@@ -1,0 +1,368 @@
+import React, { useState, useEffect } from 'react';
+import { Settings, RefreshCw, Grid3x3, Grid, LayoutGrid, Award, Anchor, Car, Home, Leaf, Package, Type, Shapes, PenTool, RotateCcw } from 'lucide-react';
+
+const RandomPatternGenerator = () => {
+  // 狀態管理
+  const [gridSize, setGridSize] = useState(3); // 3 (9格), 4 (16格), 5 (25格)
+  const [category, setCategory] = useState('animals');
+  const [gridData, setGridData] = useState([]);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  // 自製題目區域的狀態
+  const [q1, setQ1] = useState({ p1: '', p2: '', dir: '' });
+  const [q2, setQ2] = useState({ p1: '', p2: '', dir: '' });
+
+  // 方向選項
+  const directions = ['東', '南', '西', '北', '東南', '東北', '西南', '西北'];
+
+  // 取得目前網格中存在的圖案 (過濾掉 null)
+  const availablePatterns = gridData.filter(item => item !== null);
+
+  // 定義類別與對應的 Emoji 素材庫
+  const categories = {
+    buildings: {
+      label: '建築物',
+      icon: <Home className="w-4 h-4 mr-2" />,
+      items: ['🏠', '🏢', '🏣', '🏥', '🏦', '🏨', '🏰', '🏯', '⛪', '🕌', '⛺', '🏭', '🏫', '🏛️', '🗼', '🗽']
+    },
+    animals: {
+      label: '動物',
+      icon: <Award className="w-4 h-4 mr-2" />, // 使用 Award 作為一般圖示代表
+      items: ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔']
+    },
+    vehicles: {
+      label: '交通工具',
+      icon: <Car className="w-4 h-4 mr-2" />,
+      items: ['🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚜', '🛵', '🏍️', '🚂', '✈️', '🚀', '🚁']
+    },
+    items: {
+      label: '物品',
+      icon: <Package className="w-4 h-4 mr-2" />,
+      items: ['💎', '⌚', '📱', '💻', '📷', '📹', '📼', '🔍', '💡', '🔦', '📕', '✏️', '🖌️', '🔑', '🎁', '🔔']
+    },
+    nature: {
+      label: '動植物',
+      icon: <Leaf className="w-4 h-4 mr-2" />,
+      items: ['🌲', '🌳', '🌴', '🌵', '🌷', '🌸', '🌹', '🌺', '🌻', '🌼', '🌾', '🌿', '🍀', '🍁', '🍂', '🍄']
+    },
+    marine: {
+      label: '海洋生物',
+      icon: <Anchor className="w-4 h-4 mr-2" />,
+      items: ['🐳', '🐋', '🐬', '🐟', '🐠', '🐡', '🦈', '🐙', '🐚', '🦀', '🦞', '🦐', '🦑', '🐊', '🐢', '🧊']
+    },
+    letters: {
+      label: '英文字母',
+      icon: <Type className="w-4 h-4 mr-2" />,
+      items: ['A', 'B', 'C', 'D', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'O', 'P', 'Q', 'R', 'T', 'U', 'V', 'X', 'Y', 'Z']
+    },
+    shapes: {
+      label: '形狀',
+      icon: <Shapes className="w-4 h-4 mr-2" />,
+      // 修改為幾何形狀各不相同的圖案，避免同形狀僅顏色不同的情況
+      items: ['🔴', '🟦', '🔺', '🔶', '⭐', '❤️', '🌙', '🌀', '✖️', '✅', '☁️', '☀️', '♠️', '♣️', '💧', '⚡']
+    }
+  };
+
+  // 生成網格邏輯
+  const generateGrid = () => {
+    setIsAnimating(true);
+    
+    // 稍微延遲以展示動畫效果
+    setTimeout(() => {
+      const totalCells = gridSize * gridSize;
+      let fillCount = 0;
+
+      // 根據題目要求設定填入的數量
+      if (gridSize === 3) fillCount = 4;      // 9格模式：填4格
+      else if (gridSize === 4) fillCount = 8; // 16格模式：填8格
+      else if (gridSize === 5) fillCount = 10;// 25格模式：填10格
+
+      // 建立空陣列
+      const newGrid = new Array(totalCells).fill(null);
+      
+      // 產生隨機索引 (Fisher-Yates Shuffle 變體)
+      const indices = Array.from({ length: totalCells }, (_, i) => i);
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+      }
+      
+      // 取前 fillCount 個索引作為要填充的位置
+      const selectedIndices = indices.slice(0, fillCount);
+
+      // 填充內容
+      const currentItems = categories[category].items;
+      
+      // 為了確保圖案不重複，先洗牌所有圖案 (Fisher-Yates Shuffle)
+      const shuffledItems = [...currentItems];
+      for (let i = shuffledItems.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
+      }
+      
+      // 依序填入不重複的圖案
+      selectedIndices.forEach((index, i) => {
+        newGrid[index] = shuffledItems[i];
+      });
+
+      setGridData(newGrid);
+      setIsAnimating(false);
+    }, 150);
+  };
+
+  // 重置題目區域
+  const resetQuestions = () => {
+    setQ1({ p1: '', p2: '', dir: '' });
+    setQ2({ p1: '', p2: '', dir: '' });
+  };
+
+  // 當模式或類別改變時，自動重新生成，並清空題目
+  useEffect(() => {
+    generateGrid();
+    resetQuestions();
+  }, [gridSize, category]);
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-indigo-100 p-4 md:p-8">
+      <div className="max-w-4xl mx-auto">
+        
+        {/* 標題區 */}
+        <header className="mb-8 text-center">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-indigo-600 mb-2 flex items-center justify-center gap-3">
+            <Settings className="w-8 h-8" />
+            隨機圖案生成器
+          </h1>
+          <p className="text-slate-500">選擇類別與網格大小，自動生成隨機分佈圖案</p>
+        </header>
+
+        {/* 控制面板 */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-slate-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            {/* 類別選擇 */}
+            <div>
+              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">
+                1. 選擇類別
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {Object.entries(categories).map(([key, value]) => (
+                  <button
+                    key={key}
+                    onClick={() => setCategory(key)}
+                    className={`flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border
+                      ${category === key 
+                        ? 'bg-indigo-100 text-indigo-700 border-indigo-200 shadow-inner' 
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                      }`}
+                  >
+                    {value.icon}
+                    {value.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 網格模式選擇 */}
+            <div>
+              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">
+                2. 選擇網格模式
+              </h3>
+              <div className="flex flex-wrap gap-3 mb-4">
+                <button
+                  onClick={() => setGridSize(3)}
+                  className={`flex-1 flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all duration-200
+                    ${gridSize === 3 
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
+                      : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                    }`}
+                >
+                  <Grid3x3 className="w-6 h-6 mb-1" />
+                  <span className="font-bold">9格</span>
+                  <span className="text-xs opacity-75">(3x3, 選4)</span>
+                </button>
+                
+                <button
+                  onClick={() => setGridSize(4)}
+                  className={`flex-1 flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all duration-200
+                    ${gridSize === 4 
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
+                      : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                    }`}
+                >
+                  <Grid className="w-6 h-6 mb-1" />
+                  <span className="font-bold">16格</span>
+                  <span className="text-xs opacity-75">(4x4, 選8)</span>
+                </button>
+
+                <button
+                  onClick={() => setGridSize(5)}
+                  className={`flex-1 flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all duration-200
+                    ${gridSize === 5 
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
+                      : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                    }`}
+                >
+                  <LayoutGrid className="w-6 h-6 mb-1" />
+                  <span className="font-bold">25格</span>
+                  <span className="text-xs opacity-75">(5x5, 選10)</span>
+                </button>
+              </div>
+
+              {/* 重新生成按鈕 */}
+              <button
+                onClick={generateGrid}
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg"
+              >
+                <RefreshCw className={`w-5 h-5 ${isAnimating ? 'animate-spin' : ''}`} />
+                重新隨機生成
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 顯示區域 */}
+        <div className="flex justify-center mb-8">
+          <div 
+            className={`
+              grid gap-2 md:gap-3 p-4 bg-white rounded-2xl shadow-xl border-4 border-slate-200
+              transition-all duration-300 ease-in-out
+              ${gridSize === 3 ? 'grid-cols-3 w-full max-w-[400px]' : ''}
+              ${gridSize === 4 ? 'grid-cols-4 w-full max-w-[480px]' : ''}
+              ${gridSize === 5 ? 'grid-cols-5 w-full max-w-[550px]' : ''}
+            `}
+          >
+            {gridData.map((item, index) => (
+              <div
+                key={`${gridSize}-${index}-${item || 'empty'}`}
+                className={`
+                  aspect-square rounded-xl flex items-center justify-center text-3xl md:text-4xl lg:text-5xl select-none
+                  transition-all duration-500
+                  ${item 
+                    ? 'bg-indigo-50 border-2 border-indigo-200 shadow-sm scale-100 opacity-100' 
+                    : 'bg-slate-100/50 scale-95 opacity-50'
+                  }
+                `}
+              >
+                <span className={`transform transition-transform duration-300 ${isAnimating ? 'scale-0' : 'scale-100'}`}>
+                  {item}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 自製題目區域 */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-indigo-100 max-w-3xl mx-auto">
+          <h3 className="text-xl font-bold text-indigo-700 mb-6 flex items-center gap-2 border-b border-indigo-100 pb-3">
+            <PenTool className="w-6 h-6" />
+            自製題目區域
+          </h3>
+          
+          <div className="space-y-6">
+            {/* 題目 1 */}
+            <div className="flex flex-wrap items-center gap-2 md:gap-3 text-lg md:text-xl font-medium p-4 bg-slate-50 rounded-xl border border-slate-200 shadow-sm">
+              <span className="bg-indigo-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-sm">1</span>
+              
+              <div className="flex items-center gap-2 flex-wrap">
+                <select 
+                  value={q1.p1} 
+                  onChange={(e) => setQ1({...q1, p1: e.target.value})}
+                  className="bg-white border-2 border-indigo-200 rounded-lg px-2 py-1 text-2xl md:text-3xl min-w-[4rem] h-12 md:h-14 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 cursor-pointer shadow-sm text-center appearance-none"
+                  style={{backgroundImage: 'none'}}
+                >
+                  <option value="">?</option>
+                  {availablePatterns.map((p, i) => <option key={`q1p1-${i}`} value={p}>{p}</option>)}
+                </select>
+                
+                <span className="text-slate-600">在</span>
+                
+                <select 
+                  value={q1.p2}
+                  onChange={(e) => setQ1({...q1, p2: e.target.value})}
+                  className="bg-white border-2 border-indigo-200 rounded-lg px-2 py-1 text-2xl md:text-3xl min-w-[4rem] h-12 md:h-14 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 cursor-pointer shadow-sm text-center appearance-none"
+                  style={{backgroundImage: 'none'}}
+                >
+                  <option value="">?</option>
+                  {availablePatterns.map((p, i) => <option key={`q1p2-${i}`} value={p}>{p}</option>)}
+                </select>
+                
+                <span className="text-slate-600">的</span>
+                
+                <select 
+                  value={q1.dir}
+                  onChange={(e) => setQ1({...q1, dir: e.target.value})}
+                  className="bg-white border-2 border-indigo-200 rounded-lg px-3 py-1 text-base md:text-lg min-w-[5rem] h-12 md:h-14 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 cursor-pointer shadow-sm"
+                >
+                  <option value="">方向</option>
+                  {directions.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+                
+                <span className="text-slate-600">方。</span>
+              </div>
+            </div>
+
+            {/* 題目 2 */}
+            <div className="flex flex-wrap items-center gap-2 md:gap-3 text-lg md:text-xl font-medium p-4 bg-slate-50 rounded-xl border border-slate-200 shadow-sm">
+              <span className="bg-indigo-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-sm">2</span>
+              
+              <div className="flex items-center gap-2 flex-wrap">
+                <select 
+                  value={q2.p1}
+                  onChange={(e) => setQ2({...q2, p1: e.target.value})}
+                  className="bg-white border-2 border-indigo-200 rounded-lg px-2 py-1 text-2xl md:text-3xl min-w-[4rem] h-12 md:h-14 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 cursor-pointer shadow-sm text-center appearance-none"
+                  style={{backgroundImage: 'none'}}
+                >
+                  <option value="">?</option>
+                  {availablePatterns.map((p, i) => <option key={`q2p1-${i}`} value={p}>{p}</option>)}
+                </select>
+                
+                <span className="text-slate-600">的</span>
+                
+                <select 
+                  value={q2.dir}
+                  onChange={(e) => setQ2({...q2, dir: e.target.value})}
+                  className="bg-white border-2 border-indigo-200 rounded-lg px-3 py-1 text-base md:text-lg min-w-[5rem] h-12 md:h-14 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 cursor-pointer shadow-sm"
+                >
+                  <option value="">方向</option>
+                  {directions.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+                
+                <span className="text-slate-600">方是</span>
+                
+                <select 
+                  value={q2.p2}
+                  onChange={(e) => setQ2({...q2, p2: e.target.value})}
+                  className="bg-white border-2 border-indigo-200 rounded-lg px-2 py-1 text-2xl md:text-3xl min-w-[4rem] h-12 md:h-14 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 cursor-pointer shadow-sm text-center appearance-none"
+                  style={{backgroundImage: 'none'}}
+                >
+                  <option value="">?</option>
+                  {availablePatterns.map((p, i) => <option key={`q2p2-${i}`} value={p}>{p}</option>)}
+                </select>
+                
+                <span className="text-slate-600">。</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <button 
+              onClick={resetQuestions}
+              className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors font-medium text-sm group"
+            >
+              <RotateCcw className="w-4 h-4 group-hover:-rotate-180 transition-transform duration-500" />
+              清空題目
+            </button>
+          </div>
+        </div>
+
+        {/* 底部說明 */}
+        <div className="text-center mt-8 text-slate-400 text-sm">
+          <p>當前模式：{categories[category].label} / {gridSize}x{gridSize} 網格</p>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+export default RandomPatternGenerator;
