@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>錢幣總值大挑戰</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f0f9ff;
+            user-select: none;
+        }
+
+        .money-img {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            transition: transform 0.2s;
+            cursor: pointer;
+            width: 80%;
+            max-width: 120px;
+            height: auto;
+            border-radius: 50%;
+            object-fit: contain;
+        }
+
+        .money-img:hover {
+            transform: scale(1.1);
+            filter: brightness(1.1);
+        }
+
+        .hint-bubble {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #16a34a;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 0.2em 0.5em;
+            border-radius: 9999px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: 2px solid #dcfce7;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        @keyframes popIn {
+            from { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .keypad-btn {
+            transition: background-color 0.1s, transform 0.1s;
+        }
+        .keypad-btn:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes flash-green {
+            0% { background-color: #dcfce7; }
+            50% { background-color: #86efac; }
+            100% { background-color: #dcfce7; }
+        }
+        .bg-flash-success {
+            animation: flash-green 1s infinite;
+        }
+
+        /* 填空題的空格樣式 */
+        .blank-box {
+            display: inline-block;
+            min-width: 60px;
+            padding: 0 8px;
+            margin: 0 4px;
+            border-bottom: 3px solid #cbd5e1;
+            color: #1e3a8a;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .blank-box.active {
+            border-bottom-color: #3b82f6;
+            background-color: #eff6ff;
+            color: #2563eb;
+            transform: scale(1.1);
+        }
+
+        .blank-box.correct {
+            border-bottom-color: #22c55e;
+            color: #15803d;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- 頂部模式選擇 -->
+    <header class="bg-white shadow-md p-2 z-10 relative">
+        <div class="max-w-7xl mx-auto relative flex flex-col items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-center text-blue-800 mb-2 w-full">錢幣總值大挑戰</h1>
+            
+            <button id="random-btn" onclick="toggleRandomMode()" class="absolute right-0 top-0 mt-1 mr-2 px-3 py-1 rounded shadow text-sm font-bold transition-all bg-gray-200 text-gray-600 hover:bg-gray-300">
+                <i class="fas fa-random mr-1"></i> 隨機模式：關
+            </button>
+
+            <div class="flex flex-wrap justify-center gap-2" id="mode-buttons">
+                <!-- 按鈕由 JS 生成 -->
+            </div>
+        </div>
+    </header>
+
+    <!-- 遊戲主區域 -->
+    <main class="flex-1 flex flex-col md:flex-row h-full overflow-hidden">
+        
+        <!-- 左方：題目顯示區 -->
+        <div class="w-full md:w-2/3 bg-blue-50 flex flex-col border-b md:border-b-0 md:border-r border-blue-200">
+            
+            <!-- 題目資訊條 -->
+            <div class="flex justify-between items-center p-4">
+                <div class="bg-white px-4 py-2 rounded-full shadow text-blue-600 font-bold text-lg whitespace-nowrap">
+                    題目：<span id="progress-display">1 / 10</span>
+                </div>
+                <div id="instruction-text" class="text-lg text-gray-700 font-bold text-center flex-1 mx-4">
+                    隨時點擊錢幣出現提示
+                </div>
+            </div>
+
+            <!-- 硬幣滾動區域 -->
+            <div class="flex-1 overflow-y-auto flex justify-center items-start p-2">
+                <div id="banknotes-area" class="grid grid-cols-5 gap-4 w-full max-w-4xl p-2 auto-rows-min justify-items-center">
+                    <!-- 錢幣圖片將在此生成 -->
+                </div>
+            </div>
+
+            <!-- 底部：句子顯示與下一題按鈕區域 (固定在底部) -->
+            <div class="w-full bg-blue-100/50 p-4 border-t border-blue-200 flex flex-col items-center justify-center min-h-[140px]">
+                
+                <!-- 題目/答案句子 -->
+                <div id="question-sentence" class="text-xl md:text-2xl font-bold text-blue-900 mb-2 bg-white px-6 py-3 rounded-xl shadow-sm border-2 border-blue-100 text-center transition-all leading-loose">
+                    <!-- 這裡會動態顯示 -->
+                </div>
+                
+                <!-- 下一題按鈕 (初始隱藏) -->
+                <button id="next-btn" onclick="nextQuestion()" class="hidden bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-12 rounded-full text-xl shadow-lg transform transition hover:scale-105 flex items-center gap-2">
+                    下一題 <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 右方：輸入控制區 -->
+        <div class="w-full md:w-1/3 bg-white p-4 flex flex-col items-center justify-center shadow-lg z-20">
+            
+            <div class="w-full max-w-xs mb-4">
+                <div id="display-container" class="bg-gray-100 border-4 border-blue-200 rounded-xl h-20 flex items-center justify-center px-4 shadow-inner transition-colors duration-300">
+                    <!-- 移除了 $ 符號 -->
+                    <span id="input-display" class="text-4xl font-mono text-gray-800 tracking-widest min-h-[40px]"></span>
+                    <span class="animate-pulse text-blue-500 text-4xl ml-1">|</span>
+                </div>
+                <div id="feedback-msg" class="text-center h-8 mt-1 font-bold text-lg"></div>
+            </div>
+
+            <!-- 數字鍵盤 -->
+            <div class="grid grid-cols-3 gap-2 w-full max-w-xs">
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('1')">1</button>
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('2')">2</button>
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('3')">3</button>
+                
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('4')">4</button>
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('5')">5</button>
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('6')">6</button>
+                
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('7')">7</button>
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('8')">8</button>
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('9')">9</button>
+                
+                <!-- 修改：.改為刪除，原本的刪除改為清除(C) -->
+                <button class="keypad-btn bg-red-100 hover:bg-red-200 text-red-600 text-2xl font-bold py-3 rounded-lg shadow" onclick="deleteNumber()"><i class="fas fa-backspace"></i></button>
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('0')">0</button>
+                <button class="keypad-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-xl font-bold py-3 rounded-lg shadow" onclick="clearInput()">清除</button>
+                
+                <!-- 確定按鈕橫跨三欄 -->
+                <button id="confirm-btn" class="col-span-3 keypad-btn bg-green-500 hover:bg-green-600 text-white text-xl font-bold py-3 rounded-lg shadow mt-1" onclick="checkAnswer()">確定</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 完成畫面 -->
+    <div id="completion-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-md mx-4 animate-bounce-in">
+            <div class="text-6xl mb-4">🏆</div>
+            <h2 class="text-3xl font-bold text-blue-800 mb-4">恭喜完成！</h2>
+            <p class="text-gray-600 mb-6 text-lg">你真是太棒了！</p>
+            <button onclick="resetGame()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg transition transform hover:scale-105">
+                再玩一次
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 遊戲配置數據
+        const CONFIG = {
+            // 模式數值：0.1代表1角，10代表10元
+            modes: [0.1, 0.2, 0.5, 1, 2, 5, 10],
+            images: {
+                0.1: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/1角正面.png",
+                0.2: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/2角正面.png",
+                0.5: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/5角正面.png",
+                1: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/1元正面.png",
+                2: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/2元正面.png",
+                5: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/5元正面.png",
+                10: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/10元正面.png"
+            }
+        };
+
+        // 顯示名稱映射
+        function getModeLabel(val) {
+            if (val < 1) {
+                return (val * 10) + "角";
+            }
+            return val + "元";
+        }
+
+        // 遊戲狀態定義
+        const PHASES = {
+            SIMPLE: 'simple',        // 普通整數模式 (>=1元)
+            CENT_TOTAL: 'cent_total', // 小數模式第一階段：算總角數
+            CENT_CONVERT_YUAN: 'cent_convert_yuan', // 小數模式第二階段：填元
+            CENT_CONVERT_CENT: 'cent_convert_cent'  // 小數模式第三階段：填角
+        };
+
+        let currentState = {
+            mode: 1, 
+            isRandomMode: false,
+            questionQueue: [],
+            currentQueueIndex: 0,
+            currentInput: "",
+            hintsRevealed: [], 
+            nextHintIndex: 0,
+            phase: PHASES.SIMPLE, // 當前問答階段
+            noteCount: 0 // 當前硬幣數量
+        };
+
+        function init() {
+            renderModeButtons();
+            startGame(1);
+        }
+
+        function toggleRandomMode() {
+            currentState.isRandomMode = !currentState.isRandomMode;
+            const btn = document.getElementById('random-btn');
+            if (currentState.isRandomMode) {
+                btn.innerHTML = '<i class="fas fa-random mr-1"></i> 隨機模式：開';
+                btn.classList.remove('bg-gray-200', 'text-gray-600');
+                btn.classList.add('bg-purple-600', 'text-white', 'hover:bg-purple-700');
+            } else {
+                btn.innerHTML = '<i class="fas fa-random mr-1"></i> 隨機模式：關';
+                btn.classList.add('bg-gray-200', 'text-gray-600');
+                btn.classList.remove('bg-purple-600', 'text-white', 'hover:bg-purple-700');
+            }
+            startGame(currentState.mode);
+        }
+
+        function generateQueue() {
+            let allQuestions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+            if (currentState.isRandomMode) {
+                for (let i = allQuestions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+                }
+                return allQuestions.slice(0, 3).sort((a, b) => a - b);
+            } else {
+                return allQuestions;
+            }
+        }
+
+        function renderModeButtons() {
+            const container = document.getElementById('mode-buttons');
+            container.innerHTML = '';
+            CONFIG.modes.forEach(mode => {
+                const btn = document.createElement('button');
+                btn.className = `px-3 py-1 rounded-full border-2 font-bold text-sm transition-colors duration-200 min-w-[3rem]
+                    ${currentState.mode === mode ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 border-blue-300 hover:bg-blue-50'}`;
+                btn.innerText = getModeLabel(mode);
+                btn.onclick = () => startGame(mode);
+                btn.id = `mode-btn-${mode}`;
+                container.appendChild(btn);
+            });
+        }
+
+        function updateModeButtons() {
+            CONFIG.modes.forEach(mode => {
+                const btn = document.getElementById(`mode-btn-${mode}`);
+                if (currentState.mode === mode) {
+                    btn.className = 'px-3 py-1 rounded-full border-2 font-bold text-sm transition-colors duration-200 bg-blue-600 text-white border-blue-600 shadow-md transform scale-105 min-w-[3rem]';
+                } else {
+                    btn.className = 'px-3 py-1 rounded-full border-2 font-bold text-sm transition-colors duration-200 bg-white text-blue-600 border-blue-300 hover:bg-blue-50 min-w-[3rem]';
+                }
+            });
+        }
+
+        function startGame(mode) {
+            currentState.mode = mode;
+            currentState.questionQueue = generateQueue();
+            currentState.currentQueueIndex = 0;
+            
+            updateModeButtons();
+            document.getElementById('completion-modal').classList.add('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const noteIndex = currentState.questionQueue[currentState.currentQueueIndex];
+            currentState.noteCount = noteIndex + 1;
+            
+            currentState.currentInput = "";
+            currentState.nextHintIndex = 0;
+            currentState.hintsRevealed = new Array(currentState.noteCount).fill(false);
+            
+            // 決定階段
+            if (currentState.mode < 1) {
+                currentState.phase = PHASES.CENT_TOTAL;
+            } else {
+                currentState.phase = PHASES.SIMPLE;
+            }
+
+            const totalQs = currentState.questionQueue.length;
+            document.getElementById('progress-display').innerText = `${currentState.currentQueueIndex + 1} / ${totalQs}`;
+            
+            document.getElementById('input-display').innerText = "";
+            document.getElementById('feedback-msg').innerText = "";
+            
+            // 重置底部UI
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('display-container').classList.remove('bg-green-100', 'border-green-400', 'bg-flash-success');
+            document.getElementById('display-container').classList.add('bg-gray-100', 'border-blue-200');
+
+            renderMoney(currentState.noteCount);
+            renderSentence();
+        }
+
+        function renderSentence() {
+            const container = document.getElementById('question-sentence');
+            const label = getModeLabel(currentState.mode);
+            
+            if (currentState.phase === PHASES.SIMPLE) {
+                // 大於1元的模式：直接顯示元
+                container.innerHTML = `${currentState.noteCount}個${label}的總值是 <span id="blank-1" class="blank-box active">?</span> 元`;
+            } else {
+                // 小於1元的模式
+                if (currentState.phase === PHASES.CENT_TOTAL) {
+                    container.innerHTML = `${currentState.noteCount}個${label}的總值是 <span id="blank-1" class="blank-box active">?</span> 角`;
+                } else {
+                    // 已完成第一階段，顯示第二階段（換算）
+                    const totalCents = Math.round(currentState.noteCount * currentState.mode * 10);
+                    
+                    let html = `${currentState.noteCount}個${label}的總值是 <span class="text-green-600 font-bold mx-1">${totalCents}</span> 角<br>`;
+                    html += `<span class="text-sm text-gray-400 block my-1">換算為</span>`;
+                    html += `${currentState.noteCount}個${label}的總值是 `;
+                    
+                    if (currentState.phase === PHASES.CENT_CONVERT_YUAN) {
+                        html += `<span id="blank-yuan" class="blank-box active">?</span> 元 <span id="blank-cent" class="blank-box">?</span> 角`;
+                    } else if (currentState.phase === PHASES.CENT_CONVERT_CENT) {
+                        // 元已經填好
+                        const correctYuan = Math.floor(totalCents / 10);
+                        html += `<span class="text-green-600 font-bold mx-1">${correctYuan}</span> 元 <span id="blank-cent" class="blank-box active">?</span> 角`;
+                    }
+                    
+                    container.innerHTML = html;
+                }
+            }
+        }
+
+        function renderMoney(count) {
+            const container = document.getElementById('banknotes-area');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < count; i++) {
+                const wrapper = document.createElement('div');
+                wrapper.className = "relative group w-full flex justify-center"; 
+                
+                const img = document.createElement('img');
+                img.src = CONFIG.images[currentState.mode];
+                img.className = `money-img rounded-full shadow-sm border border-gray-200`;
+                img.alt = `${getModeLabel(currentState.mode)}硬幣`;
+                
+                wrapper.onclick = () => handleNoteClick(i, wrapper);
+
+                wrapper.appendChild(img);
+                container.appendChild(wrapper);
+            }
+        }
+
+        function handleNoteClick(index, wrapperElement) {
+            if (index !== currentState.nextHintIndex) return;
+            if (currentState.hintsRevealed[index]) return;
+
+            // 計算累積金額
+            let displayValue;
+            if (currentState.mode < 1) {
+                // 角模式：顯示累計的角數 (1, 2, 3 或 2, 4, 6 或 5, 10, 15)
+                displayValue = Math.round((index + 1) * currentState.mode * 10);
+            } else {
+                // 元模式：顯示累計的元數
+                displayValue = Math.round((index + 1) * currentState.mode * 10) / 10;
+            }
+            
+            const bubble = document.createElement('div');
+            bubble.className = "hint-bubble";
+            bubble.innerText = displayValue;
+            
+            wrapperElement.appendChild(bubble);
+            currentState.hintsRevealed[index] = true;
+            currentState.nextHintIndex++;
+        }
+
+        function appendNumber(num) {
+            if (document.getElementById('next-btn').classList.contains('hidden') === false) return; // 已完成本題
+            
+            // 限制長度
+            if (currentState.currentInput.length < 5) {
+                currentState.currentInput += num;
+            }
+            updateDisplay();
+        }
+
+        function deleteNumber() {
+            if (document.getElementById('next-btn').classList.contains('hidden') === false) return;
+            currentState.currentInput = currentState.currentInput.slice(0, -1);
+            updateDisplay();
+        }
+        
+        function clearInput() {
+             if (document.getElementById('next-btn').classList.contains('hidden') === false) return;
+             currentState.currentInput = "";
+             updateDisplay();
+        }
+
+        function updateDisplay() {
+            document.getElementById('input-display').innerText = currentState.currentInput;
+            
+            // 同步更新句子中的 active blank
+            const activeBlank = document.querySelector('.blank-box.active');
+            if (activeBlank) {
+                activeBlank.innerText = currentState.currentInput === "" ? "?" : currentState.currentInput;
+            }
+        }
+
+        function checkAnswer() {
+            if (document.getElementById('next-btn').classList.contains('hidden') === false) return;
+            if (currentState.currentInput === "") return;
+
+            const inputVal = parseInt(currentState.currentInput, 10);
+            const totalCents = Math.round(currentState.noteCount * currentState.mode * 10);
+            const totalValue = Math.round(currentState.noteCount * currentState.mode * 10) / 10;
+            
+            let isCorrect = false;
+
+            if (currentState.phase === PHASES.SIMPLE) {
+                // 檢查 元
+                if (inputVal === totalValue) isCorrect = true;
+            } else if (currentState.phase === PHASES.CENT_TOTAL) {
+                // 檢查 總角數
+                if (inputVal === totalCents) isCorrect = true;
+            } else if (currentState.phase === PHASES.CENT_CONVERT_YUAN) {
+                // 檢查 換算後的 元
+                const correctYuan = Math.floor(totalCents / 10);
+                if (inputVal === correctYuan) isCorrect = true;
+            } else if (currentState.phase === PHASES.CENT_CONVERT_CENT) {
+                // 檢查 換算後的 角
+                const correctCent = totalCents % 10;
+                if (inputVal === correctCent) isCorrect = true;
+            }
+
+            const feedbackEl = document.getElementById('feedback-msg');
+            const displayContainer = document.getElementById('display-container');
+
+            if (isCorrect) {
+                feedbackEl.innerText = "答對了！👏";
+                feedbackEl.className = "text-center h-8 mt-1 font-bold text-lg text-green-600";
+                
+                // 動畫反饋
+                displayContainer.classList.add('bg-flash-success');
+                setTimeout(() => displayContainer.classList.remove('bg-flash-success'), 500);
+
+                // 狀態轉移邏輯
+                if (currentState.phase === PHASES.SIMPLE) {
+                    finishQuestion(totalValue);
+                } else if (currentState.phase === PHASES.CENT_TOTAL) {
+                    if (totalCents >= 10) {
+                        // 總角數 >= 10，進入第二階段：填元
+                        currentState.phase = PHASES.CENT_CONVERT_YUAN;
+                        currentState.currentInput = "";
+                        renderSentence();
+                        updateDisplay();
+                    } else {
+                        // 總角數 < 10，直接完成
+                        finishQuestionSimpleCent(totalCents);
+                    }
+                } else if (currentState.phase === PHASES.CENT_CONVERT_YUAN) {
+                    // 進入第三階段：填角
+                    currentState.phase = PHASES.CENT_CONVERT_CENT;
+                    currentState.currentInput = "";
+                    renderSentence();
+                    updateDisplay();
+                } else if (currentState.phase === PHASES.CENT_CONVERT_CENT) {
+                    // 全部完成
+                    finishQuestionFull();
+                }
+
+            } else {
+                feedbackEl.innerText = "再試一次！";
+                feedbackEl.className = "text-center h-8 mt-1 font-bold text-lg text-red-500 animate-pulse";
+                currentState.currentInput = "";
+                updateDisplay();
+            }
+        }
+
+        // 完成題目 (元模式)
+        function finishQuestion(val) {
+            const container = document.getElementById('question-sentence');
+            const label = getModeLabel(currentState.mode);
+            container.innerHTML = `${currentState.noteCount}個${label}的總值是 <span class="text-green-600 font-bold text-3xl mx-1">${val}</span> 元`;
+            
+            document.getElementById('next-btn').classList.remove('hidden');
+            document.getElementById('input-display').innerText = "";
+        }
+
+        // 完成題目 (角模式，小於10角)
+        function finishQuestionSimpleCent(val) {
+            const container = document.getElementById('question-sentence');
+            const label = getModeLabel(currentState.mode);
+            container.innerHTML = `${currentState.noteCount}個${label}的總值是 <span class="text-green-600 font-bold text-3xl mx-1">${val}</span> 角`;
+            
+            document.getElementById('next-btn').classList.remove('hidden');
+            document.getElementById('input-display').innerText = "";
+        }
+
+        // 完成題目 (角模式，完整換算)
+        function finishQuestionFull() {
+            const container = document.getElementById('question-sentence');
+            const label = getModeLabel(currentState.mode);
+            const totalCents = Math.round(currentState.noteCount * currentState.mode * 10);
+            const correctYuan = Math.floor(totalCents / 10);
+            const correctCent = totalCents % 10;
+
+            // 最終完整顯示
+            let html = `${currentState.noteCount}個${label}的總值是 <span class="text-gray-500 font-bold mx-1">${totalCents}</span> 角<br>`;
+            html += `<span class="text-sm text-gray-400 block my-1">換算為</span>`;
+            html += `${currentState.noteCount}個${label}的總值是 <span class="text-green-600 font-bold mx-1 text-3xl">${correctYuan}</span> 元 <span class="text-green-600 font-bold mx-1 text-3xl">${correctCent}</span> 角`;
+            
+            container.innerHTML = html;
+            document.getElementById('next-btn').classList.remove('hidden');
+            document.getElementById('input-display').innerText = "";
+        }
+
+        function nextQuestion() {
+            if (currentState.currentQueueIndex < currentState.questionQueue.length - 1) {
+                currentState.currentQueueIndex++;
+                loadQuestion();
+            } else {
+                showCompletion();
+            }
+        }
+
+        function showCompletion() {
+            document.getElementById('completion-modal').classList.remove('hidden');
+        }
+
+        function resetGame() {
+            startGame(currentState.mode);
+        }
+
+        init();
+
+    </script>
+</body>
+</html>
