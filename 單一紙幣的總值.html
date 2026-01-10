@@ -142,22 +142,26 @@
             </div>
 
             <!-- 數字鍵盤 -->
-            <div class="grid grid-cols-3 gap-3 w-full max-w-xs">
-                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-4 rounded-lg shadow" onclick="appendNumber('1')">1</button>
-                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-4 rounded-lg shadow" onclick="appendNumber('2')">2</button>
-                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-4 rounded-lg shadow" onclick="appendNumber('3')">3</button>
+            <div class="grid grid-cols-3 gap-2 w-full max-w-xs">
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('1')">1</button>
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('2')">2</button>
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('3')">3</button>
                 
-                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-4 rounded-lg shadow" onclick="appendNumber('4')">4</button>
-                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-4 rounded-lg shadow" onclick="appendNumber('5')">5</button>
-                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-4 rounded-lg shadow" onclick="appendNumber('6')">6</button>
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('4')">4</button>
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('5')">5</button>
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('6')">6</button>
                 
-                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-4 rounded-lg shadow" onclick="appendNumber('7')">7</button>
-                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-4 rounded-lg shadow" onclick="appendNumber('8')">8</button>
-                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-4 rounded-lg shadow" onclick="appendNumber('9')">9</button>
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('7')">7</button>
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('8')">8</button>
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('9')">9</button>
                 
-                <button class="keypad-btn bg-red-100 hover:bg-red-200 text-red-600 text-xl font-bold py-4 rounded-lg shadow" onclick="deleteNumber()">刪除</button>
-                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-4 rounded-lg shadow" onclick="appendNumber('0')">0</button>
-                <button id="confirm-btn" class="keypad-btn bg-green-500 hover:bg-green-600 text-white text-xl font-bold py-4 rounded-lg shadow" onclick="checkAnswer()">確定</button>
+                <!-- 修改：.改為刪除，原本的刪除改為清除(C) -->
+                <button class="keypad-btn bg-red-100 hover:bg-red-200 text-red-600 text-2xl font-bold py-3 rounded-lg shadow" onclick="deleteNumber()"><i class="fas fa-backspace"></i></button>
+                <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('0')">0</button>
+                <button class="keypad-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-xl font-bold py-3 rounded-lg shadow" onclick="clearInput()">清除</button>
+                
+                <!-- 確定按鈕橫跨三欄 -->
+                <button id="confirm-btn" class="col-span-3 keypad-btn bg-green-500 hover:bg-green-600 text-white text-xl font-bold py-3 rounded-lg shadow mt-1" onclick="checkAnswer()">確定</button>
             </div>
         </div>
     </main>
@@ -363,6 +367,13 @@
             document.getElementById('input-display').innerText = currentState.currentInput;
         }
 
+        // 新增清除功能
+        function clearInput() {
+            if (currentState.isAnswerCorrect) return;
+            currentState.currentInput = "";
+            document.getElementById('input-display').innerText = "";
+        }
+
         function checkAnswer() {
             if (currentState.isAnswerCorrect) return;
             if (currentState.currentInput === "") return;
@@ -430,4 +441,3 @@
     </script>
 </body>
 </html>
-
