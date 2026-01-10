@@ -116,7 +116,12 @@
             </div>
 
             <!-- 下一題按鈕區域 (固定在底部) -->
-            <div id="next-btn-area" class="hidden w-full p-4 flex justify-center bg-blue-50/90 backdrop-blur-sm absolute bottom-0 left-0 z-30">
+            <div id="next-btn-area" class="hidden w-full p-4 flex flex-col items-center justify-center bg-blue-50/90 backdrop-blur-sm absolute bottom-0 left-0 z-30 border-t border-blue-200">
+                <!-- 新增：答案句子顯示 -->
+                <div id="result-sentence" class="text-xl md:text-3xl font-bold text-blue-900 mb-3 bg-white px-6 py-2 rounded-xl shadow-sm border-2 border-blue-100 transform transition-all animate-bounce-in">
+                    <!-- 內容由 JS 生成 -->
+                </div>
+                
                 <button onclick="nextQuestion()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-12 rounded-full text-2xl shadow-lg transform transition hover:scale-105 flex items-center gap-2">
                     下一題 <i class="fas fa-arrow-right"></i>
                 </button>
@@ -366,6 +371,7 @@
             
             // 計算正確答案 (需根據 queue 裡的真實數量)
             const noteIndex = currentState.questionQueue[currentState.currentQueueIndex];
+            const count = noteIndex + 1;
             const correctVal = (noteIndex + 1) * currentState.mode;
             
             const feedbackEl = document.getElementById('feedback-msg');
@@ -381,7 +387,11 @@
                 displayContainer.classList.remove('bg-gray-100', 'border-blue-200');
                 displayContainer.classList.add('bg-green-100', 'border-green-400', 'bg-flash-success');
 
-                // 顯示下一題按鈕
+                // 生成並顯示答案句子
+                const resultSentence = `${count}張${currentState.mode}元的總值為${correctVal}元`;
+                document.getElementById('result-sentence').innerText = resultSentence;
+
+                // 顯示下一題按鈕區域
                 document.getElementById('next-btn-area').classList.remove('hidden');
 
             } else {
