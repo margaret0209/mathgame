@@ -212,8 +212,7 @@
                     { name: '橙', icon: '🍊' }, { name: '葡萄', icon: '🍇' }, { name: '士多啤梨', icon: '🍓' },
                     { name: '桃', icon: '🍑' }, { name: '西瓜', icon: '🍉' }, { name: '櫻桃', icon: '🍒' },
                     { name: '菠蘿', icon: '🍍' }, { name: '檸檬', icon: '🍋' }, { name: '芒果', icon: '🥭' },
-                    { name: '哈密瓜', icon: '🍈' }, { name: '奇異果', icon: '🥝' },
-                    { name: '青蘋果', icon: '🍏' }
+                    { name: '哈密瓜', icon: '🍈' }, { name: '奇異果', icon: '🥝' }, { name: '青蘋果', icon: '🍏' }
                 ]
             },
             toy: {
@@ -348,17 +347,17 @@
             const shuffledItems = [...themeData].sort(() => 0.5 - Math.random());
             const selectedTypes = shuffledItems.slice(0, 3);
 
-            // 3. Assign counts: Max item is 4-6, others are strictly less to ensure unique max
-            let counts = [0, 0, 0];
-            const maxIndex = Math.floor(Math.random() * 3); // Randomly select which item gets the max
-            const maxVal = Math.floor(Math.random() * 3) + 4; // Random 4, 5, or 6
-
-            for (let i = 0; i < 3; i++) {
-                if (i === maxIndex) {
-                    counts[i] = maxVal; 
-                } else {
-                    // Others must be strictly less than maxVal (1 to maxVal-1)
-                    counts[i] = Math.floor(Math.random() * (maxVal - 1)) + 1; 
+            // 3. Assign random counts (1-6) ensuring unique max
+            // Modified: Removed the forced "4-6" constraint. Now strictly random 1-6 with unique max.
+            let counts;
+            let hasUniqueMax = false;
+            
+            while (!hasUniqueMax) {
+                counts = Array(3).fill(0).map(() => Math.floor(Math.random() * 6) + 1);
+                const maxVal = Math.max(...counts);
+                // Check if max value appears exactly once
+                if (counts.filter(c => c === maxVal).length === 1) {
+                    hasUniqueMax = true;
                 }
             }
 
