@@ -33,7 +33,7 @@
             animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             font-size: 2rem; /* 放大字體 */
             font-weight: 800;
-            color: #16a34a; /* 綠色文字 (Tailwind green-600) */
+            color: #16a34a; /* 綠色文字 */
             background-color: rgba(255, 255, 255, 0.95); /* 白色背景 */
             padding: 0.1em 0.4em; /* 縮小內距以貼合文字 */
             border-radius: 9999px; /* 圓角效果 */
@@ -117,7 +117,7 @@
 
             <!-- 下一題按鈕區域 (固定在底部) -->
             <div id="next-btn-area" class="hidden w-full p-4 flex flex-col items-center justify-center bg-blue-50/90 backdrop-blur-sm absolute bottom-0 left-0 z-30 border-t border-blue-200">
-                <!-- 新增：答案句子顯示 -->
+                <!-- 答案句子顯示 -->
                 <div id="result-sentence" class="text-xl md:text-3xl font-bold text-blue-900 mb-3 bg-white px-6 py-2 rounded-xl shadow-sm border-2 border-blue-100 transform transition-all animate-bounce-in">
                     <!-- 內容由 JS 生成 -->
                 </div>
@@ -155,18 +155,16 @@
                 <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('8')">8</button>
                 <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('9')">9</button>
                 
-                <!-- 修改：.改為刪除，原本的刪除改為清除(C) -->
                 <button class="keypad-btn bg-red-100 hover:bg-red-200 text-red-600 text-2xl font-bold py-3 rounded-lg shadow" onclick="deleteNumber()"><i class="fas fa-backspace"></i></button>
                 <button class="keypad-btn bg-blue-100 hover:bg-blue-200 text-blue-800 text-2xl font-bold py-3 rounded-lg shadow" onclick="appendNumber('0')">0</button>
                 <button class="keypad-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-xl font-bold py-3 rounded-lg shadow" onclick="clearInput()">清除</button>
                 
-                <!-- 確定按鈕橫跨三欄 -->
                 <button id="confirm-btn" class="col-span-3 keypad-btn bg-green-500 hover:bg-green-600 text-white text-xl font-bold py-3 rounded-lg shadow mt-1" onclick="checkAnswer()">確定</button>
             </div>
         </div>
     </main>
 
-    <!-- 完成畫面 (隱藏) -->
+    <!-- 完成畫面 -->
     <div id="completion-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
         <div class="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-md mx-4 animate-bounce-in">
             <div class="text-6xl mb-4">🏆</div>
@@ -181,7 +179,8 @@
     <script>
         // 遊戲配置數據
         const CONFIG = {
-            modes: [10, 20, 50, 100, 500, 1000],
+            // 加入 'mixed' 作為一個特殊模式
+            modes: [10, 20, 50, 100, 500, 1000, 'mixed'],
             images: {
                 10: "https://upload.wikimedia.org/wikipedia/zh/b/b0/HKSAR_hkd10_2007_f.jpg",
                 20: "https://www.bochk.com/dam/bochk/desktop/top/aboutus/banknote/2018/img/bochk_hkd20-back.png",
@@ -189,19 +188,25 @@
                 100: "https://www.bochk.com/dam/bochk/desktop/top/aboutus/banknote/2018/img/bochk_hkd100-back.png",
                 500: "https://www.bochk.com/dam/bochk/desktop/top/aboutus/banknote/2018/img/bochk_hkd500-back.png",
                 1000: "https://www.bochk.com/dam/bochk/desktop/top/aboutus/banknote/2018/img/bochk_hkd1000-back.png"
-            }
+            },
+            mixPool: [1000, 500, 100, 50, 20, 10]
         };
 
         // 遊戲狀態
         let currentState = {
             mode: 10,
             isRandomMode: false,
-            questionQueue: [], // 存儲題目的紙幣數量序列 (0-9 代表 1-10張)
-            currentQueueIndex: 0, // 當前在 queue 中的位置
+            // questionQueue 現在儲存物件陣列： { notes: [100, 50, 10] }
+            questionQueue: [], 
+            currentQueueIndex: 0,
             currentInput: "",
             hintsRevealed: [], 
-            nextHintIndex: 0,
-            isAnswerCorrect: false
+            nextHintIndex: 0, // 用於順序檢查 (在混合隨機模式下代表 sortedValues 的索引)
+            isAnswerCorrect: false,
+            
+            // 混合模式專用
+            currentSortedValues: [], // 該題紙幣由大到小的正確順序
+            currentAccumulatedValue: 0 // 當前已點擊紙幣的累加值
         };
 
         // 初始化
@@ -231,21 +236,70 @@
 
         // 生成題目序列
         function generateQueue() {
-            if (currentState.isRandomMode) {
-                // 隨機選3題
-                let allQuestions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-                // 洗牌算法
-                for (let i = allQuestions.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+            let queue = [];
+
+            if (currentState.mode === 'mixed') {
+                // 混合模式
+                // 修改：隨機模式現在也生成 10 題 (原本是 3 題)
+                const numQuestions = 10;
+                
+                for (let q = 0; q < numQuestions; q++) {
+                    let notes = [];
+                    // 一般模式: 4-10張, 隨機模式: 4-6張
+                    let minCount = currentState.isRandomMode ? 4 : 4;
+                    let maxCount = currentState.isRandomMode ? 6 : 10;
+                    let count = Math.floor(Math.random() * (maxCount - minCount + 1)) + minCount;
+
+                    for (let i = 0; i < count; i++) {
+                        const randomVal = CONFIG.mixPool[Math.floor(Math.random() * CONFIG.mixPool.length)];
+                        notes.push(randomVal);
+                    }
+
+                    // 排序與打亂
+                    // 總是先排序 (由大到小)，這是邏輯基準
+                    notes.sort((a, b) => b - a);
+                    
+                    if (currentState.isRandomMode) {
+                        // 如果是隨機模式，顯示時要打亂
+                        // 我們複製一份作為 displayNotes
+                        let displayNotes = [...notes];
+                        // Shuffle
+                        for (let i = displayNotes.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [displayNotes[i], displayNotes[j]] = [displayNotes[j], displayNotes[i]];
+                        }
+                        queue.push({ notes: displayNotes, sorted: notes });
+                    } else {
+                        // 一般模式，顯示順序即為排序順序
+                        queue.push({ notes: notes, sorted: notes });
+                    }
                 }
-                // 取前3個並排序 (由少到多，讓教學更順暢，也可移除 sort 變純隨機)
-                // 這裡保留 sort 讓難度循序漸進，如果想要完全隨機順序請移除 .sort(...)
-                return allQuestions.slice(0, 3).sort((a, b) => a - b);
+
             } else {
-                // 一般模式：固定 1 到 10
-                return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+                // 單一貨幣模式
+                if (currentState.isRandomMode) {
+                    // 修改：隨機模式現在包含所有 10 題 (1-10張)，但順序打亂
+                    let allCounts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+                    // Shuffle (洗牌)
+                    for (let i = allCounts.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [allCounts[i], allCounts[j]] = [allCounts[j], allCounts[i]];
+                    }
+                    
+                    // 移除原本的 .slice(0, 3) 與 .sort()，改為使用全部且保持亂序
+                    let selectedCounts = allCounts;
+                    
+                    selectedCounts.forEach(c => {
+                        queue.push({ notes: new Array(c).fill(currentState.mode) });
+                    });
+                } else {
+                    // 一般模式：1 到 10 (由少到多)
+                    for (let c = 1; c <= 10; c++) {
+                        queue.push({ notes: new Array(c).fill(currentState.mode) });
+                    }
+                }
             }
+            return queue;
         }
 
         // 渲染模式按鈕
@@ -254,9 +308,10 @@
             container.innerHTML = '';
             CONFIG.modes.forEach(mode => {
                 const btn = document.createElement('button');
+                const label = mode === 'mixed' ? '混合' : `$${mode}`;
                 btn.className = `px-4 py-1 rounded-full border-2 font-bold text-sm md:text-base transition-colors duration-200
                     ${currentState.mode === mode ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 border-blue-300 hover:bg-blue-50'}`;
-                btn.innerText = `$${mode}`;
+                btn.innerText = label;
                 btn.onclick = () => startGame(mode);
                 btn.id = `mode-btn-${mode}`;
                 container.appendChild(btn);
@@ -276,7 +331,7 @@
 
         function startGame(mode) {
             currentState.mode = mode;
-            currentState.questionQueue = generateQueue(); // 生成新題目
+            currentState.questionQueue = generateQueue(); 
             currentState.currentQueueIndex = 0;
             
             updateModeButtons();
@@ -285,71 +340,111 @@
         }
 
         function loadQuestion() {
-            // 從 queue 獲取當前題目的紙幣數量索引
-            const noteIndex = currentState.questionQueue[currentState.currentQueueIndex];
-            const count = noteIndex + 1;
+            const currentQ = currentState.questionQueue[currentState.currentQueueIndex];
+            const notes = currentQ.notes;
             
             // 重置狀態
             currentState.currentInput = "";
-            currentState.nextHintIndex = 0;
-            currentState.hintsRevealed = new Array(count).fill(false);
+            currentState.nextHintIndex = 0; // 重置順序計數器
+            currentState.hintsRevealed = new Array(notes.length).fill(false);
             currentState.isAnswerCorrect = false;
+            currentState.currentAccumulatedValue = 0;
+
+            // 設定混合模式所需的邏輯陣列
+            if (currentState.mode === 'mixed') {
+                currentState.currentSortedValues = currentQ.sorted;
+            } else {
+                // 單一模式其實也是排序好的
+                currentState.currentSortedValues = [...notes]; // 全都一樣，無所謂
+            }
 
             // UI 重置
-            // 顯示題目進度 (例如 1 / 3 或 1 / 10)
             const totalQs = currentState.questionQueue.length;
             document.getElementById('progress-display').innerText = `${currentState.currentQueueIndex + 1} / ${totalQs}`;
             
             document.getElementById('input-display').innerText = "";
             document.getElementById('feedback-msg').innerText = "";
             document.getElementById('feedback-msg').className = "text-center h-8 mt-2 font-bold text-lg";
-            document.getElementById('instruction-text').innerText = "點擊紙幣可顯示金額提示";
-            document.getElementById('instruction-text').className = "text-lg text-gray-700 font-bold text-center flex-1 mx-4";
+            
+            // 提示文字更新
+            const instruction = document.getElementById('instruction-text');
+            if (currentState.mode === 'mixed' && currentState.isRandomMode) {
+                instruction.innerText = "請由大至小點擊紙幣";
+                instruction.classList.add('text-red-600');
+            } else {
+                instruction.innerText = "隨時點擊紙幣出現提示";
+                instruction.classList.remove('text-red-600');
+            }
             
             document.getElementById('next-btn-area').classList.add('hidden');
             document.getElementById('display-container').classList.remove('bg-green-100', 'border-green-400', 'bg-flash-success');
             document.getElementById('display-container').classList.add('bg-gray-100', 'border-blue-200');
 
-            renderBanknotes(count);
+            renderBanknotes(notes);
         }
 
-        function renderBanknotes(count) {
+        function renderBanknotes(notes) {
             const container = document.getElementById('banknotes-area');
             container.innerHTML = '';
             
-            for (let i = 0; i < count; i++) {
+            notes.forEach((val, index) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = "relative group w-full"; 
                 
                 const img = document.createElement('img');
-                img.src = CONFIG.images[currentState.mode];
+                img.src = CONFIG.images[val];
                 img.className = `banknote-img rounded shadow-sm border border-gray-200`;
-                img.alt = `${currentState.mode}元紙幣`;
+                img.alt = `${val}元紙幣`;
+                // 儲存面額以便點擊邏輯判斷
+                wrapper.dataset.value = val;
                 
-                // 任何時候都可以點擊
-                wrapper.onclick = () => handleNoteClick(i, wrapper);
+                wrapper.onclick = () => handleNoteClick(index, val, wrapper);
 
                 wrapper.appendChild(img);
                 container.appendChild(wrapper);
-            }
+            });
         }
 
-        function handleNoteClick(index, wrapperElement) {
-            // 保持由左至右的邏輯，避免跳號
-            if (index !== currentState.nextHintIndex) return;
-
+        function handleNoteClick(domIndex, val, wrapperElement) {
             // 如果已經顯示，不再重複
-            if (currentState.hintsRevealed[index]) return;
+            if (currentState.hintsRevealed[domIndex]) return;
 
-            const cumulativeValue = (index + 1) * currentState.mode;
+            // 邏輯檢查：
+            // 情況1：一般模式 (單一或混合) 或 單一貨幣隨機模式 -> 視覺上都是由左到右 (domIndex 0, 1, 2...)
+            // 情況2：混合貨幣隨機模式 -> 視覺亂序，必須點擊符合 currentState.currentSortedValues[nextHintIndex] 的值
+            
+            let isValidClick = false;
+
+            if (currentState.mode === 'mixed' && currentState.isRandomMode) {
+                // 混合隨機模式：檢查點擊的面額是否為當前剩餘最大的
+                // nextHintIndex 指向 sortedValues 中下一個應該被點到的值
+                const expectedValue = currentState.currentSortedValues[currentState.nextHintIndex];
+                if (val === expectedValue) {
+                    isValidClick = true;
+                } else {
+                    // 點錯了，可以給予震動或錯誤提示 (這裡暫不處理，只是不反應)
+                    wrapperElement.classList.add('animate-pulse'); // 簡單的視覺反饋
+                    setTimeout(() => wrapperElement.classList.remove('animate-pulse'), 500);
+                    return;
+                }
+            } else {
+                // 其他模式：必須依序點擊 DOM 元素 (左到右)
+                if (domIndex === currentState.nextHintIndex) {
+                    isValidClick = true;
+                }
+            }
+
+            if (!isValidClick) return;
+
+            // 更新累加值
+            currentState.currentAccumulatedValue += val;
             
             const bubble = document.createElement('div');
-            // 修改後的樣式：居中、放大
             bubble.className = "hint-bubble";
-            bubble.innerText = cumulativeValue;
+            bubble.innerText = currentState.currentAccumulatedValue;
             
             wrapperElement.appendChild(bubble);
-            currentState.hintsRevealed[index] = true;
+            currentState.hintsRevealed[domIndex] = true;
             currentState.nextHintIndex++;
         }
 
@@ -367,7 +462,6 @@
             document.getElementById('input-display').innerText = currentState.currentInput;
         }
 
-        // 新增清除功能
         function clearInput() {
             if (currentState.isAnswerCorrect) return;
             currentState.currentInput = "";
@@ -380,10 +474,10 @@
 
             const inputVal = parseInt(currentState.currentInput);
             
-            // 計算正確答案 (需根據 queue 裡的真實數量)
-            const noteIndex = currentState.questionQueue[currentState.currentQueueIndex];
-            const count = noteIndex + 1;
-            const correctVal = (noteIndex + 1) * currentState.mode;
+            // 計算正確答案
+            const currentQ = currentState.questionQueue[currentState.currentQueueIndex];
+            const notes = currentQ.notes;
+            const correctVal = notes.reduce((sum, val) => sum + val, 0);
             
             const feedbackEl = document.getElementById('feedback-msg');
             const displayContainer = document.getElementById('display-container');
@@ -399,7 +493,13 @@
                 displayContainer.classList.add('bg-green-100', 'border-green-400', 'bg-flash-success');
 
                 // 生成並顯示答案句子
-                const resultSentence = `${count}張${currentState.mode}元的總值是${correctVal}元`;
+                let resultSentence = "";
+                if (currentState.mode === 'mixed') {
+                    resultSentence = `這堆紙幣的總值是${correctVal}元`;
+                } else {
+                    resultSentence = `${notes.length}張${currentState.mode}元的總值是${correctVal}元`;
+                }
+                
                 document.getElementById('result-sentence').innerText = resultSentence;
 
                 // 顯示下一題按鈕區域
@@ -416,9 +516,7 @@
             }
         }
 
-        // 切換下一題
         function nextQuestion() {
-            // 檢查是否還有下一題
             if (currentState.currentQueueIndex < currentState.questionQueue.length - 1) {
                 currentState.currentQueueIndex++;
                 loadQuestion();
