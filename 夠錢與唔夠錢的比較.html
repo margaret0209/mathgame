@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數線找換遊戲</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            touch-action: manipulation;
+        }
+        .blue-text { color: #2563EB; font-weight: bold; }
+        .red-text { color: #DC2626; font-weight: bold; }
+        .btn-option {
+            transition: all 0.2s;
+            transform: scale(1);
+        }
+        .btn-option:active {
+            transform: scale(0.95);
+        }
+        .mode-container {
+            display: inline-flex;
+            background-color: #f3f4f6;
+            padding: 0.25rem;
+            border-radius: 0.75rem;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+        }
+        .mode-btn {
+            border: none;
+            background: transparent;
+            padding: 0.5rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: #6b7280;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        @media (min-width: 768px) {
+            .mode-btn {
+                font-size: 1rem;
+                padding: 0.5rem 1.5rem;
+            }
+        }
+        .mode-btn:hover { color: #374151; }
+        .mode-btn.active {
+            background-color: #ffffff;
+            color: #4f46e5;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        
+        /* Inputs */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; margin: 0; 
+        }
+        .custom-input {
+            transition: all 0.2s;
+            cursor: pointer;
+            text-align: center;
+        }
+        .custom-input:read-only:focus { outline: none; }
+        .custom-input.active-field {
+            background-color: #EFF6FF;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.3);
+            transform: scale(1.05);
+            border-color: #6366f1;
+        }
+
+        /* Math Inputs specific - Enlarged */
+        .math-box {
+            width: 110px;
+            height: 90px;
+            font-size: 2.25rem;
+            font-weight: bold;
+            border: 3px solid #D1D5DB;
+            border-radius: 0.75rem;
+            background-color: white;
+            transition: all 0.3s;
+        }
+        /* Disabled state for math box */
+        .math-box.locked {
+            background-color: #E5E7EB; /* gray-200 */
+            color: #9CA3AF; /* gray-400 */
+            border-color: #D1D5DB;
+            cursor: not-allowed;
+            pointer-events: none; /* Prevent clicks */
+        }
+
+        .math-select {
+            width: 90px;
+            height: 90px;
+            font-size: 2.5rem;
+            font-weight: bold;
+            border: 3px solid #D1D5DB;
+            border-radius: 0.75rem;
+            text-align: center;
+            background-color: #F9FAFB;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 2rem 2rem;
+            padding-right: 2.5rem;
+            padding-left: 1rem;
+        }
+
+        /* Inline Keypad Styles */
+        .keypad-container {
+            width: 100%;
+            max-width: 320px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            background-color: #f3f4f6;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.06);
+            margin-top: 1rem;
+        }
+        .keypad-btn {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #374151;
+            padding: 0.75rem 0;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s;
+        }
+        .keypad-btn:active { background-color: #e5e7eb; transform: scale(0.95); }
+        .keypad-btn-action { background-color: #f9fafb; color: #4b5563; }
+        .keypad-btn-confirm {
+            background-color: #4f46e5;
+            color: white;
+            grid-column: span 3;
+            margin-top: 0.25rem;
+            font-size: 1.25rem;
+        }
+        .keypad-btn-confirm:active { background-color: #4338ca; }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+        .unlocked-pulse {
+            animation: pulse-green 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col items-center min-h-screen select-none">
+
+    <!-- Game Container -->
+    <div class="bg-white rounded-none md:rounded-2xl shadow-none md:shadow-xl w-full max-w-[95%] xl:max-w-7xl overflow-hidden border-x-0 border-y-0 md:border border-gray-200 mt-0 md:mt-4 mb-10">
+        
+        <!-- Header / Sentence Area -->
+        <div class="bg-gray-100 p-6 text-center border-b border-gray-200 relative">
+            <!-- Controls Wrapper -->
+            <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+                <!-- Mode Selection -->
+                <div class="mode-container">
+                    <button onclick="setMode(10)" id="btn-mode-10" class="mode-btn">10以內</button>
+                    <button onclick="setMode(20)" id="btn-mode-20" class="mode-btn">20以內</button>
+                    <button onclick="setMode(100)" id="btn-mode-100" class="mode-btn active">100以內</button>
+                    <button onclick="setMode(1000)" id="btn-mode-1000" class="mode-btn">1000以內</button>
+                </div>
+
+                <!-- Toggles Container -->
+                <div class="flex items-center gap-4 bg-white px-4 py-2 rounded-xl border border-gray-200">
+                    <!-- Custom Toggle Switch -->
+                    <label class="inline-flex items-center cursor-pointer select-none">
+                        <input type="checkbox" id="custom-toggle" class="sr-only peer" onchange="toggleCustomMode()">
+                        <div class="relative w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <span class="ms-2 text-sm font-bold text-gray-600">自訂數值</span>
+                    </label>
+                    
+                    <div class="w-px h-6 bg-gray-200"></div>
+
+                    <!-- Advanced Mode Toggle Switch -->
+                    <label class="inline-flex items-center cursor-pointer select-none">
+                        <input type="checkbox" id="advanced-toggle" class="sr-only peer" onchange="toggleAdvancedMode()">
+                        <div class="relative w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
+                        <span class="ms-2 text-sm font-bold text-gray-600">進階功能</span>
+                    </label>
+                </div>
+            </div>
+
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 flex flex-col items-center justify-center">
+                
+                <!-- Random Mode Display -->
+                <div id="display-mode-random" class="w-full min-h-[80px] flex items-center justify-center">
+                    <div>
+                        <span class="blue-text">我有 <span id="val-have-display">??</span> 元</span>，
+                        <span class="red-text">應付 <span id="val-pay-display">??</span> 元</span>。
+                    </div>
+                </div>
+
+                <!-- Custom Mode Inputs & Keypad -->
+                <div id="display-mode-custom" class="hidden flex flex-col items-center justify-center w-full animate-fade-in">
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-y-4 md:gap-x-4 mb-2">
+                        <div class="flex items-center justify-center flex-wrap gap-2">
+                            <span class="blue-text whitespace-nowrap text-3xl">我有</span>
+                            <input type="text" id="input-have" readonly onclick="setActiveInput('input-have')" class="custom-input w-28 md:w-36 p-2 text-3xl md:text-4xl border-b-4 border-blue-400 bg-blue-50 text-center font-bold text-blue-600 focus:outline-none rounded-t-lg" placeholder="?">
+                            <span class="text-gray-700 whitespace-nowrap text-3xl">元，</span>
+                        </div>
+                        <div class="flex items-center justify-center flex-wrap gap-2">
+                            <span class="red-text whitespace-nowrap text-3xl">應付</span>
+                            <input type="text" id="input-pay" readonly onclick="setActiveInput('input-pay')" class="custom-input w-28 md:w-36 p-2 text-3xl md:text-4xl border-b-4 border-red-400 bg-red-50 text-center font-bold text-red-600 focus:outline-none rounded-t-lg" placeholder="?">
+                            <span class="text-gray-700 whitespace-nowrap text-3xl">元</span>
+                        </div>
+                    </div>
+
+                    <!-- Custom Mode Inline Keypad -->
+                    <div id="custom-keypad" class="keypad-container">
+                        <button onclick="keypadPress('1')" class="keypad-btn">1</button>
+                        <button onclick="keypadPress('2')" class="keypad-btn">2</button>
+                        <button onclick="keypadPress('3')" class="keypad-btn">3</button>
+                        <button onclick="keypadPress('4')" class="keypad-btn">4</button>
+                        <button onclick="keypadPress('5')" class="keypad-btn">5</button>
+                        <button onclick="keypadPress('6')" class="keypad-btn">6</button>
+                        <button onclick="keypadPress('7')" class="keypad-btn">7</button>
+                        <button onclick="keypadPress('8')" class="keypad-btn">8</button>
+                        <button onclick="keypadPress('9')" class="keypad-btn">9</button>
+                        <button onclick="keypadAction('clear')" class="keypad-btn keypad-btn-action text-red-500">C</button>
+                        <button onclick="keypadPress('0')" class="keypad-btn">0</button>
+                        <button onclick="keypadAction('backspace')" class="keypad-btn keypad-btn-action">⌫</button>
+                        <button onclick="startCustomGame()" class="keypad-btn keypad-btn-confirm">開始</button>
+                    </div>
+                </div>
+            </h1>
+            
+            <p class="text-gray-500 text-sm mt-2" id="instruction-text">觀察下方的數線，回答問題</p>
+        </div>
+
+        <!-- Canvas Area - Height Reduced to 350 -->
+        <div class="p-4 flex justify-center bg-white relative">
+            <canvas id="gameCanvas" width="1200" height="350" class="w-full h-auto"></canvas>
+            <!-- Overlay for empty state -->
+            <div id="canvas-overlay" class="hidden absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 z-10">
+                <span class="text-gray-400 text-xl font-bold">請設定數值並按開始</span>
+            </div>
+        </div>
+
+        <!-- Interaction Area -->
+        <div class="p-6 bg-gray-50 border-t border-gray-200 min-h-[250px] flex flex-col items-center justify-start transition-all">
+            
+            <!-- Message Display -->
+            <div id="message-box" class="mb-4 text-xl font-bold text-center min-h-[2rem] text-gray-700 w-full"></div>
+
+            <!-- Stage 1 -->
+            <div id="stage-1" class="w-full grid grid-cols-2 gap-4 max-w-2xl">
+                <div class="col-span-2 text-center text-3xl md:text-4xl mb-4 font-semibold text-gray-700">
+                    請問：<span class="blue-text">我有</span> 比 <span class="red-text">應付</span> ...
+                </div>
+                <button onclick="checkStage1('more')" class="btn-option bg-green-100 hover:bg-green-200 text-green-800 text-4xl md:text-5xl font-bold py-6 rounded-2xl shadow border-b-8 border-green-300">多</button>
+                <button onclick="checkStage1('less')" class="btn-option bg-gray-200 hover:bg-gray-300 text-gray-800 text-4xl md:text-5xl font-bold py-6 rounded-2xl shadow border-b-8 border-gray-400">少</button>
+            </div>
+
+            <!-- Stage 2 -->
+            <div id="stage-2" class="w-full grid grid-cols-2 gap-4 hidden max-w-2xl">
+                <div class="col-span-2 text-center text-3xl md:text-4xl mb-4 font-semibold text-gray-700">
+                    既然<span id="feedback-text" class="font-bold mx-1"></span>，所以...
+                </div>
+                <button onclick="checkStage2('enough')" class="btn-option bg-green-100 hover:bg-green-200 text-green-800 text-4xl md:text-5xl font-bold py-6 rounded-2xl shadow border-b-8 border-green-300">夠錢 ✔</button>
+                <button onclick="checkStage2('not_enough')" class="btn-option bg-gray-200 hover:bg-gray-300 text-gray-800 text-4xl md:text-5xl font-bold py-6 rounded-2xl shadow border-b-8 border-gray-400">唔夠錢 ✖</button>
+            </div>
+
+            <!-- Stage 3: Advanced Calculation (Enlarged) -->
+            <div id="stage-3" class="w-full flex flex-col items-center hidden animate-fade-in w-full">
+                <div id="stage-3-question" class="text-center text-3xl md:text-4xl mb-6 font-bold text-indigo-700">
+                    <!-- Question Text inserted via JS -->
+                </div>
+                
+                <!-- Flex Container -->
+                <div class="flex flex-col xl:flex-row items-center justify-center gap-6 mb-6">
+                    
+                    <!-- Equation Builder (Enlarged) -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-300 flex flex-wrap items-center justify-center gap-3 h-full">
+                        <input type="text" id="math-op-1" readonly onclick="setActiveInput('math-op-1')" class="custom-input math-box text-blue-600" placeholder="?">
+                        
+                        <div class="relative">
+                             <select id="math-operator" class="math-select text-gray-700" onchange="validateEquationPrefix()">
+                                <option value="">?</option>
+                                <option value="+">+</option>
+                                <option value="-">-</option>
+                            </select>
+                        </div>
+
+                        <input type="text" id="math-op-2" readonly onclick="setActiveInput('math-op-2')" class="custom-input math-box text-red-600" placeholder="?">
+                        
+                        <div class="text-5xl font-bold text-gray-400 mx-2">=</div>
+
+                        <!-- Result Box (Starts Locked) -->
+                        <input type="text" id="math-result" readonly onclick="setActiveInput('math-result')" class="custom-input math-box locked" placeholder="?">
+                        
+                        <span class="text-3xl font-bold text-gray-500">(元)</span>
+                    </div>
+
+                    <!-- Stage 3 Inline Keypad -->
+                    <div class="keypad-container !mt-0 shadow-sm border border-gray-200 bg-gray-50">
+                        <button onclick="keypadPress('1')" class="keypad-btn">1</button>
+                        <button onclick="keypadPress('2')" class="keypad-btn">2</button>
+                        <button onclick="keypadPress('3')" class="keypad-btn">3</button>
+                        <button onclick="keypadPress('4')" class="keypad-btn">4</button>
+                        <button onclick="keypadPress('5')" class="keypad-btn">5</button>
+                        <button onclick="keypadPress('6')" class="keypad-btn">6</button>
+                        <button onclick="keypadPress('7')" class="keypad-btn">7</button>
+                        <button onclick="keypadPress('8')" class="keypad-btn">8</button>
+                        <button onclick="keypadPress('9')" class="keypad-btn">9</button>
+                        <button onclick="keypadAction('clear')" class="keypad-btn keypad-btn-action text-red-500">C</button>
+                        <button onclick="keypadPress('0')" class="keypad-btn">0</button>
+                        <button onclick="keypadAction('backspace')" class="keypad-btn keypad-btn-action">⌫</button>
+                    </div>
+
+                </div>
+
+                <button id="btn-submit-stage3" onclick="checkStage3()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold py-3 px-12 rounded-xl shadow-lg transition duration-200 w-full md:w-auto hidden">
+                    提交答案
+                </button>
+            </div>
+
+            <!-- Next Button -->
+            <div id="next-btn-container" class="hidden w-full text-center mt-4">
+                <button onclick="handleNextQuestion()" class="w-full md:w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold py-4 rounded-xl shadow-lg transition duration-200">
+                    下一題
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let valHave = 0; // X
+        let valPay = 0;  // Y
+        let maxRange = 100; // Default Mode
+        let isCustomMode = false;
+        let isAdvancedMode = false;
+        let activeInputId = null;
+        let canvas, ctx;
+        let equationUnlocked = false;
+        
+        // Canvas Config - Lower baseline for taller elements
+        const padding = 60; 
+        const lineY = 220; 
+        
+        function setMode(mode) {
+            maxRange = mode;
+            [10, 20, 100, 1000].forEach(m => {
+                const btn = document.getElementById(`btn-mode-${m}`);
+                if (m === mode) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            if (!isCustomMode) initGame();
+            else {
+                resetStages();
+                clearCanvas();
+                document.getElementById('canvas-overlay').classList.remove('hidden');
+                setMessage(`請輸入 ${maxRange} 以內的數值`, "text-indigo-600");
+                setActiveInput('input-have');
+            }
+        }
+
+        function toggleCustomMode() {
+            isCustomMode = document.getElementById('custom-toggle').checked;
+            updateInterfaceForMode();
+        }
+
+        function toggleAdvancedMode() {
+            isAdvancedMode = document.getElementById('advanced-toggle').checked;
+            if (!isAdvancedMode && !document.getElementById('stage-3').classList.contains('hidden')) {
+                document.getElementById('stage-3').classList.add('hidden');
+                document.getElementById('next-btn-container').classList.remove('hidden');
+                setMessage("進階功能已關閉", "text-gray-500");
+            }
+        }
+
+        function updateInterfaceForMode() {
+            const randomDiv = document.getElementById('display-mode-random');
+            const customDiv = document.getElementById('display-mode-custom');
+            const instruction = document.getElementById('instruction-text');
+            if (isCustomMode) {
+                randomDiv.classList.add('hidden');
+                customDiv.classList.remove('hidden');
+                instruction.textContent = `請使用數字鍵盤輸入 ${maxRange} 以內的數值`;
+                document.getElementById('custom-keypad').classList.remove('hidden');
+                resetStages();
+                clearCanvas();
+                document.getElementById('canvas-overlay').classList.remove('hidden');
+                setMessage("");
+                setActiveInput('input-have');
+            } else {
+                customDiv.classList.add('hidden');
+                randomDiv.classList.remove('hidden');
+                instruction.textContent = "觀察下方的數線，回答問題";
+                document.getElementById('canvas-overlay').classList.add('hidden');
+                initGame();
+            }
+        }
+
+        // --- Keypad Logic ---
+        function setActiveInput(id) {
+            const inputEl = document.getElementById(id);
+            // Prevent setting active input if it's locked (result box initially)
+            if (inputEl.classList.contains('locked')) return;
+
+            activeInputId = id;
+            document.querySelectorAll('.custom-input').forEach(el => el.classList.remove('active-field'));
+            inputEl.classList.add('active-field');
+            
+            if (isCustomMode && (id === 'input-have' || id === 'input-pay')) {
+                document.getElementById('custom-keypad').classList.remove('hidden');
+            }
+        }
+
+        function keypadPress(num) {
+            if (!activeInputId) return;
+            const input = document.getElementById(activeInputId);
+            const currentVal = input.value;
+            if (currentVal === "0") input.value = num;
+            else {
+                if (currentVal.length >= 6) return;
+                input.value = currentVal + num;
+            }
+            // If in Stage 3, validate equation parts on every press
+            if (!document.getElementById('stage-3').classList.contains('hidden')) {
+                validateEquationPrefix();
+            }
+        }
+
+        function keypadAction(action) {
+            if (!activeInputId) return;
+            const input = document.getElementById(activeInputId);
+            if (action === 'clear') input.value = "";
+            else if (action === 'backspace') input.value = input.value.slice(0, -1);
+            
+            if (!document.getElementById('stage-3').classList.contains('hidden')) {
+                validateEquationPrefix();
+            }
+        }
+
+        // --- Equation Validation Logic ---
+        function validateEquationPrefix() {
+            const op1 = parseInt(document.getElementById('math-op-1').value);
+            const op2 = parseInt(document.getElementById('math-op-2').value);
+            const operator = document.getElementById('math-operator').value;
+
+            // Target values
+            const big = Math.max(valHave, valPay);
+            const small = Math.min(valHave, valPay);
+            
+            const resultBox = document.getElementById('math-result');
+            const submitBtn = document.getElementById('btn-submit-stage3');
+
+            // Logic: Is "Op1 - Op2" correct? (i.e. Big - Small)
+            const isEquationCorrect = (op1 === big && operator === '-' && op2 === small);
+
+            if (isEquationCorrect) {
+                if (!equationUnlocked) {
+                    // Unlock
+                    equationUnlocked = true;
+                    resultBox.classList.remove('locked');
+                    resultBox.classList.remove('bg-yellow-50');
+                    resultBox.classList.add('bg-white', 'border-yellow-400', 'text-yellow-700', 'unlocked-pulse');
+                    submitBtn.classList.remove('hidden');
+                    setMessage("算式正確！請計算答案。", "text-green-600");
+                    
+                    // Auto switch to result
+                    setActiveInput('math-result');
+                }
+            } else {
+                if (equationUnlocked) {
+                    // Lock again if user changes something to wrong
+                    equationUnlocked = false;
+                    resultBox.classList.add('locked');
+                    resultBox.classList.remove('bg-white', 'border-yellow-400', 'text-yellow-700', 'unlocked-pulse');
+                    resultBox.classList.add('bg-yellow-50');
+                    resultBox.value = ""; // Clear answer if equation invalid
+                    submitBtn.classList.add('hidden');
+                    setMessage("請修改算式：大數 - 小數", "text-indigo-600");
+                    
+                    // If result was active, move focus back to op1
+                    if (activeInputId === 'math-result') {
+                        setActiveInput('math-op-1');
+                    }
+                }
+            }
+        }
+
+        // --- Game Flow ---
+        function handleNextQuestion() {
+            if (isCustomMode) {
+                resetStages();
+                setMessage("請輸入新的數值或再次點擊開始", "text-indigo-600");
+                document.getElementById('input-have').value = '';
+                document.getElementById('input-pay').value = '';
+                document.getElementById('custom-keypad').classList.remove('hidden');
+                setActiveInput('input-have'); 
+                clearCanvas();
+                document.getElementById('canvas-overlay').classList.remove('hidden');
+            } else {
+                initGame();
+            }
+        }
+
+        function startCustomGame() {
+            const inputHave = document.getElementById('input-have');
+            const inputPay = document.getElementById('input-pay');
+            const h = inputHave.value === "" ? NaN : parseInt(inputHave.value);
+            const p = inputPay.value === "" ? NaN : parseInt(inputPay.value);
+
+            if (isNaN(h) || isNaN(p)) { setMessage("請完整輸入兩個數值", "text-red-500"); return; }
+            if (h < 0 || p < 0) { setMessage("數字不能為負數", "text-red-500"); return; }
+            if (h > maxRange || p > maxRange) { setMessage(`數值不能超過目前模式上限 (${maxRange})`, "text-red-500"); return; }
+            if (h === p) { setMessage("「<span class='blue-text'>我有</span>」和「<span class='red-text'>應付</span>」的金額不能相同", "text-red-500"); return; }
+
+            valHave = h;
+            valPay = p;
+            document.getElementById('canvas-overlay').classList.add('hidden');
+            document.getElementById('custom-keypad').classList.add('hidden'); 
+            document.getElementById('instruction-text').textContent = "觀察下方的數線，回答問題";
+            resetStages();
+            drawCanvas();
+            setMessage("題目已更新！請回答問題。", "text-indigo-600");
+        }
+
+        function initGame() {
+            do {
+                valHave = Math.floor(Math.random() * (maxRange + 1));
+                valPay = Math.floor(Math.random() * (maxRange + 1));
+            } while (valHave === valPay);
+            document.getElementById('val-have-display').textContent = valHave;
+            document.getElementById('val-pay-display').textContent = valPay;
+            resetStages();
+            drawCanvas();
+        }
+
+        function resetStages() {
+            document.getElementById('stage-1').classList.remove('hidden');
+            document.getElementById('stage-1').classList.add('grid');
+            document.getElementById('stage-2').classList.add('hidden');
+            document.getElementById('stage-2').classList.remove('grid');
+            document.getElementById('stage-3').classList.add('hidden');
+            document.getElementById('next-btn-container').classList.add('hidden');
+            setMessage("");
+
+            // Reset math inputs
+            document.getElementById('math-op-1').value = "";
+            document.getElementById('math-op-2').value = "";
+            document.getElementById('math-result').value = "";
+            document.getElementById('math-operator').value = "";
+            
+            // Lock result
+            equationUnlocked = false;
+            const resultBox = document.getElementById('math-result');
+            resultBox.classList.add('locked');
+            resultBox.classList.remove('bg-white', 'border-yellow-400', 'text-yellow-700', 'unlocked-pulse');
+            document.getElementById('btn-submit-stage3').classList.add('hidden');
+
+            // Fix: Ensure Stage 3 keypad is visible for the next round
+            const stage3Keypad = document.querySelector('#stage-3 .keypad-container');
+            if (stage3Keypad) {
+                stage3Keypad.classList.remove('hidden');
+            }
+        }
+
+        function setMessage(msg, colorClass = "text-gray-700") {
+            const el = document.getElementById('message-box');
+            el.className = `mb-4 text-xl font-bold text-center min-h-[2rem] w-full ${colorClass}`;
+            el.innerHTML = msg;
+        }
+
+        // --- Logic Checks ---
+        function checkStage1(choice) {
+            const isMore = valHave > valPay;
+            let correct = false;
+            if (isMore && choice === 'more') correct = true;
+            if (!isMore && choice === 'less') correct = true;
+
+            if (correct) {
+                setMessage("答對了！", "text-green-600");
+                setTimeout(() => {
+                    document.getElementById('stage-1').classList.add('hidden');
+                    document.getElementById('stage-1').classList.remove('grid');
+                    document.getElementById('stage-2').classList.remove('hidden');
+                    document.getElementById('stage-2').classList.add('grid');
+                    const feedbackHTML = isMore 
+                        ? '<span class="blue-text">我有</span> 比 <span class="red-text">應付</span> 多' 
+                        : '<span class="blue-text">我有</span> 比 <span class="red-text">應付</span> 少';
+                    document.getElementById('feedback-text').innerHTML = feedbackHTML;
+                    setMessage(""); 
+                }, 500);
+            } else {
+                setMessage("不對喔，再看清楚數線。", "text-red-500");
+            }
+        }
+
+        function checkStage2(choice) {
+            const isEnough = valHave > valPay;
+            let correct = false;
+            if (isEnough && choice === 'enough') correct = true;
+            if (!isEnough && choice === 'not_enough') correct = true;
+
+            if (correct) {
+                setMessage("太棒了！完全正確！", "text-green-600");
+                document.getElementById('stage-2').classList.add('hidden');
+                document.getElementById('stage-2').classList.remove('grid');
+
+                if (isAdvancedMode) {
+                    initStage3(isEnough);
+                } else {
+                    document.getElementById('next-btn-container').classList.remove('hidden');
+                }
+            } else {
+                setMessage("再想想，紅色比較長還是藍色比較長？", "text-red-500");
+            }
+        }
+
+        function initStage3(isEnough) {
+            document.getElementById('stage-3').classList.remove('hidden');
+            const qText = isEnough ? "找回多少？" : "尚欠多少？";
+            document.getElementById('stage-3-question').textContent = qText;
+            setMessage("請輸入算式，然後計算答案", "text-indigo-600");
+            setActiveInput('math-op-1');
+        }
+
+        function checkStage3() {
+            // This function is now only called when equation is already correct (unlocked)
+            const result = parseInt(document.getElementById('math-result').value);
+            const big = Math.max(valHave, valPay);
+            const small = Math.min(valHave, valPay);
+            const diff = big - small;
+
+            if (isNaN(result)) {
+                setMessage("請輸入答案", "text-red-500");
+                return;
+            }
+
+            if (result === diff) {
+                setMessage("完全正確！太棒了！", "text-green-600");
+                document.getElementById('next-btn-container').classList.remove('hidden');
+                document.getElementById('btn-submit-stage3').classList.add('hidden');
+                document.querySelector('#stage-3 .keypad-container').classList.add('hidden');
+                // Visual lock final
+                document.getElementById('math-result').classList.add('locked');
+            } else {
+                setMessage("答案算錯囉，再算一次看看。", "text-red-500");
+            }
+        }
+
+        // --- Canvas Drawing ---
+        function clearCanvas() {
+            canvas = document.getElementById('gameCanvas');
+            if (canvas.getContext) {
+                ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        function drawCanvas() {
+            canvas = document.getElementById('gameCanvas');
+            if (!canvas.getContext) return;
+            ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const width = canvas.width;
+            const drawWidth = width - (padding * 2);
+            const getX = (val) => padding + (val / maxRange) * drawWidth;
+
+            // Base Line
+            ctx.beginPath(); ctx.moveTo(padding, lineY); ctx.lineTo(width - padding, lineY);
+            ctx.strokeStyle = '#000000'; ctx.lineWidth = 4; ctx.stroke();
+
+            // Arrows
+            ctx.fillStyle = '#000';
+            ctx.beginPath(); ctx.moveTo(padding, lineY); ctx.lineTo(padding + 10, lineY - 5); ctx.lineTo(padding + 10, lineY + 5); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(width - padding, lineY); ctx.lineTo(width - padding - 10, lineY - 5); ctx.lineTo(width - padding - 10, lineY + 5); ctx.fill();
+
+            // Ticks
+            ctx.textAlign = 'center';
+            let tickStep = maxRange <= 20 ? 1 : (maxRange <= 100 ? 10 : 100);
+            ctx.font = '16px Arial';
+            for(let i = tickStep; i < maxRange; i += tickStep) {
+                let x = getX(i);
+                ctx.beginPath(); ctx.moveTo(x, lineY - 5); ctx.lineTo(x, lineY + 5);
+                ctx.strokeStyle = '#9CA3AF'; ctx.lineWidth = 2; ctx.stroke();
+                ctx.fillStyle = '#9CA3AF'; ctx.fillText(i, x, lineY + 30);
+            }
+
+            // Endpoints
+            ctx.fillStyle = '#000'; ctx.strokeStyle = '#000'; ctx.font = 'bold 18px Arial';
+            let x0 = getX(0); ctx.beginPath(); ctx.moveTo(x0, lineY - 8); ctx.lineTo(x0, lineY + 8); ctx.lineWidth = 3; ctx.stroke(); ctx.fillText('0', x0, lineY + 30);
+            let xMax = getX(maxRange); ctx.beginPath(); ctx.moveTo(xMax, lineY - 8); ctx.lineTo(xMax, lineY + 8); ctx.lineWidth = 3; ctx.stroke(); ctx.fillText(maxRange, xMax, lineY + 30);
+
+            // Have (Blue Bar)
+            const xHave = getX(valHave);
+            ctx.fillStyle = 'rgba(37, 99, 235, 0.3)'; 
+            ctx.fillRect(padding, lineY - 40, xHave - padding, 40);
+            
+            ctx.strokeStyle = '#2563EB'; 
+            ctx.lineWidth = 3; 
+            ctx.strokeRect(padding, lineY - 40, xHave - padding, 40);
+            
+            // Text positions adjusted to avoid overlap
+            ctx.fillStyle = '#2563EB'; 
+            ctx.font = 'bold 20px Arial'; 
+            ctx.fillText('我有', xHave, lineY - 80);
+            
+            ctx.font = 'bold 24px Arial'; 
+            ctx.fillText(valHave, xHave, lineY - 55);
+
+            // Pay (Red Line)
+            const xPay = getX(valPay);
+            ctx.beginPath(); 
+            // Made taller to reach new text position
+            ctx.moveTo(xPay, lineY - 120); 
+            ctx.lineTo(xPay, lineY + 10);
+            ctx.strokeStyle = '#DC2626'; 
+            ctx.lineWidth = 4; 
+            ctx.stroke();
+
+            ctx.fillStyle = '#DC2626'; 
+            ctx.font = 'bold 20px Arial';
+            let textX = xPay;
+            if (xPay < padding + width * 0.05) textX += 15;
+            if (xPay > width - padding - width * 0.05) textX -= 15;
+
+            // Moved up significantly to be above Blue text
+            ctx.fillText('應付', textX, lineY - 160); 
+            
+            ctx.font = 'bold 24px Arial'; 
+            ctx.fillText(valPay, textX, lineY - 130);
+        }
+
+        window.onload = function() {
+            setMode(100);
+        };
+    </script>
+</body>
+</html>
