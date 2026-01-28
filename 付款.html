@@ -11,7 +11,6 @@
         body {
             font-family: 'Noto Sans TC', sans-serif;
             touch-action: manipulation; /* 防止雙擊縮放 */
-            background-color: #f0f9ff;
         }
 
         /* 價錢牌樣式 */
@@ -90,81 +89,88 @@
         }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden select-none">
+<!-- 修改 Body：使用 Flex 置中，深色背景，限制全螢幕高度 -->
+<body class="h-screen w-screen bg-slate-800 flex items-center justify-center overflow-hidden select-none p-2 md:p-8">
 
-    <!-- 頂部標題與控制區 -->
-    <header class="bg-white p-3 shadow-sm flex justify-between items-center z-10 gap-2">
-        <div class="flex items-center gap-2 overflow-hidden">
-            <h1 class="text-lg md:text-xl font-bold text-slate-700 whitespace-nowrap">🛒 付款練習</h1>
-            <!-- 模式選擇 -->
-            <select id="game-mode" onchange="changeMode()" class="text-sm border border-blue-300 rounded-lg px-2 py-1 bg-blue-50 text-blue-700 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="small">$20元內 (硬幣)</option>
-                <option value="large">$10000元內 (紙幣+硬幣)</option>
-            </select>
-        </div>
-        <button onclick="initGame()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold transition shadow whitespace-nowrap">
-            下一題
-        </button>
-    </header>
+    <!-- 遊戲外框容器：設定為 4:3 比例，最大寬度 1024px (iPad Landscape)，背景色移到這裡 -->
+    <!-- aspect-[4/3] 強制比例，max-h-full 確保不超出畫面，w-full 確保寬度自適應 -->
+    <div id="game-container" class="bg-[#f0f9ff] w-full max-w-[1024px] aspect-[4/3] max-h-full shadow-2xl rounded-2xl flex flex-col overflow-hidden relative border-4 border-slate-700">
 
-    <!-- 主遊戲區域 -->
-    <main class="flex-1 flex flex-col p-2 md:p-4 max-w-5xl mx-auto w-full gap-2 md:gap-4 overflow-hidden">
-        
-        <!-- 1. 價錢牌區 -->
-        <section class="flex justify-center items-center py-2 md:py-4 min-h-[100px] md:min-h-[120px]">
-            <div class="price-tag border-4 border-white px-8 py-6 md:px-12 md:py-8 rounded-xl text-center relative min-w-[220px]">
-                <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-gray-300 rounded-full border-2 border-gray-400"></div>
-                <p class="text-gray-600 text-sm font-bold mb-1">請支付</p>
-                <div class="text-5xl md:text-6xl font-black text-slate-800 tracking-wider" id="target-price">$0.00</div>
+        <!-- 頂部標題與控制區 -->
+        <header class="bg-white p-3 shadow-sm flex justify-between items-center z-10 gap-2 shrink-0">
+            <div class="flex items-center gap-2 overflow-hidden">
+                <h1 class="text-lg md:text-xl font-bold text-slate-700 whitespace-nowrap">🛒 付款練習</h1>
+                <!-- 模式選擇 -->
+                <select id="game-mode" onchange="changeMode()" class="text-sm border border-blue-300 rounded-lg px-2 py-1 bg-blue-50 text-blue-700 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="small">$20元內 (硬幣)</option>
+                    <option value="large">$10000元內 (紙幣+硬幣)</option>
+                </select>
             </div>
-        </section>
-
-        <!-- 2. 進度區 -->
-        <section class="bg-white p-3 md:p-4 rounded-xl shadow-sm shrink-0">
-            <div class="flex justify-between text-sm font-bold text-gray-500 mb-2">
-                <span>目前金額: <span id="current-display" class="text-blue-600 text-lg">$0.00</span></span>
-                <span id="status-text">還差一點點...</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-6 md:h-8 border border-gray-300 overflow-hidden relative">
-                <div class="absolute right-0 top-0 bottom-0 w-1 bg-red-300 z-10" title="目標金額"></div> 
-                <div id="progress-bar" class="progress-bar-fill bg-blue-500 h-full rounded-full w-0 relative">
-                    <div class="absolute inset-0 bg-white opacity-20" style="background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent); background-size: 1rem 1rem;"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 3. 答案區 -->
-        <section class="flex-1 bg-slate-100 rounded-xl border-2 border-dashed border-slate-300 p-2 relative flex flex-col overflow-hidden">
-            <div class="absolute top-0 left-0 bg-slate-200 text-slate-500 text-xs px-2 py-1 rounded-br-lg z-10">
-                點擊圖案可取回
-            </div>
-            <div id="answer-zone" class="flex-1 overflow-y-auto p-4 flex flex-wrap content-start justify-center gap-2 md:gap-3">
-                <div class="text-gray-400 text-sm mt-10 w-full text-center pointer-events-none" id="empty-hint">
-                    請從下方選擇錢幣或紙幣
-                </div>
-            </div>
-        </section>
-
-        <!-- 4. 選擇區 (動態生成) -->
-        <section class="bg-white rounded-t-2xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-2 pb-6 md:p-4 md:pb-8 z-20 shrink-0">
-            <div class="text-center text-gray-400 text-xs mb-2 font-bold">點擊付款</div>
-            <div id="coin-palette" class="flex flex-col gap-3">
-                <!-- 這裡會由 JS 根據模式生成一行或兩行 -->
-            </div>
-        </section>
-
-    </main>
-
-    <!-- 勝利彈窗 -->
-    <div id="win-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-        <div class="bg-white rounded-3xl p-8 max-w-sm w-11/12 text-center shadow-2xl border-4 border-yellow-400 modal-enter">
-            <div class="text-6xl mb-4">🎉</div>
-            <h2 class="text-3xl font-black text-slate-800 mb-2">付款成功！</h2>
-            <p class="text-gray-600 mb-6">你的數學真棒！剛好是 <span id="win-price" class="font-bold text-green-600"></span></p>
-            <button onclick="initGame()" class="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-3 px-6 rounded-xl shadow-lg transform transition active:scale-95 text-xl">
-                下一題 ➜
+            <button onclick="initGame()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold transition shadow whitespace-nowrap">
+                下一題
             </button>
+        </header>
+
+        <!-- 主遊戲區域 -->
+        <main class="flex-1 flex flex-col p-2 md:p-4 w-full gap-2 md:gap-3 overflow-hidden">
+            
+            <!-- 1. 價錢牌區 -->
+            <section class="flex justify-center items-center py-1 md:py-2 min-h-[80px] md:min-h-[100px] shrink-0">
+                <div class="price-tag border-4 border-white px-8 py-4 md:px-12 md:py-6 rounded-xl text-center relative min-w-[200px]">
+                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-gray-300 rounded-full border-2 border-gray-400"></div>
+                    <p class="text-gray-600 text-sm font-bold mb-1">請支付</p>
+                    <div class="text-4xl md:text-5xl font-black text-slate-800 tracking-wider" id="target-price">$0.00</div>
+                </div>
+            </section>
+
+            <!-- 2. 進度區 -->
+            <section class="bg-white p-2 md:p-3 rounded-xl shadow-sm shrink-0">
+                <div class="flex justify-between text-sm font-bold text-gray-500 mb-1">
+                    <span>目前金額: <span id="current-display" class="text-blue-600 text-lg">$0.00</span></span>
+                    <span id="status-text">還差一點點...</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-5 md:h-6 border border-gray-300 overflow-hidden relative">
+                    <div class="absolute right-0 top-0 bottom-0 w-1 bg-red-300 z-10" title="目標金額"></div> 
+                    <div id="progress-bar" class="progress-bar-fill bg-blue-500 h-full rounded-full w-0 relative">
+                        <div class="absolute inset-0 bg-white opacity-20" style="background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent); background-size: 1rem 1rem;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. 答案區 -->
+            <section class="flex-1 bg-slate-100 rounded-xl border-2 border-dashed border-slate-300 p-2 relative flex flex-col overflow-hidden min-h-0">
+                <div class="absolute top-0 left-0 bg-slate-200 text-slate-500 text-xs px-2 py-1 rounded-br-lg z-10">
+                    點擊圖案可取回
+                </div>
+                <div id="answer-zone" class="flex-1 overflow-y-auto p-4 flex flex-wrap content-start justify-center gap-2 md:gap-3">
+                    <div class="text-gray-400 text-sm mt-4 w-full text-center pointer-events-none" id="empty-hint">
+                        請從下方選擇錢幣或紙幣
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. 選擇區 (動態生成) -->
+            <section class="bg-white rounded-t-2xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-2 pb-2 md:p-3 md:pb-4 z-20 shrink-0">
+                <div class="text-center text-gray-400 text-xs mb-1 font-bold">點擊付款</div>
+                <div id="coin-palette" class="flex flex-col gap-2">
+                    <!-- 這裡會由 JS 根據模式生成一行或兩行 -->
+                </div>
+            </section>
+
+        </main>
+
+        <!-- 勝利彈窗 (確保在容器內置中) -->
+        <div id="win-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden rounded-2xl">
+            <div class="bg-white rounded-3xl p-8 max-w-sm w-11/12 text-center shadow-2xl border-4 border-yellow-400 modal-enter">
+                <div class="text-6xl mb-4">🎉</div>
+                <h2 class="text-3xl font-black text-slate-800 mb-2">付款成功！</h2>
+                <p class="text-gray-600 mb-6">你的數學真棒！剛好是 <span id="win-price" class="font-bold text-green-600"></span></p>
+                <button onclick="initGame()" class="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-3 px-6 rounded-xl shadow-lg transform transition active:scale-95 text-xl">
+                    下一題 ➜
+                </button>
+            </div>
         </div>
+
     </div>
 
     <script>
@@ -257,18 +263,18 @@
                 notesRow.className = 'flex justify-center items-center gap-2 md:gap-4 overflow-x-auto hide-scrollbar w-full py-1';
                 
                 NOTES.forEach(note => {
-                    const btn = createMoneyButton(note, 'w-24 h-12 md:w-32 md:h-16', 'note-style');
+                    const btn = createMoneyButton(note, 'w-20 h-10 md:w-28 md:h-14 lg:w-32 lg:h-16', 'note-style');
                     notesRow.appendChild(btn);
                 });
                 coinPalette.appendChild(notesRow);
 
                 // 第二行：硬幣
                 const coinsRow = document.createElement('div');
-                coinsRow.className = 'flex justify-center items-center gap-2 md:gap-4 overflow-x-auto hide-scrollbar w-full py-1 border-t border-slate-100 pt-3';
+                coinsRow.className = 'flex justify-center items-center gap-2 md:gap-4 overflow-x-auto hide-scrollbar w-full py-1 border-t border-slate-100 pt-2';
                 
                 COINS.forEach(coin => {
                     // 硬幣在紙幣模式下大小可以稍小一點以適配畫面
-                    const btn = createMoneyButton(coin, 'w-12 h-12 md:w-16 md:h-16', 'coin-style');
+                    const btn = createMoneyButton(coin, 'w-10 h-10 md:w-14 md:h-14 lg:w-16 lg:h-16', 'coin-style');
                     coinsRow.appendChild(btn);
                 });
                 coinPalette.appendChild(coinsRow);
@@ -280,7 +286,7 @@
                 
                 COINS.forEach(coin => {
                     // 大一點的硬幣
-                    const sizeClass = coin.val >= 500 ? 'w-16 h-16 md:w-20 md:h-20' : 'w-14 h-14 md:w-16 md:h-16';
+                    const sizeClass = coin.val >= 500 ? 'w-14 h-14 md:w-18 md:h-18 lg:w-20 lg:h-20' : 'w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16';
                     const btn = createMoneyButton(coin, sizeClass, 'coin-style');
                     row.appendChild(btn);
                 });
@@ -322,10 +328,10 @@
             let displaySize = '';
             let shapeClass = '';
             if (moneyData.type === 'note') {
-                displaySize = 'w-20 h-10 md:w-24 md:h-12';
+                displaySize = 'w-16 h-8 md:w-20 md:h-10 lg:w-24 lg:h-12';
                 shapeClass = 'rounded shadow-sm';
             } else {
-                displaySize = 'w-12 h-12 md:w-14 md:h-14';
+                displaySize = 'w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14';
                 shapeClass = 'rounded-full';
             }
 
@@ -405,7 +411,7 @@
             targetPriceEl.textContent = formatMoney(targetAmount);
             currentDisplayEl.textContent = "$0.00";
             progressBar.style.width = "0%";
-            answerZone.innerHTML = '<div class="text-gray-400 text-sm mt-10 w-full text-center pointer-events-none" id="empty-hint">請從下方選擇錢幣或紙幣</div>';
+            answerZone.innerHTML = '<div class="text-gray-400 text-sm mt-4 w-full text-center pointer-events-none" id="empty-hint">請從下方選擇錢幣或紙幣</div>';
             emptyHint = document.getElementById('empty-hint');
             statusText.textContent = '請開始選擇';
             statusText.className = 'text-gray-500';
