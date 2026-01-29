@@ -171,18 +171,42 @@
         const scenes = {
             intro: `
                 <h2 class="text-3xl font-bold text-blue-600 mb-6">什麼是混合物？</h2>
-                <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-lg">
-                    <p class="text-xl mb-6">當我們把 <span class="text-red-500 font-bold">兩樣或以上</span> 的東西加在一起，就變成了<span class="text-purple-600 font-bold text-2xl">混合物</span>！</p>
+                <div class="bg-white p-6 rounded-3xl shadow-xl w-full max-w-lg flex flex-col items-center">
+                    <p class="text-xl mb-4 font-bold text-gray-700">把兩種不同的東西<span class="text-red-500">加在一起</span>...</p>
                     
-                    <div class="flex justify-center items-end gap-4 h-40 mb-4 bg-gray-100 rounded-xl p-4 relative overflow-hidden" id="mix-bowl">
-                        <div class="absolute bottom-0 w-32 h-20 bg-gray-300 rounded-b-full border-4 border-gray-400 z-10"></div>
-                        <!-- 這些球會在點擊後出現 -->
-                        <div id="balls-container" class="absolute bottom-4 flex justify-center w-full z-0"></div>
+                    <!-- 原料區 -->
+                    <div class="flex justify-around w-full mb-2 items-center">
+                        <div class="flex flex-col items-center transform hover:scale-110 transition-transform">
+                            <div class="bg-red-100 p-3 rounded-full mb-2 w-20 h-20 flex justify-center items-center text-5xl shadow-sm border-2 border-red-200">🍎</div>
+                            <span class="font-bold text-gray-600">蘋果</span>
+                        </div>
+                        <div class="text-4xl font-bold text-gray-400 bounce-slow">➕</div>
+                        <div class="flex flex-col items-center transform hover:scale-110 transition-transform">
+                            <div class="bg-yellow-100 p-3 rounded-full mb-2 w-20 h-20 flex justify-center items-center text-5xl shadow-sm border-2 border-yellow-200">🍌</div>
+                            <span class="font-bold text-gray-600">香蕉</span>
+                        </div>
                     </div>
 
-                    <button onclick="mixDemo()" class="interactive-btn bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold py-3 px-8 rounded-full shadow-lg border-b-4 border-blue-700 active:border-b-0 active:mt-1">
-                        👉 按這裡混合！
+                    <!-- 箭頭 -->
+                    <div class="text-4xl text-blue-500 mb-2">⬇️</div>
+
+                    <!-- 混合碗區域 -->
+                    <div id="mix-bowl-container" class="relative w-64 h-40 flex justify-center items-end mb-6">
+                        <!-- 碗的前半部 (遮擋用) -->
+                        <div class="absolute bottom-0 w-56 h-28 bg-blue-200 rounded-b-full border-4 border-blue-400 z-20 opacity-90 shadow-lg"></div>
+                        <!-- 碗的後半部 -->
+                        <div class="absolute bottom-12 w-56 h-16 bg-blue-300 rounded-[50%] z-0 border-2 border-blue-400"></div>
+                        
+                        <!-- 掉落物品容器 -->
+                        <div id="mixture-container" class="absolute bottom-4 w-48 h-32 z-10 flex flex-wrap justify-center items-end content-end overflow-hidden">
+                            <!-- 物品會掉到這裡 -->
+                        </div>
+                    </div>
+
+                    <button onclick="mixDemo()" id="mix-btn" class="interactive-btn bg-green-500 hover:bg-green-600 text-white text-xl font-bold py-3 px-10 rounded-full shadow-[0_4px_0_rgb(21,128,61)] active:shadow-none active:translate-y-1 transition-all">
+                        開始混合！
                     </button>
+                    <div id="mix-result-text" class="mt-4 text-3xl font-bold text-purple-600 opacity-0 transition-opacity duration-500">變成了混合物！🥗</div>
                 </div>
             `,
             examples: `
@@ -237,9 +261,10 @@
                         <div id="game-question" class="w-full">
                             <!-- 問題會顯示在這裡 -->
                         </div>
-                        <div id="feedback" class="absolute inset-0 bg-white/90 rounded-3xl hidden flex-col items-center justify-center z-20">
-                            <div id="feedback-icon" class="text-8xl mb-4 bounce-slow"></div>
-                            <button onclick="nextQuestion()" class="bg-blue-500 text-white px-8 py-3 rounded-full text-xl font-bold shadow-lg hover:bg-blue-600">下一題</button>
+                        <div id="feedback" class="absolute inset-0 bg-white/95 rounded-3xl hidden flex-col items-center justify-center z-20 p-4 text-center">
+                            <div id="feedback-icon" class="text-8xl mb-2 bounce-slow"></div>
+                            <p id="feedback-text" class="text-2xl font-bold text-gray-800 mb-6 leading-relaxed"></p>
+                            <button onclick="nextQuestion()" class="bg-blue-500 text-white px-8 py-3 rounded-full text-xl font-bold shadow-lg hover:bg-blue-600 transition-transform active:scale-95">下一題</button>
                         </div>
                     </div>
                 </div>
@@ -375,27 +400,64 @@
         // --- 互動功能：混合演示 ---
         function mixDemo() {
             playSound('click');
-            const container = document.getElementById('balls-container');
-            container.innerHTML = '';
+            const container = document.getElementById('mixture-container');
+            const btn = document.getElementById('mix-btn');
+            const resultText = document.getElementById('mix-result-text');
+            const bowlContainer = document.getElementById('mix-bowl-container');
             
-            // 生成紅球
-            for(let i=0; i<3; i++) {
-                const ball = document.createElement('div');
-                ball.className = "w-8 h-8 rounded-full bg-red-500 m-1 bounce-slow";
-                container.appendChild(ball);
-            }
-            // 生成藍球
-            for(let i=0; i<3; i++) {
-                const ball = document.createElement('div');
-                ball.className = "w-8 h-8 rounded-full bg-blue-500 m-1 bounce-slow";
-                ball.style.animationDelay = "0.2s";
-                container.appendChild(ball);
-            }
+            // 重置狀態
+            container.innerHTML = '';
+            resultText.style.opacity = '0';
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
 
-            // 混合效果
-            const bowl = document.getElementById('mix-bowl');
-            bowl.classList.add('shake');
-            setTimeout(() => bowl.classList.remove('shake'), 500);
+            // 要加入的物品
+            const items = ['🍎', '🍌', '🍎', '🍌', '🍎', '🍌'];
+            
+            items.forEach((emoji, index) => {
+                setTimeout(() => {
+                    const item = document.createElement('div');
+                    item.textContent = emoji;
+                    item.className = "text-4xl absolute transition-all duration-500 ease-in";
+                    // 隨機起始位置 (在碗上方)
+                    item.style.top = '-80px';
+                    item.style.left = (Math.random() * 60 + 20) + '%';
+                    item.style.opacity = '0';
+                    item.style.transform = `rotate(${Math.random() * 360}deg)`;
+                    
+                    container.appendChild(item);
+
+                    // 觸發掉落動畫
+                    requestAnimationFrame(() => {
+                        item.style.top = (Math.random() * 30 + 30) + 'px'; // 掉進碗裡的隨機高度
+                        item.style.left = (Math.random() * 60 + 10) + '%'; // 碗裡的隨機水平位置
+                        item.style.opacity = '1';
+                        // 掉落時稍微旋轉
+                        item.style.transform = `rotate(${Math.random() * 360}deg)`;
+                    });
+                    
+                    // 輕微的音效
+                    if(index % 2 === 0) playSound('click'); 
+                }, index * 400); // 每 0.4 秒掉一個
+            });
+
+            // 掉落完成後的動作
+            setTimeout(() => {
+                // 搖晃碗
+                if(bowlContainer) {
+                    bowlContainer.classList.add('shake');
+                    setTimeout(() => bowlContainer.classList.remove('shake'), 500);
+                }
+                
+                // 顯示結果
+                playSound('success');
+                resultText.style.opacity = '1';
+                
+                // 恢復按鈕
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.textContent = "再玩一次";
+            }, items.length * 400 + 500);
         }
 
         // --- 互動功能：分離方法演示 ---
@@ -635,20 +697,46 @@
         function checkAnswer(selected, correct) {
             const feedback = document.getElementById('feedback');
             const icon = document.getElementById('feedback-icon');
+            const text = document.getElementById('feedback-text');
             
             feedback.classList.remove('hidden');
             feedback.classList.add('flex');
             
+            // 獲取正確答案的名稱
+            const correctOption = answerOptions.find(opt => opt.id === correct);
+            const correctLabel = correctOption ? correctOption.label : "";
+            
+            // 根據原理生成解釋文字
+            let reason = "";
+            switch(correct) {
+                case 'magnet':
+                    reason = `因為這裏有<span class="text-red-500">鐵做的東西</span>，<br>所以要用 <b>${correctLabel}</b>。`;
+                    break;
+                case 'sieve':
+                    reason = `因為東西的<span class="text-orange-500">大小不一樣</span>，<br>所以要用 <b>${correctLabel}</b>。`;
+                    break;
+                case 'filter':
+                    reason = `因為要分開<span class="text-blue-500">水和渣</span>，<br>所以要用 <b>${correctLabel}</b>。`;
+                    break;
+                case 'evaporate':
+                    reason = `因為想讓水不見、<span class="text-purple-500">留下東西</span>，<br>所以要用 <b>${correctLabel}</b>。`;
+                    break;
+                default:
+                    reason = `正確答案是 <b>${correctLabel}</b>。`;
+            }
+
             if (selected === correct) {
                 playSound('success');
                 icon.textContent = '✅';
-                icon.className = 'text-8xl mb-4 text-green-500 bounce-slow';
+                icon.className = 'text-8xl mb-2 text-green-500 bounce-slow';
+                text.innerHTML = `<span class="text-green-600 text-3xl">答對了！</span><br><br>${reason}`;
                 score += 10;
                 document.getElementById('score').textContent = score;
             } else {
                 playSound('wrong');
                 icon.textContent = '💪'; // 加油
-                icon.className = 'text-8xl mb-4 text-orange-500 shake';
+                icon.className = 'text-8xl mb-2 text-orange-500 shake';
+                text.innerHTML = `<span class="text-orange-600 text-3xl">加把勁！</span><br><br>${reason}`;
                 // 答錯不加分，但也會跳轉
             }
         }
