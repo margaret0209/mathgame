@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科學小教室：混合物與分離</title>
+    <!-- 引入 Tailwind CSS 進行快速樣式設計 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f0f9ff;
+            user-select: none; /* 防止學生意外選取文字 */
+        }
+
+        /* 自定義動畫類別 */
+        .bounce-slow {
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(-10%); }
+            50% { transform: translateY(0); }
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .drop-animation {
+            animation: dropDown 2s forwards;
+        }
+
+        @keyframes dropDown {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(150px); opacity: 0; }
+        }
+
+        .steam-animation {
+            animation: riseUp 3s forwards;
+        }
+
+        @keyframes riseUp {
+            0% { transform: translateY(0) scale(1); opacity: 0.8; }
+            100% { transform: translateY(-100px) scale(2); opacity: 0; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 按鈕互動效果 */
+        .interactive-btn {
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        .interactive-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 遊戲區域 */
+        .game-option {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .game-option:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- 頂部導航欄 -->
+    <header class="bg-blue-500 p-4 shadow-lg z-10">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
+                🧪 科學小教室
+            </h1>
+            <div class="text-white text-lg font-bold bg-blue-600 px-4 py-2 rounded-full hidden md:block">
+                混合物與分離
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要內容區 -->
+    <main class="flex-1 overflow-y-auto p-4 relative bg-sky-50" id="main-content">
+        <!-- 這裡是動態內容加載區 -->
+        <div class="max-w-3xl mx-auto h-full flex flex-col justify-center items-center text-center fade-in" id="scene-container">
+            <!-- 初始加載中... -->
+        </div>
+    </main>
+
+    <!-- 底部導航欄 (大按鈕適合操作) -->
+    <nav class="bg-white p-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20">
+        <div class="max-w-4xl mx-auto grid grid-cols-4 gap-2">
+            <button onclick="navigate('intro')" class="nav-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-800 p-2 rounded-xl flex flex-col items-center justify-center transition-colors border-b-4 border-yellow-300 active:border-b-0 active:mt-1">
+                <span class="text-2xl">🥣</span>
+                <span class="text-xs md:text-sm font-bold">什麼是混合物</span>
+            </button>
+            <button onclick="navigate('examples')" class="nav-btn bg-green-100 hover:bg-green-200 text-green-800 p-2 rounded-xl flex flex-col items-center justify-center transition-colors border-b-4 border-green-300 active:border-b-0 active:mt-1">
+                <span class="text-2xl">🏠</span>
+                <span class="text-xs md:text-sm font-bold">生活例子</span>
+            </button>
+            <button onclick="navigate('methods')" class="nav-btn bg-blue-100 hover:bg-blue-200 text-blue-800 p-2 rounded-xl flex flex-col items-center justify-center transition-colors border-b-4 border-blue-300 active:border-b-0 active:mt-1">
+                <span class="text-2xl">🔬</span>
+                <span class="text-xs md:text-sm font-bold">分離方法</span>
+            </button>
+            <button onclick="navigate('game')" class="nav-btn bg-purple-100 hover:bg-purple-200 text-purple-800 p-2 rounded-xl flex flex-col items-center justify-center transition-colors border-b-4 border-purple-300 active:border-b-0 active:mt-1">
+                <span class="text-2xl">🎮</span>
+                <span class="text-xs md:text-sm font-bold">小遊戲</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 聲音效果 (使用 Web Audio API 生成，無需外部文件) -->
+    <script>
+        // 音效合成器
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            if (type === 'success') {
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(500, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.5);
+            } else if (type === 'click') {
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'wrong') {
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        // 頁面內容數據
+        const scenes = {
+            intro: `
+                <h2 class="text-3xl font-bold text-blue-600 mb-6">什麼是混合物？</h2>
+                <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-lg">
+                    <p class="text-xl mb-6">當我們把 <span class="text-red-500 font-bold">兩樣或以上</span> 的東西加在一起，就變成了<span class="text-purple-600 font-bold text-2xl">混合物</span>！</p>
+                    
+                    <div class="flex justify-center items-end gap-4 h-40 mb-4 bg-gray-100 rounded-xl p-4 relative overflow-hidden" id="mix-bowl">
+                        <div class="absolute bottom-0 w-32 h-20 bg-gray-300 rounded-b-full border-4 border-gray-400 z-10"></div>
+                        <!-- 這些球會在點擊後出現 -->
+                        <div id="balls-container" class="absolute bottom-4 flex justify-center w-full z-0"></div>
+                    </div>
+
+                    <button onclick="mixDemo()" class="interactive-btn bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold py-3 px-8 rounded-full shadow-lg border-b-4 border-blue-700 active:border-b-0 active:mt-1">
+                        👉 按這裡混合！
+                    </button>
+                </div>
+            `,
+            examples: `
+                <h2 class="text-3xl font-bold text-green-600 mb-6">生活中的混合物</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+                    <div class="bg-white p-6 rounded-3xl shadow-lg transform hover:scale-105 transition-transform duration-300">
+                        <div class="text-6xl mb-4">🥗</div>
+                        <h3 class="text-2xl font-bold mb-2">沙律 (沙拉)</h3>
+                        <p class="text-gray-500 text-lg">蔬菜 + 水果 + 醬汁</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-lg transform hover:scale-105 transition-transform duration-300">
+                        <div class="text-6xl mb-4">🧋</div>
+                        <h3 class="text-2xl font-bold mb-2">珍珠奶茶</h3>
+                        <p class="text-gray-500 text-lg">茶 + 奶 + 珍珠</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-lg transform hover:scale-105 transition-transform duration-300">
+                        <div class="text-6xl mb-4">🥣</div>
+                        <h3 class="text-2xl font-bold mb-2">紅豆湯</h3>
+                        <p class="text-gray-500 text-lg">水 + 紅豆 + 糖</p>
+                    </div>
+                </div>
+                <p class="mt-8 text-xl text-gray-600 font-bold bg-white px-6 py-2 rounded-full shadow-sm">這些東西混在一起，還是原來的樣子嗎？</p>
+            `,
+            methods: `
+                <div class="flex flex-col h-full w-full">
+                    <h2 class="text-2xl md:text-3xl font-bold text-blue-600 mb-4">分離混合物的方法</h2>
+                    
+                    <!-- 方法選擇按鈕 -->
+                    <div class="flex flex-wrap justify-center gap-2 mb-4">
+                        <button onclick="showMethod('sieve')" class="method-tab bg-orange-100 border-2 border-orange-300 px-4 py-2 rounded-full font-bold text-orange-700 hover:bg-orange-200">篩 (Sieving)</button>
+                        <button onclick="showMethod('filter')" class="method-tab bg-blue-100 border-2 border-blue-300 px-4 py-2 rounded-full font-bold text-blue-700 hover:bg-blue-200">過濾 (Filtration)</button>
+                        <button onclick="showMethod('magnet')" class="method-tab bg-gray-200 border-2 border-gray-400 px-4 py-2 rounded-full font-bold text-gray-700 hover:bg-gray-300">磁吸引 (Magnetic)</button>
+                        <button onclick="showMethod('evaporate')" class="method-tab bg-red-100 border-2 border-red-300 px-4 py-2 rounded-full font-bold text-red-700 hover:bg-red-200">蒸發 (Evaporation)</button>
+                    </div>
+
+                    <!-- 演示區域 -->
+                    <div id="demo-area" class="bg-white rounded-3xl shadow-xl flex-1 p-4 relative overflow-hidden border-4 border-dashed border-gray-200 flex flex-col justify-center items-center">
+                        <p class="text-gray-400 text-xl">請點選上方按鈕來學習方法</p>
+                    </div>
+                </div>
+            `,
+            game: `
+                <div class="w-full max-w-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-3xl font-bold text-purple-600">小遊戲：用什麼方法？</h2>
+                        <div class="bg-yellow-300 px-4 py-2 rounded-full font-bold text-yellow-800 shadow">
+                            分數: <span id="score">0</span> / <span id="total-q">50</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-3xl shadow-xl min-h-[300px] flex flex-col items-center justify-center relative">
+                        <div id="game-question" class="w-full">
+                            <!-- 問題會顯示在這裡 -->
+                        </div>
+                        <div id="feedback" class="absolute inset-0 bg-white/90 rounded-3xl hidden flex-col items-center justify-center z-20">
+                            <div id="feedback-icon" class="text-8xl mb-4 bounce-slow"></div>
+                            <button onclick="nextQuestion()" class="bg-blue-500 text-white px-8 py-3 rounded-full text-xl font-bold shadow-lg hover:bg-blue-600">下一題</button>
+                        </div>
+                    </div>
+                </div>
+            `
+        };
+
+        // --- 遊戲數據庫 (50題) ---
+        // 類別：magnet, sieve, filter, evaporate
+        const rawQuestions = [
+            { item: "鐵釘 + 沙子", visual: "🔩 ➕ 🏜️", answer: "magnet" },
+            { item: "麵粉 + 紅豆", visual: "🥡 ➕ 🫘", answer: "sieve" },
+            { item: "鹽 + 水", visual: "🧂 ➕ 💧", answer: "evaporate" },
+            { item: "泥土 + 水", visual: "🟤 ➕ 💧", answer: "filter" },
+            { item: "萬字夾 + 紙碎", visual: "🖇️ ➕ 📄", answer: "magnet" },
+            { item: "石頭 + 沙", visual: "🪨 ➕ 🏜️", answer: "sieve" },
+            { item: "糖 + 水", visual: "🍬 ➕ 💧", answer: "evaporate" },
+            { item: "茶葉 + 茶", visual: "🍂 ➕ 🍵", answer: "filter" },
+            { item: "針 + 線", visual: "🪡 ➕ 🧵", answer: "magnet" },
+            { item: "玻璃珠 + 沙", visual: "🔮 ➕ 🏜️", answer: "sieve" },
+            { item: "咖啡渣 + 咖啡", visual: "☕ ➕ 💧", answer: "filter" },
+            { item: "海水 (取鹽)", visual: "🌊 ➡️ 🧂", answer: "evaporate" },
+            { item: "鑰匙 + 膠珠", visual: "🔑 ➕ 🟣", answer: "magnet" },
+            { item: "米 + 糠", visual: "🍚 ➕ 🌾", answer: "sieve" },
+            { item: "橙肉 + 橙汁", visual: "🍊 ➕ 🥤", answer: "filter" },
+            { item: "螺絲 + 木糠", visual: "🔩 ➕ 🪵", answer: "magnet" },
+            { item: "貝殼 + 沙", visual: "🐚 ➕ 🏜️", answer: "sieve" },
+            { item: "鹽水 (取鹽)", visual: "🥣 ➡️ 🧂", answer: "evaporate" },
+            { item: "湯渣 + 湯", visual: "🍲 ➡️ 🥣", answer: "filter" },
+            { item: "釘書釘 + 米", visual: "🖇️ ➕ 🍚", answer: "magnet" },
+            { item: "鈕扣 + 麵粉", visual: "🔘 ➕ 🥡", answer: "sieve" },
+            { item: "糖水 (取糖)", visual: "🍯 ➡️ 🍬", answer: "evaporate" },
+            { item: "藥渣 + 藥湯", visual: "🌿 ➕ 🥣", answer: "filter" },
+            { item: "鐵粉 + 糖", visual: "⚫ ➕ 🍬", answer: "magnet" },
+            { item: "碎石 + 泥土", visual: "🪨 ➕ 🟤", answer: "sieve" },
+            { item: "豆漿渣 + 豆漿", visual: "🫘 ➕ 🥛", answer: "filter" },
+            { item: "髮夾 + 布", visual: "🧷 ➕ 👕", answer: "magnet" },
+            { item: "米 + 麵粉", visual: "🍚 ➕ 🥡", answer: "sieve" },
+            { item: "汽水 (取糖漿)", visual: "🥤 ➡️ 🍯", answer: "evaporate" },
+            { item: "粉筆灰 + 水", visual: "🖍️ ➕ 💧", answer: "filter" },
+            { item: "鐵圈 + 膠圈", visual: "⭕ ➕ 🔴", answer: "magnet" },
+            { item: "粟米粒 + 沙", visual: "🌽 ➕ 🏜️", answer: "sieve" },
+            { item: "鹽田 (曬鹽)", visual: "☀️ ➕ 🧂", answer: "evaporate" },
+            { item: "魚缸水 (去污)", visual: "🐠 ➕ 💩", answer: "filter" },
+            { item: "鐵尺 + 膠尺", visual: "📏 ➕ 📐", answer: "magnet" },
+            { item: "乒乓波 + 沙", visual: "🏓 ➕ 🏜️", answer: "sieve" },
+            { item: "大太陽曬海水", visual: "☀️ ➕ 🌊", answer: "evaporate" },
+            { item: "果皮 + 果汁", visual: "🍎 ➕ 🥤", answer: "filter" },
+            { item: "鐵珠 + 膠珠", visual: "⚫ ➕ 🔴", answer: "magnet" },
+            { item: "寶石 + 沙", visual: "💎 ➕ 🏜️", answer: "sieve" },
+            { item: "顏色水 (取色素)", visual: "🎨 ➡️ 🔴", answer: "evaporate" },
+            { item: "麵條 + 熱水", visual: "🍜 ➕ 💧", answer: "filter" },
+            { item: "萬字夾 + 橡筋", visual: "🖇️ ➕ ⭕", answer: "magnet" },
+            { item: "錢幣 + 沙", visual: "💰 ➕ 🏜️", answer: "sieve" },
+            { item: "髒水 (變清水)", visual: "🟤 ➡️ 💧", answer: "filter" },
+            { item: "鐵匙羹 + 膠匙羹", visual: "🥄 ➕ 🥄", answer: "magnet" },
+            { item: "樹葉 + 泥土", visual: "🍃 ➕ 🟤", answer: "sieve" },
+            { item: "糖果 + 水 (溶化後)", visual: "🍬 ➕ 💧", answer: "evaporate" },
+            { item: "菜渣 + 水", visual: "🥬 ➕ 💧", answer: "filter" },
+            { item: "螺絲帽 + 膠粒", visual: "🔩 ➕ 🟣", answer: "magnet" }
+        ];
+
+        // 答題選項定義
+        const answerOptions = [
+            { id: "sieve", label: "篩", icon: "🕸️" },
+            { id: "magnet", label: "磁鐵", icon: "🧲" },
+            { id: "filter", label: "過濾", icon: "🧪" },
+            { id: "evaporate", label: "蒸發", icon: "☀️" }
+        ];
+
+        let gameQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        // 初始化
+        window.onload = () => {
+            navigate('intro');
+            prepareQuestions(); // 準備題目
+        };
+
+        // 準備題目函數：將原始數據轉換為遊戲可用格式
+        function prepareQuestions() {
+            gameQuestions = rawQuestions.map(q => {
+                // 找出正確答案的選項
+                const correctOpt = answerOptions.find(opt => opt.id === q.answer);
+                // 找出錯誤答案的選項 (過濾掉正確的)
+                const wrongOpts = answerOptions.filter(opt => opt.id !== q.answer);
+                
+                // 隨機選取2個錯誤選項
+                const shuffledWrong = wrongOpts.sort(() => 0.5 - Math.random()).slice(0, 2);
+                
+                // 合併並打亂順序 (1對 + 2錯)
+                const options = [correctOpt, ...shuffledWrong].sort(() => 0.5 - Math.random());
+                
+                return {
+                    ...q,
+                    options: options
+                };
+            });
+            // 隨機打亂題目的出現順序
+            gameQuestions.sort(() => 0.5 - Math.random());
+        }
+
+        // 導航函數
+        function navigate(sceneId) {
+            playSound('click');
+            const container = document.getElementById('scene-container');
+            
+            // 簡單的淡出效果
+            container.style.opacity = '0';
+            
+            setTimeout(() => {
+                container.innerHTML = scenes[sceneId];
+                container.style.opacity = '1';
+                
+                // 特定頁面的初始化邏輯
+                if(sceneId === 'methods') {
+                    showMethod('sieve'); // 預設顯示第一個
+                }
+                if(sceneId === 'game') {
+                    currentQuestionIndex = 0;
+                    score = 0;
+                    prepareQuestions(); // 每次重玩都重新洗牌
+                    loadQuestion();
+                }
+            }, 200);
+
+            // 更新按鈕狀態
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                // 這裡可以添加 active class logic，目前簡單處理
+            });
+        }
+
+        // --- 互動功能：混合演示 ---
+        function mixDemo() {
+            playSound('click');
+            const container = document.getElementById('balls-container');
+            container.innerHTML = '';
+            
+            // 生成紅球
+            for(let i=0; i<3; i++) {
+                const ball = document.createElement('div');
+                ball.className = "w-8 h-8 rounded-full bg-red-500 m-1 bounce-slow";
+                container.appendChild(ball);
+            }
+            // 生成藍球
+            for(let i=0; i<3; i++) {
+                const ball = document.createElement('div');
+                ball.className = "w-8 h-8 rounded-full bg-blue-500 m-1 bounce-slow";
+                ball.style.animationDelay = "0.2s";
+                container.appendChild(ball);
+            }
+
+            // 混合效果
+            const bowl = document.getElementById('mix-bowl');
+            bowl.classList.add('shake');
+            setTimeout(() => bowl.classList.remove('shake'), 500);
+        }
+
+        // --- 互動功能：分離方法演示 ---
+        function showMethod(method) {
+            playSound('click');
+            const demoArea = document.getElementById('demo-area');
+            
+            // 更新Tab樣式
+            document.querySelectorAll('.method-tab').forEach(btn => {
+                if(btn.textContent.includes(method === 'sieve' ? '篩' : method === 'filter' ? '過濾' : method === 'magnet' ? '磁' : '蒸發')) {
+                    btn.classList.add('ring-2', 'ring-offset-2', 'ring-blue-400', 'scale-105');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-400', 'scale-105');
+                }
+            });
+
+            let content = '';
+
+            if (method === 'sieve') {
+                content = `
+                    <h3 class="text-xl font-bold mb-2">篩 (Sieving)</h3>
+                    <p class="mb-4">用來分開 <span class="text-orange-600 font-bold">大</span> 和 <span class="text-blue-600 font-bold">小</span> 的東西。</p>
+                    <div class="relative w-64 h-64 bg-gray-50 border-2 border-gray-300 rounded-lg flex flex-col items-center pt-4">
+                        <!-- 篩子 -->
+                        <div class="w-48 h-12 bg-orange-200 border-4 border-orange-400 grid grid-cols-6 gap-1 p-1 z-10">
+                            <!-- 網格 -->
+                            ${Array(12).fill('<div class="bg-white opacity-50 w-full h-full"></div>').join('')}
+                        </div>
+                        
+                        <!-- 掉落物容器 -->
+                        <div id="sieve-items" class="absolute top-0 w-full flex justify-center flex-wrap gap-2 px-8">
+                            <!-- 大石頭 -->
+                            <div class="w-8 h-8 bg-gray-600 rounded-lg shadow-sm"></div>
+                            <div class="w-8 h-8 bg-gray-600 rounded-lg shadow-sm"></div>
+                            <!-- 小沙子 -->
+                            <div class="particle w-3 h-3 bg-yellow-500 rounded-full"></div>
+                            <div class="particle w-3 h-3 bg-yellow-500 rounded-full"></div>
+                            <div class="particle w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        </div>
+
+                        <div class="mt-8 text-gray-400">⬇️ 小的東西掉下來了</div>
+                    </div>
+                    <button onclick="animateSieve()" class="mt-4 bg-green-500 text-white px-6 py-2 rounded-full font-bold hover:bg-green-600 interactive-btn">開始過篩</button>
+                `;
+            } else if (method === 'magnet') {
+                content = `
+                    <h3 class="text-xl font-bold mb-2">磁吸引 (Magnetic Attraction)</h3>
+                    <p class="mb-4">磁鐵可以吸起 <span class="text-gray-700 font-bold">鐵做的</span> 東西。</p>
+                    <div class="relative w-64 h-48 bg-yellow-50 rounded-lg border-b-8 border-yellow-200 overflow-hidden">
+                        <!-- 沙子背景 -->
+                        <div class="absolute bottom-0 w-full h-12 bg-yellow-200 flex items-end justify-center gap-4 px-4">
+                            <!-- 鐵釘 -->
+                            <div class="iron-nail text-2xl transition-all duration-1000">🔩</div>
+                            <div class="plastic text-2xl">🥤</div>
+                            <div class="iron-nail text-2xl transition-all duration-1000">📎</div>
+                            <div class="plastic text-2xl">🪵</div>
+                        </div>
+                        <!-- 磁鐵 -->
+                        <div id="magnet-tool" class="absolute top-4 left-4 text-6xl transition-all duration-1000 transform -rotate-45 cursor-pointer">🧲</div>
+                    </div>
+                    <button onclick="animateMagnet()" class="mt-4 bg-red-500 text-white px-6 py-2 rounded-full font-bold hover:bg-red-600 interactive-btn">移動磁鐵</button>
+                `;
+            } else if (method === 'evaporate') {
+                content = `
+                    <h3 class="text-xl font-bold mb-2">蒸發 (Evaporation)</h3>
+                    <p class="mb-4">加熱後，<span class="text-blue-500 font-bold">水</span> 變成水蒸氣飛走了，留下 <span class="text-gray-500 font-bold">鹽</span>。</p>
+                    <div class="relative w-64 h-56 flex flex-col items-center justify-end">
+                        <!-- 太陽/火 -->
+                        <div id="heat-source" class="text-5xl mb-2 opacity-30 transition-opacity duration-500">🔥</div>
+                        
+                        <!-- 碗 -->
+                        <div class="w-40 h-20 bg-gray-300 rounded-b-full border-4 border-gray-400 relative overflow-hidden">
+                            <!-- 水 -->
+                            <div id="water-body" class="absolute bottom-0 w-full h-full bg-blue-300 transition-all duration-3000 flex items-center justify-center">
+                                <span class="text-white opacity-50">💧</span>
+                            </div>
+                            <!-- 鹽 (初始隱藏) -->
+                            <div id="salt-crystals" class="absolute bottom-2 w-full flex justify-center gap-1 opacity-0 transition-opacity duration-1000 delay-2000">
+                                <div class="w-2 h-2 bg-white rounded-sm"></div>
+                                <div class="w-2 h-2 bg-white rounded-sm"></div>
+                                <div class="w-2 h-2 bg-white rounded-sm"></div>
+                                <div class="w-2 h-2 bg-white rounded-sm"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="animateEvaporation()" class="mt-4 bg-orange-500 text-white px-6 py-2 rounded-full font-bold hover:bg-orange-600 interactive-btn">開始加熱</button>
+                `;
+            } else if (method === 'filter') {
+                content = `
+                    <h3 class="text-xl font-bold mb-2">過濾 (Filtration)</h3>
+                    <p class="mb-4">用濾紙擋住 <span class="text-yellow-800 font-bold">泥土</span>，讓 <span class="text-blue-500 font-bold">水</span> 流過去。</p>
+                    <div class="relative w-64 h-64 flex flex-col items-center">
+                        <!-- 漏斗 -->
+                        <div class="relative z-10">
+                            <div class="w-0 h-0 border-l-[40px] border-l-transparent border-r-[40px] border-r-transparent border-t-[60px] border-t-gray-300"></div>
+                            <!-- 濾紙內的髒東西 -->
+                            <div id="filter-dirt" class="absolute top-[-50px] left-[-20px] w-10 h-10 flex justify-center items-center opacity-0 transition-opacity duration-500">
+                                <span class="text-yellow-900 text-xl font-bold">🟤</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 杯子 -->
+                        <div class="w-24 h-24 border-b-4 border-l-4 border-r-4 border-gray-400 rounded-b-lg mt-2 relative overflow-hidden bg-white">
+                            <!-- 乾淨的水 -->
+                            <div id="clean-water" class="absolute bottom-0 w-full bg-blue-300 transition-all duration-2000" style="height: 0%"></div>
+                        </div>
+
+                        <!-- 滴水動畫容器 -->
+                        <div id="drops-container" class="absolute top-20 z-0"></div>
+                    </div>
+                    <button onclick="animateFilter()" class="mt-4 bg-blue-500 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-600 interactive-btn">倒入泥水</button>
+                `;
+            }
+
+            demoArea.innerHTML = content;
+        }
+
+        // --- 動畫邏輯 ---
+        function animateSieve() {
+            playSound('click');
+            const particles = document.querySelectorAll('.particle');
+            particles.forEach(p => {
+                p.classList.add('drop-animation');
+            });
+        }
+
+        function animateMagnet() {
+            playSound('click');
+            const magnet = document.getElementById('magnet-tool');
+            const nails = document.querySelectorAll('.iron-nail');
+            
+            // 磁鐵移動
+            magnet.style.transform = "translate(100px, 100px) rotate(0deg)";
+            
+            // 鐵釘吸附
+            setTimeout(() => {
+                nails.forEach(nail => {
+                    nail.style.transform = "translate(50px, -80px)";
+                });
+                playSound('success');
+            }, 500);
+        }
+
+        function animateEvaporation() {
+            playSound('click');
+            const heat = document.getElementById('heat-source');
+            const water = document.getElementById('water-body');
+            const salt = document.getElementById('salt-crystals');
+            
+            heat.style.opacity = '1';
+            heat.classList.add('bounce-slow');
+            
+            // 水位下降
+            water.style.height = '0%';
+            water.style.opacity = '0';
+            
+            // 產生蒸氣效果 (動態添加 DOM)
+            for(let i=0; i<3; i++) {
+                setTimeout(() => {
+                    const steam = document.createElement('div');
+                    steam.textContent = '♨️';
+                    steam.className = 'absolute text-2xl steam-animation';
+                    steam.style.left = (30 + i*20) + '%';
+                    steam.style.bottom = '50px';
+                    water.parentElement.appendChild(steam);
+                }, i*500);
+            }
+
+            // 顯示鹽
+            setTimeout(() => {
+                salt.style.opacity = '1';
+                playSound('success');
+            }, 2500);
+        }
+
+        function animateFilter() {
+            playSound('click');
+            const dirt = document.getElementById('filter-dirt');
+            const cleanWater = document.getElementById('clean-water');
+            const container = document.getElementById('drops-container');
+
+            // 顯示髒東西被擋住
+            dirt.style.opacity = '1';
+
+            // 滴水動畫
+            for(let i=0; i<5; i++) {
+                setTimeout(() => {
+                    const drop = document.createElement('div');
+                    drop.className = 'w-2 h-4 bg-blue-400 rounded-full absolute drop-animation';
+                    container.appendChild(drop);
+                }, i*300);
+            }
+
+            // 杯中水位上升
+            setTimeout(() => {
+                cleanWater.style.height = '60%';
+                playSound('success');
+            }, 500);
+        }
+
+        // --- 遊戲邏輯 ---
+        function loadQuestion() {
+            if (currentQuestionIndex >= gameQuestions.length) {
+                showGameEnd();
+                return;
+            }
+
+            const q = gameQuestions[currentQuestionIndex];
+            const qDiv = document.getElementById('game-question');
+            const feedback = document.getElementById('feedback');
+            
+            feedback.classList.add('hidden'); // 隱藏反饋
+            feedback.classList.remove('flex');
+
+            let html = `
+                <div class="text-center mb-6 fade-in">
+                    <p class="text-xl font-bold text-gray-700 mb-2">第 ${currentQuestionIndex + 1} 題：請問如何分離</p>
+                    <h3 class="text-3xl font-bold text-blue-600 mb-2">${q.item}</h3>
+                    <div class="text-5xl mb-6 bg-gray-100 p-4 rounded-xl inline-block">${q.visual}</div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+            `;
+
+            q.options.forEach(opt => {
+                html += `
+                    <button onclick="checkAnswer('${opt.id}', '${q.answer}')" class="game-option bg-white border-4 border-gray-200 p-4 rounded-2xl flex flex-col items-center hover:border-blue-400 hover:bg-blue-50">
+                        <span class="text-4xl mb-2">${opt.icon}</span>
+                        <span class="text-xl font-bold text-gray-700">${opt.label}</span>
+                    </button>
+                `;
+            });
+
+            html += `</div>`;
+            qDiv.innerHTML = html;
+        }
+
+        function checkAnswer(selected, correct) {
+            const feedback = document.getElementById('feedback');
+            const icon = document.getElementById('feedback-icon');
+            
+            feedback.classList.remove('hidden');
+            feedback.classList.add('flex');
+            
+            if (selected === correct) {
+                playSound('success');
+                icon.textContent = '✅';
+                icon.className = 'text-8xl mb-4 text-green-500 bounce-slow';
+                score += 10;
+                document.getElementById('score').textContent = score;
+            } else {
+                playSound('wrong');
+                icon.textContent = '💪'; // 加油
+                icon.className = 'text-8xl mb-4 text-orange-500 shake';
+                // 答錯不加分，但也會跳轉
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+
+        function showGameEnd() {
+            const qDiv = document.getElementById('game-question');
+            qDiv.innerHTML = `
+                <div class="text-center fade-in">
+                    <h2 class="text-4xl font-bold text-yellow-500 mb-4">遊戲結束！🎉</h2>
+                    <p class="text-2xl text-gray-700 mb-6">你做得很好！</p>
+                    <p class="text-3xl font-bold text-blue-600 mb-8">總分: ${score}</p>
+                    <button onclick="navigate('game')" class="bg-green-500 text-white px-8 py-3 rounded-full text-xl font-bold shadow-lg hover:bg-green-600">再玩一次</button>
+                </div>
+            `;
+            // 慶祝音效
+            playSound('success');
+        }
+
+    </script>
+</body>
+</html>
