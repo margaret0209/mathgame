@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小小分類王 - 互動分類遊戲</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f0f9ff;
+            user-select: none; /* 防止選取文字 */
+        }
+
+        /* 自定義動畫 */
+        @keyframes correct-pop {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes wrong-shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .animate-item-appear {
+            animation: correct-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .animate-correct {
+            animation: correct-pop 0.4s ease-in-out;
+            color: #22c55e; /* Green-500 */
+        }
+
+        .animate-wrong {
+            animation: wrong-shake 0.4s ease-in-out;
+            color: #ef4444; /* Red-500 */
+        }
+
+        .game-card {
+            transition: all 0.3s ease;
+        }
+        .game-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* 隱藏滾動條但保留功能 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 sm:p-4">
+
+    <!-- 主容器 -->
+    <div id="app" class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden min-h-[650px] flex flex-col relative border-4 border-blue-200">
+        
+        <!-- 頂部標題列 -->
+        <header class="bg-blue-500 p-3 text-white shadow-md z-10 shrink-0 relative flex justify-center items-center">
+            <h1 class="text-xl sm:text-2xl font-bold tracking-wider">🧩 小小分類王</h1>
+            
+            <!-- 🌟 新增：返回目錄按鈕 -->
+            <button id="home-btn" onclick="resetGame()" class="invisible absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-all active:scale-95" title="返回目錄">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+            </button>
+        </header>
+
+        <!-- 頁面 1: 選單 (Menu) -->
+        <div id="menu-screen" class="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
+            <div class="text-center space-y-2">
+                <h2 class="text-xl text-gray-700 font-bold">請選擇分類模式</h2>
+                <p class="text-gray-500 text-sm">點擊下方按鈕開始遊戲</p>
+            </div>
+
+            <!-- 分類模式選擇 -->
+            <div class="grid grid-cols-2 gap-4 w-full">
+                <button onclick="selectMode('color')" class="mode-btn bg-red-100 hover:bg-red-200 text-red-700 border-2 border-red-300 p-4 rounded-xl flex flex-col items-center gap-2 transition">
+                    <span class="text-4xl">🎨</span>
+                    <span class="font-bold">顏色分類</span>
+                </button>
+                <button onclick="selectMode('usage')" class="mode-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-2 border-yellow-300 p-4 rounded-xl flex flex-col items-center gap-2 transition">
+                    <span class="text-4xl">🛠️</span>
+                    <span class="font-bold">用途分類</span>
+                </button>
+                <button onclick="selectMode('location')" class="mode-btn bg-blue-100 hover:bg-blue-200 text-blue-800 border-2 border-blue-300 p-4 rounded-xl flex flex-col items-center gap-2 transition">
+                    <span class="text-4xl">🏠</span>
+                    <span class="font-bold">場地分類</span>
+                </button>
+                <button onclick="selectMode('other')" class="mode-btn bg-green-100 hover:bg-green-200 text-green-800 border-2 border-green-300 p-4 rounded-xl flex flex-col items-center gap-2 transition">
+                    <span class="text-4xl">🎒</span>
+                    <span class="font-bold">物品種類</span>
+                </button>
+            </div>
+
+            <!-- 難度選擇區域 (隱藏直到選擇模式) -->
+            <div id="difficulty-area" class="hidden w-full space-y-4 pt-4 border-t border-gray-100">
+                <div class="text-center text-gray-700 font-bold">要分成幾類？</div>
+                <div class="flex gap-4 justify-center">
+                    <button onclick="startGame(2)" class="bg-indigo-500 hover:bg-indigo-600 text-white py-3 px-8 rounded-full font-bold shadow-lg transform active:scale-95 transition text-lg">
+                        2 類
+                    </button>
+                    <button onclick="startGame(3)" class="bg-purple-500 hover:bg-purple-600 text-white py-3 px-8 rounded-full font-bold shadow-lg transform active:scale-95 transition text-lg">
+                        3 類
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 頁面 2: 遊戲區 (Game) -->
+        <div id="game-screen" class="hidden flex-1 flex flex-col p-4 h-full">
+            
+            <!-- 進度與分數 (Header Info) -->
+            <div class="flex justify-between items-center mb-2 px-2">
+                <div class="text-sm font-bold text-gray-500">進度: <span id="current-count" class="text-blue-600">1</span>/<span id="total-count">8</span></div>
+                <div class="text-sm font-bold text-gray-500">得分: <span id="score-display" class="text-green-600 text-lg">0</span></div>
+            </div>
+
+            <!-- 分類收集籃 (Bins) -->
+            <div id="bins-container" class="grid w-full gap-3 mb-2 shrink-0 h-32">
+                <!-- 籃子將由 JS 動態生成 -->
+            </div>
+
+            <!-- 中央物品展示區 (Item Card) -->
+            <div class="flex-1 flex flex-col items-center justify-center py-2 min-h-0">
+                <div id="item-card" class="bg-white border-4 border-dashed border-gray-300 rounded-3xl p-4 flex flex-col items-center justify-center aspect-square h-48 w-48 sm:h-56 sm:w-56 shadow-sm transition-all duration-300 relative">
+                    <div id="item-emoji" class="text-7xl sm:text-8xl mb-2 transition-transform duration-300 select-none">🍎</div>
+                    <div id="item-name" class="text-xl sm:text-2xl font-bold text-gray-800">蘋果</div>
+                </div>
+                <!-- 回饋文字 -->
+                <div id="feedback-text" class="h-8 mt-2 font-bold text-lg text-center opacity-0 transition-opacity">太棒了！</div>
+            </div>
+
+            <!-- 分類按鈕區 (Buttons) -->
+            <div id="category-buttons" class="grid grid-cols-2 gap-3 mt-auto shrink-0 pb-2">
+                <!-- 按鈕將由 JS 動態生成 -->
+            </div>
+        </div>
+
+        <!-- 頁面 3: 結果 (Result) -->
+        <div id="result-screen" class="hidden flex-1 flex flex-col items-center justify-center p-8 space-y-6 text-center">
+            <div class="text-8xl mb-4">🏆</div>
+            <h2 class="text-3xl font-bold text-gray-800">遊戲結束！</h2>
+            
+            <div class="bg-yellow-50 p-6 rounded-2xl border-2 border-yellow-200 w-full">
+                <p class="text-gray-600 mb-2">你的得分</p>
+                <p class="text-5xl font-black text-yellow-600"><span id="final-score">0</span> / 100</p>
+            </div>
+
+            <p id="result-message" class="text-lg font-bold text-blue-600">做得很好！</p>
+
+            <button onclick="resetGame()" class="mt-8 bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold py-4 px-12 rounded-full shadow-lg transform hover:scale-105 transition">
+                再玩一次
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 遊戲資料庫 (擴充至每類 20 個) ---
+        const DATABASE = {
+            color: {
+                buckets: {
+                    red: { label: "紅色", emoji: "🟥", bg: "bg-red-50", border: "border-red-200", text: "text-red-700", items: [
+                        { name: "蘋果", emoji: "🍎" }, { name: "消防車", emoji: "🚒" }, { name: "草莓", emoji: "🍓" }, { name: "愛心", emoji: "❤️" }, { name: "螃蟹", emoji: "🦀" },
+                        { name: "玫瑰", emoji: "🌹" }, { name: "氣球", emoji: "🎈" }, { name: "辣椒", emoji: "🌶️" }, { name: "口紅", emoji: "💄" }, { name: "番茄", emoji: "🍅" },
+                        { name: "郵筒", emoji: "📮" }, { name: "櫻桃", emoji: "🍒" }, { name: "蘑菇", emoji: "🍄" }, { name: "紅包", emoji: "🧧" }, { name: "燈籠", emoji: "🏮" },
+                        { name: "蝴蝶結", emoji: "🎀" }, { name: "拳擊套", emoji: "🥊" }, { name: "滅火器", emoji: "🧯" }, { name: "瓢蟲", emoji: "🐞" }, { name: "可樂", emoji: "🥤" }
+                    ]},
+                    blue: { label: "藍色", emoji: "🟦", bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-700", items: [
+                        { name: "鯨魚", emoji: "🐋" }, { name: "牛仔褲", emoji: "👖" }, { name: "藍莓", emoji: "🫐" }, { name: "鑽石", emoji: "💎" }, { name: "水滴", emoji: "💧" },
+                        { name: "海豚", emoji: "🐬" }, { name: "魚", emoji: "🐟" }, { name: "冰塊", emoji: "🧊" }, { name: "帽子", emoji: "🧢" }, { name: "書本", emoji: "📘" },
+                        { name: "雨傘", emoji: "☂️" }, { name: "海浪", emoji: "🌊" }, { name: "雪花", emoji: "❄️" }, { name: "地球", emoji: "🌍" }, { name: "睡覺", emoji: "💤" },
+                        { name: "颱風", emoji: "🌀" }, { name: "藍心", emoji: "💙" }, { name: "圓形", emoji: "🔵" }, { name: "襯衫", emoji: "👕" }, { name: "水晶球", emoji: "🔮" }
+                    ]},
+                    green: { label: "綠色", emoji: "🟩", bg: "bg-green-50", border: "border-green-200", text: "text-green-700", items: [
+                        { name: "青蛙", emoji: "🐸" }, { name: "樹木", emoji: "🌳" }, { name: "黃瓜", emoji: "🥒" }, { name: "烏龜", emoji: "🐢" }, { name: "奇異果", emoji: "🥝" },
+                        { name: "鱷魚", emoji: "🐊" }, { name: "蛇", emoji: "🐍" }, { name: "蜥蜴", emoji: "🦎" }, { name: "青蘋果", emoji: "🍏" }, { name: "豌豆", emoji: "🫛" },
+                        { name: "仙人掌", emoji: "🌵" }, { name: "竹子", emoji: "🎍" }, { name: "松樹", emoji: "🌲" }, { name: "聖誕樹", emoji: "🎄" }, { name: "幸運草", emoji: "🍀" },
+                        { name: "綠心", emoji: "💚" }, { name: "網球", emoji: "🎾" }, { name: "花椰菜", emoji: "🥦" }, { name: "樹葉", emoji: "🍃" }, { name: "草", emoji: "🌿" }
+                    ]},
+                    yellow: { label: "黃色", emoji: "🟨", bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-700", items: [
+                        { name: "香蕉", emoji: "🍌" }, { name: "太陽", emoji: "☀️" }, { name: "小鴨", emoji: "🐤" }, { name: "起司", emoji: "🧀" }, { name: "檸檬", emoji: "🍋" },
+                        { name: "蜜蜂", emoji: "🐝" }, { name: "向日葵", emoji: "🌻" }, { name: "鳳梨", emoji: "🍍" }, { name: "星星", emoji: "⭐" }, { name: "獎盃", emoji: "🏆" },
+                        { name: "皇冠", emoji: "👑" }, { name: "長頸鹿", emoji: "🦒" }, { name: "校車", emoji: "🚌" }, { name: "玉米", emoji: "🌽" }, { name: "薯條", emoji: "🍟" },
+                        { name: "奶油", emoji: "🧈" }, { name: "月亮", emoji: "🌙" }, { name: "小雞", emoji: "🐣" }, { name: "工程帽", emoji: "👷" }, { name: "閃電", emoji: "⚡" }
+                    ]},
+                    purple: { label: "紫色", emoji: "🟪", bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-700", items: [
+                        { name: "葡萄", emoji: "🍇" }, { name: "茄子", emoji: "🍆" }, { name: "紫色圓形", emoji: "🟣" }, { name: "紫心", emoji: "💜" }, { name: "雨傘", emoji: "☂️" },
+                        { name: "水晶球", emoji: "🔮" }, { name: "外星人", emoji: "👾" }, { name: "地瓜", emoji: "🍠" }, { name: "小惡魔", emoji: "😈" }, { name: "獨角獸", emoji: "🦄" },
+                        { name: "煙火", emoji: "🎆" }, { name: "收起的傘", emoji: "🌂" }, { name: "風箏", emoji: "🪁" }, { name: "愛心裝飾", emoji: "💟" }, { name: "原子", emoji: "⚛️" },
+                        { name: "燭台", emoji: "🕎" }, { name: "六芒星", emoji: "🔯" }, { name: "藍莓", emoji: "🫐" }, { name: "洋裝", emoji: "👗" }, { name: "緞帶", emoji: "🎀" }
+                    ]},
+                    orange: { label: "橙色", emoji: "🟧", bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", items: [
+                        { name: "橘子", emoji: "🍊" }, { name: "籃球", emoji: "🏀" }, { name: "南瓜", emoji: "🎃" }, { name: "狐狸", emoji: "🦊" }, { name: "紅蘿蔔", emoji: "🥕" },
+                        { name: "橙心", emoji: "🧡" }, { name: "橙色方塊", emoji: "🟧" }, { name: "書本", emoji: "📙" }, { name: "落葉", emoji: "🍂" }, { name: "老虎", emoji: "🐅" },
+                        { name: "蝦子", emoji: "🦐" }, { name: "帳篷", emoji: "⛺" }, { name: "背心", emoji: "🦺" }, { name: "磚頭", emoji: "🧱" }, { name: "芒果", emoji: "🥭" },
+                        { name: "獅子", emoji: "🦁" }, { name: "可頌", emoji: "🥐" }, { name: "炸蝦", emoji: "🍤" }, { name: "菱形", emoji: "🔸" }, { name: "八角星", emoji: "✴️" }
+                    ]}
+                }
+            },
+            usage: {
+                buckets: {
+                    cleaning: { label: "清潔", emoji: "🧹", bg: "bg-cyan-50", border: "border-cyan-200", text: "text-cyan-700", items: [
+                        { name: "掃把", emoji: "🧹" }, { name: "吸塵器", emoji: "🔌" }, { name: "肥皂", emoji: "🧼" }, { name: "海綿", emoji: "🧽" }, { name: "水桶", emoji: "🪣" },
+                        { name: "垃圾桶", emoji: "🗑️" }, { name: "衛生紙", emoji: "🧻" }, { name: "刷子", emoji: "🖌️" }, { name: "手套", emoji: "🧤" }, { name: "洗衣機", emoji: "🧼" },
+                        { name: "水龍頭", emoji: "🚰" }, { name: "噴霧", emoji: "🧴" }, { name: "回收桶", emoji: "♻️" }, { name: "通馬桶", emoji: "🪠" }, { name: "洗衣籃", emoji: "🧺" },
+                        { name: "毛巾", emoji: "🧖" }, { name: "洗手", emoji: "👏" }, { name: "蓮蓬頭", emoji: "🚿" }, { name: "浴缸", emoji: "🛁" }, { name: "抹布", emoji: "🧣" }
+                    ]},
+                    writing: { label: "書寫", emoji: "✏️", bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", items: [
+                        { name: "鉛筆", emoji: "✏️" }, { name: "原子筆", emoji: "🖊️" }, { name: "筆記本", emoji: "📓" }, { name: "蠟筆", emoji: "🖍️" }, { name: "書本", emoji: "📖" },
+                        { name: "尺", emoji: "📏" }, { name: "剪刀", emoji: "✂️" }, { name: "迴紋針", emoji: "📎" }, { name: "信封", emoji: "✉️" }, { name: "鍵盤", emoji: "⌨️" },
+                        { name: "電腦", emoji: "💻" }, { name: "卷軸", emoji: "📜" }, { name: "報紙", emoji: "📰" }, { name: "鋼筆", emoji: "🖋️" }, { name: "畫筆", emoji: "🖌️" },
+                        { name: "調色盤", emoji: "🎨" }, { name: "黑板", emoji: "⬛" }, { name: "便條紙", emoji: "📝" }, { name: "計算機", emoji: "🧮" }, { name: "圖釘", emoji: "📍" }
+                    ]},
+                    eating: { label: "餐具", emoji: "🍴", bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", items: [
+                        { name: "湯匙", emoji: "🥄" }, { name: "叉子", emoji: "🍴" }, { name: "碗", emoji: "🥣" }, { name: "平底鍋", emoji: "🍳" }, { name: "筷子", emoji: "🥢" },
+                        { name: "盤子", emoji: "🍽️" }, { name: "菜刀", emoji: "🔪" }, { name: "杯子", emoji: "🥤" }, { name: "馬克杯", emoji: "☕" }, { name: "茶壺", emoji: "🫖" },
+                        { name: "鹽巴", emoji: "🧂" }, { name: "鍋子", emoji: "🍲" }, { name: "罐子", emoji: "🫙" }, { name: "奶瓶", emoji: "🍼" }, { name: "玻璃杯", emoji: "🥛" },
+                        { name: "飲料", emoji: "🍸" }, { name: "罐頭", emoji: "🥫" }, { name: "便當", emoji: "🍱" }, { name: "爆米花", emoji: "🍿" }, { name: "鏟子", emoji: "🥘" }
+                    ]},
+                    clothing: { label: "衣物", emoji: "👕", bg: "bg-violet-50", border: "border-violet-200", text: "text-violet-700", items: [
+                        { name: "T恤", emoji: "👕" }, { name: "褲子", emoji: "👖" }, { name: "襪子", emoji: "🧦" }, { name: "帽子", emoji: "🧢" }, { name: "眼鏡", emoji: "👓" },
+                        { name: "洋裝", emoji: "👗" }, { name: "外套", emoji: "🧥" }, { name: "泳衣", emoji: "👙" }, { name: "和服", emoji: "👘" }, { name: "領帶", emoji: "👔" },
+                        { name: "圍巾", emoji: "🧣" }, { name: "手套", emoji: "🧤" }, { name: "球鞋", emoji: "👟" }, { name: "高跟鞋", emoji: "👠" }, { name: "靴子", emoji: "👢" },
+                        { name: "涼鞋", emoji: "👡" }, { name: "包包", emoji: "👜" }, { name: "背包", emoji: "🎒" }, { name: "戒指", emoji: "💍" }, { name: "皇冠", emoji: "👑" }
+                    ]}
+                }
+            },
+            location: {
+                buckets: {
+                    bathroom: { label: "浴室", emoji: "🛁", bg: "bg-teal-50", border: "border-teal-200", text: "text-teal-700", items: [
+                        { name: "浴缸", emoji: "🛁" }, { name: "馬桶", emoji: "🚽" }, { name: "牙刷", emoji: "🪥" }, { name: "蓮蓬頭", emoji: "🚿" }, { name: "衛生紙", emoji: "🧻" },
+                        { name: "肥皂", emoji: "🧼" }, { name: "毛巾", emoji: "🧖" }, { name: "馬桶吸", emoji: "🪠" }, { name: "乳液", emoji: "🧴" },
+                        { name: "海綿", emoji: "🧽" }, { name: "水桶", emoji: "🪣" }, { name: "刮鬍刀", emoji: "🪒" }, { name: "梳子", emoji: "💇" }, { name: "洗髮精", emoji: "🧴" }
+                    ]},
+                    bedroom: { label: "睡房", emoji: "🛏️", bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-700", items: [
+                        { name: "床", emoji: "🛏️" }, { name: "枕頭", emoji: "💤" }, { name: "鬧鐘", emoji: "⏰" }, { name: "檯燈", emoji: "💡" }, { name: "衣櫃", emoji: "🚪" },
+                        { name: "泰迪熊", emoji: "🧸" }, { name: "書本", emoji: "📖" }, { name: "手機", emoji: "📱" }, { name: "睡衣", emoji: "👚" }, { name: "日曆", emoji: "📅" }
+                    ]},
+                    kitchen: { label: "廚房", emoji: "👨‍🍳", bg: "bg-rose-50", border: "border-rose-200", text: "text-rose-700", items: [
+                        { name: "冰箱", emoji: "❄️" }, { name: "烤箱", emoji: "🥘" }, { name: "菜刀", emoji: "🔪" }, { name: "微波爐", emoji: "⏲️" }, { name: "鍋鏟", emoji: "🍳" },
+                        { name: "湯鍋", emoji: "🍲" }, { name: "平底鍋", emoji: "🍳" }, { name: "碗", emoji: "🥣" }, { name: "盤子", emoji: "🍽️" }, { name: "杯子", emoji: "🥤" },
+                        { name: "湯匙", emoji: "🥄" }, { name: "叉子", emoji: "🍴" }, { name: "筷子", emoji: "🥢" }, { name: "鹽巴", emoji: "🧂" }, { name: "雞蛋", emoji: "🥚" },
+                        { name: "廚師", emoji: "👨‍🍳" }, { name: "購物袋", emoji: "🛍️" }
+                    ]}
+                }
+            },
+            other: {
+                buckets: {
+                    animal: { label: "動物", emoji: "🦁", bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-800", items: [
+                        { name: "獅子", emoji: "🦁" }, { name: "兔子", emoji: "🐰" }, { name: "貓咪", emoji: "🐱" }, { name: "熊貓", emoji: "🐼" }, { name: "大象", emoji: "🐘" },
+                        { name: "狗", emoji: "🐶" }, { name: "老虎", emoji: "🐯" }, { name: "猴子", emoji: "🐵" }, { name: "豬", emoji: "🐷" }, { name: "牛", emoji: "🐮" },
+                        { name: "綿羊", emoji: "🐑" }, { name: "馬", emoji: "🐴" }, { name: "雞", emoji: "🐔" }, { name: "鴨子", emoji: "🦆" }, { name: "老鼠", emoji: "🐭" },
+                        { name: "蛇", emoji: "🐍" }, { name: "魚", emoji: "🐟" }, { name: "鯨魚", emoji: "🐋" }, { name: "企鵝", emoji: "🐧" }, { name: "熊", emoji: "🐻" }
+                    ]},
+                    plant: { label: "植物", emoji: "🌻", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", items: [
+                        { name: "向日葵", emoji: "🌻" }, { name: "仙人掌", emoji: "🌵" }, { name: "蘑菇", emoji: "🍄" }, { name: "鬱金香", emoji: "🌷" }, { name: "椰子樹", emoji: "🌴" },
+                        { name: "玫瑰", emoji: "🌹" }, { name: "扶桑花", emoji: "🌺" }, { name: "櫻花", emoji: "🌸" }, { name: "花束", emoji: "💐" }, { name: "草藥", emoji: "🌿" },
+                        { name: "樹葉", emoji: "🍃" }, { name: "幸運草", emoji: "🍀" }, { name: "楓葉", emoji: "🍁" }, { name: "松樹", emoji: "🌲" }, { name: "大樹", emoji: "🌳" },
+                        { name: "竹子", emoji: "🎍" }, { name: "樹苗", emoji: "🌱" }, { name: "稻穗", emoji: "🌾" }, { name: "玉米", emoji: "🌽" }, { name: "葡萄", emoji: "🍇" }
+                    ]},
+                    food: { label: "食物", emoji: "🍿", bg: "bg-red-50", border: "border-red-200", text: "text-red-800", items: [
+                        { name: "爆米花", emoji: "🍿" }, { name: "漢堡", emoji: "🍔" }, { name: "甜甜圈", emoji: "🍩" }, { name: "冰淇淋", emoji: "🍦" }, { name: "披薩", emoji: "🍕" },
+                        { name: "熱狗", emoji: "🌭" }, { name: "薯條", emoji: "🍟" }, { name: "壽司", emoji: "🍣" }, { name: "塔可", emoji: "🌮" }, { name: "義大利麵", emoji: "🍝" },
+                        { name: "麵包", emoji: "🍞" }, { name: "蛋糕", emoji: "🍰" }, { name: "餅乾", emoji: "🍪" }, { name: "巧克力", emoji: "🍫" }, { name: "糖果", emoji: "🍬" },
+                        { name: "棒棒糖", emoji: "🍭" }, { name: "蘋果", emoji: "🍎" }, { name: "香蕉", emoji: "🍌" }, { name: "葡萄", emoji: "🍇" }, { name: "西瓜", emoji: "🍉" }
+                    ]},
+                    vehicle: { label: "交通", emoji: "🚗", bg: "bg-gray-50", border: "border-gray-300", text: "text-gray-700", items: [
+                        { name: "汽車", emoji: "🚗" }, { name: "飛機", emoji: "✈️" }, { name: "火車", emoji: "🚆" }, { name: "腳踏車", emoji: "🚲" }, { name: "船", emoji: "🚢" },
+                        { name: "公車", emoji: "🚌" }, { name: "計程車", emoji: "🚕" }, { name: "警車", emoji: "🚓" }, { name: "消防車", emoji: "🚒" }, { name: "救護車", emoji: "🚑" },
+                        { name: "滑板車", emoji: "🛴" }, { name: "摩托車", emoji: "🏍️" }, { name: "直升機", emoji: "🚁" }, { name: "火箭", emoji: "🚀" }, { name: "獨木舟", emoji: "🛶" },
+                        { name: "快艇", emoji: "🚤" }, { name: "卡車", emoji: "🚚" }, { name: "拖拉機", emoji: "🚜" }, { name: "輪椅", emoji: "♿" }, { name: "嬰兒車", emoji: "🛒" }
+                    ]},
+                    sport: { label: "運動", emoji: "⚽", bg: "bg-sky-50", border: "border-sky-200", text: "text-sky-700", items: [
+                        { name: "足球", emoji: "⚽" }, { name: "籃球", emoji: "🏀" }, { name: "橄欖球", emoji: "🏈" }, { name: "棒球", emoji: "⚾" }, { name: "網球", emoji: "🎾" },
+                        { name: "排球", emoji: "🏐" }, { name: "撞球", emoji: "🎱" }, { name: "桌球", emoji: "🏓" }, { name: "羽球", emoji: "🏸" }, { name: "球門", emoji: "🥅" },
+                        { name: "拳擊", emoji: "🥊" }, { name: "柔道服", emoji: "🥋" }, { name: "溜冰鞋", emoji: "⛸️" }, { name: "釣魚", emoji: "🎣" }, { name: "潛水", emoji: "🤿" },
+                        { name: "滑雪板", emoji: "🎿" }, { name: "雪橇", emoji: "🛷" }, { name: "弓箭", emoji: "🏹" }, { name: "高爾夫", emoji: "⛳" }, { name: "獎盃", emoji: "🏆" }
+                    ]},
+                    nature: { label: "自然", emoji: "☀️", bg: "bg-cyan-50", border: "border-cyan-200", text: "text-cyan-700", items: [
+                        { name: "太陽", emoji: "☀️" }, { name: "月亮", emoji: "🌙" }, { name: "星星", emoji: "⭐" }, { name: "雲朵", emoji: "☁️" }, { name: "下雨", emoji: "🌧️" },
+                        { name: "雪花", emoji: "❄️" }, { name: "閃電", emoji: "⚡" }, { name: "彩虹", emoji: "🌈" }, { name: "海浪", emoji: "🌊" }, { name: "火焰", emoji: "🔥" },
+                        { name: "水滴", emoji: "💧" }, { name: "雪山", emoji: "🏔️" }, { name: "火山", emoji: "🌋" }, { name: "銀河", emoji: "🌌" }, { name: "地球", emoji: "🌍" },
+                        { name: "龍捲風", emoji: "🌪️" }, { name: "強風", emoji: "🌬️" }, { name: "彗星", emoji: "☄️" }, { name: "雨傘", emoji: "☔" }, { name: "晴天", emoji: "🌤️" }
+                    ]}
+                }
+            }
+        };
+
+        // --- 遊戲狀態變數 ---
+        let currentMode = null;
+        let selectedCategories = []; 
+        let gameQueue = []; 
+        let currentIndex = 0;
+        let score = 0;
+        let totalQuestions = 0; // 改為動態計算
+        let audioContext = null;
+
+        // --- 音效系統 ---
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioContext) return;
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(500, audioContext.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1000, audioContext.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                osc.start();
+                osc.stop(audioContext.currentTime + 0.5);
+            } else {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioContext.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, audioContext.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioContext.currentTime + 0.3);
+            }
+        }
+
+        // --- 介面控制 ---
+        function selectMode(mode) {
+            initAudio(); 
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('ring-4', 'ring-blue-400');
+            });
+            event.currentTarget.classList.add('ring-4', 'ring-blue-400');
+            document.getElementById('difficulty-area').classList.remove('hidden');
+        }
+
+        function showScreen(screenId) {
+            ['menu-screen', 'game-screen', 'result-screen'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+
+            // 🌟 控制 Home 按鈕的顯示/隱藏
+            const homeBtn = document.getElementById('home-btn');
+            if (screenId === 'menu-screen') {
+                homeBtn.classList.add('invisible');
+            } else {
+                homeBtn.classList.remove('invisible');
+            }
+        }
+
+        // --- 遊戲邏輯核心 ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startGame(numCategories) {
+            if (!currentMode) return;
+
+            const allBuckets = Object.keys(DATABASE[currentMode].buckets);
+            const count = Math.min(numCategories, allBuckets.length);
+            
+            selectedCategories = shuffleArray([...allBuckets]).slice(0, count);
+
+            let rawItems = [];
+            selectedCategories.forEach(catKey => {
+                const catData = DATABASE[currentMode].buckets[catKey];
+                
+                // 從每個分類中隨機抽取 4 個物品
+                const shuffledItems = shuffleArray([...catData.items]); // 先打亂該分類的所有物品
+                const pickedItems = shuffledItems.slice(0, 4); // 取前 4 個
+                
+                pickedItems.forEach(item => {
+                    rawItems.push({ ...item, targetCategory: catKey });
+                });
+            });
+
+            // 隨機打亂題目順序
+            gameQueue = shuffleArray(rawItems);
+            totalQuestions = gameQueue.length;
+
+            currentIndex = 0;
+            score = 0;
+            updateScoreUI();
+
+            // 1. 初始化收集籃 (Bins)
+            renderBins();
+
+            // 2. 初始化按鈕
+            renderButtons();
+
+            showScreen('game-screen');
+            loadNextItem();
+        }
+
+        // 渲染收集籃
+        function renderBins() {
+            const container = document.getElementById('bins-container');
+            container.innerHTML = '';
+            
+            // 設定 grid 欄位數
+            if (selectedCategories.length === 3) {
+                container.className = 'grid grid-cols-3 gap-2 sm:gap-3 mb-2 shrink-0 h-32 sm:h-36';
+            } else {
+                container.className = 'grid grid-cols-2 gap-4 mb-2 shrink-0 h-32 sm:h-36';
+            }
+
+            selectedCategories.forEach(catKey => {
+                const catData = DATABASE[currentMode].buckets[catKey];
+                const bin = document.createElement('div');
+                // 使用資料庫中的樣式設定
+                bin.className = `rounded-xl border-2 ${catData.border} ${catData.bg} p-2 flex flex-col relative overflow-hidden`;
+                bin.id = `bin-${catKey}`; 
+                
+                bin.innerHTML = `
+                    <div class="flex items-center justify-center gap-1 mb-1 border-b ${catData.border} pb-1">
+                        <span class="text-lg sm:text-xl">${catData.emoji}</span>
+                        <span class="text-sm font-bold ${catData.text}">${catData.label}</span>
+                    </div>
+                    <div class="bin-content flex flex-wrap gap-1 content-start justify-center overflow-y-auto no-scrollbar flex-1">
+                        <!-- 答對的物品會出現在這裡 -->
+                    </div>
+                `;
+                container.appendChild(bin);
+            });
+        }
+
+        function renderButtons() {
+            const container = document.getElementById('category-buttons');
+            container.innerHTML = '';
+            
+            if (selectedCategories.length === 3) {
+                container.className = 'grid grid-cols-3 gap-2 sm:gap-3 mt-auto shrink-0 pb-2';
+            } else {
+                container.className = 'grid grid-cols-2 gap-4 mt-auto shrink-0 pb-2';
+            }
+
+            selectedCategories.forEach(catKey => {
+                const catData = DATABASE[currentMode].buckets[catKey];
+                const btn = document.createElement('button');
+                btn.className = 'bg-white border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-700 font-bold py-2 px-1 rounded-xl shadow-md transition-all active:scale-95 flex flex-col items-center justify-center h-20 sm:h-24';
+                btn.onclick = () => handleAnswer(catKey);
+                btn.innerHTML = `
+                    <span class="text-3xl sm:text-4xl mb-1">${catData.emoji}</span>
+                    <span class="text-sm sm:text-base">${catData.label}</span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function loadNextItem() {
+            if (currentIndex >= totalQuestions) {
+                endGame();
+                return;
+            }
+
+            const item = gameQueue[currentIndex];
+            const card = document.getElementById('item-card');
+            const emojiEl = document.getElementById('item-emoji');
+            const nameEl = document.getElementById('item-name');
+            const feedbackEl = document.getElementById('feedback-text');
+
+            emojiEl.className = 'text-7xl sm:text-8xl mb-2 transition-transform duration-300 select-none'; 
+            feedbackEl.style.opacity = '0';
+            
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.8)';
+            
+            setTimeout(() => {
+                emojiEl.textContent = item.emoji;
+                nameEl.textContent = item.name;
+                card.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+                
+                document.getElementById('current-count').textContent = currentIndex + 1;
+                document.getElementById('total-count').textContent = totalQuestions;
+            }, 200);
+
+            toggleButtons(true);
+        }
+
+        function handleAnswer(selectedKey) {
+            const currentItem = gameQueue[currentIndex];
+            const isCorrect = selectedKey === currentItem.targetCategory;
+            const feedbackEl = document.getElementById('feedback-text');
+            const emojiEl = document.getElementById('item-emoji');
+
+            toggleButtons(false); 
+
+            if (isCorrect) {
+                playSound('correct');
+                score += 100 / totalQuestions;
+                feedbackEl.textContent = "答對了！⭕";
+                feedbackEl.className = "h-8 mt-2 font-bold text-lg text-center text-green-600 animate-correct";
+                emojiEl.classList.add('animate-correct');
+
+                // 將物品添加到上方的籃子中
+                addToBin(selectedKey, currentItem.emoji);
+
+            } else {
+                playSound('wrong');
+                feedbackEl.textContent = "再試一次！❌";
+                feedbackEl.className = "h-8 mt-2 font-bold text-lg text-center text-red-500 animate-wrong";
+                emojiEl.classList.add('animate-wrong');
+            }
+
+            feedbackEl.style.opacity = '1';
+            updateScoreUI();
+
+            setTimeout(() => {
+                currentIndex++;
+                loadNextItem();
+            }, 1200);
+        }
+
+        // 將物品動畫加入籃子的邏輯
+        function addToBin(categoryKey, emoji) {
+            const bin = document.querySelector(`#bin-${categoryKey} .bin-content`);
+            if (bin) {
+                const smallItem = document.createElement('span');
+                smallItem.textContent = emoji;
+                smallItem.className = 'text-2xl animate-item-appear drop-shadow-sm'; 
+                bin.appendChild(smallItem);
+                
+                // 自動捲動到底部
+                bin.scrollTop = bin.scrollHeight;
+            }
+        }
+
+        function toggleButtons(enable) {
+            const buttons = document.querySelectorAll('#category-buttons button');
+            buttons.forEach(btn => {
+                btn.disabled = !enable;
+                if (!enable) {
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            });
+        }
+
+        function updateScoreUI() {
+            document.getElementById('score-display').textContent = Math.round(score);
+        }
+
+        function endGame() {
+            showScreen('result-screen');
+            const finalScore = Math.round(score);
+            document.getElementById('final-score').textContent = finalScore;
+            
+            const msgEl = document.getElementById('result-message');
+            if (finalScore === 100) {
+                msgEl.textContent = "太厲害了！你是分類大師！🌟";
+            } else if (finalScore >= 60) {
+                msgEl.textContent = "做得很好！繼續加油！👍";
+            } else {
+                msgEl.textContent = "再接再厲，下次會更好！💪";
+            }
+        }
+
+        function resetGame() {
+            currentMode = null;
+            document.getElementById('difficulty-area').classList.add('hidden');
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('ring-4', 'ring-blue-400');
+            });
+            showScreen('menu-screen');
+        }
+
+    </script>
+</body>
+</html>
