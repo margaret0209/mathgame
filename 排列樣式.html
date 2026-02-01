@@ -146,7 +146,7 @@
             </div>
 
             <!-- Next Level Button (Hidden initially) -->
-            <button id="next-level-btn" onclick="initGame()" class="hidden mt-4 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg animate__animated animate__pulse animate__infinite">
+            <button id="next-level-btn" onclick="nextLevel()" class="hidden mt-4 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg animate__animated animate__pulse animate__infinite">
                 🎉 太棒了！下一題 ➡️
             </button>
         </footer>
@@ -155,6 +155,80 @@
 
     <!-- JavaScript Logic -->
     <script>
+        // --- Sound System ---
+        // 使用 Web Audio API 避免依賴外部檔案
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'correct') {
+                // 叮！ (高音正弦波)
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(1000, now + 0.1);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+
+            } else if (type === 'wrong') {
+                // 嗡... (低音鋸齒波)
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+
+            } else if (type === 'click') {
+                // 噠 (短促的點擊音)
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600, now);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+
+            } else if (type === 'win') {
+                // 勝利和弦 (C Major)
+                playNote(523.25, now, 0.1); // C5
+                playNote(659.25, now + 0.1, 0.1); // E5
+                playNote(783.99, now + 0.2, 0.1); // G5
+                playNote(1046.50, now + 0.3, 0.4); // C6
+            }
+        }
+
+        function playNote(freq, time, duration) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.value = freq;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.2, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + duration);
+            osc.start(time);
+            osc.stop(time + duration);
+        }
+
         // --- Game Data ---
         const themes = {
             animals: [
@@ -421,7 +495,7 @@
             const correctItemIndex = currentState.sequence[currentSlotIndex];
 
             if (selectedIndex === correctItemIndex) {
-                playFeedback(true);
+                playSound('correct'); // 播放答對音效
                 currentState.userProgress++;
 
                 // 判斷更新方式
@@ -445,12 +519,13 @@
                     handleWin();
                 }
             } else {
-                playFeedback(false);
+                playSound('wrong'); // 播放答錯音效
                 shakeGame();
             }
         }
 
         function handleWin() {
+            playSound('win'); // 播放勝利音效
             document.getElementById('options-container').classList.add('hidden');
             const winBtn = document.getElementById('next-level-btn');
             winBtn.classList.remove('hidden');
@@ -459,10 +534,16 @@
             msg.innerText = "完成！你真棒！🎉";
             msg.className = "absolute top-2 left-1/2 transform -translate-x-1/2 text-green-600 font-bold text-xl animate__animated animate__bounceIn";
         }
+        
+        function nextLevel() {
+            playSound('click');
+            initGame();
+        }
 
         // --- Interaction Helpers ---
 
         function setPattern(type) {
+            playSound('click'); // 播放點擊音效
             if (type === 'RANDOM') {
                 currentState.isRandom = true;
             } else {
@@ -509,12 +590,14 @@
         }
 
         function changeTheme() {
+            // playSound('click'); // 下拉選單點擊音效可能太頻繁，可不加
             const select = document.getElementById('theme-select');
             currentState.theme = select.value;
             initGame();
         }
 
         function toggleHint() {
+            playSound('click'); // 播放點擊音效
             currentState.hintMode = !currentState.hintMode;
             
             const btn = document.getElementById('btn-hint');
@@ -546,9 +629,15 @@
         }
 
         function playFeedback(isCorrect) {
-            // Placeholder for sound
+            // Placeholder for visual feedback, sound handled in playSound
         }
 
     </script>
 </body>
+</html>
+
+
+
+
+
 </html>
