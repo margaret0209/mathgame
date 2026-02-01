@@ -62,7 +62,7 @@
         }
 
         .item-slot {
-            transition: all 0.3s ease;
+            transition: background-color 0.3s, border-color 0.3s;
         }
 
         .option-btn {
@@ -159,12 +159,12 @@
         const themes = {
             animals: [
                 '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', 
-                '🦁', '🐮', '🐷', '🐽', '🐸', '🐵', '🐵', '🙉', '🙊', '🐒', 
+                '🦁', '🐮', '🐷', '🐽', '🐸', '🐒', '🦭', 
                 '🦍', '🦧', '🐕', '🐩', '🦮', '🐕‍🦺', '🐈', '🐈‍⬛', '🐅', '🐆', 
-                '🐎', '🦄', '🦓', '🦌', '🦬', '🐂', '🐃', '🐄', '🐖', '🐏', 
+                '🐎', '🦄', '🦓', '🦌', '🐂', '🐃', '🐄', '🐖', '🐏', 
                 '🐑', '🐐', '🐪', '🐫', '🦙', '🦒', '🐘', '🦣', '🦏', '🦛', 
                 '🐁', '🐀', '🐿', '🦔', '🦥', '🦦', '🦨', '🦘', '🦡', '🐾', 
-                '🦃', '🐔', '🐓', '🐣', '🐤', '🐥', '🐦', '🐧', '🕊', '🦅', 
+                '🦃', '🐔', '🐓', '🐥', '🐦', '🐧', '🕊', '🦅', 
                 '🦆', '🦢', '🦉', '🦩', '🦚', '🦜', '🐊', '🐢', '🦎', '🐍', 
                 '🐲', '🐉', '🦕', '🦖', '🐳', '🐋', '🐬', '🐟', '🐠', '🐡', 
                 '🦈', '🐙', '🐚', '🦀', '🦞', '🦐', '🦑', '🦪', '🐌', '🦋', 
@@ -174,7 +174,7 @@
                 '🍇', '🍈', '🍉', '🍊', '🍋', '🍌', '🍍', '🥭', '🍎', '🍏', 
                 '🍐', '🍑', '🍒', '🍓', '🫐', '🥝', '🍅', '🫒', '🥥', '🥑', 
                 '🍆', '🥔', '🥕', '🌽', '🌶', '🫑', '🥒', '🥬', '🥦', '🧄', 
-                '🧅', '🍄', '🥜', '🌰', '🍞'
+                '🧅', '🍄', '🥜', '🌰', '🫚'
             ],
             food: [
                 '🍞', '🥐', '🥖', '🫓', '🥨', '🥯', '🥞', '🧇', '🧀', '🍖', 
@@ -184,29 +184,25 @@
                 '🍝', '🍠', '🍢', '🍣', '🍤', '🍥', '🥮', '🍡', '🥟', '🥠',
                 '🥡', '🦀', '🦞', '🦐', '🦑', '🦪', '🍦', '🍧', '🍨', '🍩',
                 '🍪', '🎂', '🍰', '🧁', '🥧', '🍫', '🍬', '🍭', '🍮', '🍯',
-                '🍼', '🥛', '☕', '🍵', '🥤', '🧃', '🧉', '🧊', '🍽', '🍴'
+                '🥛', '☕', '🍵', '🥤', '🧃', '🧉', '🧊'
             ],
             emotions: [
-                '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '🥲', '☺️', 
-                '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗',
-                '😙', '😚', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭',
-                '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄',
-                '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕',
-                '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳',
-                '😎', '🤓', '🧐', '😕', '😟', '🙁', '☹️', '😮', '😯', '😲',
-                '😳', '🥺', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😱'
+                '🙈', '😄',
+                '😊', '😉', '😌', '😘', '😗',
+                '🙉', '🤪', '🤭', '🤗', '🤭',
+                '🤫', '🤔', '🙄', '🫡', '🥱',
+                '😬', '🤤', '😴', '😷', '🤒',
+                '🤮', '🤧', '😵', '🥳',
+                '😎', '☹️', '🫣', '😮‍💨',
+                '🥺', '😦', '😧', '😭', '😱'
             ],
             actions: [
-                '🏃', '🏃‍♂️', '🏃‍♀️', '🚶', '🚶‍♂️', '🚶‍♀️', '🧍', '🧍‍♂️', '🧍‍♀️', '🧎', 
-                '🧎‍♂️', '🧎‍♀️', '🧑‍🦯', '🧑‍🦼', '🧑‍🦽', '🏃', '👯', '👯‍♂️', '👯‍♀️', '🧖', 
-                '🧖‍♂️', '🧖‍♀️', '🧗', '🧗‍♂️', '🧗‍♀️', '🧘', '🧘‍♂️', '🧘‍♀️', '🛀', '🛌', 
-                '🏇', '⛷', '🏂', '🏌️', '🏌️‍♂️', '🏌️‍♀️', '🏄', '🏄‍♂️', '🏄‍♀️', '🚣', 
-                '🚣‍♂️', '🚣‍♀️', '🏊', '🏊‍♂️', '🏊‍♀️', '⛹️', '⛹️‍♂️', '⛹️‍♀️', '🏋️', '🏋️‍♂️', 
-                '🏋️‍♀️', '🚴', '🚴‍♂️', '🚴‍♀️', '🚵', '🚵‍♂️', '🚵‍♀️', '🤸', '🤸‍♂️', '🤸‍♀️', 
-                '🤼', '🤼‍♂️', '🤼‍♀️', '🤽', '🤽‍♂️', '🤽‍♀️', '🤾', '🤾‍♂️', '🤾‍♀️', '🤹', 
-                '🤹‍♂️', '🤹‍♀️', '💃', '🕺',
-                '🏋️', '🤸‍♀️', '⛹🏻‍♀️', '🤾🏻‍♂️', '🏌🏻', '🧘🏻‍♀️', '🏊🏻‍♂️', '🏌🏻‍♀️', '🤺', '🙆🏻‍♀️', 
-                '🙅🏻‍♂️', '🙋🏻‍♀️', '🤷🏻‍♂️', '🤦🏻‍♂️', '🙇🏻‍♀️'
+                '🏃', '🚶‍♀️', '🧍‍♀️', '🧎', 
+                '🧑‍🦼', '🧗‍♀️', '🏇', '⛷', '🏂', '🏌️', '🏄‍♀️', '🚣', 
+                '🏊‍♀️', '⛹️‍♀️', '🏋️', '🚴', '🤸‍♀️', '🤽', '🤾‍♀️', '🤹', 
+                '💃', '👏🏻', '👍🏻', '🫱🏻‍🫲🏽', '✌🏻', '👋🏻', '💪🏻',
+                '🏌🏻', '🧘🏻‍♀️',  '🤺', '🙆🏻‍♀️', 
+                '🙅🏻‍♂️', '🙋🏻‍♀️', '🤷🏻‍♂️', '🤦🏻‍♂️', '🫶🏻', '🙌🏻', '👌🏻', '👆🏻', '🙏🏻', '🙇🏻‍♀️'
             ],
             colors: ['🔴', '🔵', '🟢', '🟡', '🟣', '🟠', '⚫', '⚪']
         };
@@ -245,7 +241,7 @@
             }
 
             generateSequence();
-            renderSequence();
+            renderSequence(); // 初始渲染
             renderOptions();
         }
 
@@ -296,11 +292,14 @@
             currentState.userProgress = 0;
         }
 
+        // 全面渲染（用於初始化、切換提示或切換樣式）
         function renderSequence() {
             const track = document.getElementById('sequence-track');
             track.innerHTML = '';
 
             const patternLength = (['AB'].includes(currentState.patternType)) ? 2 : 3;
+            // 設定每行顯示 3 組規律圖案
+            const itemsPerLine = patternLength * 3;
             
             const solvedCount = currentState.visibleCount + currentState.userProgress;
             
@@ -320,6 +319,13 @@
                 const shouldWrap = currentState.hintMode && (groupIndex === 0 || isGroupFullySolved);
 
                 if (isGroupStart) {
+                    // 換行邏輯
+                    if (index > 0 && index % itemsPerLine === 0) {
+                        const breakEl = document.createElement('div');
+                        breakEl.className = "w-full basis-full h-4"; 
+                        track.appendChild(breakEl);
+                    }
+
                     if (shouldWrap) {
                         currentWrapper = document.createElement('div');
                         currentWrapper.className = 'hint-box flex gap-1 md:gap-2 hint-active items-center justify-center px-2 py-1';
@@ -334,9 +340,12 @@
 
                 // Render Item
                 const itemEl = document.createElement('div');
+                itemEl.id = `slot-${index}`; // 給每個格子一個獨立 ID
+                
+                // 基礎樣式
                 itemEl.className = `
-                    item-slot w-12 h-12 md:w-16 md:h-16 flex items-center justify-center text-2xl md:text-3xl rounded-xl shadow-sm border-2 flex-shrink-0
-                    ${isSolved ? 'bg-white border-slate-200' : (isNext ? 'bg-blue-50 border-blue-300 border-dashed animate-pulse' : 'bg-slate-100 border-slate-200 opacity-50')}
+                    item-slot w-12 h-12 md:w-16 md:h-16 flex items-center justify-center text-2xl md:text-3xl rounded-xl shadow-sm border-2 flex-shrink-0 transition-all duration-300
+                    ${isSolved ? 'bg-white border-slate-200' : (isNext ? 'bg-blue-50 border-blue-300 border-dashed animate-pulse text-blue-400' : 'bg-slate-100 border-slate-200 opacity-50')}
                 `;
 
                 if (isSolved) {
@@ -346,7 +355,6 @@
                     }
                 } else if (isNext) {
                     itemEl.innerText = '?';
-                    itemEl.classList.add('text-blue-400');
                 } else {
                     itemEl.innerText = '';
                 }
@@ -357,6 +365,36 @@
                     track.appendChild(itemEl);
                 }
             });
+        }
+
+        // 局部更新（只更新特定格子，避免閃爍）
+        function updateSlot(index) {
+            const el = document.getElementById(`slot-${index}`);
+            if (!el) return;
+
+            const itemIndex = currentState.sequence[index];
+            const itemChar = currentState.items[itemIndex];
+            const solvedCount = currentState.visibleCount + currentState.userProgress;
+            
+            const isSolved = index < solvedCount;
+            const isNext = index === solvedCount;
+
+            // 重置基本樣式，保留 transition
+            el.className = `item-slot w-12 h-12 md:w-16 md:h-16 flex items-center justify-center text-2xl md:text-3xl rounded-xl shadow-sm border-2 flex-shrink-0 transition-all duration-300`;
+
+            if (isSolved) {
+                el.innerText = itemChar;
+                el.classList.add('bg-white', 'border-slate-200');
+                if (index === solvedCount - 1) { 
+                    el.classList.add('pop-in'); // 剛答對的格子加上動畫
+                }
+            } else if (isNext) {
+                el.innerText = '?';
+                el.classList.add('bg-blue-50', 'border-blue-300', 'border-dashed', 'animate-pulse', 'text-blue-400');
+            } else {
+                el.innerText = '';
+                el.classList.add('bg-slate-100', 'border-slate-200', 'opacity-50');
+            }
         }
 
         function renderOptions() {
@@ -385,9 +423,25 @@
             if (selectedIndex === correctItemIndex) {
                 playFeedback(true);
                 currentState.userProgress++;
-                renderSequence();
 
-                if (currentState.visibleCount + currentState.userProgress >= currentState.totalLength) {
+                // 判斷更新方式
+                const patternLength = (['AB'].includes(currentState.patternType)) ? 2 : 3;
+                const currentCount = currentState.visibleCount + currentState.userProgress;
+                
+                // 如果開啟提示模式，且剛好完成一組規律，需要重繪（因為要加上外框）
+                // 否則使用局部更新，避免閃爍
+                if (currentState.hintMode && (currentCount % patternLength === 0)) {
+                    renderSequence();
+                } else {
+                    // 局部更新：更新剛填入的格子
+                    updateSlot(currentCount - 1);
+                    // 局部更新：更新下一個問號（如果還沒結束）
+                    if (currentCount < currentState.totalLength) {
+                        updateSlot(currentCount);
+                    }
+                }
+
+                if (currentCount >= currentState.totalLength) {
                     handleWin();
                 }
             } else {
@@ -480,7 +534,7 @@
                 status.classList.remove('bg-yellow-200');
             }
 
-            renderSequence();
+            renderSequence(); // 切換提示模式必須重繪結構
         }
 
         function shakeGame() {
