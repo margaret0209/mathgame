@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數線應用題生成器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            touch-action: manipulation;
+            background-color: #fdf2f8; /* Very light pink/warm bg */
+        }
+        .canvas-container {
+            width: 100%;
+            overflow-x: auto;
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 0.5rem; /* Reduced margin */
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+        }
+        .btn-choice {
+            transition: all 0.2s;
+            border: 2px solid #e5e7eb;
+            font-weight: bold;
+        }
+        .btn-choice:hover:not(:disabled) {
+            background-color: #f3f4f6;
+        }
+        .btn-choice.selected {
+            background-color: #EFF6FF;
+            border-color: #2563EB;
+            color: #2563EB;
+        }
+        .btn-choice.correct {
+            background-color: #dcfce7;
+            border-color: #16a34a;
+            color: #16a34a;
+        }
+        .btn-choice.wrong {
+            background-color: #fee2e2;
+            border-color: #dc2626;
+            color: #dc2626;
+        }
+        
+        /* Formula Inputs */
+        .formula-input {
+            text-align: center;
+            border: 2px solid #d1d5db;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            font-size: 2rem; /* Increased font size */
+            font-weight: bold;
+            transition: all 0.2s;
+            cursor: pointer;
+            background-color: white;
+            height: 4rem; /* Fixed height for consistency */
+        }
+        .formula-input:focus, .formula-input.active-input {
+            outline: none;
+            border-color: #9333ea;
+            box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.2);
+        }
+        .input-correct {
+            background-color: #dcfce7;
+            border-color: #16a34a;
+            color: #16a34a;
+        }
+        .input-wrong {
+            background-color: #fee2e2;
+            border-color: #dc2626;
+            color: #dc2626;
+        }
+        .input-locked {
+            background-color: #f3f4f6;
+            color: #6b7280;
+            border-color: #e5e7eb;
+            cursor: not-allowed;
+        }
+        /* Operator text */
+        .op-text {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #9ca3af;
+        }
+
+        /* Keypad Styles */
+        .keypad-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem; 
+            width: 100%;
+            max-width: 400px; /* Restricted max-width */
+        }
+        .key-btn {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem; 
+            padding: 1rem 0;
+            font-size: 1.5rem; 
+            font-weight: bold;
+            color: #374151;
+            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.1s;
+        }
+        .key-btn:active {
+            background-color: #f3f4f6;
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+        .key-btn.op-key {
+            background-color: #f3e8ff; /* Light purple */
+            color: #7e22ce;
+            border-color: #d8b4fe;
+        }
+        .key-btn.del-key {
+            background-color: #fee2e2;
+            color: #dc2626;
+            border-color: #fecaca;
+        }
+        .key-btn-zero {
+            grid-column: span 2;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex flex-col items-center">
+
+    <div class="max-w-6xl w-full space-y-4"> 
+        
+        <!-- Controls -->
+        <div class="bg-white p-4 rounded-xl shadow-sm flex flex-col gap-4">
+            
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 w-full">
+                <!-- Selectors Group -->
+                <div class="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                    <div class="flex items-center gap-2">
+                        <label class="font-bold text-gray-700 whitespace-nowrap">題型：</label>
+                        <select id="problemType" onchange="initGame()" class="w-full md:w-auto border-2 border-gray-300 rounded-lg p-2 font-bold text-gray-700 focus:border-blue-500 outline-none">
+                            <option value="1">題型 1：B 比 A 多 Y</option>
+                            <option value="2">題型 2：B 比 A 少 Y</option>
+                            <option value="3">題型 3：A 比 B 多 Y</option>
+                            <option value="4">題型 4：A 比 B 少 Y</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <label class="font-bold text-gray-700 whitespace-nowrap">數字範圍：</label>
+                        <select id="numberRange" onchange="initGame()" class="w-full md:w-auto border-2 border-gray-300 rounded-lg p-2 font-bold text-gray-700 focus:border-blue-500 outline-none">
+                            <option value="10">1 至 10</option>
+                            <option value="20">1 至 20</option>
+                            <option value="100" selected>1 至 100</option>
+                            <option value="1000">100 至 1000</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Score & Reset -->
+                <div class="flex items-center gap-4 w-full md:w-auto justify-end">
+                     <div class="text-right">
+                        <div class="text-xs text-gray-500">答對題數</div>
+                        <div class="text-2xl font-bold text-green-600"><span id="score">0</span></div>
+                    </div>
+                    <button onclick="initGame()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-lg transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Text (Increased Size) -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-xl shadow-sm">
+            <h2 id="question-text" class="text-4xl md:text-5xl font-bold text-gray-800 leading-tight">
+                <!-- Text injected by JS -->
+            </h2>
+        </div>
+
+        <!-- Canvas -->
+        <div class="canvas-container p-2">
+            <canvas id="mainCanvas"></canvas>
+        </div>
+
+        <!-- Interaction Area -->
+        <div class="bg-white p-6 rounded-xl shadow-lg space-y-6" id="interaction-area">
+            
+            <!-- Step 1: Compare A -->
+            <div id="step-compare-a" class="hidden space-y-3">
+                <h3 class="text-xl font-bold text-gray-800"><span class="text-blue-600 text-2xl">A</span> 是多，還是少？</h3>
+                <div class="flex gap-4">
+                    <button onclick="submitCompare('A', 'more')" id="btn-a-more" class="btn-choice flex-1 py-4 rounded-xl text-xl">多</button>
+                    <button onclick="submitCompare('A', 'less')" id="btn-a-less" class="btn-choice flex-1 py-4 rounded-xl text-xl">少</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Compare B -->
+            <div id="step-compare-b" class="hidden space-y-3 pt-4 border-t border-gray-100">
+                <h3 class="text-xl font-bold text-gray-800"><span class="text-red-600 text-2xl">B</span> 是多，還是少？</h3>
+                <div class="flex gap-4">
+                    <button onclick="submitCompare('B', 'more')" id="btn-b-more" class="btn-choice flex-1 py-4 rounded-xl text-xl">多</button>
+                    <button onclick="submitCompare('B', 'less')" id="btn-b-less" class="btn-choice flex-1 py-4 rounded-xl text-xl">少</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Calculation (Two Rows) -->
+            <div id="step-calc" class="hidden pt-4 border-t border-gray-100">
+                <h3 class="text-xl font-bold text-gray-800 mb-4"><span class="text-red-600 text-2xl">B</span> 有多少元？ (輸入算式)</h3>
+                
+                <div class="flex flex-col md:flex-row gap-6 items-start">
+                    
+                    <!-- Left: Formula Inputs (50% Width) -->
+                    <div class="w-full md:w-1/2 space-y-6">
+                        <div class="bg-gray-50 p-6 rounded-xl space-y-8">
+                            
+                            <!-- Row 1: The Formula -->
+                            <div class="flex flex-wrap items-center justify-center gap-3">
+                                <input type="text" readonly id="calc-n1" class="formula-input w-28" placeholder="?">
+                                <input type="text" readonly id="calc-op" class="formula-input w-20 text-purple-600" placeholder="+/-">
+                                <input type="text" readonly id="calc-n2" class="formula-input w-28" placeholder="?">
+                            </div>
+
+                            <!-- Row 2: The Answer (Initially Hidden) -->
+                            <div id="calc-row-2" class="hidden flex flex-wrap items-center justify-center gap-3 border-t border-gray-200 pt-8">
+                                <span class="op-text">=</span>
+                                <input type="text" readonly id="calc-ans" class="formula-input w-36 bg-white" placeholder="?">
+                            </div>
+
+                        </div>
+
+                        <div class="text-center">
+                            <button onclick="checkCalcStep()" id="btn-submit-calc" class="bg-purple-600 text-white px-8 py-4 rounded-lg font-bold text-xl hover:bg-purple-700 shadow-md transform active:scale-95 transition-all w-full">
+                                檢查算式
+                            </button>
+                             <button onclick="initGame()" id="btn-next-q" class="hidden bg-green-600 text-white px-8 py-4 rounded-lg font-bold text-xl hover:bg-green-700 shadow-md transform active:scale-95 transition-all w-full">
+                                下一題
+                            </button>
+                        </div>
+                        
+                        <p id="calc-feedback" class="text-center font-bold text-lg min-h-[1.5em]"></p>
+                    </div>
+
+                    <!-- Right: Keypad (50% Width) -->
+                    <div class="w-full md:w-1/2 flex justify-center">
+                        <div class="keypad-grid bg-gray-100 p-6 rounded-2xl shadow-inner">
+                            <button onclick="pressKey('7')" class="key-btn">7</button>
+                            <button onclick="pressKey('8')" class="key-btn">8</button>
+                            <button onclick="pressKey('9')" class="key-btn">9</button>
+                            <button onclick="pressKey('+')" class="key-btn op-key">+</button>
+                            
+                            <button onclick="pressKey('4')" class="key-btn">4</button>
+                            <button onclick="pressKey('5')" class="key-btn">5</button>
+                            <button onclick="pressKey('6')" class="key-btn">6</button>
+                            <button onclick="pressKey('-')" class="key-btn op-key">-</button>
+                            
+                            <button onclick="pressKey('1')" class="key-btn">1</button>
+                            <button onclick="pressKey('2')" class="key-btn">2</button>
+                            <button onclick="pressKey('3')" class="key-btn">3</button>
+                            <button onclick="pressKey('del')" class="key-btn del-key">⌫</button>
+                            
+                            <button onclick="pressKey('0')" class="key-btn key-btn-zero">0</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- Game Configuration & State ---
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        let score = 0;
+        let activeInputId = 'calc-n1'; 
+
+        let state = {
+            type: 1,
+            range: 100, // Default range
+            valA: 0,
+            diff: 0,
+            valB: 0,
+            isAMore: false, 
+            isBMore: false,
+            step: 0, 
+            showB: false,
+            calcStage: 0 // 0: Entering Formula, 1: Entering Answer
+        };
+
+        // --- Canvas Drawing ---
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            // Reduced Height from 200 to 130
+            canvas.height = 130;
+            draw();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function draw() {
+            if (!canvas.width) return;
+            const w = canvas.width;
+            const h = canvas.height;
+            const padding = 50;
+            
+            // Adjusted lineY for new height (centered in 130px)
+            const lineY = 65; 
+
+            ctx.clearRect(0, 0, w, h);
+
+            let maxVal = Math.max(state.valA, state.valB);
+            // Ensure scale handles the current range appropriately
+            const scaleMax = maxVal * 1.3;
+            const pxPerUnit = (w - 2 * padding) / scaleMax;
+
+            // Line
+            ctx.beginPath();
+            ctx.moveTo(padding, lineY);
+            ctx.lineTo(w - padding, lineY);
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Arrow
+            ctx.beginPath();
+            ctx.moveTo(w - padding, lineY);
+            ctx.lineTo(w - padding - 10, lineY - 5);
+            ctx.lineTo(w - padding - 10, lineY + 5);
+            ctx.fillStyle = '#374151';
+            ctx.fill();
+
+            // Ticks
+            drawTick(padding, lineY, '0', '#9CA3AF');
+            
+            const xA = padding + state.valA * pxPerUnit;
+            drawTick(xA, lineY, 'A', '#2563EB', state.valA);
+
+            if (state.showB) {
+                const xB = padding + state.valB * pxPerUnit;
+                drawTick(xB, lineY, 'B', '#DC2626', '?', true);
+            }
+        }
+
+        function drawTick(x, y, labelTop, color, labelBottom = null, isBottomBold = false) {
+            ctx.beginPath();
+            ctx.moveTo(x, y - 10);
+            ctx.lineTo(x, y + 10);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.fillStyle = color;
+            ctx.font = 'bold 24px "Noto Sans TC", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(labelTop, x, y - 15);
+
+            if (labelBottom !== null) {
+                ctx.textBaseline = 'top';
+                ctx.font = isBottomBold ? 'bold 24px "Noto Sans TC"' : '20px "Noto Sans TC"';
+                ctx.fillText(labelBottom, x, y + 15);
+            }
+        }
+
+        // --- Game Logic ---
+        function initGame() {
+            const typeSelect = document.getElementById('problemType');
+            const rangeSelect = document.getElementById('numberRange');
+            state.type = parseInt(typeSelect.value);
+            state.range = parseInt(rangeSelect.value);
+            
+            // Random Number Generation based on Range
+            if (state.range === 10) {
+                // 1-10: Small numbers
+                state.valA = Math.floor(Math.random() * 6) + 3; // 3 to 8
+                state.diff = Math.floor(Math.random() * 3) + 1; // 1 to 3
+            } else if (state.range === 20) {
+                // 1-20
+                state.valA = Math.floor(Math.random() * 11) + 5; // 5 to 15
+                state.diff = Math.floor(Math.random() * 5) + 2; // 2 to 6
+            } else if (state.range === 100) {
+                // 1-100 (Classic)
+                state.valA = Math.floor(Math.random() * 60) + 20; // 20 to 79
+                state.diff = Math.floor(Math.random() * 15) + 5;  // 5 to 19
+            } else if (state.range === 1000) {
+                // 100-1000: Large numbers
+                state.valA = Math.floor(Math.random() * 600) + 200; // 200 to 799
+                state.diff = Math.floor(Math.random() * 200) + 50;  // 50 to 249
+            }
+
+            // Ensure logic holds (Prevent negative B)
+            // If Type 2 or 3 (B = A - diff), we need A > diff
+            if ((state.type === 2 || state.type === 3) && state.diff >= state.valA) {
+                state.diff = Math.floor(state.valA / 2); // Fallback to safe diff
+                if (state.diff === 0) state.diff = 1;
+            }
+
+            switch(state.type) {
+                case 1: state.valB = state.valA + state.diff; state.isAMore = false; state.isBMore = true; break;
+                case 2: state.valB = state.valA - state.diff; state.isAMore = true; state.isBMore = false; break;
+                case 3: state.valB = state.valA - state.diff; state.isAMore = true; state.isBMore = false; break;
+                case 4: state.valB = state.valA + state.diff; state.isAMore = false; state.isBMore = true; break;
+            }
+
+            state.step = 0;
+            state.showB = false;
+            state.calcStage = 0;
+            
+            updateQuestionText();
+            resetUIElements();
+            resizeCanvas();
+        }
+
+        function updateQuestionText() {
+            const qDiv = document.getElementById('question-text');
+            let text = "";
+            const X = state.valA;
+            const Y = state.diff;
+            
+            // Apply colors to A and B everywhere
+            const txtA = `<span class="text-blue-600 font-bold">A</span>`;
+            const txtB = `<span class="text-red-600 font-bold">B</span>`;
+            
+            const hX = `<span class="text-blue-600 font-bold">${X}</span>`;
+            const hY = `<span class="text-purple-600 font-bold">${Y}</span>`;
+
+            switch(state.type) {
+                case 1: text = `${txtA} 有 ${hX} 元，${txtB} 比 ${txtA} 多 ${hY} 元。`; break;
+                case 2: text = `${txtA} 有 ${hX} 元，${txtB} 比 ${txtA} 少 ${hY} 元。`; break;
+                case 3: text = `${txtA} 有 ${hX} 元，${txtA} 比 ${txtB} 多 ${hY} 元。`; break;
+                case 4: text = `${txtA} 有 ${hX} 元，${txtA} 比 ${txtB} 少 ${hY} 元。`; break;
+            }
+            qDiv.innerHTML = text;
+        }
+
+        function resetUIElements() {
+            document.getElementById('step-compare-a').classList.add('hidden');
+            document.getElementById('step-compare-b').classList.add('hidden');
+            document.getElementById('step-calc').classList.add('hidden');
+
+            document.querySelectorAll('.btn-choice').forEach(b => {
+                b.className = 'btn-choice flex-1 py-4 rounded-xl text-xl';
+                b.disabled = false;
+            });
+
+            // Reset Calc Inputs
+            ['calc-n1', 'calc-n2', 'calc-ans', 'calc-op'].forEach(id => {
+                const el = document.getElementById(id);
+                el.value = '';
+                el.classList.remove('input-correct', 'input-wrong', 'input-locked');
+                el.readOnly = true; // Use keypad
+            });
+            document.getElementById('calc-op').value = ''; 
+            
+            // Hide row 2
+            document.getElementById('calc-row-2').classList.add('hidden');
+            
+            const btnSubmit = document.getElementById('btn-submit-calc');
+            btnSubmit.classList.remove('hidden');
+            btnSubmit.innerText = "檢查算式";
+            btnSubmit.classList.remove('bg-green-600', 'hover:bg-green-700');
+            btnSubmit.classList.add('bg-purple-600', 'hover:bg-purple-700');
+
+            document.getElementById('btn-next-q').classList.add('hidden');
+            document.getElementById('calc-feedback').innerText = '';
+
+            // Set default focus
+            setActiveInput('calc-n1');
+
+            showNextStep();
+        }
+
+        function showNextStep() {
+            if (state.type === 1 || state.type === 2) {
+                if (state.step === 0) {
+                    document.getElementById('step-compare-b').classList.remove('hidden');
+                    document.getElementById('step-compare-b').classList.remove('border-t', 'pt-4');
+                } else if (state.step === 1) {
+                     document.getElementById('step-calc').classList.remove('hidden');
+                }
+            } else {
+                if (state.step === 0) {
+                    document.getElementById('step-compare-a').classList.remove('hidden');
+                } else if (state.step === 1) {
+                    document.getElementById('step-compare-b').classList.remove('hidden');
+                } else if (state.step === 2) {
+                    document.getElementById('step-calc').classList.remove('hidden');
+                }
+            }
+            setTimeout(() => {
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }, 100);
+        }
+
+        function submitCompare(target, choice) {
+            let isCorrect = false;
+            let btnId = `btn-${target.toLowerCase()}-${choice}`;
+            let correctId = '';
+
+            if (target === 'A') {
+                const correct = state.isAMore ? 'more' : 'less';
+                isCorrect = (choice === correct);
+                correctId = `btn-a-${correct}`;
+            } else if (target === 'B') {
+                const correct = state.isBMore ? 'more' : 'less';
+                isCorrect = (choice === correct);
+                correctId = `btn-b-${correct}`;
+            }
+
+            const clickedBtn = document.getElementById(btnId);
+            const correctBtn = document.getElementById(correctId);
+
+            if (isCorrect) {
+                clickedBtn.classList.add('correct');
+            } else {
+                clickedBtn.classList.add('wrong');
+                correctBtn.classList.add('correct');
+                alert("再想一想喔！參考數線上的位置。");
+                return;
+            }
+
+            document.getElementById(`btn-${target.toLowerCase()}-more`).disabled = true;
+            document.getElementById(`btn-${target.toLowerCase()}-less`).disabled = true;
+
+            if (target === 'B') {
+                state.showB = true;
+                draw();
+            }
+
+            if (state.type <= 2) {
+                state.step = 1;
+            } else {
+                if (target === 'A') state.step = 1;
+                if (target === 'B') state.step = 2;
+            }
+
+            showNextStep();
+        }
+
+        // --- Keypad & Input Logic ---
+
+        function setActiveInput(id) {
+            // Prevent changing focus if input is locked
+            const el = document.getElementById(id);
+            if (el.classList.contains('input-locked')) return;
+
+            activeInputId = id;
+            // Visual Update
+            document.querySelectorAll('.formula-input').forEach(el => el.classList.remove('active-input'));
+            document.getElementById(id).classList.add('active-input');
+        }
+
+        // Add Click listeners to inputs
+        ['calc-n1', 'calc-n2', 'calc-ans', 'calc-op'].forEach(id => {
+            document.getElementById(id).addEventListener('click', () => setActiveInput(id));
+        });
+
+        function pressKey(key) {
+            if (!activeInputId) return;
+            const input = document.getElementById(activeInputId);
+            if (input.classList.contains('input-locked')) return;
+            
+            const isOpField = activeInputId === 'calc-op';
+            const isNumber = !isNaN(key);
+            const isOpKey = key === '+' || key === '-';
+
+            if (key === 'del') {
+                let current = input.value;
+                input.value = current.slice(0, -1);
+                return;
+            }
+
+            if (isOpField) {
+                if (isOpKey) {
+                    input.value = key;
+                    if(activeInputId === 'calc-op') setActiveInput('calc-n2');
+                }
+            } else {
+                if (isNumber) {
+                    input.value += key;
+                } else if (isOpKey) {
+                    const opInput = document.getElementById('calc-op');
+                    if (!opInput.classList.contains('input-locked')) {
+                         opInput.value = key;
+                         setActiveInput('calc-n2');
+                    }
+                }
+            }
+        }
+
+        function checkCalcStep() {
+            const feedback = document.getElementById('calc-feedback');
+            
+            if (state.calcStage === 0) {
+                // Check Row 1 (Formula)
+                const n1 = parseInt(document.getElementById('calc-n1').value);
+                const n2 = parseInt(document.getElementById('calc-n2').value);
+                const op = document.getElementById('calc-op').value;
+
+                if (isNaN(n1) || isNaN(n2) || !op) {
+                    feedback.innerText = "請填寫完整的算式！";
+                    feedback.className = "text-center font-bold text-lg text-red-600";
+                    return;
+                }
+
+                const X = state.valA;
+                const Y = state.diff;
+
+                // Logic: Must use X and Y
+                const inputs = [n1, n2].sort((a,b) => a-b);
+                const required = [X, Y].sort((a,b) => a-b);
+                
+                if (inputs[0] !== required[0] || inputs[1] !== required[1]) {
+                    feedback.innerText = `請使用題目給的數字 (${X} 和 ${Y})`;
+                    feedback.className = "text-center font-bold text-lg text-red-600";
+                    return;
+                }
+
+                // Check Op
+                let correctOp = state.isBMore ? '+' : '-';
+                if (op !== correctOp) {
+                    feedback.innerText = "運算符號不對喔！想一想 B 是變多還是變少？";
+                    feedback.className = "text-center font-bold text-lg text-red-600";
+                    return;
+                }
+
+                // Check Subtraction Order
+                if (op === '-' && n1 < n2) {
+                    feedback.innerText = "減法要用大數減小數喔！";
+                    feedback.className = "text-center font-bold text-lg text-red-600";
+                    return;
+                }
+
+                // Formula Correct!
+                feedback.innerText = "算式列對了！現在請計算答案。";
+                feedback.className = "text-center font-bold text-lg text-blue-600";
+
+                // Lock Row 1
+                ['calc-n1', 'calc-n2', 'calc-op'].forEach(id => {
+                    const el = document.getElementById(id);
+                    el.classList.add('input-locked');
+                    el.classList.remove('active-input');
+                });
+
+                // Transition to Stage 2
+                state.calcStage = 1;
+                document.getElementById('calc-row-2').classList.remove('hidden');
+                
+                // Update Button
+                const btn = document.getElementById('btn-submit-calc');
+                btn.innerText = "提交答案";
+                btn.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+                btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+
+                // Set focus to answer
+                setActiveInput('calc-ans');
+
+            } else {
+                // Check Row 2 (Answer)
+                const ans = parseInt(document.getElementById('calc-ans').value);
+                if (isNaN(ans)) {
+                    feedback.innerText = "請輸入答案！";
+                    feedback.className = "text-center font-bold text-lg text-red-600";
+                    return;
+                }
+
+                if (ans !== state.valB) {
+                    feedback.innerText = "答案算錯囉，再算一次！";
+                    feedback.className = "text-center font-bold text-lg text-red-600";
+                    document.getElementById('calc-ans').classList.add('input-wrong');
+                    return;
+                }
+
+                // All Correct!
+                feedback.innerText = "全對！太棒了！ 🎉";
+                feedback.className = "text-center font-bold text-lg text-green-600";
+                
+                document.getElementById('calc-ans').classList.add('input-correct');
+                document.getElementById('calc-ans').classList.remove('input-wrong');
+                document.getElementById('calc-ans').classList.add('input-locked');
+                
+                score++;
+                document.getElementById('score').innerText = score;
+                document.getElementById('btn-submit-calc').classList.add('hidden');
+                document.getElementById('btn-next-q').classList.remove('hidden');
+            }
+        }
+
+        window.onload = function() {
+            resizeCanvas();
+            initGame();
+        };
+
+    </script>
+</body>
+</html>
