@@ -79,6 +79,14 @@
             background-color: white;
             transition: all 0.3s;
         }
+        /* Operator box specific style */
+        .math-box-operator {
+            width: 90px;
+            height: 90px;
+            font-size: 2.5rem;
+            color: #4B5563;
+        }
+
         /* Disabled state for math box */
         .math-box.locked {
             background-color: #E5E7EB; /* gray-200 */
@@ -86,25 +94,6 @@
             border-color: #D1D5DB;
             cursor: not-allowed;
             pointer-events: none; /* Prevent clicks */
-        }
-
-        .math-select {
-            width: 90px;
-            height: 90px;
-            font-size: 2.5rem;
-            font-weight: bold;
-            border: 3px solid #D1D5DB;
-            border-radius: 0.75rem;
-            text-align: center;
-            background-color: #F9FAFB;
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-            background-position: right 0.75rem center;
-            background-repeat: no-repeat;
-            background-size: 2rem 2rem;
-            padding-right: 2.5rem;
-            padding-left: 1rem;
         }
 
         /* Inline Keypad Styles */
@@ -144,6 +133,13 @@
             font-size: 1.25rem;
         }
         .keypad-btn-confirm:active { background-color: #4338ca; }
+        
+        /* Operator buttons on keypad */
+        .keypad-btn-op {
+            background-color: #EEF2FF;
+            color: #4F46E5;
+            font-size: 1.5rem;
+        }
 
         @keyframes pulse-green {
             0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
@@ -166,17 +162,17 @@
             <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
                 <!-- Mode Selection -->
                 <div class="mode-container">
-                    <button onclick="setMode(10)" id="btn-mode-10" class="mode-btn">10以內</button>
-                    <button onclick="setMode(20)" id="btn-mode-20" class="mode-btn">20以內</button>
-                    <button onclick="setMode(100)" id="btn-mode-100" class="mode-btn active">100以內</button>
-                    <button onclick="setMode(1000)" id="btn-mode-1000" class="mode-btn">1000以內</button>
+                    <button onclick="setMode(10); playClickSound()" id="btn-mode-10" class="mode-btn">10以內</button>
+                    <button onclick="setMode(20); playClickSound()" id="btn-mode-20" class="mode-btn">20以內</button>
+                    <button onclick="setMode(100); playClickSound()" id="btn-mode-100" class="mode-btn active">100以內</button>
+                    <button onclick="setMode(1000); playClickSound()" id="btn-mode-1000" class="mode-btn">1000以內</button>
                 </div>
 
                 <!-- Toggles Container -->
                 <div class="flex items-center gap-4 bg-white px-4 py-2 rounded-xl border border-gray-200">
                     <!-- Custom Toggle Switch -->
                     <label class="inline-flex items-center cursor-pointer select-none">
-                        <input type="checkbox" id="custom-toggle" class="sr-only peer" onchange="toggleCustomMode()">
+                        <input type="checkbox" id="custom-toggle" class="sr-only peer" onchange="toggleCustomMode(); playClickSound()">
                         <div class="relative w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
                         <span class="ms-2 text-sm font-bold text-gray-600">自訂數值</span>
                     </label>
@@ -185,7 +181,7 @@
 
                     <!-- Advanced Mode Toggle Switch -->
                     <label class="inline-flex items-center cursor-pointer select-none">
-                        <input type="checkbox" id="advanced-toggle" class="sr-only peer" onchange="toggleAdvancedMode()">
+                        <input type="checkbox" id="advanced-toggle" class="sr-only peer" onchange="toggleAdvancedMode(); playClickSound()">
                         <div class="relative w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
                         <span class="ms-2 text-sm font-bold text-gray-600">進階功能</span>
                     </label>
@@ -207,31 +203,31 @@
                     <div class="flex flex-col md:flex-row items-center justify-center gap-y-4 md:gap-x-4 mb-2">
                         <div class="flex items-center justify-center flex-wrap gap-2">
                             <span class="blue-text whitespace-nowrap text-3xl">我有</span>
-                            <input type="text" id="input-have" readonly onclick="setActiveInput('input-have')" class="custom-input w-28 md:w-36 p-2 text-3xl md:text-4xl border-b-4 border-blue-400 bg-blue-50 text-center font-bold text-blue-600 focus:outline-none rounded-t-lg" placeholder="?">
+                            <input type="text" id="input-have" readonly onclick="setActiveInput('input-have'); playClickSound()" class="custom-input w-28 md:w-36 p-2 text-3xl md:text-4xl border-b-4 border-blue-400 bg-blue-50 text-center font-bold text-blue-600 focus:outline-none rounded-t-lg" placeholder="?">
                             <span class="text-gray-700 whitespace-nowrap text-3xl">元，</span>
                         </div>
                         <div class="flex items-center justify-center flex-wrap gap-2">
                             <span class="red-text whitespace-nowrap text-3xl">應付</span>
-                            <input type="text" id="input-pay" readonly onclick="setActiveInput('input-pay')" class="custom-input w-28 md:w-36 p-2 text-3xl md:text-4xl border-b-4 border-red-400 bg-red-50 text-center font-bold text-red-600 focus:outline-none rounded-t-lg" placeholder="?">
+                            <input type="text" id="input-pay" readonly onclick="setActiveInput('input-pay'); playClickSound()" class="custom-input w-28 md:w-36 p-2 text-3xl md:text-4xl border-b-4 border-red-400 bg-red-50 text-center font-bold text-red-600 focus:outline-none rounded-t-lg" placeholder="?">
                             <span class="text-gray-700 whitespace-nowrap text-3xl">元</span>
                         </div>
                     </div>
 
                     <!-- Custom Mode Inline Keypad -->
                     <div id="custom-keypad" class="keypad-container">
-                        <button onclick="keypadPress('1')" class="keypad-btn">1</button>
-                        <button onclick="keypadPress('2')" class="keypad-btn">2</button>
-                        <button onclick="keypadPress('3')" class="keypad-btn">3</button>
-                        <button onclick="keypadPress('4')" class="keypad-btn">4</button>
-                        <button onclick="keypadPress('5')" class="keypad-btn">5</button>
-                        <button onclick="keypadPress('6')" class="keypad-btn">6</button>
-                        <button onclick="keypadPress('7')" class="keypad-btn">7</button>
-                        <button onclick="keypadPress('8')" class="keypad-btn">8</button>
-                        <button onclick="keypadPress('9')" class="keypad-btn">9</button>
-                        <button onclick="keypadAction('clear')" class="keypad-btn keypad-btn-action text-red-500">C</button>
-                        <button onclick="keypadPress('0')" class="keypad-btn">0</button>
-                        <button onclick="keypadAction('backspace')" class="keypad-btn keypad-btn-action">⌫</button>
-                        <button onclick="startCustomGame()" class="keypad-btn keypad-btn-confirm">開始</button>
+                        <button onclick="keypadPress('1'); playClickSound()" class="keypad-btn">1</button>
+                        <button onclick="keypadPress('2'); playClickSound()" class="keypad-btn">2</button>
+                        <button onclick="keypadPress('3'); playClickSound()" class="keypad-btn">3</button>
+                        <button onclick="keypadPress('4'); playClickSound()" class="keypad-btn">4</button>
+                        <button onclick="keypadPress('5'); playClickSound()" class="keypad-btn">5</button>
+                        <button onclick="keypadPress('6'); playClickSound()" class="keypad-btn">6</button>
+                        <button onclick="keypadPress('7'); playClickSound()" class="keypad-btn">7</button>
+                        <button onclick="keypadPress('8'); playClickSound()" class="keypad-btn">8</button>
+                        <button onclick="keypadPress('9'); playClickSound()" class="keypad-btn">9</button>
+                        <button onclick="keypadAction('clear'); playClickSound()" class="keypad-btn keypad-btn-action text-red-500">C</button>
+                        <button onclick="keypadPress('0'); playClickSound()" class="keypad-btn">0</button>
+                        <button onclick="keypadAction('backspace'); playClickSound()" class="keypad-btn keypad-btn-action">⌫</button>
+                        <button onclick="startCustomGame(); playClickSound()" class="keypad-btn keypad-btn-confirm">開始</button>
                     </div>
                 </div>
             </h1>
@@ -239,9 +235,9 @@
             <p class="text-gray-500 text-sm mt-2" id="instruction-text">觀察下方的數線，回答問題</p>
         </div>
 
-        <!-- Canvas Area - Height Reduced to 350 -->
+        <!-- Canvas Area - Height Reduced to 280 -->
         <div class="p-4 flex justify-center bg-white relative">
-            <canvas id="gameCanvas" width="1200" height="350" class="w-full h-auto"></canvas>
+            <canvas id="gameCanvas" width="1200" height="280" class="w-full h-auto"></canvas>
             <!-- Overlay for empty state -->
             <div id="canvas-overlay" class="hidden absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 z-10">
                 <span class="text-gray-400 text-xl font-bold">請設定數值並按開始</span>
@@ -259,8 +255,8 @@
                 <div class="col-span-2 text-center text-3xl md:text-4xl mb-4 font-semibold text-gray-700">
                     請問：<span class="blue-text">我有</span> 比 <span class="red-text">應付</span> ...
                 </div>
-                <button onclick="checkStage1('more')" class="btn-option bg-green-100 hover:bg-green-200 text-green-800 text-4xl md:text-5xl font-bold py-6 rounded-2xl shadow border-b-8 border-green-300">多</button>
-                <button onclick="checkStage1('less')" class="btn-option bg-gray-200 hover:bg-gray-300 text-gray-800 text-4xl md:text-5xl font-bold py-6 rounded-2xl shadow border-b-8 border-gray-400">少</button>
+                <button onclick="checkStage1('more'); playClickSound()" class="btn-option bg-green-100 hover:bg-green-200 text-green-800 text-4xl md:text-5xl font-bold py-6 rounded-2xl shadow border-b-8 border-green-300">多</button>
+                <button onclick="checkStage1('less'); playClickSound()" class="btn-option bg-gray-200 hover:bg-gray-300 text-gray-800 text-4xl md:text-5xl font-bold py-6 rounded-2xl shadow border-b-8 border-gray-400">少</button>
             </div>
 
             <!-- Stage 2 -->
@@ -268,67 +264,70 @@
                 <div class="col-span-2 text-center text-3xl md:text-4xl mb-4 font-semibold text-gray-700">
                     既然<span id="feedback-text" class="font-bold mx-1"></span>，所以...
                 </div>
-                <button onclick="checkStage2('enough')" class="btn-option bg-green-100 hover:bg-green-200 text-green-800 text-4xl md:text-5xl font-bold py-6 rounded-2xl shadow border-b-8 border-green-300">夠錢 ✔</button>
-                <button onclick="checkStage2('not_enough')" class="btn-option bg-gray-200 hover:bg-gray-300 text-gray-800 text-4xl md:text-5xl font-bold py-6 rounded-2xl shadow border-b-8 border-gray-400">唔夠錢 ✖</button>
+                <button onclick="checkStage2('enough'); playClickSound()" class="btn-option bg-green-100 hover:bg-green-200 text-green-800 text-4xl md:text-5xl font-bold py-6 rounded-2xl shadow border-b-8 border-green-300">夠錢 ✔</button>
+                <button onclick="checkStage2('not_enough'); playClickSound()" class="btn-option bg-gray-200 hover:bg-gray-300 text-gray-800 text-4xl md:text-5xl font-bold py-6 rounded-2xl shadow border-b-8 border-gray-400">唔夠錢 ✖</button>
             </div>
 
-            <!-- Stage 3: Advanced Calculation (Enlarged) -->
+            <!-- Stage 3: Advanced Calculation (Enlarged & Flex) -->
             <div id="stage-3" class="w-full flex flex-col items-center hidden animate-fade-in w-full">
                 <div id="stage-3-question" class="text-center text-3xl md:text-4xl mb-6 font-bold text-indigo-700">
                     <!-- Question Text inserted via JS -->
                 </div>
                 
-                <!-- Flex Container -->
-                <div class="flex flex-col xl:flex-row items-center justify-center gap-6 mb-6">
+                <!-- Flex Container for Side-by-Side Layout (Equation + Keypad) -->
+                <!-- Reduced width to keep them closer together on large screens -->
+                <div class="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 mb-6 w-full">
                     
                     <!-- Equation Builder (Enlarged) -->
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-300 flex flex-wrap items-center justify-center gap-3 h-full">
-                        <input type="text" id="math-op-1" readonly onclick="setActiveInput('math-op-1')" class="custom-input math-box text-blue-600" placeholder="?">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-300 flex flex-wrap items-center justify-center gap-3 h-full max-w-2xl">
+                        <input type="text" id="math-op-1" readonly onclick="setActiveInput('math-op-1'); playClickSound()" class="custom-input math-box text-blue-600" placeholder="?">
                         
-                        <div class="relative">
-                             <select id="math-operator" class="math-select text-gray-700" onchange="validateEquationPrefix()">
-                                <option value="">?</option>
-                                <option value="+">+</option>
-                                <option value="-">-</option>
-                            </select>
-                        </div>
+                        <!-- Operator Input (Now clickable) -->
+                        <input type="text" id="math-operator" readonly onclick="setActiveInput('math-operator'); playClickSound()" class="custom-input math-box math-box-operator" placeholder="?">
 
-                        <input type="text" id="math-op-2" readonly onclick="setActiveInput('math-op-2')" class="custom-input math-box text-red-600" placeholder="?">
+                        <input type="text" id="math-op-2" readonly onclick="setActiveInput('math-op-2'); playClickSound()" class="custom-input math-box text-red-600" placeholder="?">
                         
                         <div class="text-5xl font-bold text-gray-400 mx-2">=</div>
 
                         <!-- Result Box (Starts Locked) -->
-                        <input type="text" id="math-result" readonly onclick="setActiveInput('math-result')" class="custom-input math-box locked" placeholder="?">
+                        <input type="text" id="math-result" readonly onclick="setActiveInput('math-result'); playClickSound()" class="custom-input math-box locked" placeholder="?">
                         
                         <span class="text-3xl font-bold text-gray-500">(元)</span>
                     </div>
 
-                    <!-- Stage 3 Inline Keypad -->
-                    <div class="keypad-container !mt-0 shadow-sm border border-gray-200 bg-gray-50">
-                        <button onclick="keypadPress('1')" class="keypad-btn">1</button>
-                        <button onclick="keypadPress('2')" class="keypad-btn">2</button>
-                        <button onclick="keypadPress('3')" class="keypad-btn">3</button>
-                        <button onclick="keypadPress('4')" class="keypad-btn">4</button>
-                        <button onclick="keypadPress('5')" class="keypad-btn">5</button>
-                        <button onclick="keypadPress('6')" class="keypad-btn">6</button>
-                        <button onclick="keypadPress('7')" class="keypad-btn">7</button>
-                        <button onclick="keypadPress('8')" class="keypad-btn">8</button>
-                        <button onclick="keypadPress('9')" class="keypad-btn">9</button>
-                        <button onclick="keypadAction('clear')" class="keypad-btn keypad-btn-action text-red-500">C</button>
-                        <button onclick="keypadPress('0')" class="keypad-btn">0</button>
-                        <button onclick="keypadAction('backspace')" class="keypad-btn keypad-btn-action">⌫</button>
+                    <!-- Stage 3 Inline Keypad (With + and -) -->
+                    <div class="keypad-container !mt-0 shadow-sm border border-gray-200 bg-gray-50 shrink-0">
+                        <button onclick="keypadPress('1'); playClickSound()" class="keypad-btn">1</button>
+                        <button onclick="keypadPress('2'); playClickSound()" class="keypad-btn">2</button>
+                        <button onclick="keypadPress('3'); playClickSound()" class="keypad-btn">3</button>
+                        
+                        <button onclick="keypadPress('4'); playClickSound()" class="keypad-btn">4</button>
+                        <button onclick="keypadPress('5'); playClickSound()" class="keypad-btn">5</button>
+                        <button onclick="keypadPress('6'); playClickSound()" class="keypad-btn">6</button>
+                        
+                        <button onclick="keypadPress('7'); playClickSound()" class="keypad-btn">7</button>
+                        <button onclick="keypadPress('8'); playClickSound()" class="keypad-btn">8</button>
+                        <button onclick="keypadPress('9'); playClickSound()" class="keypad-btn">9</button>
+                        
+                        <!-- Added Operator Row -->
+                        <button onclick="keypadPress('0'); playClickSound()" class="keypad-btn">0</button>
+                        <button onclick="keypadPress('+'); playClickSound()" class="keypad-btn keypad-btn-op">+</button>
+                        <button onclick="keypadPress('-'); playClickSound()" class="keypad-btn keypad-btn-op">-</button>
+                        
+                        <button onclick="keypadAction('clear'); playClickSound()" class="keypad-btn keypad-btn-action text-red-500">C</button>
+                        <button onclick="keypadAction('backspace'); playClickSound()" class="keypad-btn keypad-btn-action col-span-2">⌫</button>
                     </div>
 
                 </div>
 
-                <button id="btn-submit-stage3" onclick="checkStage3()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold py-3 px-12 rounded-xl shadow-lg transition duration-200 w-full md:w-auto hidden">
+                <button id="btn-submit-stage3" onclick="checkStage3(); playClickSound()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold py-3 px-12 rounded-xl shadow-lg transition duration-200 w-full md:w-auto hidden">
                     提交答案
                 </button>
             </div>
 
             <!-- Next Button -->
             <div id="next-btn-container" class="hidden w-full text-center mt-4">
-                <button onclick="handleNextQuestion()" class="w-full md:w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold py-4 rounded-xl shadow-lg transition duration-200">
+                <button onclick="handleNextQuestion(); playClickSound()" class="w-full md:w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold py-4 rounded-xl shadow-lg transition duration-200">
                     下一題
                 </button>
             </div>
@@ -347,10 +346,34 @@
         let canvas, ctx;
         let equationUnlocked = false;
         
-        // Canvas Config - Lower baseline for taller elements
+        // Canvas Config - Reduced height settings
         const padding = 60; 
-        const lineY = 220; 
+        const lineY = 190; // Optimized for 280px height
         
+        // Audio Context Setup
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playClickSound() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(400, audioCtx.currentTime); 
+            oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.05); 
+            
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.05);
+        }
+
         function setMode(mode) {
             maxRange = mode;
             [10, 20, 100, 1000].forEach(m => {
@@ -420,15 +443,32 @@
             }
         }
 
-        function keypadPress(num) {
+        function keypadPress(val) {
             if (!activeInputId) return;
             const input = document.getElementById(activeInputId);
+            
+            // Logic for Operator Input
+            if (activeInputId === 'math-operator') {
+                if (val === '+' || val === '-') {
+                    input.value = val;
+                    // Trigger validation manually because 'input' event isn't fired
+                    if (!document.getElementById('stage-3').classList.contains('hidden')) {
+                        validateEquationPrefix();
+                    }
+                }
+                return; // Ignore numbers for operator field
+            }
+
+            // Logic for Number Inputs
+            if (val === '+' || val === '-') return; // Ignore operators for number fields
+
             const currentVal = input.value;
-            if (currentVal === "0") input.value = num;
+            if (currentVal === "0") input.value = val;
             else {
                 if (currentVal.length >= 6) return;
-                input.value = currentVal + num;
+                input.value = currentVal + val;
             }
+            
             // If in Stage 3, validate equation parts on every press
             if (!document.getElementById('stage-3').classList.contains('hidden')) {
                 validateEquationPrefix();
@@ -450,7 +490,7 @@
         function validateEquationPrefix() {
             const op1 = parseInt(document.getElementById('math-op-1').value);
             const op2 = parseInt(document.getElementById('math-op-2').value);
-            const operator = document.getElementById('math-operator').value;
+            const operator = document.getElementById('math-operator').value; // Now an input value
 
             // Target values
             const big = Math.max(valHave, valPay);
@@ -711,16 +751,16 @@
             // Text positions adjusted to avoid overlap
             ctx.fillStyle = '#2563EB'; 
             ctx.font = 'bold 20px Arial'; 
-            ctx.fillText('我有', xHave, lineY - 80);
+            ctx.fillText('我有', xHave, lineY - 75);
             
             ctx.font = 'bold 24px Arial'; 
-            ctx.fillText(valHave, xHave, lineY - 55);
+            ctx.fillText(valHave, xHave, lineY - 50);
 
             // Pay (Red Line)
             const xPay = getX(valPay);
             ctx.beginPath(); 
             // Made taller to reach new text position
-            ctx.moveTo(xPay, lineY - 120); 
+            ctx.moveTo(xPay, lineY - 110); 
             ctx.lineTo(xPay, lineY + 10);
             ctx.strokeStyle = '#DC2626'; 
             ctx.lineWidth = 4; 
@@ -733,10 +773,10 @@
             if (xPay > width - padding - width * 0.05) textX -= 15;
 
             // Moved up significantly to be above Blue text
-            ctx.fillText('應付', textX, lineY - 160); 
+            ctx.fillText('應付', textX, lineY - 140); 
             
             ctx.font = 'bold 24px Arial'; 
-            ctx.fillText(valPay, textX, lineY - 130);
+            ctx.fillText(valPay, textX, lineY - 115);
         }
 
         window.onload = function() {
