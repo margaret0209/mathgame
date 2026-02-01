@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>趣味樣式排序遊戲</title>
+    <!-- 使用 Tailwind CSS 進行快速樣式設計 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 animate.css 增加互動效果 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f0f9ff;
+            user-select: none; /* 防止選取文字干擾遊戲 */
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 提示框樣式 - 虛線框 */
+        .hint-box {
+            border: 3px dashed #f59e0b; /* Amber 500 */
+            background-color: rgba(253, 230, 138, 0.3); /* Amber 200 opacity */
+            border-radius: 12px;
+            padding: 4px;
+            margin: -4px; /* 抵消 padding 確保不影響佈局太 */
+            position: relative;
+            z-index: 0;
+            transition: all 0.3s ease;
+            /* 讓新出現的框有淡入效果 */
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        /* 提示文字標籤 */
+        .hint-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f59e0b;
+            color: white;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+
+        .hint-box:hover .hint-label, .hint-active .hint-label {
+            opacity: 1;
+        }
+
+        .item-slot {
+            transition: all 0.3s ease;
+        }
+
+        .option-btn {
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        .option-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 成功動畫 */
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .pop-in {
+            animation: popIn 0.4s forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="game-card w-full max-w-4xl p-6 flex flex-col gap-6">
+        
+        <!-- Header & Controls -->
+        <header class="flex flex-col md:flex-row justify-between items-center gap-4 border-b pb-4">
+            <h1 class="text-2xl font-bold text-slate-700">🧩 樣式排序遊戲</h1>
+            
+            <div class="flex flex-wrap gap-3 justify-center">
+                <!-- 樣式選擇 -->
+                <div class="flex flex-wrap gap-1 bg-slate-100 rounded-lg p-1 justify-center">
+                    <button onclick="setPattern('AB')" id="btn-ab" class="px-3 py-1.5 rounded-md text-sm font-bold transition-colors bg-white shadow text-blue-600">AB</button>
+                    <button onclick="setPattern('ABC')" id="btn-abc" class="px-3 py-1.5 rounded-md text-sm font-bold transition-colors text-slate-500 hover:bg-slate-200">ABC</button>
+                    <button onclick="setPattern('ABA')" id="btn-aba" class="px-3 py-1.5 rounded-md text-sm font-bold transition-colors text-slate-500 hover:bg-slate-200">ABA</button>
+                    <button onclick="setPattern('ABB')" id="btn-abb" class="px-3 py-1.5 rounded-md text-sm font-bold transition-colors text-slate-500 hover:bg-slate-200">ABB</button>
+                    <button onclick="setPattern('AAB')" id="btn-aab" class="px-3 py-1.5 rounded-md text-sm font-bold transition-colors text-slate-500 hover:bg-slate-200">AAB</button>
+                    <button onclick="setPattern('RANDOM')" id="btn-random" class="px-3 py-1.5 rounded-md text-sm font-bold transition-colors text-slate-500 hover:bg-slate-200 border-l border-slate-300 ml-1 pl-3 text-purple-600">🎲 隨機</button>
+                </div>
+
+                <!-- 主題選擇 -->
+                <select id="theme-select" onchange="changeTheme()" class="bg-slate-100 border-none text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5">
+                    <option value="animals">🐶 動物</option>
+                    <option value="fruits">🍎 蔬果</option>
+                    <option value="food">🍔 食物</option>
+                    <option value="emotions">😀 表情</option>
+                    <option value="actions">🏃 動作</option>
+                    <option value="colors">🎨 顏色</option>
+                </select>
+
+                <!-- 提示開關 -->
+                <button onclick="toggleHint()" id="btn-hint" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold border-2 border-slate-200 text-slate-500 hover:bg-yellow-50 hover:border-yellow-300 hover:text-yellow-600 transition-all">
+                    <span>💡 提示模式</span>
+                    <span id="hint-status" class="text-xs bg-slate-200 px-2 py-0.5 rounded-full">關閉</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <main class="flex-grow flex flex-col items-center justify-center min-h-[200px] bg-slate-50 rounded-xl border-2 border-slate-100 p-4 relative overflow-hidden">
+            
+            <!-- Game Status/Message -->
+            <div id="game-message" class="absolute top-2 left-1/2 transform -translate-x-1/2 text-slate-400 text-sm font-medium">
+                觀察規律，填入正確的圖案
+            </div>
+
+            <!-- Sequence Track -->
+            <div id="sequence-track" class="flex flex-wrap items-center justify-center gap-2 md:gap-4 mt-6 px-2">
+                <!-- Items will be injected here by JS -->
+            </div>
+
+        </main>
+
+        <!-- Bottom Question Area -->
+        <footer class="flex flex-col items-center gap-4 pt-2">
+            <h2 class="text-xl font-bold text-slate-700 flex items-center gap-2">
+                ❓ 下一個圖案是？
+            </h2>
+            
+            <div id="options-container" class="flex gap-6 mt-2">
+                <!-- Options will be injected here by JS -->
+            </div>
+
+            <!-- Next Level Button (Hidden initially) -->
+            <button id="next-level-btn" onclick="initGame()" class="hidden mt-4 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg animate__animated animate__pulse animate__infinite">
+                🎉 太棒了！下一題 ➡️
+            </button>
+        </footer>
+
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- Game Data ---
+        const themes = {
+            animals: [
+                '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', 
+                '🦁', '🐮', '🐷', '🐽', '🐸', '🐵', '🐵', '🙉', '🙊', '🐒', 
+                '🦍', '🦧', '🐕', '🐩', '🦮', '🐕‍🦺', '🐈', '🐈‍⬛', '🐅', '🐆', 
+                '🐎', '🦄', '🦓', '🦌', '🦬', '🐂', '🐃', '🐄', '🐖', '🐏', 
+                '🐑', '🐐', '🐪', '🐫', '🦙', '🦒', '🐘', '🦣', '🦏', '🦛', 
+                '🐁', '🐀', '🐿', '🦔', '🦥', '🦦', '🦨', '🦘', '🦡', '🐾', 
+                '🦃', '🐔', '🐓', '🐣', '🐤', '🐥', '🐦', '🐧', '🕊', '🦅', 
+                '🦆', '🦢', '🦉', '🦩', '🦚', '🦜', '🐊', '🐢', '🦎', '🐍', 
+                '🐲', '🐉', '🦕', '🦖', '🐳', '🐋', '🐬', '🐟', '🐠', '🐡', 
+                '🦈', '🐙', '🐚', '🦀', '🦞', '🦐', '🦑', '🦪', '🐌', '🦋', 
+                '🐛', '🐜', '🐝', '🪲', '🐞', '🦗', '🕷', '🕸', '🦂', '🦟'
+            ],
+            fruits: [
+                '🍇', '🍈', '🍉', '🍊', '🍋', '🍌', '🍍', '🥭', '🍎', '🍏', 
+                '🍐', '🍑', '🍒', '🍓', '🫐', '🥝', '🍅', '🫒', '🥥', '🥑', 
+                '🍆', '🥔', '🥕', '🌽', '🌶', '🫑', '🥒', '🥬', '🥦', '🧄', 
+                '🧅', '🍄', '🥜', '🌰', '🍞'
+            ],
+            food: [
+                '🍞', '🥐', '🥖', '🫓', '🥨', '🥯', '🥞', '🧇', '🧀', '🍖', 
+                '🍗', '🥩', '🥓', '🍔', '🍟', '🍕', '🌭', '🥪', '🌮', '🌯', 
+                '🫔', '🥙', '🧆', '🥚', '🍳', '🥘', '🍲', '🫕', '🥣', '🥗', 
+                '🍿', '🧈', '🧂', '🥫', '🍱', '🍘', '🍙', '🍚', '🍛', '🍜', 
+                '🍝', '🍠', '🍢', '🍣', '🍤', '🍥', '🥮', '🍡', '🥟', '🥠',
+                '🥡', '🦀', '🦞', '🦐', '🦑', '🦪', '🍦', '🍧', '🍨', '🍩',
+                '🍪', '🎂', '🍰', '🧁', '🥧', '🍫', '🍬', '🍭', '🍮', '🍯',
+                '🍼', '🥛', '☕', '🍵', '🥤', '🧃', '🧉', '🧊', '🍽', '🍴'
+            ],
+            emotions: [
+                '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '🥲', '☺️', 
+                '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗',
+                '😙', '😚', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭',
+                '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄',
+                '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕',
+                '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳',
+                '😎', '🤓', '🧐', '😕', '😟', '🙁', '☹️', '😮', '😯', '😲',
+                '😳', '🥺', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😱'
+            ],
+            actions: [
+                '🏃', '🏃‍♂️', '🏃‍♀️', '🚶', '🚶‍♂️', '🚶‍♀️', '🧍', '🧍‍♂️', '🧍‍♀️', '🧎', 
+                '🧎‍♂️', '🧎‍♀️', '🧑‍🦯', '🧑‍🦼', '🧑‍🦽', '🏃', '👯', '👯‍♂️', '👯‍♀️', '🧖', 
+                '🧖‍♂️', '🧖‍♀️', '🧗', '🧗‍♂️', '🧗‍♀️', '🧘', '🧘‍♂️', '🧘‍♀️', '🛀', '🛌', 
+                '🏇', '⛷', '🏂', '🏌️', '🏌️‍♂️', '🏌️‍♀️', '🏄', '🏄‍♂️', '🏄‍♀️', '🚣', 
+                '🚣‍♂️', '🚣‍♀️', '🏊', '🏊‍♂️', '🏊‍♀️', '⛹️', '⛹️‍♂️', '⛹️‍♀️', '🏋️', '🏋️‍♂️', 
+                '🏋️‍♀️', '🚴', '🚴‍♂️', '🚴‍♀️', '🚵', '🚵‍♂️', '🚵‍♀️', '🤸', '🤸‍♂️', '🤸‍♀️', 
+                '🤼', '🤼‍♂️', '🤼‍♀️', '🤽', '🤽‍♂️', '🤽‍♀️', '🤾', '🤾‍♂️', '🤾‍♀️', '🤹', 
+                '🤹‍♂️', '🤹‍♀️', '💃', '🕺',
+                '🏋️', '🤸‍♀️', '⛹🏻‍♀️', '🤾🏻‍♂️', '🏌🏻', '🧘🏻‍♀️', '🏊🏻‍♂️', '🏌🏻‍♀️', '🤺', '🙆🏻‍♀️', 
+                '🙅🏻‍♂️', '🙋🏻‍♀️', '🤷🏻‍♂️', '🤦🏻‍♂️', '🙇🏻‍♀️'
+            ],
+            colors: ['🔴', '🔵', '🟢', '🟡', '🟣', '🟠', '⚫', '⚪']
+        };
+
+        const PATTERN_TYPES = ['AB', 'ABC', 'ABA', 'ABB', 'AAB'];
+
+        // --- State Management ---
+        let currentState = {
+            isRandom: false, // Is Random Mode active?
+            patternType: 'AB', // The ACTUAL current pattern being played
+            theme: 'animals',
+            hintMode: false,
+            items: [], 
+            sequence: [], 
+            visibleCount: 0, 
+            userProgress: 0, 
+            totalLength: 12
+        };
+
+        // --- Initialization ---
+        window.onload = () => {
+            initGame();
+        };
+
+        function initGame() {
+            // Hide next button, show options
+            document.getElementById('next-level-btn').classList.add('hidden');
+            document.getElementById('options-container').classList.remove('hidden');
+            document.getElementById('game-message').innerText = "觀察規律，填入正確的圖案";
+            document.getElementById('game-message').className = "absolute top-2 left-1/2 transform -translate-x-1/2 text-slate-400 text-sm font-medium";
+
+            // If in Random Mode, pick a new pattern
+            if (currentState.isRandom) {
+                const randomIndex = Math.floor(Math.random() * PATTERN_TYPES.length);
+                currentState.patternType = PATTERN_TYPES[randomIndex];
+            }
+
+            generateSequence();
+            renderSequence();
+            renderOptions();
+        }
+
+        // --- Core Logic ---
+
+        function generateSequence() {
+            const themeItems = themes[currentState.theme];
+            const shuffled = [...themeItems].sort(() => 0.5 - Math.random());
+            
+            const repeatCount = 6;
+            let patternTemplate = []; 
+
+            switch (currentState.patternType) {
+                case 'AB':
+                    currentState.items = [shuffled[0], shuffled[1]];
+                    patternTemplate = [0, 1];
+                    currentState.visibleCount = Math.random() > 0.5 ? 3 : 4;
+                    break;
+                case 'ABC':
+                    currentState.items = [shuffled[0], shuffled[1], shuffled[2]];
+                    patternTemplate = [0, 1, 2];
+                    currentState.visibleCount = Math.random() > 0.5 ? 4 : 5;
+                    break;
+                case 'ABA':
+                    currentState.items = [shuffled[0], shuffled[1]];
+                    patternTemplate = [0, 1, 0];
+                    currentState.visibleCount = Math.random() > 0.5 ? 4 : 5;
+                    break;
+                case 'ABB':
+                    currentState.items = [shuffled[0], shuffled[1]];
+                    patternTemplate = [0, 1, 1];
+                    currentState.visibleCount = Math.random() > 0.5 ? 4 : 5;
+                    break;
+                case 'AAB':
+                    currentState.items = [shuffled[0], shuffled[1]];
+                    patternTemplate = [0, 0, 1];
+                    currentState.visibleCount = Math.random() > 0.5 ? 4 : 5;
+                    break;
+            }
+
+            const unitLength = patternTemplate.length;
+            currentState.totalLength = unitLength * repeatCount;
+
+            currentState.sequence = Array.from({length: currentState.totalLength}, (_, i) => {
+                return patternTemplate[i % unitLength];
+            });
+
+            currentState.userProgress = 0;
+        }
+
+        function renderSequence() {
+            const track = document.getElementById('sequence-track');
+            track.innerHTML = '';
+
+            const patternLength = (['AB'].includes(currentState.patternType)) ? 2 : 3;
+            
+            const solvedCount = currentState.visibleCount + currentState.userProgress;
+            
+            let currentWrapper = null;
+
+            currentState.sequence.forEach((itemIndex, index) => {
+                const itemChar = currentState.items[itemIndex];
+                const isSolved = index < solvedCount;
+                const isNext = index === solvedCount;
+
+                // Hint logic
+                const groupIndex = Math.floor(index / patternLength);
+                const isGroupStart = (index % patternLength === 0);
+                const groupEndIndex = (groupIndex + 1) * patternLength - 1;
+                const isGroupFullySolved = solvedCount > groupEndIndex;
+                
+                const shouldWrap = currentState.hintMode && (groupIndex === 0 || isGroupFullySolved);
+
+                if (isGroupStart) {
+                    if (shouldWrap) {
+                        currentWrapper = document.createElement('div');
+                        currentWrapper.className = 'hint-box flex gap-1 md:gap-2 hint-active items-center justify-center px-2 py-1';
+                        if (groupIndex === 0) {
+                             currentWrapper.innerHTML = `<span class="hint-label">重複規律</span>`;
+                        }
+                        track.appendChild(currentWrapper);
+                    } else {
+                        currentWrapper = null;
+                    }
+                }
+
+                // Render Item
+                const itemEl = document.createElement('div');
+                itemEl.className = `
+                    item-slot w-12 h-12 md:w-16 md:h-16 flex items-center justify-center text-2xl md:text-3xl rounded-xl shadow-sm border-2 flex-shrink-0
+                    ${isSolved ? 'bg-white border-slate-200' : (isNext ? 'bg-blue-50 border-blue-300 border-dashed animate-pulse' : 'bg-slate-100 border-slate-200 opacity-50')}
+                `;
+
+                if (isSolved) {
+                    itemEl.innerText = itemChar;
+                    if (index >= currentState.visibleCount) {
+                        itemEl.classList.add('pop-in');
+                    }
+                } else if (isNext) {
+                    itemEl.innerText = '?';
+                    itemEl.classList.add('text-blue-400');
+                } else {
+                    itemEl.innerText = '';
+                }
+
+                if (currentWrapper) {
+                    currentWrapper.appendChild(itemEl);
+                } else {
+                    track.appendChild(itemEl);
+                }
+            });
+        }
+
+        function renderOptions() {
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            currentState.items.forEach((char, index) => {
+                const btn = document.createElement('button');
+                btn.className = `
+                    option-btn w-20 h-20 md:w-24 md:h-24 bg-white border-b-4 border-slate-200 rounded-2xl 
+                    text-4xl md:text-5xl shadow-md flex items-center justify-center
+                    hover:bg-blue-50 hover:border-blue-300 hover:-translate-y-1
+                `;
+                btn.innerText = char;
+                btn.onclick = () => checkAnswer(index);
+                container.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedIndex) {
+            const currentSlotIndex = currentState.visibleCount + currentState.userProgress;
+            if (currentSlotIndex >= currentState.totalLength) return;
+
+            const correctItemIndex = currentState.sequence[currentSlotIndex];
+
+            if (selectedIndex === correctItemIndex) {
+                playFeedback(true);
+                currentState.userProgress++;
+                renderSequence();
+
+                if (currentState.visibleCount + currentState.userProgress >= currentState.totalLength) {
+                    handleWin();
+                }
+            } else {
+                playFeedback(false);
+                shakeGame();
+            }
+        }
+
+        function handleWin() {
+            document.getElementById('options-container').classList.add('hidden');
+            const winBtn = document.getElementById('next-level-btn');
+            winBtn.classList.remove('hidden');
+            
+            const msg = document.getElementById('game-message');
+            msg.innerText = "完成！你真棒！🎉";
+            msg.className = "absolute top-2 left-1/2 transform -translate-x-1/2 text-green-600 font-bold text-xl animate__animated animate__bounceIn";
+        }
+
+        // --- Interaction Helpers ---
+
+        function setPattern(type) {
+            if (type === 'RANDOM') {
+                currentState.isRandom = true;
+            } else {
+                currentState.isRandom = false;
+                currentState.patternType = type;
+            }
+            
+            updateButtonStyles(type);
+            initGame();
+        }
+
+        function updateButtonStyles(activeType) {
+            const allTypes = [...PATTERN_TYPES, 'RANDOM'];
+            
+            allTypes.forEach(p => {
+                const btnId = `btn-${p.toLowerCase()}`;
+                const btn = document.getElementById(btnId);
+                if (!btn) return;
+
+                const isActive = (p === activeType);
+                
+                // Base styles
+                let cls = "px-3 py-1.5 rounded-md text-sm font-bold transition-colors ";
+                
+                // Special style for Random button
+                if (p === 'RANDOM') {
+                    cls += "border-l border-slate-300 ml-1 pl-3 ";
+                    if (isActive) {
+                        cls += "bg-purple-100 text-purple-700 shadow border-purple-200";
+                    } else {
+                        cls += "text-purple-600 hover:bg-slate-200";
+                    }
+                } else {
+                    // Regular buttons
+                    if (isActive) {
+                        cls += "bg-white shadow text-blue-600 border border-slate-100";
+                    } else {
+                        cls += "text-slate-500 hover:bg-slate-200";
+                    }
+                }
+                
+                btn.className = cls;
+            });
+        }
+
+        function changeTheme() {
+            const select = document.getElementById('theme-select');
+            currentState.theme = select.value;
+            initGame();
+        }
+
+        function toggleHint() {
+            currentState.hintMode = !currentState.hintMode;
+            
+            const btn = document.getElementById('btn-hint');
+            const status = document.getElementById('hint-status');
+
+            if (currentState.hintMode) {
+                btn.classList.add('bg-yellow-50', 'border-yellow-300', 'text-yellow-600');
+                btn.classList.remove('text-slate-500', 'border-slate-200');
+                status.innerText = "開啟";
+                status.classList.remove('bg-slate-200');
+                status.classList.add('bg-yellow-200');
+            } else {
+                btn.classList.remove('bg-yellow-50', 'border-yellow-300', 'text-yellow-600');
+                btn.classList.add('text-slate-500', 'border-slate-200');
+                status.innerText = "關閉";
+                status.classList.add('bg-slate-200');
+                status.classList.remove('bg-yellow-200');
+            }
+
+            renderSequence();
+        }
+
+        function shakeGame() {
+            const track = document.getElementById('sequence-track');
+            track.classList.add('animate__animated', 'animate__headShake');
+            setTimeout(() => {
+                track.classList.remove('animate__animated', 'animate__headShake');
+            }, 500);
+        }
+
+        function playFeedback(isCorrect) {
+            // Placeholder for sound
+        }
+
+    </script>
+</body>
+</html>
