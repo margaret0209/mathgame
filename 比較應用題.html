@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>數線應用題生成器</title>
+    <title>比較應用題</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -273,6 +273,63 @@
     </div>
 
     <script>
+        // --- Sound System ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'click') {
+                // Short high tick
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+
+            } else if (type === 'correct') {
+                // Two notes ascending (Ding-Dong)
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.connect(gain2);
+                gain2.connect(audioCtx.destination);
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(659.25, now + 0.15); // E5
+                gain2.gain.setValueAtTime(0, now + 0.15);
+                gain2.gain.linearRampToValueAtTime(0.1, now + 0.16);
+                gain2.gain.linearRampToValueAtTime(0, now + 0.5);
+                osc2.start(now + 0.15);
+                osc2.stop(now + 0.5);
+
+            } else if (type === 'wrong') {
+                // Low buzz/descending
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.3);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            }
+        }
+
         // --- Game Configuration & State ---
         const canvas = document.getElementById('mainCanvas');
         const ctx = canvas.getContext('2d');
@@ -498,6 +555,8 @@
         }
 
         function submitCompare(target, choice) {
+            playSound('click'); // Click sound
+
             let isCorrect = false;
             let btnId = `btn-${target.toLowerCase()}-${choice}`;
             let correctId = '';
@@ -517,9 +576,11 @@
 
             if (isCorrect) {
                 clickedBtn.classList.add('correct');
+                playSound('correct'); // Correct sound
             } else {
                 clickedBtn.classList.add('wrong');
                 correctBtn.classList.add('correct');
+                playSound('wrong'); // Wrong sound
                 alert("再想一想喔！參考數線上的位置。");
                 return;
             }
@@ -561,6 +622,8 @@
         });
 
         function pressKey(key) {
+            playSound('click'); // Click sound
+
             if (!activeInputId) return;
             const input = document.getElementById(activeInputId);
             if (input.classList.contains('input-locked')) return;
@@ -605,6 +668,7 @@
                 if (isNaN(n1) || isNaN(n2) || !op) {
                     feedback.innerText = "請填寫完整的算式！";
                     feedback.className = "text-center font-bold text-lg text-red-600";
+                    playSound('wrong');
                     return;
                 }
 
@@ -618,6 +682,7 @@
                 if (inputs[0] !== required[0] || inputs[1] !== required[1]) {
                     feedback.innerText = `請使用題目給的數字 (${X} 和 ${Y})`;
                     feedback.className = "text-center font-bold text-lg text-red-600";
+                    playSound('wrong');
                     return;
                 }
 
@@ -626,6 +691,7 @@
                 if (op !== correctOp) {
                     feedback.innerText = "運算符號不對喔！想一想 B 是變多還是變少？";
                     feedback.className = "text-center font-bold text-lg text-red-600";
+                    playSound('wrong');
                     return;
                 }
 
@@ -633,12 +699,14 @@
                 if (op === '-' && n1 < n2) {
                     feedback.innerText = "減法要用大數減小數喔！";
                     feedback.className = "text-center font-bold text-lg text-red-600";
+                    playSound('wrong');
                     return;
                 }
 
                 // Formula Correct!
                 feedback.innerText = "算式列對了！現在請計算答案。";
                 feedback.className = "text-center font-bold text-lg text-blue-600";
+                playSound('correct');
 
                 // Lock Row 1
                 ['calc-n1', 'calc-n2', 'calc-op'].forEach(id => {
@@ -666,6 +734,7 @@
                 if (isNaN(ans)) {
                     feedback.innerText = "請輸入答案！";
                     feedback.className = "text-center font-bold text-lg text-red-600";
+                    playSound('wrong');
                     return;
                 }
 
@@ -673,12 +742,14 @@
                     feedback.innerText = "答案算錯囉，再算一次！";
                     feedback.className = "text-center font-bold text-lg text-red-600";
                     document.getElementById('calc-ans').classList.add('input-wrong');
+                    playSound('wrong');
                     return;
                 }
 
                 // All Correct!
                 feedback.innerText = "全對！太棒了！ 🎉";
                 feedback.className = "text-center font-bold text-lg text-green-600";
+                playSound('correct');
                 
                 document.getElementById('calc-ans').classList.add('input-correct');
                 document.getElementById('calc-ans').classList.remove('input-wrong');
