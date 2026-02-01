@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>橫向象形圖遊戲 - 兒童數學</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Add Tone.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            touch-action: manipulation;
+        }
+
+        .fruit-slot {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .fruit-icon {
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.1));
+            cursor: grab;
+            user-select: none;
+        }
+
+        .fruit-icon:active {
+            cursor: grabbing;
+        }
+
+        .spawn-animation {
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .count-badge {
+            animation: scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes scaleUp {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        .floating-score {
+            position: absolute;
+            color: #10B981;
+            font-weight: bold;
+            font-size: 1.5rem;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-50px); }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            animation: fall linear forwards;
+            z-index: 50;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(720deg); }
+        }
+
+        /* Theme Button Active State */
+        .theme-btn.active {
+            background-color: #3B82F6;
+            color: white;
+            border-color: #2563EB;
+        }
+    </style>
+</head>
+<body class="bg-blue-50 min-h-screen flex flex-col items-center py-4 select-none" onclick="initAudioContext()">
+
+    <!-- Top Control Panel -->
+    <!-- Modified: Changed max-w-5xl to max-w-7xl -->
+    <div class="w-full max-w-7xl bg-white p-4 rounded-xl shadow-md mb-4 border-2 border-blue-100 flex flex-col md:flex-row justify-between items-center gap-4">
+        
+        <!-- Theme Selector -->
+        <div class="flex gap-2 flex-wrap justify-center">
+            <button onclick="setTheme('fruit')" id="btn-fruit" class="theme-btn active px-4 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 font-bold hover:bg-gray-100 transition-colors flex items-center gap-2">
+                <span>🍎</span> 水果
+            </button>
+            <button onclick="setTheme('toy')" id="btn-toy" class="theme-btn px-4 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 font-bold hover:bg-gray-100 transition-colors flex items-center gap-2">
+                <span>🤖</span> 玩具
+            </button>
+            <button onclick="setTheme('animal')" id="btn-animal" class="theme-btn px-4 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 font-bold hover:bg-gray-100 transition-colors flex items-center gap-2">
+                <span>🦁</span> 動物
+            </button>
+            <button onclick="setTheme('bread')" id="btn-bread" class="theme-btn px-4 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 font-bold hover:bg-gray-100 transition-colors flex items-center gap-2">
+                <span>🥐</span> 麵包
+            </button>
+        </div>
+
+        <!-- Question Mode Select -->
+        <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+            <label for="q-mode-select" class="text-gray-700 font-bold text-sm whitespace-nowrap">問題模式：</label>
+            <select id="q-mode-select" class="bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 outline-none cursor-pointer hover:bg-gray-50" onchange="setQuestionMode(this.value)">
+                <option value="none">不用</option>
+                <option value="most">最多</option>
+                <option value="count">數量</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <!-- Modified: Changed max-w-5xl to max-w-7xl -->
+    <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-7xl border-4 border-blue-200 relative overflow-hidden">
+        
+        <!-- Header -->
+        <div class="mb-4">
+            <h1 id="game-title" class="text-3xl md:text-4xl font-bold text-gray-800 tracking-wide text-center mb-2">家中水果的數量</h1>
+            <div class="w-full flex justify-end">
+                <span class="text-gray-600 text-sm font-medium">
+                    1個圖案代表1
+                </span>
+            </div>
+        </div>
+
+        <!-- Main Layout Wrapper: Flex row on desktop, col on mobile -->
+        <div class="flex flex-col md:flex-row gap-6 items-stretch">
+            
+            <!-- Chart Area (Left side) - Horizontal Layout -->
+            <div class="flex-1 relative bg-white rounded-lg p-2 md:p-4 overflow-x-auto">
+                
+                <!-- Main Horizontal Chart Structure -->
+                <!-- Modified: Increased min-w from 500px to 700px to accommodate wider labels -->
+                <div class="flex w-full min-w-[700px]"> 
+                    
+                    <!-- 1. Labels Column -->
+                    <!-- Modified: Increased width from w-32/w-40 to w-48/w-60 -->
+                    <div id="labels-container" class="flex flex-col justify-around w-48 md:w-60 pr-4 gap-4 py-4">
+                        <!-- Labels injected by JS -->
+                    </div>
+
+                    <!-- 2. Vertical Divider Line -->
+                    <div class="w-1.5 bg-gray-800 rounded-full my-2"></div>
+
+                    <!-- 3. Rows Container -->
+                    <div id="rows-container" class="flex flex-col justify-around flex-1 pl-2 gap-4 py-4">
+                        <!-- Rows injected by JS -->
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Gameplay / Question Area (Right side) -->
+            <div id="game-area" class="md:w-72 shrink-0 bg-blue-100 rounded-xl p-4 border-2 border-blue-300 flex flex-col items-center justify-center min-h-[160px] relative transition-all duration-300">
+                
+                <!-- Default Spawner UI -->
+                <div id="spawner-ui" class="flex flex-col items-center w-full sticky top-4">
+                    <div class="text-gray-600 text-sm mb-4 font-bold uppercase tracking-wider text-center">當前出現的物品</div>
+                    
+                    <div class="bg-white rounded-full p-4 shadow-inner mb-4">
+                        <div id="spawner" class="relative w-24 h-24 flex items-center justify-center"></div>
+                    </div>
+                    
+                    <p class="text-gray-500 text-xs text-center font-medium bg-white/50 px-2 py-1 rounded">
+                        請由左至右<br>點擊正確的空格
+                    </p>
+                </div>
+
+                <!-- Question UI (Hidden by default) -->
+                <div id="question-ui" class="hidden flex-col items-center w-full text-center animate-fade-in my-auto">
+                    <div id="question-text" class="text-xl font-bold text-gray-800 mb-6 leading-relaxed"></div>
+                    <div id="answer-options" class="flex flex-wrap gap-3 justify-center w-full min-h-[60px]"></div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Reset Button -->
+        <button onclick="initGame()" class="absolute top-4 left-4 bg-gray-200 hover:bg-gray-300 text-gray-600 p-2 rounded-full transition-colors z-10" title="重新開始">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+        </button>
+
+    </div>
+
+    <!-- Win Modal -->
+    <div id="win-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl text-center transform scale-0 transition-transform duration-300" id="win-content">
+            <div class="text-6xl mb-4">🎉</div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">太棒了！</h2>
+            <p class="text-gray-600 mb-6">你完成了所有挑戰！</p>
+            <button onclick="initGame()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition hover:scale-105">
+                再玩一次
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Data Definitions ---
+        const THEMES = {
+            fruit: {
+                title: "家中水果的數量",
+                items: [
+                    { name: '蘋果', icon: '🍎' }, { name: '香蕉', icon: '🍌' }, { name: '梨', icon: '🍐' },
+                    { name: '橙', icon: '🍊' }, { name: '葡萄', icon: '🍇' }, { name: '士多啤梨', icon: '🍓' },
+                    { name: '桃', icon: '🍑' }, { name: '西瓜', icon: '🍉' }, { name: '櫻桃', icon: '🍒' },
+                    { name: '菠蘿', icon: '🍍' }, { name: '檸檬', icon: '🍋' }, { name: '芒果', icon: '🥭' },
+                    { name: '哈密瓜', icon: '🍈' }, { name: '奇異果', icon: '🥝' }, { name: '青蘋果', icon: '🍏' }
+                ]
+            },
+            toy: {
+                title: "家中玩具的數量",
+                items: [
+                    { name: '玩具車', icon: '🚗' }, { name: '機械人', icon: '🤖' }, { name: '熊啤啤', icon: '🧸' },
+                    { name: '飛機', icon: '✈️' }, { name: '火車', icon: '🚂' }, { name: '火箭', icon: '🚀' },
+                    { name: '拼圖', icon: '🧩' }, { name: '氣球', icon: '🎈' }, { name: '鼓', icon: '🥁' },
+                    { name: '搖搖', icon: '🪀' }
+                ]
+            },
+            animal: {
+                title: "動物園動物的數量",
+                items: [
+                    { name: '獅子', icon: '🦁' }, { name: '老虎', icon: '🐯' }, { name: '猴子', icon: '🐵' },
+                    { name: '大象', icon: '🐘' }, { name: '長頸鹿', icon: '🦒' }, { name: '斑馬', icon: '🦓' },
+                    { name: '熊貓', icon: '🐼' }, { name: '兔子', icon: '🐰' }, { name: '貓', icon: '🐱' },
+                    { name: '狗', icon: '🐶' }, { name: '樹熊', icon: '🐨' }, { name: '小豬', icon: '🐷' },
+                    { name: '乳牛', icon: '🐮' }, { name: '綿羊', icon: '🐑' }, { name: '企鵝', icon: '🐧' },
+                    { name: '狐狸', icon: '🦊' }, { name: '鸚鵡', icon: '🦜' }, { name: '樹懶', icon: '🦥' },
+                    { name: '袋鼠', icon: '🦘' }, { name: '紅鸛', icon: '🦩' }, { name: '松鼠', icon: '🐿️' }
+                ]
+            },
+            bread: {
+                title: "家中麵包的數量",
+                items: [
+                    { name: '牛角包', icon: '🥐' }, { name: '貝果', icon: '🥯' }, { name: '法包', icon: '🥖' },
+                    { name: '熱狗', icon: '🌭' }, { name: '三文治', icon: '🥪' }
+                ]
+            }
+        };
+
+        // --- Sound Logic (Tone.js) ---
+        let synth;
+        let isAudioInitialized = false;
+
+        async function initAudioContext() {
+            if (isAudioInitialized) return;
+            
+            try {
+                await Tone.start();
+                synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                synth.volume.value = -6; // Adjust volume
+                isAudioInitialized = true;
+                console.log("Audio initialized");
+            } catch (e) {
+                console.error("Audio init failed:", e);
+            }
+        }
+
+        function playCorrectSound() {
+            if (!isAudioInitialized) initAudioContext();
+            if (synth) {
+                synth.triggerAttackRelease("G5", "8n");
+            }
+        }
+
+        function playWrongSound() {
+            if (!isAudioInitialized) initAudioContext();
+            if (synth) {
+                synth.triggerAttackRelease("C4", "8n");
+            }
+        }
+
+        function playCountSound() {
+            if (!isAudioInitialized) initAudioContext();
+            if (synth) {
+                synth.triggerAttackRelease("E5", "16n");
+            }
+        }
+
+        // --- Game State ---
+        let currentTheme = 'fruit';
+        let currentLevelItems = [];
+        let itemQueue = []; 
+        let currentSpawnedItem = null;
+        let isDragging = false;
+        
+        // Question Mode State
+        let currentQuestionMode = 'none'; // 'none', 'most', 'count'
+        let isQuestionPhase = false;
+        let currentQuestionType = null;
+        let currentQuestionTarget = null;
+        let countingIndex = 0; // Tracks which number (1, 2...) we are currently counting on
+
+        // Select Logic
+        function setQuestionMode(mode) {
+            currentQuestionMode = mode;
+        }
+
+        // --- Theme Switching ---
+        function setTheme(theme) {
+            currentTheme = theme;
+            
+            // Update Title
+            document.getElementById('game-title').textContent = THEMES[theme].title;
+            
+            // Update Buttons UI
+            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${theme}`).classList.add('active');
+
+            initGame();
+        }
+
+        function initGame() {
+            if (!isAudioInitialized) initAudioContext();
+
+            // 1. Reset State
+            document.getElementById('win-modal').classList.add('hidden');
+            document.getElementById('win-content').classList.remove('scale-100');
+            document.getElementById('win-content').classList.add('scale-0');
+            
+            isQuestionPhase = false;
+            currentQuestionType = null;
+            countingIndex = 0;
+            
+            // Reset UI Areas
+            document.getElementById('spawner-ui').classList.remove('hidden');
+            document.getElementById('question-ui').classList.add('hidden');
+            document.getElementById('game-area').classList.replace('bg-yellow-50', 'bg-blue-100');
+            document.getElementById('game-area').classList.replace('border-yellow-300', 'border-blue-300');
+            
+            // 2. Select 3 Random Items
+            const themeData = THEMES[currentTheme].items;
+            const shuffledItems = [...themeData].sort(() => 0.5 - Math.random());
+            const selectedTypes = shuffledItems.slice(0, 3);
+
+            // 3. Assign random counts (1-6) ensuring unique max
+            let counts;
+            let hasUniqueMax = false;
+            
+            while (!hasUniqueMax) {
+                counts = Array(3).fill(0).map(() => Math.floor(Math.random() * 6) + 1);
+                const maxVal = Math.max(...counts);
+                if (counts.filter(c => c === maxVal).length === 1) {
+                    hasUniqueMax = true;
+                }
+            }
+
+            currentLevelItems = selectedTypes.map((item, index) => ({
+                ...item,
+                id: index,
+                targetCount: counts[index], 
+                currentCount: 0
+            }));
+
+            // 4. Create the "Deck"
+            itemQueue = [];
+            currentLevelItems.forEach(item => {
+                for (let i = 0; i < item.targetCount; i++) {
+                    itemQueue.push(item.id);
+                }
+            });
+            itemQueue.sort(() => 0.5 - Math.random());
+
+            renderBoard();
+            spawnNextItem();
+        }
+
+        function renderBoard() {
+            const labelsContainer = document.getElementById('labels-container');
+            const rowsContainer = document.getElementById('rows-container');
+            
+            labelsContainer.innerHTML = '';
+            rowsContainer.innerHTML = '';
+
+            currentLevelItems.forEach((item, index) => {
+                // 1. Create Label (Left Column)
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'flex flex-row items-center justify-end gap-2 h-16 md:h-20 pr-4 transition-all duration-200';
+                labelDiv.id = `label-row-${item.id}`; // For highlighting
+                labelDiv.onclick = () => handleRowClick(item.id); // For "Most" question
+
+                labelDiv.innerHTML = `
+                    <span class="text-xl md:text-3xl font-bold text-gray-700 whitespace-nowrap">${item.name}</span>
+                    <span class="text-3xl md:text-5xl leading-tight">${item.icon}</span>
+                `;
+                labelsContainer.appendChild(labelDiv);
+
+                // 2. Create Row Container (Right Column)
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'flex flex-row items-center h-16 md:h-20 w-full rounded-r-lg transition-all duration-200';
+                rowDiv.id = `slots-row-${item.id}`; // For slots container
+                
+                // Allow row highlight interaction if needed, but slots handle their own logic usually
+                
+                // Slots
+                for (let i = 0; i < 6; i++) {
+                    const slot = document.createElement('div');
+                    // Horizontal layout: borders on right
+                    slot.className = `h-full flex-1 flex items-center justify-center border-r border-dashed border-gray-300 last:border-none relative fruit-slot slot-${item.id}-${i} cursor-pointer`;
+                    
+                    // Slot Interaction Handlers
+                    slot.onclick = (e) => {
+                        e.stopPropagation();
+                        handleSlotInteraction(item.id, i);
+                    };
+
+                    slot.ondragover = (e) => {
+                        if (isQuestionPhase) return;
+                        e.preventDefault(); 
+                        slot.classList.add('bg-yellow-50');
+                    };
+                    
+                    slot.ondragleave = () => {
+                        slot.classList.remove('bg-yellow-50');
+                    };
+                    
+                    slot.ondrop = (e) => {
+                        if (isQuestionPhase) return;
+                        e.preventDefault();
+                        slot.classList.remove('bg-yellow-50');
+                        handleSlotInteraction(item.id, i); 
+                    };
+
+                    const innerBox = document.createElement('div');
+                    // Large icon size
+                    innerBox.className = 'w-10 h-10 md:w-14 md:h-14 border-2 border-gray-100 rounded-lg flex items-center justify-center text-4xl md:text-5xl pointer-events-none relative';
+                    slot.appendChild(innerBox);
+                    rowDiv.appendChild(slot);
+                }
+
+                rowsContainer.appendChild(rowDiv);
+            });
+        }
+
+        function spawnNextItem() {
+            const spawner = document.getElementById('spawner');
+            spawner.innerHTML = '';
+
+            if (itemQueue.length === 0) {
+                checkWinCondition();
+                return;
+            }
+
+            const nextItemId = itemQueue[0];
+            const itemData = currentLevelItems.find(f => f.id === nextItemId);
+            currentSpawnedItem = itemData;
+
+            const icon = document.createElement('div');
+            icon.draggable = true;
+            icon.className = 'text-6xl md:text-7xl cursor-grab active:cursor-grabbing hover:scale-110 transition-transform spawn-animation';
+            icon.textContent = itemData.icon;
+            icon.id = 'draggable-item';
+            
+            icon.ondragstart = (e) => {
+                isDragging = true;
+                e.dataTransfer.setData("text/plain", nextItemId);
+                e.dataTransfer.effectAllowed = "move";
+                setTimeout(() => icon.classList.add('opacity-50'), 0);
+            };
+            
+            icon.ondragend = () => {
+                isDragging = false;
+                icon.classList.remove('opacity-50');
+            };
+
+            icon.ontouchstart = () => { icon.classList.add('scale-125'); };
+            icon.ontouchend = () => { icon.classList.remove('scale-125'); };
+
+            spawner.appendChild(icon);
+        }
+
+        function handleSlotInteraction(rowId, slotIndex) {
+            // Case 1: Question Mode
+            if (isQuestionPhase) {
+                if (currentQuestionType === 'most') {
+                    // Clicking a slot in "Most" mode is same as clicking row
+                    checkMostAnswer(rowId);
+                } else if (currentQuestionType === 'count') {
+                    handleCountingClick(rowId, slotIndex);
+                }
+                return;
+            }
+
+            // Case 2: Normal Gameplay
+            if (!currentSpawnedItem) return;
+
+            const targetItem = currentLevelItems.find(f => f.id === rowId);
+            const slotElement = document.querySelector(`.slot-${rowId}-${slotIndex}`);
+
+            // Error 1: Wrong Row (Item Mismatch)
+            if (currentSpawnedItem.id !== rowId) {
+                playWrongSound();
+                slotElement.classList.add('bg-red-100', 'shake');
+                setTimeout(() => slotElement.classList.remove('bg-red-100', 'shake'), 500);
+                return;
+            }
+
+            // Error 2: Wrong Slot (Must fill Left-to-Right)
+            if (slotIndex !== targetItem.currentCount) {
+                playWrongSound();
+                slotElement.classList.add('bg-red-100', 'shake');
+                setTimeout(() => slotElement.classList.remove('bg-red-100', 'shake'), 500);
+                return;
+            }
+
+            // Success Condition
+            playCorrectSound();
+            itemQueue.shift();
+            
+            targetItem.currentCount++;
+
+            placeItemInSlot(rowId, slotIndex, targetItem.icon);
+
+            document.getElementById('spawner').innerHTML = '';
+            setTimeout(spawnNextItem, 300);
+        }
+
+        function placeItemInSlot(rowId, slotIndex, iconChar) {
+            const slot = document.querySelector(`.slot-${rowId}-${slotIndex}`);
+            const innerBox = slot.querySelector('div');
+
+            innerBox.textContent = iconChar;
+            innerBox.className = 'w-10 h-10 md:w-14 md:h-14 flex items-center justify-center text-4xl md:text-5xl spawn-animation relative';
+            innerBox.style.border = 'none';
+            
+            const floatText = document.createElement('div');
+            floatText.className = 'floating-score';
+            floatText.style.left = '50%';
+            floatText.style.bottom = '100%';
+            floatText.style.transform = 'translate(-50%, 0)';
+            floatText.textContent = '+1';
+            slot.appendChild(floatText);
+            
+            setTimeout(() => floatText.remove(), 1000);
+        }
+
+        function checkWinCondition() {
+            if (itemQueue.length === 0) {
+                if (currentQuestionMode !== 'none') {
+                    setTimeout(startQuestionPhase, 800);
+                } else {
+                    setTimeout(triggerWin, 500);
+                }
+            }
+        }
+
+        // --- Question Mode Logic ---
+
+        function startQuestionPhase() {
+            isQuestionPhase = true;
+            countingIndex = 0;
+            
+            document.getElementById('spawner-ui').classList.add('hidden');
+            const qUI = document.getElementById('question-ui');
+            qUI.classList.remove('hidden');
+            qUI.classList.add('flex');
+            
+            document.getElementById('game-area').classList.replace('bg-blue-100', 'bg-yellow-50');
+            document.getElementById('game-area').classList.replace('border-blue-300', 'border-yellow-300');
+
+            if (currentQuestionMode === 'most') {
+                currentQuestionType = 'most';
+            } else if (currentQuestionMode === 'count') {
+                currentQuestionType = 'count';
+            } else {
+                triggerWin();
+                return;
+            }
+
+            const qText = document.getElementById('question-text');
+            const ansOptions = document.getElementById('answer-options');
+            ansOptions.innerHTML = '';
+
+            if (currentQuestionType === 'most') {
+                qText.innerHTML = `請問：<span class="text-blue-600">哪一種${getCategoryName()}最多？</span><br><span class="text-sm text-gray-500 font-normal">請點擊左側的項目或圖表</span>`;
+                
+                // Add highlight to rows
+                currentLevelItems.forEach(item => {
+                    document.getElementById(`label-row-${item.id}`).classList.add('bg-yellow-50', 'rounded-lg', 'cursor-pointer', 'hover:bg-yellow-100');
+                    document.getElementById(`slots-row-${item.id}`).classList.add('bg-yellow-50', 'cursor-pointer', 'hover:bg-yellow-100');
+                });
+
+            } else {
+                // Count specific item
+                const targetItem = currentLevelItems[Math.floor(Math.random() * currentLevelItems.length)];
+                currentQuestionTarget = targetItem;
+                
+                qText.innerHTML = `請問：<span class="text-blue-600">${targetItem.name}${targetItem.icon} 的數量是多少？</span><br><span class="text-sm text-gray-500 font-normal">請由左至右，點擊圖表中的${targetItem.name}來點數</span>`;
+            }
+        }
+
+        function handleRowClick(rowId) {
+            if (isQuestionPhase && currentQuestionType === 'most') {
+                checkMostAnswer(rowId);
+            }
+        }
+
+        function handleCountingClick(rowId, slotIndex) {
+            // Check if correct row
+            if (rowId !== currentQuestionTarget.id) {
+                // Wrong row
+                const label = document.getElementById(`label-row-${rowId}`);
+                label.classList.add('shake', 'text-red-500');
+                playWrongSound();
+                setTimeout(() => label.classList.remove('shake', 'text-red-500'), 500);
+                return;
+            }
+
+            // Check if correct sequence (Left to Right)
+            if (slotIndex !== countingIndex) {
+                const slot = document.querySelector(`.slot-${rowId}-${slotIndex}`);
+                if (slotIndex > countingIndex) {
+                    slot.classList.add('shake');
+                    playWrongSound();
+                    setTimeout(() => slot.classList.remove('shake'), 500);
+                }
+                return;
+            }
+
+            // Correct count
+            const slot = document.querySelector(`.slot-${rowId}-${slotIndex}`);
+            const innerBox = slot.querySelector('div');
+            
+            const countBadge = document.createElement('div');
+            countBadge.className = 'absolute inset-0 flex items-center justify-center text-4xl font-black text-white bg-black/40 rounded-lg count-badge z-10';
+            countBadge.innerText = (countingIndex + 1);
+            innerBox.appendChild(countBadge);
+            
+            playCountSound();
+            countingIndex++;
+
+            if (countingIndex === currentQuestionTarget.targetCount) {
+                setTimeout(showCountOptions, 500);
+            }
+        }
+
+        function showCountOptions() {
+            const qText = document.getElementById('question-text');
+            const ansOptions = document.getElementById('answer-options');
+            
+            qText.innerHTML = `共有 <span class="text-blue-600 text-3xl font-bold">${countingIndex}</span> 個！<br><span class="text-sm text-gray-500 font-normal">請選擇正確的數字</span>`;
+            
+            for (let i = 1; i <= 6; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'w-12 h-12 md:w-14 md:h-14 rounded-full bg-white border-2 border-blue-400 text-xl md:text-2xl font-bold text-blue-600 hover:bg-blue-500 hover:text-white transition shadow-sm transform active:scale-95 animate-fade-in';
+                btn.textContent = i;
+                btn.onclick = () => checkCountAnswer(i, btn);
+                ansOptions.appendChild(btn);
+            }
+        }
+
+        function getCategoryName() {
+            if (currentTheme === 'fruit') return '水果';
+            if (currentTheme === 'toy') return '玩具';
+            if (currentTheme === 'animal') return '動物';
+            if (currentTheme === 'bread') return '麵包';
+            return '物品';
+        }
+
+        function checkMostAnswer(rowId) {
+            const label = document.getElementById(`label-row-${rowId}`);
+            const slots = document.getElementById(`slots-row-${rowId}`);
+
+            if (label.classList.contains('opacity-50')) return; // Already disabled
+
+            const clickedItem = currentLevelItems.find(f => f.id === rowId);
+            const maxCount = Math.max(...currentLevelItems.map(f => f.targetCount));
+
+            if (clickedItem.targetCount === maxCount) {
+                // Correct
+                playCorrectSound();
+                label.classList.add('text-green-600');
+                slots.classList.add('bg-green-100');
+                setTimeout(triggerWin, 500);
+            } else {
+                // Wrong
+                playWrongSound();
+                label.classList.add('shake', 'opacity-50');
+                slots.classList.add('opacity-50');
+                setTimeout(() => label.classList.remove('shake'), 500);
+            }
+        }
+
+        function checkCountAnswer(number, btnElement) {
+            if (btnElement.classList.contains('bg-gray-300')) return;
+
+            if (number === currentQuestionTarget.targetCount) {
+                // Correct
+                playCorrectSound(); 
+                btnElement.classList.replace('bg-white', 'bg-green-500');
+                btnElement.classList.replace('text-blue-600', 'text-white');
+                btnElement.classList.replace('border-blue-400', 'border-green-500');
+                btnElement.classList.remove('hover:bg-blue-500', 'hover:text-white', 'transform', 'active:scale-95');
+                setTimeout(triggerWin, 500);
+            } else {
+                // Wrong
+                playWrongSound(); 
+                btnElement.classList.add('shake');
+                btnElement.classList.remove('bg-white', 'text-blue-600', 'border-blue-400', 'hover:bg-blue-500', 'hover:text-white', 'transform', 'active:scale-95');
+                btnElement.classList.add('bg-gray-300', 'text-gray-500', 'border-gray-300', 'cursor-not-allowed');
+                setTimeout(() => { btnElement.classList.remove('shake'); }, 500);
+            }
+        }
+
+        function triggerWin() {
+            const modal = document.getElementById('win-modal');
+            const content = document.getElementById('win-content');
+            modal.classList.remove('hidden');
+            void modal.offsetWidth;
+            content.classList.remove('scale-0');
+            content.classList.add('scale-100');
+            createConfetti();
+        }
+
+        function createConfetti() {
+            const colors = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'];
+            for (let i = 0; i < 50; i++) {
+                const conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                conf.style.top = -10 + 'px';
+                document.body.appendChild(conf);
+                setTimeout(() => conf.remove(), 5000);
+            }
+        }
+
+        // Start game on load
+        window.onload = initGame;
+
+    </script>
+</body>
+</html>
