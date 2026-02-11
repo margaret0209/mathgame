@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水的奇幻旅程 - 互動學習網</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #e0f2fe; /* light blue-100 */
+            user-select: none;
+        }
+
+        /* 自定義動畫 */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes shiver {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        @keyframes flow {
+            0% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+            50% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+            100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+        }
+
+        @keyframes gas-expand {
+            0% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.2); opacity: 0.3; }
+            100% { transform: scale(1); opacity: 0.6; }
+        }
+
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        .animate-shiver { animation: shiver 0.5s infinite; }
+        .animate-flow { animation: flow 4s infinite ease-in-out; }
+        .animate-gas { animation: gas-expand 3s infinite ease-in-out; }
+
+        .btn-press:active {
+            transform: scale(0.95);
+        }
+
+        /* 分子模擬容器 */
+        .molecule-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+            border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.5);
+            overflow: hidden;
+        }
+        .molecule {
+            width: 15px;
+            height: 15px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            position: absolute;
+            transition: all 1s ease;
+        }
+
+    </style>
+</head>
+<body class="text-slate-700 h-screen flex flex-col overflow-hidden">
+
+    <!-- 導航列 -->
+    <header class="bg-blue-500 text-white p-4 shadow-lg z-10">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold flex items-center gap-2">
+                💧 水的奇幻旅程
+            </h1>
+            <nav class="flex gap-2 text-sm md:text-base">
+                <button onclick="switchTab('learn')" id="nav-learn" class="px-3 py-1 bg-white/20 rounded-full hover:bg-white/40 transition font-bold ring-2 ring-white">認識三態</button>
+                <button onclick="switchTab('lab')" id="nav-lab" class="px-3 py-1 bg-white/20 rounded-full hover:bg-white/40 transition">變身實驗室</button>
+                <button onclick="switchTab('life')" id="nav-life" class="px-3 py-1 bg-white/20 rounded-full hover:bg-white/40 transition">生活例子</button>
+                <button onclick="switchTab('quiz')" id="nav-quiz" class="px-3 py-1 bg-white/20 rounded-full hover:bg-white/40 transition">小測驗</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 主要內容區 -->
+    <main class="flex-1 overflow-y-auto relative bg-gradient-to-b from-blue-50 to-white p-4">
+        <div class="max-w-4xl mx-auto min-h-full">
+
+            <!-- 1. 認識三態 (Learning Section) -->
+            <section id="section-learn" class="min-h-full flex flex-col items-center justify-center space-y-6 fade-in py-10">
+                <h2 class="text-3xl font-bold text-blue-800 mb-4">水的三種樣子</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+                    <!-- 固體 -->
+                    <div class="bg-white p-6 rounded-2xl shadow-xl border-b-4 border-blue-200 text-center transform hover:scale-105 transition duration-300">
+                        <div class="text-6xl mb-4 flex justify-center">
+                            <div class="w-20 h-20 bg-blue-200 rounded-lg flex items-center justify-center animate-shiver border-2 border-blue-300">🧊</div>
+                        </div>
+                        <h3 class="text-2xl font-bold text-blue-600 mb-4">固體：冰 (Ice)</h3>
+                        <div class="text-left space-y-2 text-sm text-gray-700 bg-blue-50 p-4 rounded-lg">
+                            <p><span class="font-bold text-blue-800">🌡️ 溫度：</span> 0°C 或更低</p>
+                            <p><span class="font-bold text-blue-800">👀 形狀：</span> 固定，不會隨便流動</p>
+                            <p><span class="font-bold text-blue-800">💡 例子：</span> 冰塊、雪、冰山</p>
+                        </div>
+                    </div>
+
+                    <!-- 液體 -->
+                    <div class="bg-white p-6 rounded-2xl shadow-xl border-b-4 border-blue-400 text-center transform hover:scale-105 transition duration-300">
+                        <div class="text-6xl mb-4 flex justify-center">
+                            <div class="w-20 h-20 bg-blue-400 rounded-[40%] flex items-center justify-center animate-flow shadow-inner border-2 border-blue-500 text-white">💧</div>
+                        </div>
+                        <h3 class="text-2xl font-bold text-blue-600 mb-4">液體：水 (Water)</h3>
+                        <div class="text-left space-y-2 text-sm text-gray-700 bg-blue-50 p-4 rounded-lg">
+                            <p><span class="font-bold text-blue-800">🌡️ 溫度：</span> 常溫</p>
+                            <p><span class="font-bold text-blue-800">👀 形狀：</span> 會流動，隨容器改變</p>
+                            <p><span class="font-bold text-blue-800">💡 例子：</span> 自來水、雨、河水</p>
+                        </div>
+                    </div>
+
+                    <!-- 氣體 -->
+                    <div class="bg-white p-6 rounded-2xl shadow-xl border-b-4 border-gray-300 text-center transform hover:scale-105 transition duration-300">
+                        <div class="text-6xl mb-4 flex justify-center">
+                            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center animate-gas filter blur-sm">💨</div>
+                        </div>
+                        <h3 class="text-2xl font-bold text-blue-600 mb-4">氣體：水蒸氣 (Steam)</h3>
+                        <div class="text-left space-y-2 text-sm text-gray-700 bg-gray-50 p-4 rounded-lg">
+                            <p><span class="font-bold text-blue-800">🌡️ 溫度：</span> 100°C 或更高</p>
+                            <p><span class="font-bold text-blue-800">👀 形狀：</span> 看不見，會飄散在空氣中</p>
+                            <p><span class="font-bold text-blue-800">💡 例子：</span> 燒開水的白煙、溫泉的霧氣</p>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="switchTab('lab')" class="mt-8 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-3 px-8 rounded-full shadow-lg animate-bounce transition btn-press">
+                    去實驗室看看變化！ ➡️
+                </button>
+            </section>
+
+            <!-- 2. 變身實驗室 (Transformation Lab) -->
+            <section id="section-lab" class="hidden min-h-full flex flex-col items-center py-4">
+                <h2 class="text-2xl font-bold text-blue-800 mb-2">水的三態轉換實驗室</h2>
+                <p class="text-gray-600 mb-6 text-center text-sm">點擊按鈕給水加熱或冷卻，看看會發生什麼事！</p>
+
+                <!-- 實驗區 -->
+                <div class="flex-1 w-full flex flex-col md:flex-row items-center justify-center gap-8">
+                    
+                    <!-- 左側控制面板 -->
+                    <div class="flex flex-row md:flex-col gap-4">
+                        <button id="btn-heat" onclick="changeState('heat')" class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold shadow-xl border-4 border-red-300 flex flex-col items-center justify-center transition btn-press">
+                            <span class="text-2xl">🔥</span>
+                            <span>遇熱</span>
+                        </button>
+                        
+                        <div class="h-2 md:h-24 w-24 md:w-2 bg-gray-300 rounded-full relative mx-auto">
+                            <!-- 溫度計模擬 -->
+                            <div id="thermometer-fill" class="absolute bottom-0 left-0 right-0 bg-red-500 rounded-full transition-all duration-1000" style="height: 50%; width: 100%;"></div>
+                        </div>
+
+                        <button id="btn-cold" onclick="changeState('cold')" class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold shadow-xl border-4 border-cyan-300 flex flex-col items-center justify-center transition btn-press">
+                            <span class="text-2xl">❄️</span>
+                            <span>遇冷</span>
+                        </button>
+                    </div>
+
+                    <!-- 中央展示區 -->
+                    <div class="relative w-64 h-64 md:w-80 md:h-80 bg-white rounded-3xl shadow-2xl flex flex-col items-center justify-center border-4 border-blue-100 overflow-hidden">
+                        
+                        <!-- 狀態標籤 -->
+                        <div class="absolute top-4 left-0 right-0 text-center">
+                            <span id="current-state-text" class="px-4 py-1 bg-blue-100 text-blue-800 rounded-full font-bold">液體 (水)</span>
+                        </div>
+
+                        <!-- 視覺呈現 -->
+                        <div id="visual-container" class="mt-8 transition-all duration-1000">
+                            <!-- JS 會在這裡動態改變內容 -->
+                            <div class="text-8xl animate-flow">💧</div>
+                        </div>
+
+                        <!-- 分子視圖 (小窗口) -->
+                        <div class="absolute bottom-4 right-4 w-24 h-24 bg-gray-50 border border-gray-200 rounded-lg p-1">
+                            <div class="text-[10px] text-gray-500 text-center mb-1">分子顯微鏡</div>
+                            <div id="molecule-box" class="molecule-container relative w-full h-16 bg-white overflow-hidden">
+                                <!-- Molecules go here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右側：發生了什麼事？ -->
+                    <div class="w-full md:w-64 bg-yellow-50 p-4 rounded-xl border-2 border-yellow-200 shadow-md">
+                        <h3 class="font-bold text-yellow-800 mb-2">變化紀錄：</h3>
+                        <div id="log-display" class="text-lg font-bold text-center py-4 text-slate-700 min-h-[80px] flex items-center justify-center">
+                            試著按按看左邊的按鈕！
+                        </div>
+                        <div class="text-sm text-gray-500 mt-2 bg-white p-2 rounded">
+                            <ul class="list-disc pl-4 space-y-1">
+                                <li>冰 <span class="text-red-500">遇熱</span> ➝ <span class="font-bold">熔化</span></li>
+                                <li>水 <span class="text-red-500">遇熱</span> ➝ <span class="font-bold">蒸發</span></li>
+                                <li>水蒸氣 <span class="text-cyan-500">遇冷</span> ➝ <span class="font-bold">凝結</span></li>
+                                <li>水 <span class="text-cyan-500">遇冷</span> ➝ <span class="font-bold">凝固</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. 生活中的例子 (Life Examples) -->
+            <section id="section-life" class="hidden min-h-full pb-20">
+                <h2 class="text-2xl font-bold text-center text-blue-800 mb-6">生活中的水三態</h2>
+                
+                <div class="space-y-8">
+                    <!-- 固體例子 -->
+                    <div class="bg-white rounded-xl shadow-lg p-4">
+                        <div class="flex items-center gap-3 mb-3 border-b pb-2">
+                            <span class="text-3xl">🧊</span>
+                            <h3 class="text-xl font-bold text-blue-700">固體的例子</h3>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="text-center group">
+                                <div class="bg-blue-50 h-24 rounded-lg flex items-center justify-center text-4xl group-hover:scale-110 transition">🍦</div>
+                                <p class="mt-2 font-bold">冰棒</p>
+                            </div>
+                            <div class="text-center group">
+                                <div class="bg-blue-50 h-24 rounded-lg flex items-center justify-center text-4xl group-hover:scale-110 transition">🏔️</div>
+                                <p class="mt-2 font-bold">冰山</p>
+                            </div>
+                            <div class="text-center group">
+                                <div class="bg-blue-50 h-24 rounded-lg flex items-center justify-center text-4xl group-hover:scale-110 transition">⛄</div>
+                                <p class="mt-2 font-bold">雪人</p>
+                            </div>
+                            <div class="text-center group">
+                                <div class="bg-blue-50 h-24 rounded-lg flex items-center justify-center text-4xl group-hover:scale-110 transition">🍧</div>
+                                <p class="mt-2 font-bold">剉冰</p>
+                            </div>
+                            <div class="text-center group">
+                                <div class="bg-blue-50 h-24 rounded-lg flex items-center justify-center text-4xl group-hover:scale-110 transition">🌨️</div>
+                                <p class="mt-2 font-bold">冰雹</p>
+                            </div>
+                            <div class="text-center group">
+                                <div class="bg-blue-50 h-24 rounded-lg flex items-center justify-center text-4xl group-hover:scale-110 transition">⛸️</div>
+                                <p class="mt-2 font-bold">溜冰場</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 液體例子 -->
+                    <div class="bg-white rounded-xl shadow-lg p-4">
+                        <div class="flex items-center gap-3 mb-3 border-b pb-2">
+                            <span class="text-3xl">💧</span>
+                            <h3 class="text-xl font-bold text-blue-700">液體的例子</h3>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="text-center group">
+                                <div class="bg-blue-50 h-24 rounded-lg flex items-center justify-center text-4xl group-hover:scale-110 transition">🌧️</div>
+                                <p class="mt-2 font-bold">雨水</p>
+                            </div>
+                            <div class="text-center group">
+                                <div class="bg-blue-50 h-24 rounded-lg flex items-center justify-center text-4xl group-hover:scale-110 transition">🌊</div>
+                                <p class="mt-2 font-bold">大海</p>
+                            </div>
+                            <div class="text-center group">
+                                <div class="bg-blue-50 h-24 rounded-lg flex items-center justify-center text-4xl group-hover:scale-110 transition">🥤</div>
+                                <p class="mt-2 font-bold">飲料</p>
+                            </div>
+                            <div class="text-center group">
+                                <div class="bg-blue-50 h-24 rounded-lg flex items-center justify-center text-4xl group-hover:scale-110 transition">🚿</div>
+                                <p class="mt-2 font-bold">洗澡水</p>
+                            </div>
+                            <div class="text-center group">
+                                <div class="bg-blue-50 h-24 rounded-lg flex items-center justify-center text-4xl group-hover:scale-110 transition">🍃</div>
+                                <p class="mt-2 font-bold">露水</p>
+                            </div>
+                            <div class="text-center group">
+                                <div class="bg-blue-50 h-24 rounded-lg flex items-center justify-center text-4xl group-hover:scale-110 transition">🏞️</div>
+                                <p class="mt-2 font-bold">瀑布</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 氣體例子 -->
+                    <div class="bg-white rounded-xl shadow-lg p-4">
+                        <div class="flex items-center gap-3 mb-3 border-b pb-2">
+                            <span class="text-3xl">💨</span>
+                            <h3 class="text-xl font-bold text-blue-700">氣體與轉換的例子</h3>
+                            <span class="text-xs text-gray-500 bg-gray-100 px-2 rounded">注意：有些白煙其實是小水滴(液體)喔！</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-blue-50 p-3 rounded-lg flex items-start gap-3">
+                                <div class="text-3xl">♨️</div>
+                                <div>
+                                    <p class="font-bold">燒開水</p>
+                                    <p class="text-sm text-gray-600">水遇熱 <span class="text-red-500 font-bold">蒸發</span> 變成看不見的水蒸氣。</p>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg flex items-start gap-3">
+                                <div class="text-3xl">👕</div>
+                                <div>
+                                    <p class="font-bold">曬衣服</p>
+                                    <p class="text-sm text-gray-600">衣服裡的水吸熱 <span class="text-red-500 font-bold">蒸發</span> 到空氣中，衣服就乾了。</p>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg flex items-start gap-3">
+                                <div class="text-3xl">🍹</div>
+                                <div>
+                                    <p class="font-bold">冰水杯外的水珠</p>
+                                    <p class="text-sm text-gray-600">空氣中的水蒸氣遇冷 <span class="text-cyan-600 font-bold">凝結</span> 成小水珠。</p>
+                                </div>
+                            </div>
+                             <div class="bg-blue-50 p-3 rounded-lg flex items-start gap-3">
+                                <div class="text-3xl">🧊</div>
+                                <div>
+                                    <p class="font-bold">製冰盒</p>
+                                    <p class="text-sm text-gray-600">水放進冷凍庫，遇冷 <span class="text-cyan-600 font-bold">凝固</span> 成冰塊。</p>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg flex items-start gap-3">
+                                <div class="text-3xl">💇‍♀️</div>
+                                <div>
+                                    <p class="font-bold">吹頭髮</p>
+                                    <p class="text-sm text-gray-600">吹風機的熱風讓頭髮上的水 <span class="text-red-500 font-bold">蒸發</span> 變乾。</p>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg flex items-start gap-3">
+                                <div class="text-3xl">👓</div>
+                                <div>
+                                    <p class="font-bold">眼鏡起霧</p>
+                                    <p class="text-sm text-gray-600">熱湯的水蒸氣碰到冷的鏡片 <span class="text-cyan-600 font-bold">凝結</span> 成小水珠。</p>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg flex items-start gap-3">
+                                <div class="text-3xl">😮‍💨</div>
+                                <div>
+                                    <p class="font-bold">冬天哈氣</p>
+                                    <p class="text-sm text-gray-600">嘴裡的熱水氣遇到冷空氣 <span class="text-cyan-600 font-bold">凝結</span> 成白霧。</p>
+                                </div>
+                            </div>
+                            <!-- 新增的三態轉換例子 -->
+                            <div class="bg-blue-50 p-3 rounded-lg flex items-start gap-3">
+                                <div class="text-3xl">⛄</div>
+                                <div>
+                                    <p class="font-bold">雪人融化</p>
+                                    <p class="text-sm text-gray-600">太陽出來好熱，雪人慢慢 <span class="text-blue-600 font-bold">熔化</span> 變成水了。</p>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg flex items-start gap-3">
+                                <div class="text-3xl">🌦️</div>
+                                <div>
+                                    <p class="font-bold">雨後水窪乾了</p>
+                                    <p class="text-sm text-gray-600">地上的積水被太陽曬，<span class="text-red-500 font-bold">蒸發</span> 回到空氣中。</p>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg flex items-start gap-3">
+                                <div class="text-3xl">🪞</div>
+                                <div>
+                                    <p class="font-bold">浴室鏡子霧霧的</p>
+                                    <p class="text-sm text-gray-600">洗澡時的熱水氣碰到冷鏡子，<span class="text-cyan-600 font-bold">凝結</span> 成小水珠。</p>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg flex items-start gap-3">
+                                <div class="text-3xl">⛸️</div>
+                                <div>
+                                    <p class="font-bold">湖面結冰</p>
+                                    <p class="text-sm text-gray-600">冬天氣溫非常低，湖水表面 <span class="text-cyan-600 font-bold">凝固</span> 變成硬硬的冰層。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. 小測驗 (Quiz) -->
+            <section id="section-quiz" class="hidden min-h-full flex flex-col items-center justify-center py-10">
+                <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-lg border-t-8 border-yellow-400">
+                    <h2 class="text-2xl font-bold text-center mb-6">🧠 水的小博士測驗</h2>
+                    
+                    <div id="quiz-container">
+                        <div id="question-area" class="mb-6">
+                            <p id="question-text" class="text-xl font-bold text-gray-800 mb-4">題目載入中...</p>
+                            <!-- 更新這裡的 class 為 grid-cols-1 md:grid-cols-2 (2x2) -->
+                            <div id="options-area" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- 選項按鈕 -->
+                            </div>
+                        </div>
+                        <div id="feedback-area" class="hidden text-center p-4 bg-gray-100 rounded-lg animate-bounce">
+                            <!-- 回饋訊息 -->
+                        </div>
+                    </div>
+
+                    <div id="score-area" class="hidden text-center">
+                        <div class="text-6xl mb-4">🏆</div>
+                        <h3 class="text-2xl font-bold text-blue-600">測驗完成！</h3>
+                        <p class="text-lg mt-2">你的分數是：<span id="final-score" class="font-bold text-red-500 text-3xl">0</span> / 100</p>
+                        <button onclick="restartQuiz()" class="mt-6 bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition shadow">再玩一次</button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- 頁腳 -->
+    <footer class="bg-blue-100 p-2 text-center text-blue-400 text-xs">
+        <p>互動學習教材：水的三態與轉換</p>
+    </footer>
+
+    <script>
+        // --- 狀態管理 ---
+        const gameState = {
+            currentTab: 'learn',
+            waterState: 'water', // ice, water, vapor
+            score: 0,
+            currentQuestion: 0
+        };
+
+        // --- 導航功能 ---
+        function switchTab(tabId) {
+            // 隱藏所有 section
+            document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
+            // 移除導航按鈕的 active 樣式
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-white', 'font-bold');
+            });
+
+            // 顯示目標 section
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+            // 加上 active 樣式
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if(activeBtn) activeBtn.classList.add('ring-2', 'ring-white', 'font-bold');
+
+            // 如果進入實驗室，重置實驗室
+            if(tabId === 'lab') {
+                updateLabVisuals();
+            }
+            // 如果進入測驗，重置測驗
+            if(tabId === 'quiz') {
+                restartQuiz();
+            }
+        }
+
+        // --- 實驗室邏輯 ---
+        function changeState(action) {
+            const logDisplay = document.getElementById('log-display');
+            const visual = document.getElementById('visual-container');
+
+            if (action === 'heat') {
+                if (gameState.waterState === 'ice') {
+                    gameState.waterState = 'water';
+                    logDisplay.innerHTML = `冰 <span class="text-red-500 font-bold text-xl">遇熱</span> <br> <span class="text-blue-600 font-bold text-2xl">熔化</span> 成水了！`;
+                } else if (gameState.waterState === 'water') {
+                    gameState.waterState = 'vapor';
+                    logDisplay.innerHTML = `水 <span class="text-red-500 font-bold text-xl">遇熱</span> <br> <span class="text-gray-500 font-bold text-2xl">蒸發</span> 成水蒸氣了！`;
+                } else {
+                    logDisplay.innerHTML = `水蒸氣已經很熱囉！<br>沒辦法再變化了。`;
+                    shakeEffect(visual);
+                }
+            } else if (action === 'cold') {
+                if (gameState.waterState === 'vapor') {
+                    gameState.waterState = 'water';
+                    logDisplay.innerHTML = `水蒸氣 <span class="text-cyan-500 font-bold text-xl">遇冷</span> <br> <span class="text-blue-600 font-bold text-2xl">凝結</span> 成水了！`;
+                } else if (gameState.waterState === 'water') {
+                    gameState.waterState = 'ice';
+                    logDisplay.innerHTML = `水 <span class="text-cyan-500 font-bold text-xl">遇冷</span> <br> <span class="text-blue-800 font-bold text-2xl">凝固</span> 成冰了！`;
+                } else {
+                    logDisplay.innerHTML = `冰已經很冷囉！<br>沒辦法再變化了。`;
+                    shakeEffect(visual);
+                }
+            }
+            updateLabVisuals();
+        }
+
+        function shakeEffect(element) {
+            element.classList.add('translate-x-2');
+            setTimeout(() => element.classList.remove('translate-x-2'), 100);
+            setTimeout(() => element.classList.add('-translate-x-2'), 200);
+            setTimeout(() => element.classList.remove('-translate-x-2'), 300);
+        }
+
+        function updateLabVisuals() {
+            const visualContainer = document.getElementById('visual-container');
+            const stateText = document.getElementById('current-state-text');
+            const thermometer = document.getElementById('thermometer-fill');
+            const btnHeat = document.getElementById('btn-heat');
+            const btnCold = document.getElementById('btn-cold');
+
+            // 重置樣式
+            visualContainer.className = "mt-8 transition-all duration-1000 flex items-center justify-center h-32";
+            
+            // 清空分子
+            const molBox = document.getElementById('molecule-box');
+            molBox.innerHTML = '';
+
+            if (gameState.waterState === 'ice') {
+                stateText.innerText = "固體 (冰)";
+                stateText.className = "px-4 py-1 bg-blue-800 text-white rounded-full font-bold shadow";
+                visualContainer.innerHTML = `<div class="text-8xl animate-shiver filter drop-shadow-xl">🧊</div>`;
+                thermometer.style.height = "20%";
+                thermometer.className = "absolute bottom-0 left-0 right-0 bg-cyan-600 rounded-full transition-all duration-1000";
+                
+                // 停用冷按鈕
+                btnCold.classList.add('opacity-50', 'cursor-not-allowed');
+                btnHeat.classList.remove('opacity-50', 'cursor-not-allowed');
+
+                // 分子動畫：整齊排列，微動
+                for(let i=0; i<9; i++) {
+                    let m = document.createElement('div');
+                    m.className = 'molecule bg-blue-600';
+                    m.style.left = (20 + (i%3)*25) + 'px';
+                    m.style.top = (10 + Math.floor(i/3)*20) + 'px';
+                    // 微動
+                    m.style.animation = `shiver 0.5s infinite`;
+                    molBox.appendChild(m);
+                }
+
+            } else if (gameState.waterState === 'water') {
+                stateText.innerText = "液體 (水)";
+                stateText.className = "px-4 py-1 bg-blue-400 text-white rounded-full font-bold shadow";
+                visualContainer.innerHTML = `<div class="text-8xl animate-flow filter drop-shadow-xl text-blue-500">💧</div>`;
+                thermometer.style.height = "50%";
+                thermometer.className = "absolute bottom-0 left-0 right-0 bg-blue-500 rounded-full transition-all duration-1000";
+
+                btnCold.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnHeat.classList.remove('opacity-50', 'cursor-not-allowed');
+
+                // 分子動畫：底部聚集，流動
+                for(let i=0; i<9; i++) {
+                    let m = document.createElement('div');
+                    m.className = 'molecule bg-blue-400';
+                    m.style.left = Math.random() * 80 + 'px';
+                    m.style.top = (40 + Math.random() * 20) + 'px';
+                    m.style.transition = "all 2s ease-in-out";
+                    molBox.appendChild(m);
+                    
+                    // 隨機移動
+                    setInterval(() => {
+                        if(gameState.waterState === 'water') {
+                            m.style.left = Math.random() * 80 + 'px';
+                            m.style.top = (40 + Math.random() * 20) + 'px';
+                        }
+                    }, 1000 + Math.random()*1000);
+                }
+
+            } else if (gameState.waterState === 'vapor') {
+                stateText.innerText = "氣體 (水蒸氣)";
+                stateText.className = "px-4 py-1 bg-gray-200 text-gray-700 rounded-full font-bold shadow";
+                visualContainer.innerHTML = `<div class="text-8xl animate-gas filter blur-sm opacity-50">💨</div>`;
+                thermometer.style.height = "90%";
+                thermometer.className = "absolute bottom-0 left-0 right-0 bg-red-500 rounded-full transition-all duration-1000";
+
+                btnHeat.classList.add('opacity-50', 'cursor-not-allowed');
+                btnCold.classList.remove('opacity-50', 'cursor-not-allowed');
+
+                // 分子動畫：快速亂跑
+                for(let i=0; i<6; i++) {
+                    let m = document.createElement('div');
+                    m.className = 'molecule bg-gray-400 opacity-60';
+                    m.style.left = Math.random() * 80 + 'px';
+                    m.style.top = Math.random() * 80 + 'px';
+                    m.style.transition = "all 0.5s linear";
+                    molBox.appendChild(m);
+
+                     // 快速隨機移動
+                     setInterval(() => {
+                        if(gameState.waterState === 'vapor') {
+                            m.style.left = Math.random() * 80 + 'px';
+                            m.style.top = Math.random() * 80 + 'px';
+                        }
+                    }, 500);
+                }
+            }
+        }
+
+        // --- 測驗資料與邏輯 ---
+        const questions = [
+            {
+                q: "當「冰」遇到熱，變成「水」的過程叫什麼？",
+                options: ["凝固", "熔化", "蒸發", "凝結"],
+                ans: 1
+            },
+            {
+                q: "曬衣服時，衣服上的水變成了水蒸氣跑掉了，這是什麼現象？",
+                options: ["蒸發", "熔化", "凝固", "下雨"],
+                ans: 0
+            },
+            {
+                q: "把水放入冷凍庫，水會變成冰，這是什麼過程？",
+                options: ["蒸發", "凝結", "凝固", "消失"],
+                ans: 2
+            },
+            {
+                q: "從冰箱拿出冰飲料，杯子外面會有小水珠，這是空氣中的水蒸氣發生了什麼事？",
+                options: ["生氣", "遇熱", "凝結", "蒸發"],
+                ans: 2
+            },
+            {
+                q: "水的三態中，哪一種形狀固定，摸起來硬硬的？",
+                options: ["水 (液體)", "水蒸氣 (氣體)", "冰 (固體)", "果凍"],
+                ans: 2
+            },
+            {
+                q: "早晨草地上的「露水」是怎麼來的？",
+                options: ["植物流汗", "水蒸氣凝結", "冰塊熔化", "地下水跑出來"],
+                ans: 1
+            },
+            {
+                q: "燒開水時，壺口冒出的「白煙」其實是什麼？",
+                options: ["水蒸氣 (氣體)", "小水滴 (液體)", "灰塵", "煙霧"],
+                ans: 1
+            },
+            {
+                q: "地板拖完後過一陣子就乾了，水跑去哪裡了？",
+                options: ["被地板吃掉了", "凝固成灰塵", "蒸發到空氣中", "變成了冰"],
+                ans: 2
+            },
+            {
+                q: "冬天說話時口中吐出的「白氣」是因為？",
+                options: ["嘴巴著火", "口中熱氣遇冷凝結", "口中水氣蒸發", "吸入冷空氣"],
+                ans: 1
+            },
+            {
+                q: "哪一種狀態的水沒有固定的形狀，但有固定的體積？",
+                options: ["固體 (冰)", "液體 (水)", "氣體 (水蒸氣)", "以上皆非"],
+                ans: 1
+            },
+            {
+                q: "製作冰棒時，需要把果汁放入哪裡？",
+                options: ["烤箱", "微波爐", "冷凍庫", "冷藏室"],
+                ans: 2
+            },
+            {
+                q: "水蒸氣是看不見的，這句話對嗎？",
+                options: ["對", "錯", "看心情", "只有晚上看不見"],
+                ans: 0
+            },
+            {
+                q: "眼鏡吃麵時會起霧，這是因為什麼現象？",
+                options: ["熔化", "凝結", "蒸發", "昇華"],
+                ans: 1
+            },
+            {
+                q: "哪一種狀態的水分子跑得最快、最自由？",
+                options: ["冰", "水", "水蒸氣", "都一樣快"],
+                ans: 2
+            },
+            {
+                q: "哪一種狀態的水分子排列最整齊，手牽手不太移動？",
+                options: ["冰", "水", "水蒸氣", "都一樣"],
+                ans: 0
+            },
+            {
+                q: "吹風機把頭髮吹乾，是利用熱風加速什麼作用？",
+                options: ["凝結", "凝固", "蒸發", "熔化"],
+                ans: 2
+            },
+            {
+                q: "高山上的雪終年不化，是因為？",
+                options: ["太陽照不到", "氣溫太低", "雪太厚", "風太大"],
+                ans: 1
+            },
+            {
+                q: "除濕機收集到的水是從哪裡來的？",
+                options: ["機器自己製造的", "空氣中的水蒸氣凝結", "漏水", "雨水"],
+                ans: 1
+            },
+            {
+                q: "浴室鏡子洗澡後變模糊，是因為鏡子表面有？",
+                options: ["灰塵", "小水滴", "裂痕", "肥皂"],
+                ans: 1
+            },
+            {
+                q: "將濕衣服晾在通風處，水會變成什麼跑掉？",
+                options: ["冰塊", "水蒸氣", "露珠", "雨滴"],
+                ans: 1
+            },
+            {
+                q: "河流的水流動是因為水是？",
+                options: ["固體", "液體", "氣體", "電漿"],
+                ans: 1
+            },
+            {
+                q: "冰淇淋如果不趕快吃會變成水水的，這是？",
+                options: ["熔化", "凝固", "蒸發", "消失"],
+                ans: 0
+            },
+            {
+                q: "雲主要是由什麼組成的？",
+                options: ["棉花", "小水滴或小冰晶", "煙霧", "水蒸氣"],
+                ans: 1
+            },
+            {
+                q: "煮湯時如果不蓋蓋子，湯會變少是因為？",
+                options: ["被偷喝了", "水蒸發了", "鍋子漏水", "凝固了"],
+                ans: 1
+            },
+            {
+                q: "水在自然界循環的動力主要來自？",
+                options: ["月亮", "太陽", "風", "人類"],
+                ans: 1
+            },
+            {
+                q: "把冰塊放在手心，手會感覺涼涼的，是因為冰塊在？",
+                options: ["吸熱熔化", "放熱凝固", "吸熱蒸發", "放熱凝結"],
+                ans: 0
+            },
+            {
+                q: "下列哪一個是固體水的例子？",
+                options: ["露水", "海水", "冰雹", "溫泉"],
+                ans: 2
+            },
+            {
+                q: "下列哪一個是氣體水的例子？",
+                options: ["霧", "雲", "空氣中看不見的水氣", "雨"],
+                ans: 2
+            },
+            {
+                q: "蠟燭燃燒後的蠟油流下來變硬，這過程類似水的什麼變化？",
+                options: ["熔化", "凝固", "蒸發", "凝結"],
+                ans: 1
+            },
+            {
+                q: "乾冰冒出的白煙和水煮開冒出的白煙，看起來很像，都是？",
+                options: ["氣體", "小水滴", "灰塵", "固體粉末"],
+                ans: 1
+            },
+            {
+                q: "冬天車窗內側起霧，是因為車內熱空氣遇到冷玻璃產生？",
+                options: ["凝結", "蒸發", "凝固", "熔化"],
+                ans: 0
+            },
+            {
+                q: "用濕抹布寫字在黑板上，字不見了是因為？",
+                options: ["被粉筆吸走", "蒸發到空氣中", "滲透到黑板裡", "滴到地上了"],
+                ans: 1
+            },
+            {
+                q: "哪一個動作可以加速水的蒸發？",
+                options: ["把水放進冰箱", "把水裝在瓶子蓋緊", "加熱或用風吹", "加糖"],
+                ans: 2
+            },
+            {
+                q: "水結冰時，體積通常會？",
+                options: ["變小", "變大", "不變", "消失"],
+                ans: 1
+            },
+            {
+                q: "寒流來時，魚塭上的水結冰了，這層冰是在？",
+                options: ["水底", "水中間", "水面上", "到處都是"],
+                ans: 2
+            },
+            {
+                q: "下列哪個地方最容易看到「凝結」現象？",
+                options: ["熱鍋子裡", "冷凍庫門打開冒煙", "曬衣服", "沙漠"],
+                ans: 1
+            },
+            {
+                q: "雨過天晴，地上的積水乾了，是因為？",
+                options: ["水滲到地下和蒸發", "水變成了蟲", "水被太陽喝掉了", "水凝固了"],
+                ans: 0
+            },
+            {
+                q: "想要保存冰塊不讓它融化，應該？",
+                options: ["曬太陽", "用吹風機吹", "放在保溫杯或保麗龍箱", "放在盤子上"],
+                ans: 2
+            },
+            {
+                q: "下列哪種飲料裡面有固體的水？",
+                options: ["熱咖啡", "去冰奶茶", "漂浮冰咖啡", "溫開水"],
+                ans: 2
+            },
+            {
+                q: "霧通常在什麼時候最容易出現？",
+                options: ["中午大太陽", "清晨或氣溫降低時", "下午兩點", "隨時"],
+                ans: 1
+            },
+            {
+                q: "為什麼裝冰水的杯子外面會「流汗」？",
+                options: ["杯子破了", "杯子裡的水滲出來", "空氣中的水氣遇冷凝結", "杯子在哭"],
+                ans: 2
+            },
+            {
+                q: "水蒸氣凝結成小水滴需要什麼條件？",
+                options: ["遇熱", "遇冷", "遇光", "遇風"],
+                ans: 1
+            },
+            {
+                q: "水變成水蒸氣需要什麼條件？",
+                options: ["吸熱", "放熱", "結冰", "加壓"],
+                ans: 0
+            },
+            {
+                q: "冰山融化會造成海平面上升，是因為冰變成了？",
+                options: ["氣體", "液體", "固體", "不見了"],
+                ans: 1
+            },
+            {
+                q: "哪一種形態的水會充滿整個容器空間？",
+                options: ["冰塊", "水", "水蒸氣", "沙子"],
+                ans: 2
+            },
+            {
+                q: "瀑布是屬於哪一種狀態的水？",
+                options: ["固體", "液體", "氣體", "混合體"],
+                ans: 1
+            },
+            {
+                q: "在極地看到的極光與水的三態有無直接關係？",
+                options: ["有，是冰造成的", "有，是水蒸氣", "沒有直接關係", "是雨水造成的"],
+                ans: 2
+            },
+            {
+                q: "如果地球沒有太陽，水可能會全部變成？",
+                options: ["水蒸氣", "液態水", "冰", "沸騰的水"],
+                ans: 2
+            },
+            {
+                q: "做菜時勾芡用的太白粉水，加熱變濃稠，這與水的三態變化主要關係是？",
+                options: ["水蒸發變少", "水結冰", "太白粉糊化(化學變化)", "水凝結"],
+                ans: 2
+            },
+            {
+                q: "最後一題：愛惜水資源很重要，因為地球上大部分的水是？",
+                options: ["可以喝的淡水", "鹹鹹的海水", "冰山", "地下水"],
+                ans: 1
+            }
+        ];
+
+        function restartQuiz() {
+            gameState.score = 0;
+            gameState.currentQuestion = 0;
+            document.getElementById('quiz-container').classList.remove('hidden');
+            document.getElementById('score-area').classList.add('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const qData = questions[gameState.currentQuestion];
+            document.getElementById('question-text').innerText = `${gameState.currentQuestion + 1}. ${qData.q}`;
+            
+            const optionsDiv = document.getElementById('options-area');
+            optionsDiv.innerHTML = '';
+            document.getElementById('feedback-area').classList.add('hidden');
+
+            qData.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                // 這裡加入了 h-full 確保在 grid 裡面高度會自動填滿，看起來比較整齊
+                btn.className = "w-full h-full text-left p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition font-bold text-slate-700 flex items-center";
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(index);
+                optionsDiv.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedIndex) {
+            const qData = questions[gameState.currentQuestion];
+            const feedback = document.getElementById('feedback-area');
+            const optionsDiv = document.getElementById('options-area');
+            
+            // 鎖定按鈕
+            Array.from(optionsDiv.children).forEach(btn => btn.disabled = true);
+
+            feedback.classList.remove('hidden');
+            
+            if (selectedIndex === qData.ans) {
+                // 每題改為2分，總分100
+                gameState.score += 2;
+                feedback.innerHTML = `<span class="text-green-600 font-bold text-xl">✅ 答對了！</span>`;
+                feedback.className = "text-center p-4 bg-green-100 rounded-lg mb-4 border-2 border-green-200";
+                
+                // Highlight correct
+                optionsDiv.children[selectedIndex].classList.add('bg-green-200', 'border-green-500');
+            } else {
+                feedback.innerHTML = `<span class="text-red-500 font-bold text-xl">❌ 答錯囉！</span> <br> 正確答案是：${qData.options[qData.ans]}`;
+                feedback.className = "text-center p-4 bg-red-100 rounded-lg mb-4 border-2 border-red-200";
+                
+                // Highlight wrong and correct
+                optionsDiv.children[selectedIndex].classList.add('bg-red-200', 'border-red-500');
+                optionsDiv.children[qData.ans].classList.add('bg-green-200', 'border-green-500');
+            }
+
+            // Next button
+            setTimeout(() => {
+                const nextBtn = document.createElement('button');
+                nextBtn.innerText = gameState.currentQuestion < questions.length - 1 ? "下一題 ➡️" : "看成績 📊";
+                nextBtn.className = "mt-4 bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 font-bold shadow-lg mx-auto block";
+                nextBtn.onclick = () => {
+                    gameState.currentQuestion++;
+                    if (gameState.currentQuestion < questions.length) {
+                        showQuestion();
+                    } else {
+                        showResult();
+                    }
+                };
+                feedback.appendChild(nextBtn);
+            }, 500);
+        }
+
+        function showResult() {
+            document.getElementById('quiz-container').classList.add('hidden');
+            document.getElementById('score-area').classList.remove('hidden');
+            
+            const scoreSpan = document.getElementById('final-score');
+            // 動畫跑分
+            let tempScore = 0;
+            const interval = setInterval(() => {
+                scoreSpan.innerText = tempScore;
+                if(tempScore >= gameState.score) clearInterval(interval);
+                tempScore++;
+            }, 20);
+        }
+
+        // 初始化
+        switchTab('learn');
+
+    </script>
+</body>
+</html>
