@@ -326,6 +326,7 @@
                     qDiv.innerHTML += `<span><span class="text-7xl mx-2">${currentQuestionData.B.icon}</span> 的</span>`;
                     qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[7.5rem] border-b-[4px] border-slate-400 text-blue-700 font-bold text-center px-3 text-5xl" data-answers="${answersAttr}">?</span>`;
                     qDiv.innerHTML += `<span>方是 <span class="text-7xl mx-2">${currentQuestionData.A.icon}</span></span>`;
+                    qDiv.innerHTML += `<span>的 <strong class="text-indigo-600 text-6xl mx-3">${currentQuestionData.dirName}</strong> 。</span>`;
                 }
 
             } else if (type === 2) {
@@ -338,6 +339,7 @@
                 } else {
                     qDiv.innerHTML += `<span><span class="text-7xl mx-2">${currentQuestionData.B.icon}</span> 的 <strong class="text-indigo-600 text-6xl mx-3">${currentQuestionData.dirName}</strong> 方是</span>`;
                     qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[7.5rem] border-b-[4px] border-slate-400 text-blue-700 font-bold text-center px-3 text-7xl" data-answers="${answersAttr}">?</span>`;
+                    qDiv.innerHTML += `<span>的 <strong class="text-indigo-600 text-6xl mx-3">${currentQuestionData.dirName}</strong> 。</span>`;
                 }
 
             } else if (type === 3) {
@@ -351,6 +353,7 @@
                 } else {
                     qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[7.5rem] border-b-[4px] border-slate-400 text-blue-700 font-bold text-center px-3 text-7xl" data-answers="${answersAttr}">?</span>`;
                     qDiv.innerHTML += `<span>的 <strong class="text-indigo-600 text-6xl mx-3">${currentQuestionData.dirName}</strong> 方是 <span class="text-7xl mx-2">${currentQuestionData.A.icon}</span></span>`;
+                    qDiv.innerHTML += `<span>的 <strong class="text-indigo-600 text-6xl mx-3">${currentQuestionData.dirName}</strong> 。</span>`;
                 }
             }
 
