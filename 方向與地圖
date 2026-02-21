@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隨機地圖生成器與方向練習</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自訂一些簡單的動畫與字體微調 */
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; }
+        .emoji-shadow { text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 0.5rem center; background-size: 1em; padding-right: 2rem !important; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- 頁面標題 -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 mb-2">🗺️ 隨機地圖與方向練習</h1>
+            <p class="text-slate-600">觀察左方的地圖與指南針，回答右方的問題！</p>
+        </header>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+            
+            <!-- 左側區域：指南針與地圖 -->
+            <div class="w-full lg:w-1/2 flex flex-col gap-6">
+                
+                <!-- 指南針區塊 -->
+                <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 flex flex-col items-center">
+                    <h2 class="text-xl font-bold text-slate-700 mb-4">🧭 目前方位</h2>
+                    <div class="relative w-32 h-32 rounded-full border-4 border-slate-200 bg-slate-50 flex items-center justify-center shadow-inner">
+                        <!-- 螢幕方向提示詞 -->
+                        <span class="absolute -top-6 font-bold text-slate-400 text-sm">畫面正上方</span>
+                        
+                        <!-- 旋轉的指針 -->
+                        <div id="compass-arrow" class="absolute w-full h-full transition-transform duration-1000 ease-in-out">
+                            <!-- 北方紅色箭頭 -->
+                            <div class="absolute top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-b-[45px] border-l-transparent border-r-transparent border-b-red-500"></div>
+                            <!-- 北方標字 -->
+                            <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 font-black text-red-600 text-xl bg-white/80 px-1 rounded">北</div>
+                            <!-- 南方黑色箭頭 -->
+                            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-t-[45px] border-l-transparent border-r-transparent border-t-slate-800"></div>
+                        </div>
+                    </div>
+                    <p id="compass-desc" class="mt-6 text-slate-600 font-medium bg-slate-100 px-4 py-2 rounded-lg text-center"></p>
+                </div>
+
+                <!-- 地圖區塊 -->
+                <div class="bg-white p-4 md:p-6 rounded-2xl shadow-md border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-700 mb-4 text-center">📍 4x4 地圖</h2>
+                    <div id="map-grid" class="grid grid-cols-4 gap-2 md:gap-3 bg-slate-200 p-2 md:p-3 rounded-xl">
+                        <!-- 地圖方塊由 JS 產生 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側區域：題目與設定 -->
+            <div class="w-full lg:w-1/2 bg-white p-6 rounded-2xl shadow-md border border-slate-200 flex flex-col">
+                
+                <!-- 設定區域 -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 border-b pb-4 gap-4">
+                    <div class="flex flex-col gap-2 w-full sm:w-auto">
+                        <h2 class="text-2xl font-bold text-slate-800">📝 題目測驗</h2>
+                        <div class="flex gap-2 text-sm">
+                            <select id="setting-dir-mode" class="border border-slate-300 bg-slate-50 text-slate-700 py-1 px-2 rounded font-medium focus:ring focus:ring-blue-200">
+                                <option value="8">八個方向</option>
+                                <option value="4">四個方向</option>
+                            </select>
+                            <select id="setting-q-mode" class="border border-slate-300 bg-slate-50 text-slate-700 py-1 px-2 rounded font-medium focus:ring focus:ring-blue-200">
+                                <option value="mixed">隨機混合</option>
+                                <option value="1">方向題型</option>
+                                <option value="2">地圖物件題型</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="generateNewSession()" class="whitespace-nowrap px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg shadow transition-colors w-full sm:w-auto">重新生成</button>
+                </div>
+
+                <!-- 答題區域 (每次只顯示一題) -->
+                <div id="question-area" class="flex flex-col flex-grow">
+                    <div class="flex justify-between items-center mb-4 text-slate-500 font-bold">
+                        <span>進度：第 <span id="current-q-num" class="text-blue-600 text-lg">1</span> / 5 題</span>
+                        <span>得分：<span id="current-score" class="text-green-600 text-lg">0</span></span>
+                    </div>
+
+                    <!-- 單題容器 -->
+                    <div id="single-question-container" class="p-6 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-4 text-xl shadow-sm mb-6 min-h-[120px] justify-center">
+                        <!-- 題目由 JS 產生 -->
+                    </div>
+
+                    <!-- 操作按鈕與回饋 -->
+                    <div class="flex flex-col gap-4 mt-auto">
+                        <div id="feedback-message" class="text-center font-bold text-lg h-8"></div>
+                        
+                        <button id="btn-submit" onclick="checkAnswer()" class="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg shadow-md transition-colors text-lg">送出答案</button>
+                        
+                        <button id="btn-next" onclick="nextQuestion()" class="hidden w-full py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-lg shadow-md transition-colors text-lg">下一題 ➡️</button>
+
+                        <button id="btn-result" onclick="showResults()" class="hidden w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-lg shadow-md transition-colors text-lg">查看總結 🏆</button>
+                    </div>
+                </div>
+                
+                <!-- 結果結算區域 -->
+                <div id="result-area" class="hidden flex flex-col items-center justify-center flex-grow py-8">
+                    <h3 class="text-3xl font-black text-slate-800 mb-4">測驗結束！</h3>
+                    <div id="final-score-display" class="text-5xl font-extrabold mb-6"></div>
+                    <div id="final-message" class="text-xl text-slate-600 font-bold text-center mb-8 px-4"></div>
+                    <button onclick="generateNewSession()" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full shadow-lg transition-transform hover:scale-105 text-xl">再玩一次</button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // 定義使用的 16 個圖案 (Emojis)
+        const iconsList = ['🌲', '🏠', '⛰️', '⛺', '🏰', '⛪', '⛲', '🏭', '🏫', '🏥', '🏦', '🏪', '🚂', '⛵', '✈️', '🚀'];
+        
+        // 8 個方位名稱
+        const dirNames8 = ['北', '東北', '東', '東南', '南', '西南', '西', '西北'];
+        // 4 個方位名稱
+        const dirNames4 = ['北', '東', '南', '西'];
+        
+        // 定義螢幕上的 8 個移動向量 [dx (橫向), dy (直向)]
+        const screenVectors = [
+            [0, -1],  // 0: 上
+            [1, -1],  // 1: 右上
+            [1, 0],   // 2: 右
+            [1, 1],   // 3: 右下
+            [0, 1],   // 4: 下
+            [-1, 1],  // 5: 左下
+            [-1, 0],  // 6: 左
+            [-1, -1]  // 7: 左上
+        ];
+
+        let currentNorthIndex = 0; 
+        let currentMap = []; 
+        
+        // 測驗狀態
+        let currentQuestionNum = 1;
+        const maxQuestions = 5;
+        let score = 0;
+        let currentQuestionData = null;
+
+        // 陣列洗牌函數
+        function shuffle(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // 初始化與生成新關卡
+        function generateNewSession() {
+            currentQuestionNum = 1;
+            score = 0;
+            updateScoreDisplay();
+            
+            // 切換畫面
+            document.getElementById('result-area').classList.add('hidden');
+            document.getElementById('question-area').classList.remove('hidden');
+            document.getElementById('question-area').classList.add('flex');
+
+            // 1. 生成打亂的地圖
+            const shuffledIcons = shuffle(iconsList);
+            currentMap = [];
+            for (let i = 0; i < 4; i++) {
+                currentMap.push(shuffledIcons.slice(i * 4, i * 4 + 4));
+            }
+
+            // 2. 渲染地圖畫面
+            const mapGrid = document.getElementById('map-grid');
+            mapGrid.innerHTML = '';
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'aspect-square flex items-center justify-center text-4xl lg:text-5xl bg-white border border-slate-300 rounded-xl shadow-sm hover:scale-105 transition-transform cursor-default select-none emoji-shadow';
+                    cell.innerText = currentMap[r][c];
+                    mapGrid.appendChild(cell);
+                }
+            }
+
+            // 3. 隨機決定指南針方向 (依據選擇的模式限制北方指向)
+            const dirMode = document.getElementById('setting-dir-mode').value;
+            if (dirMode === '4') {
+                // 如果是 4 方向，讓指南針也只指向正上、右、下、左，避免混淆
+                const dirs4 = [0, 2, 4, 6];
+                currentNorthIndex = dirs4[Math.floor(Math.random() * dirs4.length)];
+            } else {
+                currentNorthIndex = Math.floor(Math.random() * 8);
+            }
+            
+            const degrees = currentNorthIndex * 45;
+            document.getElementById('compass-arrow').style.transform = `rotate(${degrees}deg)`;
+            
+            const screenDirNames = ['正上方', '右上方', '正右方', '右下方', '正下方', '左下方', '正左方', '左上方'];
+            document.getElementById('compass-desc').innerHTML = `注意：現在的 <strong class="text-red-600">北方 (北)</strong> 朝向畫面的 <strong class="text-blue-700">${screenDirNames[currentNorthIndex]}</strong>`;
+
+            // 4. 渲染第一題
+            renderCurrentQuestion();
+        }
+
+        // 尋找符合條件的一組圖案與方位
+        function getValidPair(type, dirMode) {
+            let maxTries = 300;
+            while (maxTries-- > 0) {
+                let rB = Math.floor(Math.random() * 4);
+                let cB = Math.floor(Math.random() * 4);
+                
+                let dirIndex;
+                if (dirMode === '4') {
+                    const dirs4 = [0, 2, 4, 6]; // 北, 東, 南, 西
+                    dirIndex = dirs4[Math.floor(Math.random() * dirs4.length)];
+                } else {
+                    dirIndex = Math.floor(Math.random() * 8);
+                }
+                
+                // 問物件是誰 (Type 2)，距離限制為 1，確保答案唯一
+                let dist = (type === 2) ? 1 : (Math.floor(Math.random() * 3) + 1);
+
+                let screenDirIndex = (dirIndex + currentNorthIndex) % 8;
+                let dx = screenVectors[screenDirIndex][0];
+                let dy = screenVectors[screenDirIndex][1];
+
+                let rA = rB + dist * dy;
+                let cA = cB + dist * dx;
+
+                if (rA >= 0 && rA < 4 && cA >= 0 && cA < 4) {
+                    return {
+                        B: { icon: currentMap[rB][cB] },
+                        A: { icon: currentMap[rA][cA] },
+                        dirIndex: dirIndex,
+                        dirName: dirNames8[dirIndex] // 名稱永遠可對應8方位陣列
+                    };
+                }
+            }
+            return null;
+        }
+
+        // 渲染單一題目
+        function renderCurrentQuestion() {
+            document.getElementById('current-q-num').innerText = currentQuestionNum;
+            document.getElementById('feedback-message').innerHTML = ''; // 清除回饋
+            
+            // 重設按鈕狀態
+            document.getElementById('btn-submit').classList.remove('hidden');
+            document.getElementById('btn-next').classList.add('hidden');
+            document.getElementById('btn-result').classList.add('hidden');
+
+            const dirMode = document.getElementById('setting-dir-mode').value;
+            const qMode = document.getElementById('setting-q-mode').value;
+            
+            // 決定題型 (1:方向, 2:物件)
+            let type;
+            if (qMode === '1') type = 1;
+            else if (qMode === '2') type = 2;
+            else type = Math.random() > 0.5 ? 1 : 2; // Mixed
+
+            currentQuestionData = getValidPair(type, dirMode);
+            if (!currentQuestionData) {
+                // 防呆重試
+                renderCurrentQuestion();
+                return;
+            }
+
+            const container = document.getElementById('single-question-container');
+            container.innerHTML = '';
+
+            const qDiv = document.createElement('div');
+            qDiv.className = 'flex flex-wrap items-center justify-center gap-3 leading-loose text-center';
+
+            if (type === 1) {
+                // 題型 1：「圖案1」在「圖案2」的「方向」方。
+                qDiv.innerHTML += `<span>「<span class="text-3xl">${currentQuestionData.A.icon}</span>」在「<span class="text-3xl">${currentQuestionData.B.icon}</span>」的</span>`;
+                
+                const select = document.createElement('select');
+                select.id = 'answer-select';
+                select.className = 'border-b-[3px] border-slate-400 bg-white px-3 py-1 outline-none text-blue-700 font-bold rounded cursor-pointer shadow-sm focus:border-blue-500 hover:border-blue-400 transition-colors text-xl';
+                
+                const optionsList = dirMode === '4' ? dirNames4 : dirNames8;
+                select.innerHTML = `<option value="">選擇方向</option>` + optionsList.map(d => `<option value="${d}">${d}</option>`).join('');
+                select.dataset.answer = currentQuestionData.dirName;
+                
+                qDiv.appendChild(select);
+                qDiv.innerHTML += `<span>方。</span>`;
+            } else {
+                // 題型 2：「圖案1」的「方向」方是「圖案2」 (已刪去"相鄰"兩字)
+                qDiv.innerHTML += `<span>「<span class="text-3xl">${currentQuestionData.B.icon}</span>」的「<strong class="text-indigo-600 text-2xl mx-1">${currentQuestionData.dirName}</strong>」方是</span>`;
+                
+                const select = document.createElement('select');
+                select.id = 'answer-select';
+                select.className = 'border-b-[3px] border-slate-400 bg-white px-2 py-1 outline-none text-blue-700 font-bold text-3xl rounded cursor-pointer shadow-sm focus:border-blue-500 hover:border-blue-400 transition-colors';
+                select.innerHTML = `<option value="">?</option>` + iconsList.map(ic => `<option value="${ic}">${ic}</option>`).join('');
+                select.dataset.answer = currentQuestionData.A.icon;
+                
+                qDiv.appendChild(select);
+            }
+
+            container.appendChild(qDiv);
+        }
+
+        // 批改單一答案
+        function checkAnswer() {
+            const select = document.getElementById('answer-select');
+            if (select.value === "") {
+                alert("請先選擇一個答案再送出喔！");
+                return;
+            }
+
+            const isCorrect = select.value === select.dataset.answer;
+            const feedback = document.getElementById('feedback-message');
+            
+            if (isCorrect) {
+                select.classList.remove('border-slate-400');
+                select.classList.add('border-green-500', 'text-green-700', 'bg-green-50');
+                feedback.innerHTML = '<span class="text-green-600">✅ 答對了！非常棒！</span>';
+                score++;
+                updateScoreDisplay();
+            } else {
+                select.classList.remove('border-slate-400');
+                select.classList.add('border-red-500', 'text-red-600', 'bg-red-50');
+                feedback.innerHTML = `<span class="text-red-600">❌ 答錯了！正確答案是：<strong>${select.dataset.answer}</strong></span>`;
+            }
+            
+            // 鎖定選單
+            select.disabled = true;
+            select.classList.add('cursor-not-allowed');
+
+            // 切換按鈕
+            document.getElementById('btn-submit').classList.add('hidden');
+            if (currentQuestionNum < maxQuestions) {
+                document.getElementById('btn-next').classList.remove('hidden');
+            } else {
+                document.getElementById('btn-result').classList.remove('hidden');
+            }
+        }
+
+        // 進入下一題
+        function nextQuestion() {
+            currentQuestionNum++;
+            renderCurrentQuestion();
+        }
+
+        // 顯示最終結算
+        function showResults() {
+            document.getElementById('question-area').classList.add('hidden');
+            document.getElementById('question-area').classList.remove('flex');
+            
+            document.getElementById('result-area').classList.remove('hidden');
+            
+            const scoreDisplay = document.getElementById('final-score-display');
+            const finalMsg = document.getElementById('final-message');
+            
+            scoreDisplay.innerText = `${score} / ${maxQuestions}`;
+            
+            if(score === maxQuestions) {
+                scoreDisplay.className = 'text-5xl font-extrabold mb-6 text-green-600';
+                finalMsg.innerText = `🎉 太神啦！完美過關，你的方向感超棒！`;
+            } else if (score >= 3) {
+                scoreDisplay.className = 'text-5xl font-extrabold mb-6 text-yellow-500';
+                finalMsg.innerText = `👍 表現不錯！繼續保持練習，你會越來越熟練！`;
+            } else {
+                scoreDisplay.className = 'text-5xl font-extrabold mb-6 text-red-500';
+                finalMsg.innerText = `💪 再接再厲！看地圖時記得要先確認指南針的北方在哪裡喔！`;
+            }
+        }
+
+        function updateScoreDisplay() {
+            document.getElementById('current-score').innerText = score;
+        }
+
+        // 頁面載入時執行第一次生成
+        window.onload = generateNewSession;
+    </script>
+</body>
+</html>
