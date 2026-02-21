@@ -24,26 +24,14 @@
 
         <div class="flex flex-col lg:flex-row gap-8">
             
-            <!-- 左側區域：地圖 -->
-            <div class="w-full lg:w-1/2 flex flex-col gap-6">
-                <!-- 地圖區塊 -->
-                <div class="bg-white p-4 md:p-6 rounded-2xl shadow-md border border-slate-200">
-                    <h2 class="text-xl font-bold text-slate-700 mb-4 text-center">📍 4x4 地圖</h2>
-                    <div id="map-grid" class="grid grid-cols-4 gap-2 md:gap-3 bg-slate-200 p-2 md:p-3 rounded-xl">
-                        <!-- 地圖方塊由 JS 產生 -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- 右側區域：指南針與題目 -->
+            <!-- 左側區域：指南針與地圖 -->
             <div class="w-full lg:w-1/2 flex flex-col gap-6">
                 
-                <!-- 指南針區塊 (右上) -->
+                <!-- 指南針區塊 (移至左上) -->
                 <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 flex flex-col items-center">
                     <h2 class="text-xl font-bold text-slate-700 mb-4">🧭 目前方位</h2>
                     <div class="relative w-32 h-32 rounded-full border-4 border-slate-200 bg-slate-50 flex items-center justify-center shadow-inner">
-                        <!-- 螢幕方向提示詞 -->
-                        <span class="absolute -top-6 font-bold text-slate-400 text-sm">畫面正上方</span>
+                        <!-- 已移除「畫面正上方」提示詞 -->
                         
                         <!-- 旋轉的指針 -->
                         <div id="compass-arrow" class="absolute w-full h-full transition-transform duration-1000 ease-in-out">
@@ -55,10 +43,22 @@
                             <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-t-[45px] border-l-transparent border-r-transparent border-t-slate-800"></div>
                         </div>
                     </div>
-                    <p id="compass-desc" class="mt-6 text-slate-600 font-medium bg-slate-100 px-4 py-2 rounded-lg text-center"></p>
+                    <!-- 已移除 compass-desc 文字說明段落 -->
                 </div>
 
-                <!-- 題目與設定區塊 (右下) -->
+                <!-- 地圖區塊 -->
+                <div class="bg-white p-4 md:p-6 rounded-2xl shadow-md border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-700 mb-4 text-center">📍 4x4 地圖</h2>
+                    <div id="map-grid" class="grid grid-cols-4 gap-2 md:gap-3 bg-slate-200 p-2 md:p-3 rounded-xl max-w-xs mx-auto">
+                        <!-- 地圖方塊由 JS 產生 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側區域：題目 -->
+            <div class="w-full lg:w-1/2 flex flex-col gap-6">
+                
+                <!-- 題目與設定區塊 (右側) -->
                 <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 flex flex-col flex-grow">
                 
                     <!-- 設定區域 -->
@@ -183,7 +183,7 @@
             for (let r = 0; r < 4; r++) {
                 for (let c = 0; c < 4; c++) {
                     const cell = document.createElement('div');
-                    cell.className = 'aspect-square flex items-center justify-center text-4xl lg:text-5xl bg-white border border-slate-300 rounded-xl shadow-sm hover:scale-105 transition-transform cursor-default select-none emoji-shadow';
+                    cell.className = 'aspect-square flex items-center justify-center text-3xl lg:text-4xl bg-white border border-slate-300 rounded-xl shadow-sm hover:scale-105 transition-transform cursor-default select-none emoji-shadow';
                     cell.innerText = currentMap[r][c];
                     mapGrid.appendChild(cell);
                 }
@@ -202,8 +202,7 @@
             const degrees = currentNorthIndex * 45;
             document.getElementById('compass-arrow').style.transform = `rotate(${degrees}deg)`;
             
-            const screenDirNames = ['正上方', '右上方', '正右方', '右下方', '正下方', '左下方', '正左方', '左上方'];
-            document.getElementById('compass-desc').innerHTML = `注意：現在的 <strong class="text-red-600">北方 (北)</strong> 朝向畫面的 <strong class="text-blue-700">${screenDirNames[currentNorthIndex]}</strong>`;
+            // 已移除設定 compass-desc 的 JS 程式碼
 
             // 4. 渲染第一題
             renderCurrentQuestion();
