@@ -24,10 +24,21 @@
 
         <div class="flex flex-col lg:flex-row gap-8">
             
-            <!-- 左側區域：指南針與地圖 -->
+            <!-- 左側區域：地圖 -->
+            <div class="w-full lg:w-1/2 flex flex-col gap-6">
+                <!-- 地圖區塊 -->
+                <div class="bg-white p-4 md:p-6 rounded-2xl shadow-md border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-700 mb-4 text-center">📍 4x4 地圖</h2>
+                    <div id="map-grid" class="grid grid-cols-4 gap-2 md:gap-3 bg-slate-200 p-2 md:p-3 rounded-xl">
+                        <!-- 地圖方塊由 JS 產生 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側區域：指南針與題目 -->
             <div class="w-full lg:w-1/2 flex flex-col gap-6">
                 
-                <!-- 指南針區塊 -->
+                <!-- 指南針區塊 (右上) -->
                 <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 flex flex-col items-center">
                     <h2 class="text-xl font-bold text-slate-700 mb-4">🧭 目前方位</h2>
                     <div class="relative w-32 h-32 rounded-full border-4 border-slate-200 bg-slate-50 flex items-center justify-center shadow-inner">
@@ -47,69 +58,61 @@
                     <p id="compass-desc" class="mt-6 text-slate-600 font-medium bg-slate-100 px-4 py-2 rounded-lg text-center"></p>
                 </div>
 
-                <!-- 地圖區塊 -->
-                <div class="bg-white p-4 md:p-6 rounded-2xl shadow-md border border-slate-200">
-                    <h2 class="text-xl font-bold text-slate-700 mb-4 text-center">📍 4x4 地圖</h2>
-                    <div id="map-grid" class="grid grid-cols-4 gap-2 md:gap-3 bg-slate-200 p-2 md:p-3 rounded-xl">
-                        <!-- 地圖方塊由 JS 產生 -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- 右側區域：題目與設定 -->
-            <div class="w-full lg:w-1/2 bg-white p-6 rounded-2xl shadow-md border border-slate-200 flex flex-col">
+                <!-- 題目與設定區塊 (右下) -->
+                <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 flex flex-col flex-grow">
                 
-                <!-- 設定區域 -->
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 border-b pb-4 gap-4">
-                    <div class="flex flex-col gap-2 w-full sm:w-auto">
-                        <h2 class="text-2xl font-bold text-slate-800">📝 題目測驗</h2>
-                        <div class="flex gap-2 text-sm">
-                            <select id="setting-dir-mode" class="border border-slate-300 bg-slate-50 text-slate-700 py-1 px-2 rounded font-medium focus:ring focus:ring-blue-200">
-                                <option value="8">八個方向</option>
-                                <option value="4">四個方向</option>
-                            </select>
-                            <select id="setting-q-mode" class="border border-slate-300 bg-slate-50 text-slate-700 py-1 px-2 rounded font-medium focus:ring focus:ring-blue-200">
-                                <option value="mixed">隨機混合</option>
-                                <option value="1">方向題型</option>
-                                <option value="2">地圖物件題型</option>
-                            </select>
+                    <!-- 設定區域 -->
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 border-b pb-4 gap-4">
+                        <div class="flex flex-col gap-2 w-full sm:w-auto">
+                            <h2 class="text-2xl font-bold text-slate-800">📝 題目測驗</h2>
+                            <div class="flex gap-2 text-sm">
+                                <select id="setting-dir-mode" class="border border-slate-300 bg-slate-50 text-slate-700 py-1 px-2 rounded font-medium focus:ring focus:ring-blue-200">
+                                    <option value="8">八個方向</option>
+                                    <option value="4">四個方向</option>
+                                </select>
+                                <select id="setting-q-mode" class="border border-slate-300 bg-slate-50 text-slate-700 py-1 px-2 rounded font-medium focus:ring focus:ring-blue-200">
+                                    <option value="mixed">隨機混合</option>
+                                    <option value="1">方向題型</option>
+                                    <option value="2">地圖物件題型</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="generateNewSession()" class="whitespace-nowrap px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg shadow transition-colors w-full sm:w-auto">重新生成</button>
+                    </div>
+
+                    <!-- 答題區域 (每次只顯示一題) -->
+                    <div id="question-area" class="flex flex-col flex-grow">
+                        <div class="flex justify-between items-center mb-4 text-slate-500 font-bold">
+                            <span>進度：第 <span id="current-q-num" class="text-blue-600 text-lg">1</span> / 5 題</span>
+                            <span>得分：<span id="current-score" class="text-green-600 text-lg">0</span></span>
+                        </div>
+
+                        <!-- 單題容器 -->
+                        <div id="single-question-container" class="p-6 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-4 text-xl shadow-sm mb-6 min-h-[120px] justify-center">
+                            <!-- 題目由 JS 產生 -->
+                        </div>
+
+                        <!-- 操作按鈕與回饋 -->
+                        <div class="flex flex-col gap-4 mt-auto">
+                            <div id="feedback-message" class="text-center font-bold text-lg h-8"></div>
+                            
+                            <button id="btn-submit" onclick="checkAnswer()" class="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg shadow-md transition-colors text-lg">送出答案</button>
+                            
+                            <button id="btn-next" onclick="nextQuestion()" class="hidden w-full py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-lg shadow-md transition-colors text-lg">下一題 ➡️</button>
+
+                            <button id="btn-result" onclick="showResults()" class="hidden w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-lg shadow-md transition-colors text-lg">查看總結 🏆</button>
                         </div>
                     </div>
-                    <button onclick="generateNewSession()" class="whitespace-nowrap px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg shadow transition-colors w-full sm:w-auto">重新生成</button>
-                </div>
-
-                <!-- 答題區域 (每次只顯示一題) -->
-                <div id="question-area" class="flex flex-col flex-grow">
-                    <div class="flex justify-between items-center mb-4 text-slate-500 font-bold">
-                        <span>進度：第 <span id="current-q-num" class="text-blue-600 text-lg">1</span> / 5 題</span>
-                        <span>得分：<span id="current-score" class="text-green-600 text-lg">0</span></span>
+                    
+                    <!-- 結果結算區域 -->
+                    <div id="result-area" class="hidden flex flex-col items-center justify-center flex-grow py-8">
+                        <h3 class="text-3xl font-black text-slate-800 mb-4">測驗結束！</h3>
+                        <div id="final-score-display" class="text-5xl font-extrabold mb-6"></div>
+                        <div id="final-message" class="text-xl text-slate-600 font-bold text-center mb-8 px-4"></div>
+                        <button onclick="generateNewSession()" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full shadow-lg transition-transform hover:scale-105 text-xl">再玩一次</button>
                     </div>
 
-                    <!-- 單題容器 -->
-                    <div id="single-question-container" class="p-6 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-4 text-xl shadow-sm mb-6 min-h-[120px] justify-center">
-                        <!-- 題目由 JS 產生 -->
-                    </div>
-
-                    <!-- 操作按鈕與回饋 -->
-                    <div class="flex flex-col gap-4 mt-auto">
-                        <div id="feedback-message" class="text-center font-bold text-lg h-8"></div>
-                        
-                        <button id="btn-submit" onclick="checkAnswer()" class="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg shadow-md transition-colors text-lg">送出答案</button>
-                        
-                        <button id="btn-next" onclick="nextQuestion()" class="hidden w-full py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-lg shadow-md transition-colors text-lg">下一題 ➡️</button>
-
-                        <button id="btn-result" onclick="showResults()" class="hidden w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-lg shadow-md transition-colors text-lg">查看總結 🏆</button>
-                    </div>
                 </div>
-                
-                <!-- 結果結算區域 -->
-                <div id="result-area" class="hidden flex flex-col items-center justify-center flex-grow py-8">
-                    <h3 class="text-3xl font-black text-slate-800 mb-4">測驗結束！</h3>
-                    <div id="final-score-display" class="text-5xl font-extrabold mb-6"></div>
-                    <div id="final-message" class="text-xl text-slate-600 font-bold text-center mb-8 px-4"></div>
-                    <button onclick="generateNewSession()" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full shadow-lg transition-transform hover:scale-105 text-xl">再玩一次</button>
-                </div>
-
             </div>
 
         </div>
@@ -144,7 +147,7 @@
         const maxQuestions = 5;
         let score = 0;
         let currentQuestionData = null;
-        let currentSelectedAnswer = ""; // 新增：記錄當前選擇的答案
+        let currentSelectedAnswer = ""; // 記錄當前選擇的答案
 
         // 陣列洗牌函數
         function shuffle(array) {
