@@ -144,6 +144,7 @@
         const maxQuestions = 5;
         let score = 0;
         let currentQuestionData = null;
+        let currentSelectedAnswer = ""; // 新增：記錄當前選擇的答案
 
         // 陣列洗牌函數
         function shuffle(array) {
@@ -246,6 +247,7 @@
         function renderCurrentQuestion() {
             document.getElementById('current-q-num').innerText = currentQuestionNum;
             document.getElementById('feedback-message').innerHTML = ''; // 清除回饋
+            currentSelectedAnswer = ""; // 重設選擇答案
             
             // 重設按鈕狀態
             document.getElementById('btn-submit').classList.remove('hidden');
@@ -271,65 +273,94 @@
             const container = document.getElementById('single-question-container');
             container.innerHTML = '';
 
+            // 題目句子容器
             const qDiv = document.createElement('div');
-            qDiv.className = 'flex flex-wrap items-center justify-center gap-3 leading-loose text-center';
+            qDiv.className = 'flex flex-wrap items-center justify-center gap-3 leading-loose text-center mb-6';
+
+            // 選項按鈕容器
+            const optionsDiv = document.createElement('div');
 
             if (type === 1) {
-                // 題型 1：「圖案1」在「圖案2」的「方向」方。
-                qDiv.innerHTML += `<span>「<span class="text-3xl">${currentQuestionData.A.icon}</span>」在「<span class="text-3xl">${currentQuestionData.B.icon}</span>」的</span>`;
+                // 題型 1：圖案1 在 圖案2 的 方向 方。(移除引號)
+                qDiv.innerHTML += `<span><span class="text-4xl mx-1">${currentQuestionData.A.icon}</span> 在 <span class="text-4xl mx-1">${currentQuestionData.B.icon}</span> 的</span>`;
                 
-                const select = document.createElement('select');
-                select.id = 'answer-select';
-                select.className = 'border-b-[3px] border-slate-400 bg-white px-3 py-1 outline-none text-blue-700 font-bold rounded cursor-pointer shadow-sm focus:border-blue-500 hover:border-blue-400 transition-colors text-xl';
+                // 挖空處
+                qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[4rem] border-b-[3px] border-slate-400 text-blue-700 font-bold text-center px-2 text-2xl" data-answer="${currentQuestionData.dirName}">?</span>`;
                 
-                const optionsList = dirMode === '4' ? dirNames4 : dirNames8;
-                select.innerHTML = `<option value="">選擇方向</option>` + optionsList.map(d => `<option value="${d}">${d}</option>`).join('');
-                select.dataset.answer = currentQuestionData.dirName;
-                
-                qDiv.appendChild(select);
                 qDiv.innerHTML += `<span>方。</span>`;
+
+                // 選項
+                optionsDiv.className = 'flex flex-wrap justify-center gap-3';
+                const optionsList = dirMode === '4' ? dirNames4 : dirNames8;
+                optionsList.forEach(opt => {
+                    optionsDiv.innerHTML += `<button onclick="selectOption(this, '${opt}')" class="opt-btn px-5 py-3 bg-white border-2 border-slate-200 rounded-lg shadow-sm hover:border-blue-400 hover:bg-blue-50 focus:outline-none transition-all text-xl font-bold text-slate-700">${opt}</button>`;
+                });
             } else {
-                // 題型 2：「圖案1」的「方向」方是「圖案2」 (已刪去"相鄰"兩字)
-                qDiv.innerHTML += `<span>「<span class="text-3xl">${currentQuestionData.B.icon}</span>」的「<strong class="text-indigo-600 text-2xl mx-1">${currentQuestionData.dirName}</strong>」方是</span>`;
+                // 題型 2：圖案1 的 方向 方是 圖案2 (移除引號)
+                qDiv.innerHTML += `<span><span class="text-4xl mx-1">${currentQuestionData.B.icon}</span> 的 <strong class="text-indigo-600 text-3xl mx-2">${currentQuestionData.dirName}</strong> 方是</span>`;
                 
-                const select = document.createElement('select');
-                select.id = 'answer-select';
-                select.className = 'border-b-[3px] border-slate-400 bg-white px-2 py-1 outline-none text-blue-700 font-bold text-3xl rounded cursor-pointer shadow-sm focus:border-blue-500 hover:border-blue-400 transition-colors';
-                select.innerHTML = `<option value="">?</option>` + iconsList.map(ic => `<option value="${ic}">${ic}</option>`).join('');
-                select.dataset.answer = currentQuestionData.A.icon;
-                
-                qDiv.appendChild(select);
+                // 挖空處
+                qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[4rem] border-b-[3px] border-slate-400 text-blue-700 font-bold text-center px-2 text-4xl" data-answer="${currentQuestionData.A.icon}">?</span>`;
+
+                // 選項
+                optionsDiv.className = 'grid grid-cols-4 sm:grid-cols-8 gap-2';
+                iconsList.forEach(opt => {
+                    optionsDiv.innerHTML += `<button onclick="selectOption(this, '${opt}')" class="opt-btn aspect-square flex items-center justify-center bg-white border-2 border-slate-200 rounded-lg shadow-sm hover:border-blue-400 hover:bg-blue-50 focus:outline-none transition-all text-3xl emoji-shadow">${opt}</button>`;
+                });
             }
 
             container.appendChild(qDiv);
+            container.appendChild(optionsDiv);
+        }
+
+        // 選擇選項
+        function selectOption(btnElement, val) {
+            // 如果已經送出答案，則不可再點選
+            if (document.getElementById('btn-submit').classList.contains('hidden')) return;
+
+            currentSelectedAnswer = val;
+            const blank = document.getElementById('answer-blank');
+            blank.innerText = val;
+            blank.classList.remove('border-slate-400');
+            blank.classList.add('border-blue-500', 'text-blue-700');
+
+            // 移除所有按鈕的選中狀態
+            document.querySelectorAll('.opt-btn').forEach(btn => {
+                btn.classList.remove('ring-4', 'ring-blue-300', 'border-blue-500', 'bg-blue-50');
+            });
+
+            // 標示當前選中的按鈕
+            btnElement.classList.add('ring-4', 'ring-blue-300', 'border-blue-500', 'bg-blue-50');
         }
 
         // 批改單一答案
         function checkAnswer() {
-            const select = document.getElementById('answer-select');
-            if (select.value === "") {
-                alert("請先選擇一個答案再送出喔！");
+            if (!currentSelectedAnswer) {
+                alert("請先點擊下方選項填入答案喔！");
                 return;
             }
 
-            const isCorrect = select.value === select.dataset.answer;
+            const blank = document.getElementById('answer-blank');
+            const isCorrect = currentSelectedAnswer === blank.dataset.answer;
             const feedback = document.getElementById('feedback-message');
             
             if (isCorrect) {
-                select.classList.remove('border-slate-400');
-                select.classList.add('border-green-500', 'text-green-700', 'bg-green-50');
+                blank.classList.remove('border-blue-500', 'text-blue-700');
+                blank.classList.add('border-green-500', 'text-green-700');
                 feedback.innerHTML = '<span class="text-green-600">✅ 答對了！非常棒！</span>';
                 score++;
                 updateScoreDisplay();
             } else {
-                select.classList.remove('border-slate-400');
-                select.classList.add('border-red-500', 'text-red-600', 'bg-red-50');
-                feedback.innerHTML = `<span class="text-red-600">❌ 答錯了！正確答案是：<strong>${select.dataset.answer}</strong></span>`;
+                blank.classList.remove('border-blue-500', 'text-blue-700');
+                blank.classList.add('border-red-500', 'text-red-600');
+                feedback.innerHTML = `<span class="text-red-600">❌ 答錯了！正確答案是：<strong>${blank.dataset.answer}</strong></span>`;
             }
             
-            // 鎖定選單
-            select.disabled = true;
-            select.classList.add('cursor-not-allowed');
+            // 停用所有選項按鈕
+            document.querySelectorAll('.opt-btn').forEach(btn => {
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.onclick = null;
+            });
 
             // 切換按鈕
             document.getElementById('btn-submit').classList.add('hidden');
