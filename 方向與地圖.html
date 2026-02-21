@@ -73,6 +73,7 @@
                                     <option value="mixed">隨機混合</option>
                                     <option value="1" selected>方向題型</option>
                                     <option value="2">地圖物件題型</option>
+                                    <option value="3">進階題型</option>
                                 </select>
                             </div>
                         </div>
@@ -222,7 +223,7 @@
                     dirIndex = Math.floor(Math.random() * 8);
                 }
                 
-                // 問物件是誰 (Type 2)，距離限制為 1，確保答案唯一
+                // 地圖物件題型 (Type 2) 距離限制為 1。進階題型 (Type 3) 不限距離，允許產生多個答案。
                 let dist = (type === 2) ? 1 : (Math.floor(Math.random() * 3) + 1);
 
                 let screenDirIndex = (dirIndex + currentNorthIndex) % 8;
@@ -234,10 +235,11 @@
 
                 if (rA >= 0 && rA < 4 && cA >= 0 && cA < 4) {
                     return {
-                        B: { icon: currentMap[rB][cB] },
-                        A: { icon: currentMap[rA][cA] },
+                        B: { icon: currentMap[rB][cB], r: rB, c: cB },
+                        A: { icon: currentMap[rA][cA], r: rA, c: cA },
                         dirIndex: dirIndex,
-                        dirName: dirNames8[dirIndex] // 名稱永遠可對應8方位陣列
+                        dirName: dirNames8[dirIndex], // 名稱永遠可對應8方位陣列
+                        screenDirIndex: screenDirIndex
                     };
                 }
             }
@@ -258,11 +260,15 @@
             const dirMode = document.getElementById('setting-dir-mode').value;
             const qMode = document.getElementById('setting-q-mode').value;
             
-            // 決定題型 (1:方向, 2:物件)
+            // 決定題型 (1:方向, 2:地圖物件, 3:進階)
             let type;
             if (qMode === '1') type = 1;
             else if (qMode === '2') type = 2;
-            else type = Math.random() > 0.5 ? 1 : 2; // Mixed
+            else if (qMode === '3') type = 3;
+            else {
+                const types = [1, 2, 3];
+                type = types[Math.floor(Math.random() * types.length)];
+            }
 
             currentQuestionData = getValidPair(type, dirMode);
             if (!currentQuestionData) {
@@ -271,6 +277,29 @@
                 return;
             }
 
+            // 計算所有符合條件的正確答案
+            let validAnswers = [];
+            if (type === 1) {
+                validAnswers = [currentQuestionData.dirName];
+            } else if (type === 2) {
+                validAnswers = [currentQuestionData.A.icon];
+            } else if (type === 3) {
+                // 進階題型：尋找這條直線上所有符合條件的基準點 (圖案B)
+                let rA = currentQuestionData.A.r;
+                let cA = currentQuestionData.A.c;
+                let dx = screenVectors[currentQuestionData.screenDirIndex][0];
+                let dy = screenVectors[currentQuestionData.screenDirIndex][1];
+                for (let d = 1; d <= 3; d++) {
+                    let rCand = rA - d * dy;
+                    let cCand = cA - d * dx;
+                    if (rCand >= 0 && rCand < 4 && cCand >= 0 && cCand < 4) {
+                        validAnswers.push(currentMap[rCand][cCand]);
+                    }
+                }
+            }
+            // 轉成字串屬性存放
+            const answersAttr = validAnswers.join(',');
+
             const container = document.getElementById('single-question-container');
             container.innerHTML = '';
 
@@ -278,32 +307,61 @@
             const qDiv = document.createElement('div');
             qDiv.className = 'flex flex-wrap items-center justify-center gap-4 leading-loose text-center mb-8';
 
-            // 選項按鈕容器
+            // 隨機決定句型結構 (1: A 在 B 的方向方, 2: B 的方向方是 A)
+            const sentenceStruct = Math.random() > 0.5 ? 1 : 2;
+
+            // 選項按鈕容器與狀態
             const optionsDiv = document.createElement('div');
+            let optionsType = ""; // 'dir' 或 'icon'
 
             if (type === 1) {
-                // 題型 1：圖案1 在 圖案2 的 方向 方。(移除引號)
-                qDiv.innerHTML += `<span><span class="text-7xl mx-2">${currentQuestionData.A.icon}</span> 在 <span class="text-7xl mx-2">${currentQuestionData.B.icon}</span> 的</span>`;
+                // --- 1. 方向題型 --- (挖空: 方向)
+                optionsType = 'dir';
                 
-                // 挖空處
-                qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[7.5rem] border-b-[4px] border-slate-400 text-blue-700 font-bold text-center px-3 text-5xl" data-answer="${currentQuestionData.dirName}">?</span>`;
-                
-                qDiv.innerHTML += `<span>方。</span>`;
+                if (sentenceStruct === 1) {
+                    qDiv.innerHTML += `<span><span class="text-7xl mx-2">${currentQuestionData.A.icon}</span> 在 <span class="text-7xl mx-2">${currentQuestionData.B.icon}</span> 的</span>`;
+                    qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[7.5rem] border-b-[4px] border-slate-400 text-blue-700 font-bold text-center px-3 text-5xl" data-answers="${answersAttr}">?</span>`;
+                    qDiv.innerHTML += `<span>方。</span>`;
+                } else {
+                    qDiv.innerHTML += `<span><span class="text-7xl mx-2">${currentQuestionData.B.icon}</span> 的</span>`;
+                    qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[7.5rem] border-b-[4px] border-slate-400 text-blue-700 font-bold text-center px-3 text-5xl" data-answers="${answersAttr}">?</span>`;
+                    qDiv.innerHTML += `<span>方是 <span class="text-7xl mx-2">${currentQuestionData.A.icon}</span></span>`;
+                }
 
-                // 選項
+            } else if (type === 2) {
+                // --- 2. 地圖物件題型 --- (挖空: 圖案A / 被指到的物件)
+                optionsType = 'icon';
+
+                if (sentenceStruct === 1) {
+                    qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[7.5rem] border-b-[4px] border-slate-400 text-blue-700 font-bold text-center px-3 text-7xl" data-answers="${answersAttr}">?</span>`;
+                    qDiv.innerHTML += `<span>在 <span class="text-7xl mx-2">${currentQuestionData.B.icon}</span> 的 <strong class="text-indigo-600 text-6xl mx-3">${currentQuestionData.dirName}</strong> 方。</span>`;
+                } else {
+                    qDiv.innerHTML += `<span><span class="text-7xl mx-2">${currentQuestionData.B.icon}</span> 的 <strong class="text-indigo-600 text-6xl mx-3">${currentQuestionData.dirName}</strong> 方是</span>`;
+                    qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[7.5rem] border-b-[4px] border-slate-400 text-blue-700 font-bold text-center px-3 text-7xl" data-answers="${answersAttr}">?</span>`;
+                }
+
+            } else if (type === 3) {
+                // --- 3. 進階題型 --- (挖空: 圖案B / 基準點物件)
+                optionsType = 'icon';
+
+                if (sentenceStruct === 1) {
+                    qDiv.innerHTML += `<span><span class="text-7xl mx-2">${currentQuestionData.A.icon}</span> 在</span>`;
+                    qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[7.5rem] border-b-[4px] border-slate-400 text-blue-700 font-bold text-center px-3 text-7xl" data-answers="${answersAttr}">?</span>`;
+                    qDiv.innerHTML += `<span>的 <strong class="text-indigo-600 text-6xl mx-3">${currentQuestionData.dirName}</strong> 方。</span>`;
+                } else {
+                    qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[7.5rem] border-b-[4px] border-slate-400 text-blue-700 font-bold text-center px-3 text-7xl" data-answers="${answersAttr}">?</span>`;
+                    qDiv.innerHTML += `<span>的 <strong class="text-indigo-600 text-6xl mx-3">${currentQuestionData.dirName}</strong> 方是 <span class="text-7xl mx-2">${currentQuestionData.A.icon}</span></span>`;
+                }
+            }
+
+            // 根據題型生成對應的選項按鈕
+            if (optionsType === 'dir') {
                 optionsDiv.className = 'flex flex-wrap justify-center gap-4';
                 const optionsList = dirMode === '4' ? dirNames4 : dirNames8;
                 optionsList.forEach(opt => {
                     optionsDiv.innerHTML += `<button onclick="selectOption(this, '${opt}')" class="opt-btn px-8 py-4 bg-white border-2 border-slate-200 rounded-lg shadow-sm hover:border-blue-400 hover:bg-blue-50 focus:outline-none transition-all text-3xl font-bold text-slate-700">${opt}</button>`;
                 });
             } else {
-                // 題型 2：圖案1 的 方向 方是 圖案2 (移除引號)
-                qDiv.innerHTML += `<span><span class="text-7xl mx-2">${currentQuestionData.B.icon}</span> 的 <strong class="text-indigo-600 text-6xl mx-3">${currentQuestionData.dirName}</strong> 方是</span>`;
-                
-                // 挖空處
-                qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[7.5rem] border-b-[4px] border-slate-400 text-blue-700 font-bold text-center px-3 text-7xl" data-answer="${currentQuestionData.A.icon}">?</span>`;
-
-                // 選項
                 optionsDiv.className = 'grid grid-cols-4 sm:grid-cols-8 gap-3';
                 iconsList.forEach(opt => {
                     optionsDiv.innerHTML += `<button onclick="selectOption(this, '${opt}')" class="opt-btn aspect-square flex items-center justify-center bg-white border-2 border-slate-200 rounded-lg shadow-sm hover:border-blue-400 hover:bg-blue-50 focus:outline-none transition-all text-5xl emoji-shadow">${opt}</button>`;
@@ -342,7 +400,8 @@
             }
 
             const blank = document.getElementById('answer-blank');
-            const isCorrect = currentSelectedAnswer === blank.dataset.answer;
+            const validAnswers = blank.dataset.answers.split(',');
+            const isCorrect = validAnswers.includes(currentSelectedAnswer);
             const feedback = document.getElementById('feedback-message');
             
             if (isCorrect) {
@@ -354,7 +413,8 @@
             } else {
                 blank.classList.remove('border-blue-500', 'text-blue-700');
                 blank.classList.add('border-red-500', 'text-red-600');
-                feedback.innerHTML = `<span class="text-red-600">❌ 答錯了！正確答案是：<strong>${blank.dataset.answer}</strong></span>`;
+                const correctAnswersStr = validAnswers.join(" 或 ");
+                feedback.innerHTML = `<span class="text-red-600">❌ 答錯了！正確答案是：<strong>${correctAnswersStr}</strong></span>`;
             }
             
             // 停用所有選項按鈕
