@@ -87,7 +87,7 @@
                         </div>
 
                         <!-- 單題容器 -->
-                        <div id="single-question-container" class="p-6 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-4 text-2xl shadow-sm mb-6 min-h-[120px] justify-center">
+                        <div id="single-question-container" class="p-6 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-4 text-4xl shadow-sm mb-6 min-h-[160px] justify-center">
                             <!-- 題目由 JS 產生 -->
                         </div>
 
@@ -276,37 +276,37 @@
 
             // 題目句子容器
             const qDiv = document.createElement('div');
-            qDiv.className = 'flex flex-wrap items-center justify-center gap-3 leading-loose text-center mb-6';
+            qDiv.className = 'flex flex-wrap items-center justify-center gap-4 leading-loose text-center mb-8';
 
             // 選項按鈕容器
             const optionsDiv = document.createElement('div');
 
             if (type === 1) {
                 // 題型 1：圖案1 在 圖案2 的 方向 方。(移除引號)
-                qDiv.innerHTML += `<span><span class="text-5xl mx-1">${currentQuestionData.A.icon}</span> 在 <span class="text-5xl mx-1">${currentQuestionData.B.icon}</span> 的</span>`;
+                qDiv.innerHTML += `<span><span class="text-7xl mx-2">${currentQuestionData.A.icon}</span> 在 <span class="text-7xl mx-2">${currentQuestionData.B.icon}</span> 的</span>`;
                 
                 // 挖空處
-                qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[5rem] border-b-[3px] border-slate-400 text-blue-700 font-bold text-center px-2 text-3xl" data-answer="${currentQuestionData.dirName}">?</span>`;
+                qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[7.5rem] border-b-[4px] border-slate-400 text-blue-700 font-bold text-center px-3 text-5xl" data-answer="${currentQuestionData.dirName}">?</span>`;
                 
                 qDiv.innerHTML += `<span>方。</span>`;
 
                 // 選項
-                optionsDiv.className = 'flex flex-wrap justify-center gap-3';
+                optionsDiv.className = 'flex flex-wrap justify-center gap-4';
                 const optionsList = dirMode === '4' ? dirNames4 : dirNames8;
                 optionsList.forEach(opt => {
-                    optionsDiv.innerHTML += `<button onclick="selectOption(this, '${opt}')" class="opt-btn px-5 py-3 bg-white border-2 border-slate-200 rounded-lg shadow-sm hover:border-blue-400 hover:bg-blue-50 focus:outline-none transition-all text-xl font-bold text-slate-700">${opt}</button>`;
+                    optionsDiv.innerHTML += `<button onclick="selectOption(this, '${opt}')" class="opt-btn px-8 py-4 bg-white border-2 border-slate-200 rounded-lg shadow-sm hover:border-blue-400 hover:bg-blue-50 focus:outline-none transition-all text-3xl font-bold text-slate-700">${opt}</button>`;
                 });
             } else {
                 // 題型 2：圖案1 的 方向 方是 圖案2 (移除引號)
-                qDiv.innerHTML += `<span><span class="text-5xl mx-1">${currentQuestionData.B.icon}</span> 的 <strong class="text-indigo-600 text-4xl mx-2">${currentQuestionData.dirName}</strong> 方是</span>`;
+                qDiv.innerHTML += `<span><span class="text-7xl mx-2">${currentQuestionData.B.icon}</span> 的 <strong class="text-indigo-600 text-6xl mx-3">${currentQuestionData.dirName}</strong> 方是</span>`;
                 
                 // 挖空處
-                qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[5rem] border-b-[3px] border-slate-400 text-blue-700 font-bold text-center px-2 text-5xl" data-answer="${currentQuestionData.A.icon}">?</span>`;
+                qDiv.innerHTML += `<span id="answer-blank" class="inline-block min-w-[7.5rem] border-b-[4px] border-slate-400 text-blue-700 font-bold text-center px-3 text-7xl" data-answer="${currentQuestionData.A.icon}">?</span>`;
 
                 // 選項
-                optionsDiv.className = 'grid grid-cols-4 sm:grid-cols-8 gap-2';
+                optionsDiv.className = 'grid grid-cols-4 sm:grid-cols-8 gap-3';
                 iconsList.forEach(opt => {
-                    optionsDiv.innerHTML += `<button onclick="selectOption(this, '${opt}')" class="opt-btn aspect-square flex items-center justify-center bg-white border-2 border-slate-200 rounded-lg shadow-sm hover:border-blue-400 hover:bg-blue-50 focus:outline-none transition-all text-3xl emoji-shadow">${opt}</button>`;
+                    optionsDiv.innerHTML += `<button onclick="selectOption(this, '${opt}')" class="opt-btn aspect-square flex items-center justify-center bg-white border-2 border-slate-200 rounded-lg shadow-sm hover:border-blue-400 hover:bg-blue-50 focus:outline-none transition-all text-5xl emoji-shadow">${opt}</button>`;
                 });
             }
 
