@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>隨機貨架生成器 Random Shelf Generator</title>
+    <title>隨機貨架生成器</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -12,8 +12,8 @@
             font-family: 'Noto Sans TC', sans-serif;
         }
         .shelf-row {
-            background: #e0c097; /* Wood color base */
-            border-bottom: 12px solid #8d6e63; /* Shelf edge */
+            background: #e0c097;
+            border-bottom: 12px solid #8d6e63;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             position: relative;
         }
@@ -61,13 +61,6 @@
             user-select: none;
             line-height: 1.2;
         }
-        /* 調整英文標籤大小為中文的 1/2 */
-        .dir-btn .eng-label {
-            font-size: 0.5em;
-            text-transform: uppercase;
-            font-weight: 500;
-            opacity: 0.8;
-        }
         .dir-btn:active {
             transform: translateY(2px);
             box-shadow: none;
@@ -88,15 +81,12 @@
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
         }
-        .shake {
-            animation: shake 0.3s ease-in-out;
-        }
         .blank-box {
             display: inline-flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-width: 60px;
+            min-width: 70px;
             padding: 2px 10px;
             height: 48px;
             margin: 0 4px;
@@ -106,10 +96,6 @@
             vertical-align: middle;
             transition: all 0.3s;
             line-height: 1;
-        }
-        /* 調整空格內英文大小為 1/2 */
-        .blank-box .eng-label {
-            font-size: 0.5em;
         }
         .blank-box.filled-correct {
             border-bottom: 4px solid #22c55e;
@@ -124,62 +110,50 @@
             border-radius: 4px;
             animation: shake 0.3s ease-in-out;
         }
-        /* 調整通用英文副標大小為中文的 1/2 */
-        .eng-sub {
-            display: block;
-            font-size: 0.5em;
-            font-weight: normal;
-            line-height: 1.2;
+        .q-item-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            font-size: 1.25rem;
+        }
+        .option-card {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .option-card:hover {
+            transform: translateY(-4px);
+            border-color: #60a5fa;
+            background-color: #f8fbff;
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center py-8 px-4">
 
-    <!-- Header & Controls -->
+    <!-- Header -->
     <header class="w-full max-w-4xl mb-6 text-center space-y-4">
-        <h1 class="text-3xl md:text-4xl font-bold text-slate-800">
-            📦 隨機貨架生成器
-            <span class="eng-sub">Random Shelf Generator</span>
-        </h1>
-        
+        <h1 class="text-3xl md:text-4xl font-bold text-slate-800">📦 隨機貨架生成器</h1>
         <div class="bg-white p-4 rounded-xl shadow-md border border-slate-200">
-            <p class="mb-3 text-slate-600 font-medium">
-                請選擇貨物種類：
-                <span class="text-[0.8rem] block opacity-70">Please Select Category:</span>
-            </p>
+            <p class="mb-3 text-slate-600 font-medium">請選擇貨物種類：</p>
             <div class="flex flex-wrap justify-center gap-3" id="category-buttons">
-                <button onclick="playSound('click'); setCategory('fruits')" class="px-5 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-bold transition shadow-sm border border-red-200 ring-2 ring-red-300">
-                    🍎 水果<span class="eng-sub">Fruits</span>
-                </button>
-                <button onclick="playSound('click'); setCategory('vegetables')" class="px-5 py-2 rounded-xl bg-green-100 text-green-700 hover:bg-green-200 font-bold transition shadow-sm border border-green-200">
-                    🥦 蔬菜<span class="eng-sub">Vegetables</span>
-                </button>
-                <button onclick="playSound('click'); setCategory('drinks')" class="px-5 py-2 rounded-xl bg-blue-100 text-blue-700 hover:bg-blue-200 font-bold transition shadow-sm border border-blue-200">
-                    🥤 飲品<span class="eng-sub">Drinks</span>
-                </button>
-                <button onclick="playSound('click'); setCategory('toys')" class="px-5 py-2 rounded-xl bg-purple-100 text-purple-700 hover:bg-purple-200 font-bold transition shadow-sm border border-purple-200">
-                    🧸 玩具<span class="eng-sub">Toys</span>
-                </button>
+                <button onclick="playSound('click'); setCategory('fruits')" class="px-5 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-bold transition shadow-sm border border-red-200">🍎 水果</button>
+                <button onclick="playSound('click'); setCategory('vegetables')" class="px-5 py-2 rounded-xl bg-green-100 text-green-700 hover:bg-green-200 font-bold transition shadow-sm border border-green-200">🥦 蔬菜</button>
+                <button onclick="playSound('click'); setCategory('drinks')" class="px-5 py-2 rounded-xl bg-blue-100 text-blue-700 hover:bg-blue-200 font-bold transition shadow-sm border border-blue-200">🥤 飲品</button>
+                <button onclick="playSound('click'); setCategory('toys')" class="px-5 py-2 rounded-xl bg-purple-100 text-purple-700 hover:bg-purple-200 font-bold transition shadow-sm border border-purple-200">🧸 玩具</button>
             </div>
         </div>
     </header>
 
-    <!-- Main Shelf Area -->
+    <!-- Main Shelf -->
     <main class="w-full max-w-4xl bg-white p-2 md:p-6 rounded-2xl shadow-xl border border-slate-300 mb-4">
         <div class="flex justify-between items-center mb-4 px-2">
-            <h2 class="text-xl font-bold text-slate-700">
-                當前類別：<span id="current-category" class="text-blue-600">水果</span>
-                <span class="eng-sub">Current Category</span>
-            </h2>
-            <button onclick="playSound('click'); generateShelf()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1 rounded border border-slate-300 transition flex items-center gap-1">
-                <div class="flex flex-col items-center">
-                    <span>🔄 重新排列</span>
-                    <span class="text-[0.5em] font-normal">Shuffle</span>
-                </div>
-            </button>
+            <h2 class="text-xl font-bold text-slate-700">當前類別：<span id="current-category" class="text-blue-600">水果</span></h2>
+            <button onclick="playSound('click'); generateShelf()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-lg border border-slate-300 transition font-bold">🔄 重新排列</button>
         </div>
-
-        <!-- Shelf Grid -->
         <div id="shelf-container" class="flex flex-col gap-4 bg-[#f8f5f2] p-4 rounded-lg border border-[#d7ccc8]">
             <div class="shelf-row rounded-t-lg p-2 h-20 md:h-24 flex justify-around items-end" id="shelf-row-0"></div>
             <div class="shelf-row p-2 h-20 md:h-24 flex justify-around items-end" id="shelf-row-1"></div>
@@ -187,415 +161,219 @@
         </div>
     </main>
 
-    <!-- Game/Question Mode Switcher -->
-    <div class="w-full max-w-4xl mb-4 flex justify-center bg-white p-2 rounded-full shadow-sm border border-slate-200 w-fit mx-auto">
-        <button onclick="playSound('click'); setMode('manual')" id="btn-mode-manual" class="mode-btn px-6 py-2 rounded-full font-bold text-slate-600 hover:bg-slate-100 bg-slate-200 text-slate-800 shadow-inner">
-            ✏️ 自由出題 <span class="eng-sub">Manual</span>
-        </button>
-        <button onclick="playSound('click'); setMode('auto')" id="btn-mode-auto" class="mode-btn px-6 py-2 rounded-full font-bold text-slate-600 hover:bg-slate-100">
-            🤖 電腦出題 <span class="eng-sub">Auto</span>
-        </button>
+    <!-- Mode Switcher -->
+    <div class="w-full max-w-4xl mb-6 flex justify-center bg-white p-2 rounded-full shadow-sm border border-slate-200 w-fit mx-auto">
+        <button onclick="playSound('click'); setMode('manual')" id="btn-mode-manual" class="mode-btn px-6 py-2 rounded-full font-bold bg-slate-200 text-slate-800 shadow-inner">✏️ 自由出題</button>
+        <button onclick="playSound('click'); setMode('auto')" id="btn-mode-auto" class="mode-btn px-6 py-2 rounded-full font-bold text-slate-600 hover:bg-slate-100">🤖 電腦出題</button>
     </div>
 
     <!-- Question Area -->
-    <section class="w-full max-w-5xl min-h-[150px]">
-        
+    <section class="w-full max-w-5xl min-h-[300px] mb-12">
         <!-- MANUAL MODE -->
-        <div id="manual-mode-container" class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            <!-- Question Type 1 -->
-            <div class="bg-white p-6 rounded-2xl shadow-lg border-l-8 border-yellow-400">
-                <h3 class="font-bold text-lg mb-4 text-slate-700 border-b pb-2">
-                    題目一：方位描述
-                    <span class="eng-sub">Q1: Spatial Description</span>
-                </h3>
-                <div class="space-y-4">
-                    <div class="flex flex-wrap items-center gap-2 text-lg leading-loose">
-                        <select id="q1-obj1" class="w-full md:w-auto flex-1 p-2 border border-slate-300 rounded bg-slate-50 focus:ring-2 focus:ring-yellow-400"></select>
-                        <span class="font-bold text-slate-600 whitespace-nowrap text-center">在<span class="eng-sub">at</span></span>
-                        <select id="q1-obj2" class="w-full md:w-auto flex-1 p-2 border border-slate-300 rounded bg-slate-50 focus:ring-2 focus:ring-yellow-400"></select>
-                        <span class="font-bold text-slate-600 whitespace-nowrap text-center">的<span class="eng-sub">'s</span></span>
-                        <select id="q1-dir" class="w-32 p-2 border border-slate-300 rounded bg-slate-50 focus:ring-2 focus:ring-yellow-400 text-center">
-                            <option value="up">⬆️ 上 (Up)</option>
-                            <option value="down">⬇️ 下 (Down)</option>
-                            <option value="left">⬅️ 左 (Left)</option>
-                            <option value="right">➡️ 右 (Right)</option>
-                            <option value="top-left">↖️ 左上 (Top-L)</option>
-                            <option value="top-right">↗️ 右上 (Top-R)</option>
-                            <option value="bottom-left">↙️ 左下 (Bot-L)</option>
-                            <option value="bottom-right">↘️ 右下 (Bot-R)</option>
-                        </select>
-                        <span class="font-bold text-slate-600">方。<span class="eng-sub">side.</span></span>
-                    </div>
-                    <button onclick="playSound('click'); checkAnswer(1)" class="w-full py-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-lg shadow-sm transition">
-                        檢查答案 <span class="eng-sub">Check Answer</span>
-                    </button>
-                    <div id="result-1" class="hidden p-3 rounded-lg text-center font-bold animate-pulse"></div>
+        <div id="manual-mode-container" class="max-w-4xl mx-auto">
+            <div id="manual-type-picker" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div onclick="setManualSubMode(1)" class="option-card bg-white p-8 rounded-2xl shadow-lg border-2 border-slate-100 flex flex-col items-center text-center">
+                    <div class="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center text-3xl mb-4">📍</div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">題目一：方位描述</h3>
+                    <p class="text-slate-500">練習描述物體與物體之間的相對方位</p>
+                </div>
+                <div onclick="setManualSubMode(2)" class="option-card bg-white p-8 rounded-2xl shadow-lg border-2 border-slate-100 flex flex-col items-center text-center">
+                    <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-3xl mb-4">🔍</div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">題目二：尋找物體</h3>
+                    <p class="text-slate-500">根據位置尋找該方位是什麼貨物</p>
                 </div>
             </div>
 
-            <!-- Question Type 2 -->
-            <div class="bg-white p-6 rounded-2xl shadow-lg border-l-8 border-indigo-400">
-                <h3 class="font-bold text-lg mb-4 text-slate-700 border-b pb-2">
-                    題目二：尋找物體
-                    <span class="eng-sub">Q2: Finding Object</span>
-                </h3>
-                <div class="space-y-4">
-                    <div class="flex flex-wrap items-center gap-2 text-lg leading-loose">
-                        <select id="q2-obj1" class="w-full md:w-auto flex-1 p-2 border border-slate-300 rounded bg-slate-50 focus:ring-2 focus:ring-indigo-400"></select>
-                        <span class="font-bold text-slate-600 whitespace-nowrap text-center">的<span class="eng-sub">'s</span></span>
-                        <select id="q2-dir" class="w-32 p-2 border border-slate-300 rounded bg-slate-50 focus:ring-2 focus:ring-indigo-400 text-center">
-                            <option value="up">⬆️ 上 (Up)</option>
-                            <option value="down">⬇️ 下 (Down)</option>
-                            <option value="left">⬅️ 左 (Left)</option>
-                            <option value="right">➡️ 右 (Right)</option>
-                            <option value="top-left">↖️ 左上 (Top-L)</option>
-                            <option value="top-right">↗️ 右上 (Top-R)</option>
-                            <option value="bottom-left">↙️ 左下 (Bot-L)</option>
-                            <option value="bottom-right">↘️ 右下 (Bot-R)</option>
+            <!-- Q1 Form -->
+            <div id="manual-q1-form" class="hidden bg-white p-8 rounded-2xl shadow-lg border-l-8 border-yellow-400 relative">
+                <button onclick="backToPicker()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">✕ 關閉題目</button>
+                <h3 class="font-bold text-xl mb-6 text-slate-700">✏️ 自由出題：方位描述</h3>
+                <div class="space-y-6">
+                    <div class="flex flex-wrap items-center gap-3 text-xl leading-loose">
+                        <select id="q1-obj1" class="flex-1 min-w-[150px] p-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:border-yellow-400 focus:outline-none"></select>
+                        <span class="font-bold text-slate-600">在</span>
+                        <select id="q1-obj2" class="flex-1 min-w-[150px] p-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:border-yellow-400 focus:outline-none"></select>
+                        <span class="font-bold text-slate-600">的</span>
+                        <select id="q1-dir" class="w-40 p-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:border-yellow-400 focus:outline-none text-center font-bold">
+                            <option value="up">⬆️ 上</option><option value="down">⬇️ 下</option>
+                            <option value="left">⬅️ 左</option><option value="right">➡️ 右</option>
+                            <option value="top-left">↖️ 左上</option><option value="top-right">↗️ 右上</option>
+                            <option value="bottom-left">↙️ 左下</option><option value="bottom-right">↘️ 右下</option>
                         </select>
-                        <span class="font-bold text-slate-600 whitespace-nowrap text-center">方是<span class="eng-sub">side is</span></span>
-                        <select id="q2-obj2" class="w-full md:w-auto flex-1 p-2 border border-slate-300 rounded bg-slate-50 focus:ring-2 focus:ring-indigo-400"></select>
+                        <span class="font-bold text-slate-600">方。</span>
                     </div>
-                    <button onclick="playSound('click'); checkAnswer(2)" class="w-full py-2 bg-indigo-400 hover:bg-indigo-500 text-white font-bold rounded-lg shadow-sm transition">
-                        檢查答案 <span class="eng-sub">Check Answer</span>
-                    </button>
-                    <div id="result-2" class="hidden p-3 rounded-lg text-center font-bold animate-pulse"></div>
+                    <button onclick="checkAnswer(1)" class="w-full py-4 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 text-xl font-bold rounded-xl shadow-md transition">檢查答案</button>
+                    <div id="result-1" class="hidden p-4 rounded-xl text-center font-bold text-lg mt-4"></div>
+                </div>
+            </div>
+
+            <!-- Q2 Form -->
+            <div id="manual-q2-form" class="hidden bg-white p-8 rounded-2xl shadow-lg border-l-8 border-indigo-400 relative">
+                <button onclick="backToPicker()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">✕ 關閉題目</button>
+                <h3 class="font-bold text-xl mb-6 text-slate-700">✏️ 自由出題：尋找物體</h3>
+                <div class="space-y-6">
+                    <div class="flex flex-wrap items-center gap-3 text-xl leading-loose">
+                        <select id="q2-obj1" class="flex-1 min-w-[150px] p-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:border-indigo-400 focus:outline-none"></select>
+                        <span class="font-bold text-slate-600">的</span>
+                        <select id="q2-dir" class="w-40 p-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:border-indigo-400 focus:outline-none text-center font-bold">
+                            <option value="up">⬆️ 上</option><option value="down">⬇️ 下</option>
+                            <option value="left">⬅️ 左</option><option value="right">➡️ 右</option>
+                            <option value="top-left">↖️ 左上</option><option value="top-right">↗️ 右上</option>
+                            <option value="bottom-left">↙️ 左下</option><option value="bottom-right">↘️ 右下</option>
+                        </select>
+                        <span class="font-bold text-slate-600">方是</span>
+                        <select id="q2-obj2" class="flex-1 min-w-[150px] p-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:border-indigo-400 focus:outline-none"></select>
+                    </div>
+                    <button onclick="checkAnswer(2)" class="w-full py-4 bg-indigo-500 hover:bg-indigo-600 text-white text-xl font-bold rounded-xl shadow-md transition">檢查答案</button>
+                    <div id="result-2" class="hidden p-4 rounded-xl text-center font-bold text-lg mt-4"></div>
                 </div>
             </div>
         </div>
 
         <!-- AUTO MODE -->
-        <div id="auto-mode-container" class="hidden w-full max-w-5xl mx-auto bg-white p-3 rounded-3xl shadow-xl border border-blue-100 relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 to-purple-400"></div>
-            
-            <div class="flex flex-col md:flex-row items-center justify-between gap-4 mt-2">
-                <div id="auto-question-display" class="w-full md:flex-1 bg-slate-50 rounded-xl p-4 border-2 border-slate-100 flex flex-col items-center justify-center gap-2 text-xl md:text-2xl font-bold text-slate-700 min-h-[120px]">
-                    載入題目中... <span class="eng-sub">Loading Question...</span>
-                </div>
-
-                <div class="flex flex-col gap-4 items-center shrink-0">
-                    <div class="grid grid-cols-3 gap-3 w-fit mx-auto p-4 bg-slate-50 rounded-2xl border border-slate-200">
-                        <button class="dir-btn" onclick="checkAutoAnswer('top-left')">左上<span class="eng-label">Top-Left</span></button>
-                        <button class="dir-btn" onclick="checkAutoAnswer('up')">上<span class="eng-label">Up</span></button>
-                        <button class="dir-btn" onclick="checkAutoAnswer('top-right')">右上<span class="eng-label">Top-Right</span></button>
-                        
-                        <button class="dir-btn" onclick="checkAutoAnswer('left')">左<span class="eng-label">Left</span></button>
-                        <div class="dir-btn bg-slate-100 border-none shadow-none text-blue-300 flex flex-col items-center justify-center cursor-default">
-                            <span class="text-[0.9rem]">基準<span class="eng-label">Base</span></span>
-                        </div>
-                        <button class="dir-btn" onclick="checkAutoAnswer('right')">右<span class="eng-label">Right</span></button>
-                        
-                        <button class="dir-btn" onclick="checkAutoAnswer('bottom-left')">左下<span class="eng-label">Bot-Left</span></button>
-                        <button class="dir-btn" onclick="checkAutoAnswer('down')">下<span class="eng-label">Down</span></button>
-                        <button class="dir-btn" onclick="checkAutoAnswer('bottom-right')">右下<span class="eng-label">Bot-Right</span></button>
+        <div id="auto-mode-container" class="hidden w-full max-w-5xl mx-auto bg-white p-4 rounded-3xl shadow-xl border border-blue-100 relative">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div id="auto-question-display" class="w-full md:flex-1 bg-slate-50 rounded-xl p-6 border-2 border-slate-100 flex flex-col items-center justify-center gap-4 text-xl md:text-2xl font-bold text-slate-700 min-h-[160px]">載入題目中...</div>
+                <div class="flex flex-col gap-4 items-center">
+                    <div class="grid grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                        <button class="dir-btn" onclick="checkAutoAnswer('top-left')">左上</button>
+                        <button class="dir-btn" onclick="checkAutoAnswer('up')">上</button>
+                        <button class="dir-btn" onclick="checkAutoAnswer('top-right')">右上</button>
+                        <button class="dir-btn" onclick="checkAutoAnswer('left')">左</button>
+                        <div class="dir-btn bg-slate-100 border-none shadow-none text-blue-300 flex items-center justify-center cursor-default text-sm">基準</div>
+                        <button class="dir-btn" onclick="checkAutoAnswer('right')">右</button>
+                        <button class="dir-btn" onclick="checkAutoAnswer('bottom-left')">左下</button>
+                        <button class="dir-btn" onclick="checkAutoAnswer('down')">下</button>
+                        <button class="dir-btn" onclick="checkAutoAnswer('bottom-right')">右下</button>
                     </div>
-
-                    <div id="auto-result" class="hidden p-4 rounded-xl text-center font-bold text-lg mt-2 w-full"></div>
-                    
-                    <button onclick="playSound('click'); generateAutoQuestion()" id="btn-next-auto" class="hidden w-full max-w-xs py-3 bg-green-500 hover:bg-green-600 text-white text-lg font-bold rounded-xl shadow-lg shadow-green-200 transform hover:-translate-y-0.5 transition">
-                        下一題 ➡️ <span class="eng-sub">Next Question</span>
-                    </button>
+                    <div id="auto-result" class="hidden p-4 rounded-xl text-center font-bold text-lg w-full"></div>
+                    <button onclick="generateAutoQuestion()" id="btn-next-auto" class="hidden w-full py-3 bg-green-500 hover:bg-green-600 text-white text-lg font-bold rounded-xl shadow-lg transition">下一題 ➡️</button>
                 </div>
             </div>
         </div>
-
     </section>
-
-    <footer class="mt-12 text-slate-400 text-sm text-center">
-        貨架生成器 v2.0 (雙語比例優化版)
-        <span class="eng-sub">Shelf Generator Bilingual Edition</span>
-    </footer>
 
     <script>
         const soundManager = {
-            ctx: null,
-            init: function() {
-                if (!this.ctx) {
-                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (this.ctx.state === 'suspended') {
-                    this.ctx.resume();
-                }
-            },
+            ctx: null, init: function() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); if (this.ctx.state === 'suspended') this.ctx.resume(); },
             play: function(type) {
-                this.init();
-                const t = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-
-                if (type === 'click') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(600, t);
-                    osc.frequency.exponentialRampToValueAtTime(300, t + 0.1);
-                    gain.gain.setValueAtTime(0.1, t);
-                    gain.gain.linearRampToValueAtTime(0, t + 0.1);
-                    osc.start(t);
-                    osc.stop(t + 0.1);
-                } else if (type === 'correct') {
-                    [523.25, 659.25, 783.99].forEach((freq, i) => {
-                        const o = this.ctx.createOscillator();
-                        const g = this.ctx.createGain();
-                        o.connect(g);
-                        g.connect(this.ctx.destination);
-                        o.frequency.value = freq;
-                        g.gain.setValueAtTime(0.1, t + (i*0.1));
-                        g.gain.linearRampToValueAtTime(0, t + (i*0.1) + 0.3);
-                        o.start(t + (i*0.1));
-                        o.stop(t + (i*0.1) + 0.3);
-                    });
-                } else if (type === 'wrong') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(150, t);
-                    osc.frequency.linearRampToValueAtTime(100, t + 0.3);
-                    gain.gain.setValueAtTime(0.1, t);
-                    gain.gain.linearRampToValueAtTime(0, t + 0.3);
-                    osc.start(t);
-                    osc.stop(t + 0.3);
-                }
+                this.init(); const t = this.ctx.currentTime; const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                if (type === 'click') { osc.frequency.setValueAtTime(600, t); gain.gain.setValueAtTime(0.1, t); osc.start(t); osc.stop(t+0.1); }
+                else if (type === 'correct') { [523, 659, 783].forEach((f, i) => { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.connect(g); g.connect(this.ctx.destination); o.frequency.value = f; g.gain.setValueAtTime(0.1, t+(i*0.1)); o.start(t+(i*0.1)); o.stop(t+(i*0.1)+0.3); }); }
+                else if (type === 'wrong') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t); gain.gain.setValueAtTime(0.1, t); osc.start(t); osc.stop(t+0.3); }
             }
         };
-
-        function playSound(type) {
-            try { soundManager.play(type); } catch (e) {}
-        }
+        function playSound(type) { try { soundManager.play(type); } catch (e) {} }
 
         const categories = {
-            fruits: {
-                name: "水果", eng: "Fruits",
-                items: ["🍎 蘋果 Apple", "🍐 梨子 Pear", "🍊 橙 Orange", "🍋 檸檬 Lemon", "🍌 香蕉 Banana", "🍉 西瓜 Watermelon", "🍇 葡萄 Grapes", "🍓 草莓 Strawberry", "🍒 櫻桃 Cherry", "🍑 桃子 Peach", "🍍 鳳梨 Pineapple", "🥥 椰子 Coconut", "🥝 奇異果 Kiwi", "🥭 芒果 Mango", "🍈 密瓜 Melon", "🥑 酪梨 Avocado"]
-            },
-            vegetables: {
-                name: "蔬菜", eng: "Vegetables",
-                items: ["🥦 西蘭花 Broccoli", "🥬 生菜 Lettuce", "🥒 青瓜 Cucumber", "🌽 玉米 Corn", "🥕 蘿蔔 Carrot", "🥔 馬鈴薯 Potato", "🍆 茄子 Eggplant", "🍅 番茄 Tomato", "🍄 蘑菇 Mushroom", "🧅 洋蔥 Onion", "🧄 蒜頭 Garlic", "🍠 番薯 Sweet Potato", "🌶️ 辣椒 Chili", "🎃 南瓜 Pumpkin", "🫑 青椒 Bell Pepper", "🥜 花生 Peanut"]
-            },
-            drinks: {
-                name: "飲品", eng: "Drinks",
-                items: ["🥛 牛奶 Milk", "☕ 咖啡 Coffee", "🍵 熱茶 Tea", "🧃 果汁 Juice", "🥤 汽水 Soda", "🍺 啤酒 Beer", "🍷 紅酒 Wine", "🍸 雞尾酒 Cocktail", "🍼 奶瓶 Bottle", "🍶 燒酒 Sake", "🧊 冰水 Ice Water", "🧉 瑪黛茶 Mate", "🧋 珍奶 Bubble Tea", "🍾 香檳 Champagne", "🥛 豆漿 Soy Milk", "🥥 椰水 Coconut Water"]
-            },
-            toys: {
-                name: "玩具", eng: "Toys",
-                items: ["🧸 啤啤熊 Teddy", "🚗 玩具車 Car", "🏎️ 賽車 Racecar", "🚂 火車 Train", "🚁 直升機 Helicopter", "🚀 火箭 Rocket", "🛸 飛碟 UFO", "🤖 機械人 Robot", "🧩 拼圖 Puzzle", "🎮 遊戲機 Console", "🎲 骰子 Dice", "🎯 飛鏢 Darts", "🏸 球拍 Racket", "⚽ 足球 Soccer", "🏀 籃球 Basketball", "🪁 風箏 Kite"]
-            }
+            fruits: { name: "水果", items: ["🍎 蘋果", "🍐 梨子", "🍊 橙子", "🍋 檸檬", "🍌 香蕉", "🍉 西瓜", "🍇 葡萄", "🍓 草莓", "🍒 櫻桃", "🍑 桃子", "🍍 鳳梨", "🥥 椰子", "🥝 奇異果", "🥭 芒果", "🍈 密瓜", "🥑 酪梨"] },
+            vegetables: { name: "蔬菜", items: ["🥦 西蘭花", "🥬 生菜", "🥒 青瓜", "🌽 玉米", "🥕 蘿蔔", "🥔 馬鈴薯", "🍆 茄子", "🍅 番茄", "🍄 蘑菇", "🧅 洋蔥", "🧄 蒜頭", "🍠 番薯", "🌶️ 辣椒", "🎃 南瓜", "🥗 沙拉", "🥜 花生"] },
+            drinks: { name: "飲品", items: ["🥛 牛奶", "☕ 咖啡", "🍵 熱茶", "🧃 果汁", "🥤 汽水", "🍺 啤酒", "🍷 紅酒", "🍸 雞尾酒", "🍼 奶瓶", "🍶 燒酒", "🧊 冰塊", "🧉 瑪黛茶", "🥛 冰水", "🍾 香檳", "🥛 豆漿", "🥥 椰子水"] },
+            toys: { name: "玩具", items: ["🧸 啤啤熊", "🚗 玩具車", "🏎️ 賽車", "🚂 火車", "🚁 直升機", "🚀 火箭", "🛸 飛碟", "🤖 機械人", "🧩 拼圖", "🎮 遊戲機", "🎲 骰子", "🎯 飛鏢", "🏸 球拍", "⚽ 足球", "🏀 籃球", "🪁 風箏"] }
         };
 
-        const dirSymbols = {
-            'up': {zh: '上', en: 'Up'}, 'down': {zh: '下', en: 'Down'}, 'left': {zh: '左', en: 'Left'}, 'right': {zh: '右', en: 'Right'},
-            'top-left': {zh: '左上', en: 'Top-Left'}, 'top-right': {zh: '右上', en: 'Top-Right'}, 'bottom-left': {zh: '左下', en: 'Bot-Left'}, 'bottom-right': {zh: '右下', en: 'Bot-Right'}
-        };
+        const dirNames = { 'up':'上', 'down':'下', 'left':'左', 'right':'右', 'top-left':'左上', 'top-right':'右上', 'bottom-left':'左下', 'bottom-right':'右下' };
+        let shelfState = [], currentCategory = 'fruits', currentMode = 'manual';
 
-        let currentCategory = 'fruits';
-        let shelfState = [];
-        let currentMode = 'manual';
-        let currentAutoQuestion = null;
-
-        window.onload = function() { generateShelf(); };
-
-        function setCategory(cat) {
-            currentCategory = cat;
-            const buttons = document.getElementById('category-buttons').children;
-            Array.from(buttons).forEach(btn => btn.classList.remove('ring-2', 'ring-slate-400'));
-            document.getElementById('current-category').innerText = categories[cat].name;
-            generateShelf();
+        function setCategory(cat) { 
+            currentCategory = cat; 
+            document.getElementById('current-category').innerText = categories[cat].name; 
+            const btns = document.querySelectorAll('#category-buttons button');
+            btns.forEach(btn => btn.classList.remove('ring-2', 'ring-blue-300', 'border-blue-400'));
+            generateShelf(); 
         }
-
-        function setMode(mode) {
-            currentMode = mode;
-            const manualContainer = document.getElementById('manual-mode-container');
-            const autoContainer = document.getElementById('auto-mode-container');
+        function setMode(mode) { 
+            currentMode = mode; 
+            document.getElementById('manual-mode-container').classList.toggle('hidden', mode !== 'manual'); 
+            document.getElementById('auto-mode-container').classList.toggle('hidden', mode !== 'auto'); 
+            
             const btnManual = document.getElementById('btn-mode-manual');
             const btnAuto = document.getElementById('btn-mode-auto');
-
             if (mode === 'manual') {
-                manualContainer.classList.remove('hidden');
-                autoContainer.classList.add('hidden');
-                btnManual.classList.add('bg-slate-200', 'text-slate-800', 'shadow-inner');
-                btnManual.classList.remove('bg-white', 'text-slate-600');
-                btnAuto.classList.add('bg-white', 'text-slate-600');
-                btnAuto.classList.remove('bg-blue-100', 'text-blue-800', 'shadow-inner');
+                btnManual.className = "mode-btn px-6 py-2 rounded-full font-bold bg-slate-200 text-slate-800 shadow-inner";
+                btnAuto.className = "mode-btn px-6 py-2 rounded-full font-bold text-slate-600 hover:bg-slate-100";
+                backToPicker();
             } else {
-                manualContainer.classList.add('hidden');
-                autoContainer.classList.remove('hidden');
-                btnAuto.classList.add('bg-blue-100', 'text-blue-800', 'shadow-inner');
-                btnAuto.classList.remove('bg-white', 'text-slate-600');
-                btnManual.classList.add('bg-white', 'text-slate-600');
-                btnManual.classList.remove('bg-slate-200', 'text-slate-800', 'shadow-inner');
+                btnAuto.className = "mode-btn px-6 py-2 rounded-full font-bold bg-slate-200 text-slate-800 shadow-inner";
+                btnManual.className = "mode-btn px-6 py-2 rounded-full font-bold text-slate-600 hover:bg-slate-100";
                 generateAutoQuestion();
             }
         }
+        function setManualSubMode(type) { playSound('click'); document.getElementById('manual-type-picker').classList.add('hidden'); document.getElementById(`manual-q${type}-form`).classList.remove('hidden'); }
+        function backToPicker() { document.getElementById('manual-type-picker').classList.remove('hidden'); document.getElementById('manual-q1-form').classList.add('hidden'); document.getElementById('manual-q2-form').classList.add('hidden'); resetResults(); }
 
         function generateShelf() {
-            const itemsList = categories[currentCategory].items;
-            shelfState = [];
+            const list = categories[currentCategory].items; shelfState = [];
             for (let i = 0; i < 3; i++) document.getElementById(`shelf-row-${i}`).innerHTML = '';
-            const shuffledItems = [...itemsList].sort(() => 0.5 - Math.random());
-            const selectedItems = shuffledItems.slice(0, 15);
-            let itemIndex = 0;
-            for (let r = 0; r < 3; r++) {
-                const rowEl = document.getElementById(`shelf-row-${r}`);
-                for (let c = 0; c < 5; c++) {
-                    const randomItem = selectedItems[itemIndex++];
-                    const parts = randomItem.split(' ');
-                    const itemObj = { id: `item-${r}-${c}`, name: randomItem, zh: parts[1], en: parts[2], emoji: parts[0], row: r, col: c };
-                    shelfState.push(itemObj);
-                    const cell = document.createElement('div');
-                    cell.className = 'w-1/5 h-full flex flex-col items-center justify-end pb-2 cursor-pointer item-card';
-                    cell.innerHTML = `
-                        <div class="text-3xl md:text-4xl drop-shadow-md">${itemObj.emoji}</div>
-                        <div class="text-[10px] md:text-[11px] text-slate-800 font-bold bg-white/80 px-1 rounded shadow-sm whitespace-nowrap overflow-hidden text-center leading-tight">
-                            ${itemObj.zh}<br><span class="text-[0.5em] font-normal uppercase text-slate-500">${itemObj.en}</span>
-                        </div>`;
-                    rowEl.appendChild(cell);
-                }
-            }
-            updateDropdowns();
-            resetResults();
-            if (currentMode === 'auto') generateAutoQuestion();
+            const selected = [...list].sort(() => 0.5 - Math.random()).slice(0, 15);
+            selected.forEach((item, idx) => {
+                const r = Math.floor(idx / 5), c = idx % 5; const parts = item.split(' ');
+                const obj = { id: `i-${r}-${c}`, name: item, emoji: parts[0], zh: parts[1]||parts[0], row: r, col: c };
+                shelfState.push(obj);
+                const cell = document.createElement('div');
+                cell.className = 'w-1/5 h-full flex flex-col items-center justify-end pb-2 item-card';
+                cell.innerHTML = `<div class="text-3xl md:text-4xl drop-shadow-md">${obj.emoji}</div><div class="text-[12px] text-slate-800 font-bold bg-white/80 px-2 rounded shadow-sm">${obj.zh}</div>`;
+                document.getElementById(`shelf-row-${r}`).appendChild(cell);
+            });
+            updateDropdowns(); resetResults(); if (currentMode === 'auto') generateAutoQuestion();
         }
 
         function updateDropdowns() {
             ['q1-obj1', 'q1-obj2', 'q2-obj1', 'q2-obj2'].forEach(id => {
-                const select = document.getElementById(id);
-                select.innerHTML = `<option value="" disabled selected>請選擇 Select...</option>`;
-                shelfState.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item.id;
-                    option.text = item.name; 
-                    select.add(option);
-                });
+                const s = document.getElementById(id); s.innerHTML = '<option value="" disabled selected>選擇貨物...</option>';
+                shelfState.forEach(i => { const o = document.createElement('option'); o.value = i.id; o.text = i.name; s.add(o); });
             });
         }
 
-        function resetResults() {
-            document.getElementById('result-1').className = 'hidden';
-            document.getElementById('result-2').className = 'hidden';
-            document.getElementById('auto-result').className = 'hidden';
-            document.getElementById('btn-next-auto').classList.add('hidden');
-            enableGridButtons();
+        function resetResults() { 
+            ['result-1', 'result-2', 'auto-result'].forEach(id => { const el = document.getElementById(id); if (el) el.className = 'hidden'; });
+            const btn = document.getElementById('btn-next-auto'); if (btn) btn.classList.add('hidden');
+            document.querySelectorAll('.dir-btn').forEach(b => b.disabled = false);
         }
 
-        function calculateDirection(fromObj, toObj) {
-            const dR = toObj.row - fromObj.row; 
-            const dC = toObj.col - fromObj.col; 
-            if (dR === -1 && dC === 0) return 'up';
-            if (dR === 1 && dC === 0) return 'down';
-            if (dR === 0 && dC === -1) return 'left';
-            if (dR === 0 && dC === 1) return 'right';
-            if (dR === -1 && dC === -1) return 'top-left';
-            if (dR === -1 && dC === 1) return 'top-right';
-            if (dR === 1 && dC === -1) return 'bottom-left';
-            if (dR === 1 && dC === 1) return 'bottom-right';
+        function calculateDirection(f, t) {
+            const dr = t.row - f.row, dc = t.col - f.col;
+            if (dr===-1 && dc===0) return 'up'; if (dr===1 && dc===0) return 'down';
+            if (dr===0 && dc===-1) return 'left'; if (dr===0 && dc===1) return 'right';
+            if (dr===-1 && dc===-1) return 'top-left'; if (dr===-1 && dc===1) return 'top-right';
+            if (dr===1 && dc===-1) return 'bottom-left'; if (dr===1 && dc===1) return 'bottom-right';
             return 'none';
         }
 
         function checkAnswer(type) {
-            const resultDiv = document.getElementById(`result-${type}`);
-            const o1Id = document.getElementById(`q${type}-obj1`).value;
-            const o2Id = document.getElementById(`q${type}-obj2`).value;
-            const dir = document.getElementById(`q${type}-dir`).value;
-
-            if (!o1Id || !o2Id) { 
-                playSound('wrong'); 
-                showResult(resultDiv, false, "請選擇兩個物件！ (Please select items)"); 
-                return; 
-            }
-            if (o1Id === o2Id) { 
-                playSound('wrong'); 
-                showResult(resultDiv, false, "兩個物件不能相同！ (Must be different)"); 
-                return; 
-            }
-
-            const o1 = shelfState.find(i => i.id === o1Id);
-            const o2 = shelfState.find(i => i.id === o2Id);
-            const actualDir = (type === 1) ? calculateDirection(o2, o1) : calculateDirection(o1, o2);
-            
-            const isCorrect = (actualDir === dir);
-            playSound(isCorrect ? 'correct' : 'wrong');
-            showResult(resultDiv, isCorrect, isCorrect ? "答對了！🎉 (Correct!)" : "答錯了，再試試看。(Try Again)");
+            const o1Id = document.getElementById(`q${type}-obj1`).value, o2Id = document.getElementById(`q${type}-obj2`).value, dir = document.getElementById(`q${type}-dir`).value;
+            const res = document.getElementById(`result-${type}`);
+            if (!o1Id || !o2Id) { playSound('wrong'); showResult(res, false, "請選擇兩個物件！"); return; }
+            const o1 = shelfState.find(i => i.id === o1Id), o2 = shelfState.find(i => i.id === o2Id);
+            const actual = (type === 1) ? calculateDirection(o2, o1) : calculateDirection(o1, o2);
+            const correct = (actual === dir); playSound(correct ? 'correct' : 'wrong');
+            showResult(res, correct, correct ? "答對了！🎉" : "答錯了，再試試！");
         }
 
+        let curAutoQ = null;
         function generateAutoQuestion() {
-            document.getElementById('auto-result').className = 'hidden';
-            document.getElementById('btn-next-auto').classList.add('hidden');
-            enableGridButtons();
-
+            resetResults();
             const objA = shelfState[Math.floor(Math.random() * shelfState.length)];
             const neighbors = shelfState.filter(o => o.id !== objA.id && calculateDirection(objA, o) !== 'none');
-            if (neighbors.length === 0) return generateAutoQuestion();
+            if (!neighbors.length) return generateAutoQuestion();
             const objB = neighbors[Math.floor(Math.random() * neighbors.length)];
-
             const qType = Math.random() < 0.5 ? 1 : 2;
             const display = document.getElementById('auto-question-display');
-            let correctDir = "";
-            let html = "";
-
-            if (qType === 1) {
-                correctDir = calculateDirection(objB, objA);
-                html = `
-                    <div class="flex flex-wrap items-center justify-center gap-2 leading-relaxed">
-                        <span class="bg-white px-3 py-1 rounded shadow text-blue-600 font-bold">${objA.zh}<span class="eng-sub">${objA.en}</span></span>
-                        <span class="text-center">在<span class="eng-sub">at</span></span>
-                        <span class="bg-white px-3 py-1 rounded shadow text-blue-600 font-bold">${objB.zh}<span class="eng-sub">${objB.en}</span></span>
-                        <span class="text-center">的<span class="eng-sub">'s</span></span>
-                        <span id="question-blank" class="blank-box">❓<span class="eng-label">?</span></span>
-                        <span class="text-center">方。<span class="eng-sub">side.</span></span>
-                    </div>`;
-            } else {
-                correctDir = calculateDirection(objA, objB);
-                html = `
-                    <div class="flex flex-wrap items-center justify-center gap-2 leading-relaxed">
-                        <span class="bg-white px-3 py-1 rounded shadow text-blue-600 font-bold">${objA.zh}<span class="eng-sub">${objA.en}</span></span>
-                        <span class="text-center">的<span class="eng-sub">'s</span></span>
-                        <span id="question-blank" class="blank-box">❓<span class="eng-label">?</span></span>
-                        <span class="text-center">方是<span class="eng-sub">side is</span></span>
-                        <span class="bg-white px-3 py-1 rounded shadow text-blue-600 font-bold">${objB.zh}<span class="eng-sub">${objB.en}</span></span>
-                        <span class="text-center">。<span class="eng-sub">.</span></span>
-                    </div>`;
-            }
-            display.innerHTML = html;
-            currentAutoQuestion = { correctDir: correctDir };
+            display.innerHTML = qType === 1 ? `<div class="flex flex-wrap items-center justify-center gap-3"><span class="q-item-icon">${objA.emoji} ${objA.zh}</span><span>在</span><span class="q-item-icon">${objB.emoji} ${objB.zh}</span><span>的</span><span id="q-blank" class="blank-box">❓</span><span>方。</span></div>` : `<div class="flex flex-wrap items-center justify-center gap-3"><span class="q-item-icon">${objA.emoji} ${objA.zh}</span><span>的</span><span id="q-blank" class="blank-box">❓</span><span>方是</span><span class="q-item-icon">${objB.emoji} ${objB.zh}</span><span>。</span></div>`;
+            curAutoQ = { correct: (qType === 1) ? calculateDirection(objB, objA) : calculateDirection(objA, objB) };
         }
 
-        function checkAutoAnswer(userDir) {
-            playSound('click');
-            const res = document.getElementById('auto-result');
-            const blank = document.getElementById('question-blank');
-            blank.innerHTML = `${dirSymbols[userDir].zh}<span class="eng-label">${dirSymbols[userDir].en}</span>`;
-            blank.className = 'blank-box';
-
-            if (userDir === currentAutoQuestion.correctDir) {
-                blank.classList.add('filled-correct');
-                playSound('correct');
-                showResult(res, true, "太棒了！答對了！🎉 (Correct!)");
-                document.getElementById('btn-next-auto').classList.remove('hidden');
-                disableGridButtons();
-            } else {
-                blank.classList.add('filled-wrong');
-                playSound('wrong');
-                showResult(res, false, "不對喔，再看清楚一點！💪 (Try again)");
-                const grid = document.querySelector('.grid.gap-3');
-                grid.classList.add('shake');
-                setTimeout(() => {
-                    grid.classList.remove('shake');
-                    setTimeout(() => {
-                        blank.classList.remove('filled-wrong');
-                        blank.innerHTML = '❓<span class="eng-label">?</span>';
-                    }, 800);
-                }, 300);
-            }
+        function checkAutoAnswer(dir) {
+            const blank = document.getElementById('q-blank'), res = document.getElementById('auto-result');
+            blank.innerText = dirNames[dir]; blank.className = 'blank-box';
+            if (dir === curAutoQ.correct) { blank.classList.add('filled-correct'); playSound('correct'); showResult(res, true, "答對了！🎉"); document.getElementById('btn-next-auto').classList.remove('hidden'); document.querySelectorAll('.dir-btn').forEach(b => b.disabled = true); }
+            else { blank.classList.add('filled-wrong'); playSound('wrong'); showResult(res, false, "不對喔，再看一次。"); setTimeout(() => { blank.classList.remove('filled-wrong'); blank.innerText = '❓'; }, 800); }
         }
 
-        function disableGridButtons() { document.querySelectorAll('.dir-btn').forEach(b => b.disabled = true); }
-        function enableGridButtons() { document.querySelectorAll('.dir-btn').forEach(b => b.disabled = false); }
+        function showResult(el, ok, txt) { el.innerHTML = txt; el.className = `p-3 rounded-lg text-center font-bold mt-4 block ${ok?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}`; el.classList.remove('hidden'); }
 
-        function showResult(el, success, text) {
-            el.innerHTML = text;
-            el.className = 'p-3 rounded-lg text-center font-bold animate-pulse mt-2 block ';
-            if (text.includes("請")) el.classList.add('bg-yellow-100', 'text-yellow-800');
-            else if (success) el.classList.add('bg-green-100', 'text-green-700');
-            else el.classList.add('bg-red-100', 'text-red-700');
-        }
+        window.onload = generateShelf;
     </script>
 </body>
 </html>
