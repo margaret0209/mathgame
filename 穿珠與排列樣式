@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>排列樣式遊戲</title>
+  
+  <!-- 載入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- 載入 React & ReactDOM (React 18) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- 載入 Babel 讓瀏覽器可以編譯 JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      50% { transform: translateX(10px); }
+      75% { transform: translateX(-10px); }
+    }
+    .animate-shake {
+      animation: shake 0.5s ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-slate-50">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback } = React;
+
+    // --- 圖示元件 (替換原本的 lucide-react) ---
+    const TrophyIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+    );
+
+    const CheckCircle2Icon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+    );
+
+    const XCircleIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+    );
+
+    const RotateCcwIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+    );
+
+    const Volume2Icon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+    );
+
+    const VolumeXIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+    );
+    // ----------------------------------------
+
+    // --- 音效系統 (Web Audio API) ---
+    let audioCtx = null;
+    const initAudio = () => {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    };
+
+    const playSound = (type, isMuted) => {
+      if (isMuted) return;
+      initAudio();
+      
+      const playTone = (freq, waveType, duration, vol) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = waveType;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      };
+
+      if (type === 'success') { playTone(500, 'sine', 0.1, 0.05); setTimeout(() => playTone(800, 'sine', 0.15, 0.05), 100); }
+      if (type === 'error') { playTone(200, 'sawtooth', 0.2, 0.05); setTimeout(() => playTone(150, 'sawtooth', 0.2, 0.05), 150); }
+      if (type === 'complete') {
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+          setTimeout(() => playTone(freq, 'sine', 0.2, 0.08), i * 150);
+        });
+      }
+    };
+
+    // --- 隨機顏色池 ---
+    const COLOR_POOL = [
+      { name: '紅色', classes: 'from-red-400 to-red-600 border-red-700' },
+      { name: '黑色', classes: 'from-slate-600 to-slate-900 border-slate-900' },
+      { name: '藍色', classes: 'from-blue-400 to-blue-600 border-blue-700' },
+      { name: '綠色', classes: 'from-green-400 to-green-600 border-green-700' },
+      { name: '黃色', classes: 'from-yellow-300 to-yellow-500 border-yellow-600' },
+      { name: '紫色', classes: 'from-purple-400 to-purple-600 border-purple-700' },
+      { name: '橘色', classes: 'from-orange-400 to-orange-600 border-orange-700' },
+      { name: '粉色', classes: 'from-pink-400 to-pink-600 border-pink-700' },
+      { name: '青色', classes: 'from-teal-400 to-teal-600 border-teal-700' },
+    ];
+
+    // 定義模式對應的基礎排列區塊 (Pattern Blocks)
+    // A: 紅色, B: 黑色, C: 藍色
+    const PATTERN_BLOCKS = {
+      'AB': ['A', 'B'],
+      'ABC': ['A', 'B', 'C'],
+      'AAB': ['A', 'A', 'B'],
+      'ABB': ['A', 'B', 'B'],
+      'ABA': ['A', 'B', 'A']
+    };
+
+    const MAX_BEADS = 12; // 每一條串珠的最大長度
+
+    function App() {
+      const [mode, setMode] = useState('AB');
+      const [playStyle, setPlayStyle] = useState('stringing'); // 新增玩法狀態：'stringing' (穿珠) 或 'finding' (找一找)
+      const [sequence, setSequence] = useState([]);
+      const [missingIndex, setMissingIndex] = useState(-1); // 記錄「找一找」模式中空缺的位置
+      const [score, setScore] = useState(0);
+      const [feedback, setFeedback] = useState(null); // 'success', 'error', 'complete'
+      const [colorMapping, setColorMapping] = useState({});
+      const [isMuted, setIsMuted] = useState(false);
+      
+      // 初始化一個新的謎題
+      const startNewRound = useCallback(() => {
+        const block = PATTERN_BLOCKS[mode];
+
+        // 隨機抽選顏色配置
+        const shuffledColors = [...COLOR_POOL].sort(() => 0.5 - Math.random());
+        const newMapping = {
+          'A': shuffledColors[0],
+          'B': shuffledColors[1],
+          'C': shuffledColors[2],
+        };
+        setColorMapping(newMapping);
+
+        if (playStyle === 'stringing') {
+          // 「穿珠」模式：初始長度隨機，至少顯示一個完整的規律，讓玩家有跡可循
+          const minLength = block.length + 1;
+          const initialLength = Math.min(minLength + Math.floor(Math.random() * 2), MAX_BEADS - 2);
+          
+          let initialSequence = [];
+          for (let i = 0; i < initialLength; i++) {
+            initialSequence.push(block[i % block.length]);
+          }
+          
+          setSequence(initialSequence);
+          setMissingIndex(-1);
+        } else {
+          // 「找一找」模式：產生完整的序列，並隨機挖空一個中間的珠子
+          let fullSeq = [];
+          for (let i = 0; i < MAX_BEADS; i++) {
+            fullSeq.push(block[i % block.length]);
+          }
+          // 隨機挑選 2 到 9 之間的位置 (保留頭尾，確保有足夠的規律提示)
+          const mIndex = Math.floor(Math.random() * (MAX_BEADS - 4)) + 2;
+          fullSeq[mIndex] = null; // 標記為空缺
+          
+          setSequence(fullSeq);
+          setMissingIndex(mIndex);
+        }
+        
+        setFeedback(null);
+      }, [mode, playStyle]);
+
+      // 當模式或玩法改變時，重新開始遊戲
+      useEffect(() => {
+        startNewRound();
+      }, [mode, playStyle, startNewRound]);
+
+      // 處理玩家的選擇
+      const handleChoice = (choice) => {
+        if (feedback === 'complete') return;
+
+        const block = PATTERN_BLOCKS[mode];
+
+        if (playStyle === 'stringing') {
+          if (sequence.length >= MAX_BEADS) return;
+          
+          const expectedNext = block[sequence.length % block.length];
+
+          if (choice === expectedNext) {
+            // 答對了
+            const newSequence = [...sequence, choice];
+            setSequence(newSequence);
+            
+            if (newSequence.length >= MAX_BEADS) {
+              // 完成整條串珠
+              playSound('complete', isMuted);
+              setFeedback('complete');
+              setScore(s => s + 10);
+              setTimeout(() => startNewRound(), 2000);
+            } else {
+              // 答對一個，顯示短暫的成功回饋
+              playSound('success', isMuted);
+              setFeedback('success');
+              setTimeout(() => setFeedback(null), 500);
+            }
+          } else {
+            // 答錯了
+            playSound('error', isMuted);
+            setFeedback('error');
+            setTimeout(() => setFeedback(null), 800);
+          }
+        } else {
+          // 「找一找」模式處理邏輯
+          const expectedMissing = block[missingIndex % block.length];
+          
+          if (choice === expectedMissing) {
+            // 找對了！
+            const newSequence = [...sequence];
+            newSequence[missingIndex] = choice;
+            setSequence(newSequence);
+            
+            playSound('complete', isMuted);
+            setFeedback('complete');
+            setScore(s => s + 10);
+            setTimeout(() => startNewRound(), 2000);
+          } else {
+            // 答錯了
+            playSound('error', isMuted);
+            setFeedback('error');
+            setTimeout(() => setFeedback(null), 800);
+          }
+        }
+      };
+
+      // 取得目前模式需要顯示的選項按鈕
+      const getOptions = () => {
+        const block = PATTERN_BLOCKS[mode];
+        // 取得該模式中不重複的元素 (例如 ABB 會回傳 ['A', 'B'])
+        return [...new Set(block)];
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col items-center py-8 px-4 font-sans select-none">
+          
+          {/* 標題與計分板 */}
+          <div className="w-full max-w-3xl flex justify-between items-center mb-8 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">排列樣式遊戲</h1>
+              <p className="text-slate-500 text-sm mt-1">觀察規律，選出正確的下一個串珠！</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setIsMuted(!isMuted)} 
+                className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
+                title={isMuted ? "開啟音效" : "靜音"}
+              >
+                {isMuted ? <VolumeXIcon className="" /> : <Volume2Icon className="" />}
+              </button>
+              <div className="flex items-center gap-2 bg-amber-100 text-amber-600 px-4 py-2 rounded-xl font-bold text-lg md:text-xl border border-amber-200 shadow-inner">
+                <TrophyIcon className="text-amber-500" />
+                <span>分數: {score}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 玩法選擇區 */}
+          <div className="w-full max-w-3xl mb-6">
+            <h2 className="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              選擇玩法
+            </h2>
+            <div className="flex bg-slate-200 p-1 rounded-xl w-fit shadow-inner">
+              <button
+                onClick={() => setPlayStyle('stringing')}
+                className={`px-6 py-2.5 rounded-lg font-bold text-md transition-all duration-200 ${
+                  playStyle === 'stringing' 
+                    ? 'bg-white text-indigo-600 shadow-sm' 
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                穿珠
+              </button>
+              <button
+                onClick={() => setPlayStyle('finding')}
+                className={`px-6 py-2.5 rounded-lg font-bold text-md transition-all duration-200 ${
+                  playStyle === 'finding' 
+                    ? 'bg-white text-indigo-600 shadow-sm' 
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                找一找
+              </button>
+            </div>
+          </div>
+
+          {/* 模式選擇區 */}
+          <div className="w-full max-w-3xl mb-12">
+            <h2 className="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              選擇模式
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              {Object.keys(PATTERN_BLOCKS).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  className={`px-6 py-3 rounded-xl font-bold text-lg transition-all duration-200 shadow-sm ${
+                    mode === m
+                      ? 'bg-indigo-600 text-white shadow-md scale-105 transform ring-4 ring-indigo-600/20'
+                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 hover:scale-105 transform'
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 遊戲主要互動區 (中間串珠) */}
+          <div className="w-full max-w-3xl bg-white rounded-3xl p-8 shadow-sm border border-slate-200 mb-10 relative overflow-hidden">
+            
+            {/* 過關動畫遮罩 */}
+            {feedback === 'complete' && (
+              <div className="absolute inset-0 z-50 bg-green-500/10 flex items-center justify-center backdrop-blur-sm transition-all duration-300">
+                 <div className="bg-white px-8 py-4 rounded-2xl shadow-xl flex items-center gap-4 animate-bounce">
+                    <CheckCircle2Icon className="text-green-500" />
+                    <span className="text-2xl font-bold text-green-600">太棒了！準備下一關...</span>
+                 </div>
+              </div>
+            )}
+
+            {/* 答錯提示 */}
+            {feedback === 'error' && (
+              <div className="absolute top-4 right-4 z-40 animate-pulse flex items-center gap-2 text-red-500 bg-red-50 px-4 py-2 rounded-lg border border-red-200">
+                 <XCircleIcon className="" />
+                 <span className="font-bold">再試一次！</span>
+              </div>
+            )}
+
+            <h3 className="text-center text-xl font-bold text-slate-700 mb-12">
+              {playStyle === 'stringing' ? '下一個應該是什麼顏色？' : '中間不見的珠子是什麼顏色？'}
+            </h3>
+
+            <div className="relative flex items-center justify-center min-h-[100px] max-w-full overflow-x-auto py-4 px-2">
+              {/* 串珠的繩子 */}
+              <div className="absolute left-4 right-4 h-2 bg-amber-700/40 rounded-full top-1/2 -translate-y-1/2 z-0 shadow-inner"></div>
+              
+              <div className="flex gap-1 sm:gap-2 md:gap-3 relative z-10">
+                {Array.from({ length: MAX_BEADS }).map((_, index) => {
+                  let type = null;
+                  let isActivePlaceholder = false;
+                  
+                  if (playStyle === 'stringing') {
+                    const isFilled = index < sequence.length;
+                    type = isFilled ? sequence[index] : null;
+                    isActivePlaceholder = index === sequence.length;
+                  } else {
+                    type = sequence[index];
+                    isActivePlaceholder = index === missingIndex && type === null;
+                  }
+
+                  const isWinning = feedback === 'complete';
+
+                  return (
+                    <Bead 
+                      key={index} 
+                      type={type} 
+                      colorInfo={type ? colorMapping[type] : null}
+                      isActivePlaceholder={isActivePlaceholder} 
+                      animateBounce={isWinning}
+                      delay={index * 100} // 用於過關時的連鎖彈跳動畫
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* 下方選擇區域 */}
+          <div className="w-full max-w-md">
+            <h3 className="text-center text-lg font-bold text-slate-500 mb-4">
+              點擊下方圓形來選擇：
+            </h3>
+            <div className={`flex justify-center gap-6 md:gap-10 transition-transform duration-300 ${feedback === 'error' ? 'animate-shake' : ''}`}>
+              {getOptions().map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => handleChoice(opt)}
+                  disabled={feedback === 'complete'}
+                  className="group relative focus:outline-none cursor-pointer"
+                >
+                  {/* 選擇按鈕 (較大的圓形) */}
+                  <div className="transform transition-transform duration-200 group-hover:scale-110 group-active:scale-95">
+                    <Bead type={opt} colorInfo={colorMapping[opt]} size="large" />
+                  </div>
+                  
+                  {/* 按鈕下方陰影或標籤提示 (可選) */}
+                  <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm font-bold text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    {colorMapping[opt]?.name || ''}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 重新開始按鈕 */}
+          <button 
+            onClick={() => { setScore(0); startNewRound(); }}
+            className="mt-16 flex items-center gap-2 text-slate-400 hover:text-slate-600 transition-colors font-medium"
+          >
+            <RotateCcwIcon className="" />
+            重置分數與遊戲
+          </button>
+        </div>
+      );
+    }
+
+    // 獨立的串珠 (Bead) 元件
+    const Bead = ({ type, colorInfo, isActivePlaceholder, animateBounce, delay = 0, size = "normal" }) => {
+      // 決定尺寸
+      const sizeClasses = size === "large" 
+        ? "w-20 h-20 md:w-24 md:h-24 border-[3px]" 
+        : "w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 border-2"; // 稍微縮小尺寸以容納12顆珠子
+
+      // 根據 colorInfo 決定顏色 (加入立體漸層質感)
+      let colorClasses = "";
+      if (colorInfo) {
+        colorClasses = `bg-gradient-to-br ${colorInfo.classes} shadow-[inset_-2px_-4px_6px_rgba(0,0,0,0.3)]`;
+      }
+
+      // 組合過關動畫
+      const animationStyle = animateBounce 
+        ? { animation: `bounce 1s infinite ${delay}ms` } 
+        : {};
+
+      if (type) {
+        // 已填入的串珠
+        return (
+          <div 
+            className={`${sizeClasses} rounded-full ${colorClasses} shadow-lg z-10 flex-shrink-0 transition-transform duration-300`}
+            style={animationStyle}
+          />
+        );
+      }
+
+      if (isActivePlaceholder) {
+        // 提示目前應該填入的位置
+        return (
+          <div className={`${sizeClasses} rounded-full border-[3px] border-dashed border-amber-400 bg-amber-50 animate-pulse z-10 flex items-center justify-center text-amber-500 font-bold text-xl md:text-3xl flex-shrink-0 shadow-sm`}>
+            ?
+          </div>
+        );
+      }
+
+      // 未來的空位
+      return (
+        <div className={`${sizeClasses} rounded-full border-2 border-dashed border-slate-300 bg-slate-50/50 z-10 flex-shrink-0`} />
+      );
+    };
+
+    // 將 App 渲染到畫面上
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
