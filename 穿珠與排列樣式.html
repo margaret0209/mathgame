@@ -31,7 +31,7 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, useCallback } = React;
+    const { useState, useEffect, useCallback, useRef } = React;
 
     // --- 圖示元件 (替換原本的 lucide-react) ---
     const TrophyIcon = ({ className }) => (
@@ -96,17 +96,27 @@
       }
     };
 
-    // --- 隨機顏色池 ---
+    // --- 隨機顏色池 (新增 textClass 供形狀填色使用) ---
     const COLOR_POOL = [
-      { name: '紅色', classes: 'from-red-400 to-red-600 border-red-700' },
-      { name: '黑色', classes: 'from-slate-600 to-slate-900 border-slate-900' },
-      { name: '藍色', classes: 'from-blue-400 to-blue-600 border-blue-700' },
-      { name: '綠色', classes: 'from-green-400 to-green-600 border-green-700' },
-      { name: '黃色', classes: 'from-yellow-300 to-yellow-500 border-yellow-600' },
-      { name: '紫色', classes: 'from-purple-400 to-purple-600 border-purple-700' },
-      { name: '橘色', classes: 'from-orange-400 to-orange-600 border-orange-700' },
-      { name: '粉色', classes: 'from-pink-400 to-pink-600 border-pink-700' },
-      { name: '青色', classes: 'from-teal-400 to-teal-600 border-teal-700' },
+      { name: '紅色', classes: 'from-red-400 to-red-600 border-red-700', textClass: 'text-red-500' },
+      { name: '黑色', classes: 'from-slate-600 to-slate-900 border-slate-900', textClass: 'text-slate-800' },
+      { name: '藍色', classes: 'from-blue-400 to-blue-600 border-blue-700', textClass: 'text-blue-500' },
+      { name: '綠色', classes: 'from-green-400 to-green-600 border-green-700', textClass: 'text-green-500' },
+      { name: '黃色', classes: 'from-yellow-300 to-yellow-500 border-yellow-600', textClass: 'text-yellow-500' },
+      { name: '紫色', classes: 'from-purple-400 to-purple-600 border-purple-700', textClass: 'text-purple-500' },
+      { name: '橘色', classes: 'from-orange-400 to-orange-600 border-orange-700', textClass: 'text-orange-500' },
+      { name: '粉色', classes: 'from-pink-400 to-pink-600 border-pink-700', textClass: 'text-pink-500' },
+      { name: '青色', classes: 'from-teal-400 to-teal-600 border-teal-700', textClass: 'text-teal-500' },
+    ];
+
+    // --- 隨機形狀池 ---
+    const SHAPE_POOL = [
+      { name: '圓形', type: 'circle' },
+      { name: '正方形', type: 'square' },
+      { name: '三角形', type: 'triangle' },
+      { name: '星星', type: 'star' },
+      { name: '菱形', type: 'diamond' },
+      { name: '六邊形', type: 'hexagon' },
     ];
 
     // 定義模式對應的基礎排列區塊 (Pattern Blocks)
@@ -124,25 +134,48 @@
     function App() {
       const [mode, setMode] = useState('AB');
       const [playStyle, setPlayStyle] = useState('stringing'); // 新增玩法狀態：'stringing' (穿珠) 或 'finding' (找一找)
+      const [theme, setTheme] = useState('color'); // 新增主題狀態：'color' (顏色), 'shape' (形狀), 'mixed' (混合)
       const [sequence, setSequence] = useState([]);
       const [missingIndex, setMissingIndex] = useState(-1); // 記錄「找一找」模式中空缺的位置
       const [score, setScore] = useState(0);
       const [feedback, setFeedback] = useState(null); // 'success', 'error', 'complete'
-      const [colorMapping, setColorMapping] = useState({});
+      const [attributeMapping, setAttributeMapping] = useState({}); // 儲存當前的屬性對應 (顏色或形狀)
       const [isMuted, setIsMuted] = useState(false);
+
+      const feedbackTimeoutRef = useRef(null); // 用於儲存計時器，避免狀態被意外重置
       
       // 初始化一個新的謎題
       const startNewRound = useCallback(() => {
+        // 清除殘留的計時器
+        if (feedbackTimeoutRef.current) {
+          clearTimeout(feedbackTimeoutRef.current);
+        }
+
         const block = PATTERN_BLOCKS[mode];
 
-        // 隨機抽選顏色配置
-        const shuffledColors = [...COLOR_POOL].sort(() => 0.5 - Math.random());
-        const newMapping = {
-          'A': shuffledColors[0],
-          'B': shuffledColors[1],
-          'C': shuffledColors[2],
-        };
-        setColorMapping(newMapping);
+        let newMapping = {};
+        
+        if (theme === 'mixed') {
+          // 混合模式：獨立隨機抽選顏色和形狀，並組合成雙屬性
+          const shuffledColors = [...COLOR_POOL].sort(() => 0.5 - Math.random());
+          const shuffledShapes = [...SHAPE_POOL].sort(() => 0.5 - Math.random());
+          newMapping = {
+            'A': { isMixed: true, color: shuffledColors[0], shape: shuffledShapes[0], name: `${shuffledColors[0].name}${shuffledShapes[0].name}` },
+            'B': { isMixed: true, color: shuffledColors[1], shape: shuffledShapes[1], name: `${shuffledColors[1].name}${shuffledShapes[1].name}` },
+            'C': { isMixed: true, color: shuffledColors[2], shape: shuffledShapes[2], name: `${shuffledColors[2].name}${shuffledShapes[2].name}` },
+          };
+        } else {
+          // 單一主題：依據當前主題隨機抽選配置
+          const currentPool = theme === 'color' ? COLOR_POOL : SHAPE_POOL;
+          const shuffled = [...currentPool].sort(() => 0.5 - Math.random());
+          newMapping = {
+            'A': shuffled[0],
+            'B': shuffled[1],
+            'C': shuffled[2],
+          };
+        }
+        
+        setAttributeMapping(newMapping);
 
         if (playStyle === 'stringing') {
           // 「穿珠」模式：初始長度隨機，至少顯示一個完整的規律，讓玩家有跡可循
@@ -171,16 +204,21 @@
         }
         
         setFeedback(null);
-      }, [mode, playStyle]);
+      }, [mode, playStyle, theme]);
 
       // 當模式或玩法改變時，重新開始遊戲
       useEffect(() => {
         startNewRound();
-      }, [mode, playStyle, startNewRound]);
+      }, [mode, playStyle, theme, startNewRound]);
 
       // 處理玩家的選擇
       const handleChoice = (choice) => {
         if (feedback === 'complete') return;
+
+        // 每次點擊時，清除之前的計時器，防止快速點擊導致過關狀態被前面的錯誤或成功事件給重置
+        if (feedbackTimeoutRef.current) {
+          clearTimeout(feedbackTimeoutRef.current);
+        }
 
         const block = PATTERN_BLOCKS[mode];
 
@@ -199,18 +237,21 @@
               playSound('complete', isMuted);
               setFeedback('complete');
               setScore(s => s + 10);
-              // 移除自動下一題定時器，改由玩家手動點擊
             } else {
               // 答對一個，顯示短暫的成功回饋
               playSound('success', isMuted);
               setFeedback('success');
-              setTimeout(() => setFeedback(null), 500);
+              feedbackTimeoutRef.current = setTimeout(() => {
+                setFeedback(prev => prev === 'success' ? null : prev);
+              }, 500);
             }
           } else {
             // 答錯了
             playSound('error', isMuted);
             setFeedback('error');
-            setTimeout(() => setFeedback(null), 800);
+            feedbackTimeoutRef.current = setTimeout(() => {
+              setFeedback(prev => prev === 'error' ? null : prev);
+            }, 800);
           }
         } else {
           // 「找一找」模式處理邏輯
@@ -225,12 +266,13 @@
             playSound('complete', isMuted);
             setFeedback('complete');
             setScore(s => s + 10);
-            // 移除自動下一題定時器，改由玩家手動點擊
           } else {
             // 答錯了
             playSound('error', isMuted);
             setFeedback('error');
-            setTimeout(() => setFeedback(null), 800);
+            feedbackTimeoutRef.current = setTimeout(() => {
+              setFeedback(prev => prev === 'error' ? null : prev);
+            }, 800);
           }
         }
       };
@@ -240,6 +282,13 @@
         const block = PATTERN_BLOCKS[mode];
         // 取得該模式中不重複的元素 (例如 ABB 會回傳 ['A', 'B'])
         return [...new Set(block)];
+      };
+
+      // 取得提示語的主題關鍵字
+      const getThemePrompt = () => {
+        if (theme === 'color') return '顏色';
+        if (theme === 'shape') return '形狀';
+        return '圖案'; // 混合模式的稱呼
       };
 
       return (
@@ -266,32 +315,72 @@
             </div>
           </div>
 
-          {/* 玩法選擇區 */}
-          <div className="w-full max-w-5xl mb-6">
-            <h2 className="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
-              選擇玩法
-            </h2>
-            <div className="flex bg-slate-200 p-1 rounded-xl w-fit shadow-inner">
-              <button
-                onClick={() => setPlayStyle('stringing')}
-                className={`px-6 py-2.5 rounded-lg font-bold text-md transition-all duration-200 ${
-                  playStyle === 'stringing' 
-                    ? 'bg-white text-indigo-600 shadow-sm' 
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                穿珠
-              </button>
-              <button
-                onClick={() => setPlayStyle('finding')}
-                className={`px-6 py-2.5 rounded-lg font-bold text-md transition-all duration-200 ${
-                  playStyle === 'finding' 
-                    ? 'bg-white text-indigo-600 shadow-sm' 
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                找一找
-              </button>
+          {/* 玩法與主題選擇區 */}
+          <div className="w-full max-w-5xl mb-6 flex flex-col md:flex-row gap-6">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                選擇主題
+              </h2>
+              <div className="flex bg-slate-200 p-1 rounded-xl w-fit shadow-inner">
+                <button
+                  onClick={() => setTheme('color')}
+                  className={`px-6 py-2.5 rounded-lg font-bold text-md transition-all duration-200 ${
+                    theme === 'color' 
+                      ? 'bg-white text-indigo-600 shadow-sm' 
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  顏色
+                </button>
+                <button
+                  onClick={() => setTheme('shape')}
+                  className={`px-6 py-2.5 rounded-lg font-bold text-md transition-all duration-200 ${
+                    theme === 'shape' 
+                      ? 'bg-white text-indigo-600 shadow-sm' 
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  形狀
+                </button>
+                <button
+                  onClick={() => setTheme('mixed')}
+                  className={`px-6 py-2.5 rounded-lg font-bold text-md transition-all duration-200 ${
+                    theme === 'mixed' 
+                      ? 'bg-white text-indigo-600 shadow-sm' 
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  混合
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                選擇玩法
+              </h2>
+              <div className="flex bg-slate-200 p-1 rounded-xl w-fit shadow-inner">
+                <button
+                  onClick={() => setPlayStyle('stringing')}
+                  className={`px-6 py-2.5 rounded-lg font-bold text-md transition-all duration-200 ${
+                    playStyle === 'stringing' 
+                      ? 'bg-white text-indigo-600 shadow-sm' 
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  穿珠
+                </button>
+                <button
+                  onClick={() => setPlayStyle('finding')}
+                  className={`px-6 py-2.5 rounded-lg font-bold text-md transition-all duration-200 ${
+                    playStyle === 'finding' 
+                      ? 'bg-white text-indigo-600 shadow-sm' 
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  找一找
+                </button>
+              </div>
             </div>
           </div>
 
@@ -329,7 +418,9 @@
             )}
 
             <h3 className="text-center text-xl font-bold text-slate-700 mb-12">
-              {playStyle === 'stringing' ? '下一個應該是什麼顏色？' : '中間不見的珠子是什麼顏色？'}
+              {playStyle === 'stringing' 
+                ? `下一個應該是什麼${getThemePrompt()}？` 
+                : `中間不見的珠子是什麼${getThemePrompt()}？`}
             </h3>
 
             <div className="relative flex items-center justify-center min-h-[100px] max-w-full overflow-x-auto py-4 px-2">
@@ -356,10 +447,11 @@
                     <Bead 
                       key={index} 
                       type={type} 
-                      colorInfo={type ? colorMapping[type] : null}
+                      attributeInfo={type ? attributeMapping[type] : null}
                       isActivePlaceholder={isActivePlaceholder} 
                       animateBounce={isWinning}
                       delay={index * 100} // 用於過關時的連鎖彈跳動畫
+                      theme={theme}
                     />
                   );
                 })}
@@ -386,7 +478,7 @@
             ) : (
               <div className="w-full">
                 <h3 className="text-center text-lg font-bold text-slate-500 mb-4">
-                  點擊下方圓形來選擇：
+                  點擊下方圖形來選擇：
                 </h3>
                 <div className={`flex justify-center gap-6 md:gap-10 transition-transform duration-300 ${feedback === 'error' ? 'animate-shake' : ''}`}>
                   {getOptions().map((opt) => (
@@ -396,14 +488,14 @@
                       disabled={feedback === 'complete'}
                       className="group relative focus:outline-none cursor-pointer"
                     >
-                      {/* 選擇按鈕 (較大的圓形) */}
+                      {/* 選擇按鈕 (較大的圖形) */}
                       <div className="transform transition-transform duration-200 group-hover:scale-110 group-active:scale-95">
-                        <Bead type={opt} colorInfo={colorMapping[opt]} size="large" />
+                        <Bead type={opt} attributeInfo={attributeMapping[opt]} size="large" theme={theme} />
                       </div>
                       
                       {/* 按鈕下方陰影或標籤提示 (可選) */}
                       <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm font-bold text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                        {colorMapping[opt]?.name || ''}
+                        {attributeMapping[opt]?.name || ''}
                       </div>
                     </button>
                   ))}
@@ -425,37 +517,79 @@
     }
 
     // 獨立的串珠 (Bead) 元件
-    const Bead = ({ type, colorInfo, isActivePlaceholder, animateBounce, delay = 0, size = "normal" }) => {
+    const Bead = ({ type, attributeInfo, isActivePlaceholder, animateBounce, delay = 0, size = "normal", theme }) => {
       // 決定尺寸
-      const sizeClasses = size === "large" 
-        ? "w-20 h-20 md:w-24 md:h-24 border-[3px]" 
-        : "w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 border-2"; // 稍微縮小尺寸以容納12顆珠子
-
-      // 根據 colorInfo 決定顏色 (加入立體漸層質感)
-      let colorClasses = "";
-      if (colorInfo) {
-        colorClasses = `bg-gradient-to-br ${colorInfo.classes} shadow-[inset_-2px_-4px_6px_rgba(0,0,0,0.3)]`;
-      }
+      const baseSizeClasses = size === "large" 
+        ? "w-20 h-20 md:w-24 md:h-24" 
+        : "w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14";
+        
+      const borderWidthClass = size === "large" ? "border-[3px]" : "border-2";
 
       // 組合過關動畫
       const animationStyle = animateBounce 
         ? { animation: `bounce 1s infinite ${delay}ms` } 
         : {};
 
-      if (type) {
-        // 已填入的串珠
-        return (
-          <div 
-            className={`${sizeClasses} rounded-full ${colorClasses} shadow-lg z-10 flex-shrink-0 transition-transform duration-300`}
-            style={animationStyle}
-          />
-        );
+      // 繪製形狀的內部函式
+      const renderShape = (shapeType) => {
+        const svgProps = { width: "100%", height: "100%", viewBox: "0 0 24 24", fill: "currentColor", stroke: "rgba(0,0,0,0.1)", strokeWidth: "1", strokeLinejoin: "round" };
+        switch(shapeType) {
+          case 'circle': return <svg {...svgProps}><circle cx="12" cy="12" r="10"/></svg>;
+          case 'square': return <svg {...svgProps}><rect x="3" y="3" width="18" height="18" rx="3"/></svg>;
+          case 'triangle': return <svg {...svgProps}><polygon points="12 2 22 20 2 20"/></svg>;
+          case 'star': return <svg {...svgProps}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
+          case 'diamond': return <svg {...svgProps}><polygon points="12 2 22 12 12 22 2 12"/></svg>;
+          case 'hexagon': return <svg {...svgProps}><polygon points="12 2 20.66 7 20.66 17 12 22 3.34 17 3.34 7"/></svg>;
+          default: return null;
+        }
+      };
+
+      if (type && attributeInfo) {
+        // 安全檢查：因為 React 狀態更新 (theme 與 attributeMapping) 會有微小時間差
+        // 先確認 attributeInfo 內的資料格式是否符合當前的 theme，避免讀取 undefined 造成崩潰
+        const isMixedData = attributeInfo.isMixed === true;
+        const isShapeData = attributeInfo.type !== undefined;
+        const isColorData = attributeInfo.classes !== undefined && !isMixedData;
+
+        if (theme === 'color' && isColorData) {
+          return (
+            <div 
+              className={`${baseSizeClasses} ${borderWidthClass} rounded-full bg-gradient-to-br ${attributeInfo.classes} shadow-[inset_-2px_-4px_6px_rgba(0,0,0,0.3)] z-10 flex-shrink-0 transition-transform duration-300`}
+              style={animationStyle}
+            />
+          );
+        } else if (theme === 'shape' && isShapeData) {
+          // 單純形狀主題 (預設靛藍色)
+          return (
+            <div 
+              className={`${baseSizeClasses} z-10 flex-shrink-0 transition-transform duration-300 flex items-center justify-center text-indigo-500 drop-shadow-[0_4px_6px_rgba(0,0,0,0.3)]`}
+              style={animationStyle}
+            >
+              {renderShape(attributeInfo.type)}
+            </div>
+          );
+        } else if (theme === 'mixed' && isMixedData) {
+          // 混合主題 (顏色 + 形狀)
+          return (
+            <div 
+              className={`${baseSizeClasses} z-10 flex-shrink-0 transition-transform duration-300 flex items-center justify-center ${attributeInfo.color.textClass} drop-shadow-[0_4px_6px_rgba(0,0,0,0.3)]`}
+              style={animationStyle}
+            >
+              {renderShape(attributeInfo.shape.type)}
+            </div>
+          );
+        }
+
+        // 當狀態正在切換、資料尚未同步的瞬間，回傳一個空佔位符避免報錯
+        return <div className={`${baseSizeClasses} z-10 flex-shrink-0`} />;
       }
+
+      const shapeBorderClass = theme === 'color' ? 'rounded-full' : 'rounded-xl';
 
       if (isActivePlaceholder) {
         // 提示目前應該填入的位置
         return (
-          <div className={`${sizeClasses} rounded-full border-[3px] border-dashed border-amber-400 bg-amber-50 animate-pulse z-10 flex items-center justify-center text-amber-500 font-bold text-xl md:text-3xl flex-shrink-0 shadow-sm`}>
+          <div className={`${baseSizeClasses} ${shapeBorderClass} border-[3px] border-dashed border-amber-400 bg-amber-50 animate-pulse z-10 flex items-center justify-center text-amber-500 font-bold text-xl md:text-3xl flex-shrink-0 shadow-sm`}>
             ?
           </div>
         );
@@ -463,7 +597,7 @@
 
       // 未來的空位
       return (
-        <div className={`${sizeClasses} rounded-full border-2 border-dashed border-slate-300 bg-slate-50/50 z-10 flex-shrink-0`} />
+        <div className={`${baseSizeClasses} ${shapeBorderClass} border-2 border-dashed border-slate-300 bg-slate-50/50 z-10 flex-shrink-0`} />
       );
     };
 
