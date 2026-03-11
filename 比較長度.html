@@ -68,6 +68,16 @@
         <div class="absolute left-[60px] top-0 bottom-0 w-1 bg-red-500 border-l border-red-300 z-0"></div>
         <div class="absolute left-[20px] top-4 text-red-500 font-bold text-sm bg-white px-1 rounded">起點</div>
         
+        <!-- 可拖曳的輔助比較線 -->
+        <div id="movable-line" class="absolute top-0 bottom-0 w-1 bg-red-400/80 border-l-2 border-dashed border-red-500 z-40 cursor-ew-resize flex flex-col items-center justify-end group touch-none" style="left: 60px;">
+            <!-- 拖曳把手 -->
+            <div class="w-8 h-8 bg-white border-2 border-red-500 text-red-500 rounded-full flex items-center justify-center mb-2 shadow-md group-hover:bg-red-50 transition-colors pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M8 9l4-4 4 4m0 6l-4 4-4-4" transform="rotate(90 12 12)" />
+                </svg>
+            </div>
+        </div>
+
         <!-- 進階模式提示訊息 -->
         <div id="adv-hint" class="absolute top-4 left-[90px] bg-red-100 text-red-600 px-4 py-2 rounded-lg font-bold shadow-md z-20 transition-all duration-300 opacity-0 translate-y-[-10px] pointer-events-none">
             ⚠️ 順序不對喔！請由最長（上）排到最短（下）
@@ -116,6 +126,7 @@
         const instructionText = document.getElementById('instruction-text');
         const advHint = document.getElementById('adv-hint');
         const winMessage = document.getElementById('win-message');
+        const movableLine = document.getElementById('movable-line');
         
         // --- 音效系統 (Web Audio API) ---
         let audioCtx = null;
@@ -224,6 +235,10 @@
         let startX, startY, initialLeft, initialTop;
         let alignedItems = new Set(); // 記錄已經對齊的物件
         
+        // 輔助線狀態
+        let isDraggingLine = false;
+        let lineStartX, lineInitialLeft;
+
         // 問答狀態
         let longestItemId = '';
         let shortestItemId = '';
@@ -273,6 +288,9 @@
             winModal.classList.remove('flex');
             advHint.classList.add('opacity-0', 'translate-y-[-10px]');
             
+            // 重置輔助線位置
+            movableLine.style.left = `${ALIGN_X}px`;
+
             // 隱藏問答區並重置狀態
             quizSection.classList.add('hidden', 'opacity-0', 'translate-y-4');
             quizSection.classList.remove('block', 'opacity-100', 'translate-y-0');
@@ -590,6 +608,45 @@
             setTimeout(() => {
                 initGame();
             }, 300);
+        }
+
+        // --- 輔助線拖曳邏輯 ---
+        movableLine.addEventListener('pointerdown', onLinePointerDown);
+
+        function onLinePointerDown(e) {
+            isDraggingLine = true;
+            lineStartX = e.clientX;
+            lineInitialLeft = parseFloat(movableLine.style.left) || ALIGN_X;
+            movableLine.setPointerCapture(e.pointerId);
+            
+            // 讓輔助線在拖曳時顯得更明顯
+            movableLine.classList.add('bg-red-500/50');
+            
+            movableLine.addEventListener('pointermove', onLinePointerMove);
+            movableLine.addEventListener('pointerup', onLinePointerUp);
+            movableLine.addEventListener('pointercancel', onLinePointerUp);
+        }
+
+        function onLinePointerMove(e) {
+            if (!isDraggingLine) return;
+            const dx = e.clientX - lineStartX;
+            let newLeft = lineInitialLeft + dx;
+            
+            // 限制在起點(ALIGN_X)與畫布最右側之間
+            const boardWidth = container.parentElement.clientWidth;
+            newLeft = Math.max(ALIGN_X, Math.min(newLeft, boardWidth - 10));
+            
+            movableLine.style.left = `${newLeft}px`;
+        }
+
+        function onLinePointerUp(e) {
+            isDraggingLine = false;
+            movableLine.releasePointerCapture(e.pointerId);
+            movableLine.classList.remove('bg-red-500/50');
+            
+            movableLine.removeEventListener('pointermove', onLinePointerMove);
+            movableLine.removeEventListener('pointerup', onLinePointerUp);
+            movableLine.removeEventListener('pointercancel', onLinePointerUp);
         }
 
         // 網頁載入完成後啟動遊戲
