@@ -32,8 +32,8 @@
     <!-- 模式切換 -->
     <div class="flex justify-center mt-2 mb-4">
         <div class="bg-gray-200 p-1 rounded-full flex gap-1 shadow-inner">
-            <button onclick="setMode(false)" id="btn-mode-normal" class="px-6 py-2 rounded-full font-bold bg-white text-sky-600 shadow-sm transition-all">一般模式</button>
-            <button onclick="setMode(true)" id="btn-mode-adv" class="px-6 py-2 rounded-full font-bold text-gray-500 hover:text-sky-600 transition-all">進階模式</button>
+            <button onclick="playSound('click'); setMode(false)" id="btn-mode-normal" class="px-6 py-2 rounded-full font-bold bg-white text-sky-600 shadow-sm transition-all">一般模式</button>
+            <button onclick="playSound('click'); setMode(true)" id="btn-mode-adv" class="px-6 py-2 rounded-full font-bold text-gray-500 hover:text-sky-600 transition-all">進階模式</button>
         </div>
     </div>
 
@@ -47,10 +47,10 @@
     <div class="flex flex-wrap items-center justify-center gap-3 mb-6">
         <span class="text-lg font-bold text-gray-700">物件數量：</span>
         <div class="flex gap-2 bg-white p-1 rounded-lg shadow-sm border border-sky-200">
-            <button onclick="setCount(2)" id="btn-count-2" class="px-4 py-1 rounded-md text-gray-600 hover:bg-sky-100 transition-colors">2件</button>
-            <button onclick="setCount(3)" id="btn-count-3" class="px-4 py-1 rounded-md text-white bg-sky-500 font-bold shadow-md hover:bg-sky-600 transition-colors">3件</button>
-            <button onclick="setCount(4)" id="btn-count-4" class="px-4 py-1 rounded-md text-gray-600 hover:bg-sky-100 transition-colors">4件</button>
-            <button onclick="setCount(5)" id="btn-count-5" class="px-4 py-1 rounded-md text-gray-600 hover:bg-sky-100 transition-colors">5件</button>
+            <button onclick="playSound('click'); setCount(2)" id="btn-count-2" class="px-4 py-1 rounded-md text-gray-600 hover:bg-sky-100 transition-colors">2件</button>
+            <button onclick="playSound('click'); setCount(3)" id="btn-count-3" class="px-4 py-1 rounded-md text-white bg-sky-500 font-bold shadow-md hover:bg-sky-600 transition-colors">3件</button>
+            <button onclick="playSound('click'); setCount(4)" id="btn-count-4" class="px-4 py-1 rounded-md text-gray-600 hover:bg-sky-100 transition-colors">4件</button>
+            <button onclick="playSound('click'); setCount(5)" id="btn-count-5" class="px-4 py-1 rounded-md text-gray-600 hover:bg-sky-100 transition-colors">5件</button>
         </div>
     </div>
 
@@ -71,7 +71,7 @@
 
     <!-- 控制按鈕 -->
     <div class="mt-8">
-        <button onclick="initGame()" class="px-8 py-3 bg-indigo-500 hover:bg-indigo-600 text-white text-xl font-bold rounded-full shadow-md transition-transform transform hover:scale-105 active:scale-95">
+        <button onclick="playSound('click'); initGame()" class="px-8 py-3 bg-indigo-500 hover:bg-indigo-600 text-white text-xl font-bold rounded-full shadow-md transition-transform transform hover:scale-105 active:scale-95">
             重新產生長條
         </button>
     </div>
@@ -97,7 +97,7 @@
             <div class="text-6xl mb-4">🎉</div>
             <h2 class="text-3xl font-bold text-gray-800 mb-4">太棒了！</h2>
             <p id="win-message" class="text-gray-600 text-lg mb-8">你已經成功對齊長條並答對所有問題了！</p>
-            <button onclick="closeModalAndRestart()" class="w-full py-3 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-full shadow-md transition-transform active:scale-95">
+            <button onclick="playSound('click'); closeModalAndRestart()" class="w-full py-3 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-full shadow-md transition-transform active:scale-95">
                 再玩一次
             </button>
         </div>
@@ -115,6 +115,96 @@
         const instructionText = document.getElementById('instruction-text');
         const advHint = document.getElementById('adv-hint');
         const winMessage = document.getElementById('win-message');
+        
+        // --- 音效系統 (Web Audio API) ---
+        let audioCtx = null;
+        function playSound(type) {
+            // 初始化 AudioContext (需在使用者互動後才能啟動)
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            
+            const t = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            switch(type) {
+                case 'click':
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, t);
+                    gain.gain.setValueAtTime(0.05, t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+                    osc.start(t);
+                    osc.stop(t + 0.1);
+                    break;
+                case 'pickup':
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, t);
+                    osc.frequency.exponentialRampToValueAtTime(600, t + 0.1);
+                    gain.gain.setValueAtTime(0.05, t);
+                    gain.gain.linearRampToValueAtTime(0, t + 0.1);
+                    osc.start(t);
+                    osc.stop(t + 0.1);
+                    break;
+                case 'drop':
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, t);
+                    osc.frequency.exponentialRampToValueAtTime(200, t + 0.1);
+                    gain.gain.setValueAtTime(0.05, t);
+                    gain.gain.linearRampToValueAtTime(0, t + 0.1);
+                    osc.start(t);
+                    osc.stop(t + 0.1);
+                    break;
+                case 'snap':
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(800, t);
+                    gain.gain.setValueAtTime(0.1, t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+                    osc.start(t);
+                    osc.stop(t + 0.15);
+                    break;
+                case 'correct':
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, t);
+                    osc.frequency.setValueAtTime(800, t + 0.1);
+                    gain.gain.setValueAtTime(0.1, t);
+                    gain.gain.setValueAtTime(0.1, t + 0.1);
+                    gain.gain.linearRampToValueAtTime(0, t + 0.3);
+                    osc.start(t);
+                    osc.stop(t + 0.3);
+                    break;
+                case 'wrong':
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, t);
+                    gain.gain.setValueAtTime(0.05, t);
+                    gain.gain.linearRampToValueAtTime(0, t + 0.3);
+                    osc.start(t);
+                    osc.stop(t + 0.3);
+                    break;
+                case 'win':
+                    // 歡樂的勝利琶音 (C E G C)
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; 
+                    notes.forEach((freq, i) => {
+                        const oscWin = audioCtx.createOscillator();
+                        const gainWin = audioCtx.createGain();
+                        oscWin.type = 'sine';
+                        oscWin.frequency.value = freq;
+                        oscWin.connect(gainWin);
+                        gainWin.connect(audioCtx.destination);
+                        gainWin.gain.setValueAtTime(0, t + i * 0.1);
+                        gainWin.gain.linearRampToValueAtTime(0.1, t + i * 0.1 + 0.05);
+                        gainWin.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.3);
+                        oscWin.start(t + i * 0.1);
+                        oscWin.stop(t + i * 0.1 + 0.3);
+                    });
+                    return; // Win 已經使用了多個 oscillator，直接結束
+            }
+        }
         
         // 遊戲設定
         const ALIGN_X = 60; // 對齊線的 X 座標
@@ -275,6 +365,7 @@
 
         // 拖曳開始
         function onPointerDown(e) {
+            playSound('pickup');
             draggedItem = e.currentTarget;
             
             // 隱藏進階模式的錯誤提示
@@ -331,6 +422,7 @@
             let currentLeft = parseFloat(draggedItem.style.left);
             
             if (Math.abs(currentLeft - ALIGN_X) <= SNAP_THRESHOLD) {
+                playSound('snap');
                 // 吸附到紅線
                 draggedItem.style.left = `${ALIGN_X}px`;
                 draggedItem.style.transition = 'left 0.2s ease-out';
@@ -342,6 +434,8 @@
                 }, 200);
 
                 checkWinCondition();
+            } else {
+                playSound('drop');
             }
 
             // 清理事件與狀態
@@ -393,6 +487,7 @@
             }
             
             if (isCorrect) {
+                playSound('win');
                 winMessage.innerText = '你已經成功將長條由長至短排列完成了！';
                 winModal.classList.remove('hidden');
                 winModal.classList.add('flex');
@@ -443,6 +538,7 @@
                               (qNum === 2 && itemId === shortestItemId);
 
             if (isCorrect) {
+                playSound('correct');
                 // 答對處理
                 btn.classList.add('border-green-400', 'scale-110');
                 btn.innerHTML = '✅';
@@ -461,6 +557,7 @@
                 // 檢查是否兩題都答對了
                 if (q1Answered && q2Answered) {
                     setTimeout(() => {
+                        playSound('win');
                         winMessage.innerText = '你已經成功對齊長條並答對所有問題了！';
                         winModal.classList.remove('hidden');
                         winModal.classList.add('flex');
@@ -471,6 +568,7 @@
                     }, 800);
                 }
             } else {
+                playSound('wrong');
                 // 答錯處理
                 btn.classList.add('border-red-400', 'opacity-50');
                 btn.innerHTML = '❌';
