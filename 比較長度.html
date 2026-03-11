@@ -27,7 +27,15 @@
         }
     </style>
 </head>
-<body class="bg-sky-50 min-h-screen flex flex-col items-center p-4 font-sans select-none">
+<body class="bg-sky-50 min-h-screen flex flex-col items-center p-4 font-sans select-none relative">
+
+    <!-- 重新產生按鈕 (右上角) -->
+    <button onclick="playSound('click'); initGame()" class="absolute top-4 right-4 md:top-6 md:right-8 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm md:text-base font-bold rounded-full shadow-md transition-transform transform hover:scale-105 active:scale-95 z-50 flex items-center gap-1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        重新產生
+    </button>
 
     <!-- 模式切換 -->
     <div class="flex justify-center mt-2 mb-4">
@@ -67,13 +75,6 @@
 
         <!-- 物件容器 -->
         <div id="objects-container" class="absolute inset-0 z-10"></div>
-    </div>
-
-    <!-- 控制按鈕 -->
-    <div class="mt-8">
-        <button onclick="playSound('click'); initGame()" class="px-8 py-3 bg-indigo-500 hover:bg-indigo-600 text-white text-xl font-bold rounded-full shadow-md transition-transform transform hover:scale-105 active:scale-95">
-            重新產生長條
-        </button>
     </div>
 
     <!-- 問答區域 (對齊後顯示) -->
