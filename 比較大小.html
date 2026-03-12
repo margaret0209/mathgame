@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>大小比一比</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            overscroll-behavior: none; /* 防止手機下拉更新干擾拖曳 */
+        }
+        .shape {
+            /* 讓重疊的顏色會加深，方便精準比較大小 */
+            mix-blend-mode: multiply;
+            transition: transform 0.1s ease-out, filter 0.1s ease-out;
+            touch-action: none; /* 讓手機瀏覽器將觸控事件完全交給腳本處理 */
+        }
+        .zone {
+            transition: all 0.2s ease;
+        }
+        .zone.hovered {
+            background-color: #e0e7ff;
+            border-color: #6366f1;
+            transform: scale(1.02);
+        }
+        /* 新增：正確與錯誤的閃爍動畫類別 */
+        .zone.correct-flash {
+            border-color: #22c55e !important;
+            background-color: #dcfce7 !important;
+        }
+        .zone.error-flash {
+            border-color: #ef4444 !important;
+            background-color: #fee2e2 !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-200 h-screen w-screen overflow-hidden flex items-center justify-center p-2 md:p-4 font-sans">
+
+    <div class="flex flex-col h-full w-full max-w-3xl bg-white shadow-2xl rounded-2xl overflow-hidden relative">
+        
+        <!-- 頂部標題區 -->
+        <header class="bg-indigo-600 text-white p-3 md:p-4 text-center z-10 relative flex-shrink-0">
+            <h1 class="text-2xl md:text-3xl font-bold tracking-wider">🟢 大小比一比 🔴</h1>
+            <p class="text-sm md:text-base mt-1 opacity-90 hidden sm:block">你可以把它們「疊在一起」來比較誰比較大！</p>
+            
+            <!-- 控制面板 -->
+            <div class="mt-3 flex flex-wrap justify-center items-center gap-3">
+                <div class="flex items-center bg-indigo-500 rounded-full px-3 py-1 shadow-inner">
+                    <label for="mode-select" class="text-sm font-medium mr-2">數量：</label>
+                    <select id="mode-select" onchange="changeMode()" class="bg-white text-indigo-700 text-sm rounded px-2 py-1 outline-none font-bold cursor-pointer">
+                        <option value="2">2 個</option>
+                        <option value="3" selected>3 個</option>
+                        <option value="4">4 個</option>
+                        <option value="5">5 個</option>
+                    </select>
+                </div>
+                <button onclick="initGame()" class="bg-white text-indigo-600 px-5 py-1.5 rounded-full text-sm font-bold shadow hover:bg-indigo-50 active:scale-95 transition">
+                    重新產生
+                </button>
+            </div>
+        </header>
+
+        <!-- 訊息提示區 -->
+        <div id="message-container" class="text-center p-2 h-14 flex items-center justify-center flex-shrink-0 bg-indigo-50/50">
+            <p id="message" class="text-sm md:text-lg text-gray-700 font-medium px-2">
+                拖動圖形疊在一起比較大小，然後由大到小放入下方框框！
+            </p>
+        </div>
+
+        <!-- 遊戲互動區 -->
+        <div id="play-area" class="flex-grow relative bg-gray-50 mx-4 mb-2 rounded-xl border-2 border-dashed border-gray-300">
+            <!-- 動態生成的形狀會放在這裡 -->
+        </div>
+
+        <!-- 放置區域 (由 JS 動態生成) -->
+        <div id="drop-zones" class="flex justify-around items-center p-3 md:p-6 bg-white gap-1 md:gap-2 flex-shrink-0 border-t border-gray-100 min-h-[100px] md:min-h-[140px]">
+            <!-- 框框會在這裡產生 -->
+        </div>
+    </div>
+
+    <script>
+        const playArea = document.getElementById('play-area');
+        const dropZonesContainer = document.getElementById('drop-zones');
+        const messageEl = document.getElementById('message');
+        
+        let numObjects = 3;
+        let zones = []; // 動態儲存放置區
+        
+        let highestZ = 10;
+        let draggedEl = null;
+        let startX = 0, startY = 0;
+        let currentHoverZone = null;
+
+        // --- 音效系統 (Web Audio API) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        // 初始化音效引擎 (必須在使用者互動後才能啟動)
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // 播放合成音效
+        function playSound(type) {
+            if (!audioCtx) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+            
+            if (type === 'pick') {
+                // 拿起：短促、音調微微上升
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(300, now);
+                oscillator.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                oscillator.start(now);
+                oscillator.stop(now + 0.1);
+            } else if (type === 'drop') {
+                // 放開 (未放進框框)：低沉、音調下降
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(400, now);
+                oscillator.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                oscillator.start(now);
+                oscillator.stop(now + 0.1);
+            } else if (type === 'snap') {
+                // 吸附到框框：清脆的波形 (正確時播放)
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(600, now);
+                oscillator.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                oscillator.start(now);
+                oscillator.stop(now + 0.1);
+            } else if (type === 'error') {
+                // 錯誤：低沉短促的警告音 (放錯時播放)
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(200, now);
+                oscillator.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                oscillator.start(now);
+                oscillator.stop(now + 0.2);
+            } else if (type === 'win') {
+                // 獲勝：簡單的和弦琶音
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(440, now);       // A4
+                oscillator.frequency.setValueAtTime(554.37, now + 0.1); // C#5
+                oscillator.frequency.setValueAtTime(659.25, now + 0.2); // E5
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+                oscillator.start(now);
+                oscillator.stop(now + 0.5);
+            }
+        }
+
+        // 當使用者改變下拉選單時觸發
+        function changeMode() {
+            numObjects = parseInt(document.getElementById('mode-select').value);
+            initGame();
+        }
+
+        function initGame() {
+            // 清空畫面與狀態
+            playArea.innerHTML = '';
+            dropZonesContainer.innerHTML = '';
+            zones = [];
+            messageEl.innerText = "拖動圖形疊在一起比較大小，然後由大到小放入下方框框！";
+            messageEl.className = "text-sm md:text-lg text-gray-700 font-medium px-2";
+
+            // 1. 動態產生放置框框的標籤文字
+            const zoneLabels = {
+                2: ["較大", "較小"],
+                3: ["最大", "中等", "最小"],
+                4: ["最大", "第二大", "第三大", "最小"],
+                5: ["最大", "第二大", "第三大", "第四大", "最小"]
+            };
+            const labels = zoneLabels[numObjects];
+
+            // 動態生成下方框框
+            for (let i = 0; i < numObjects; i++) {
+                const zone = document.createElement('div');
+                // 使用 flex-1 讓多個框框時能自動擠壓，並設定 max-width
+                zone.className = "zone drop-zone flex-1 max-w-[100px] aspect-square border-2 md:border-4 border-dashed border-gray-300 rounded-xl md:rounded-2xl flex items-center justify-center text-gray-400 font-bold text-xs md:text-lg relative bg-gray-50";
+                
+                // 由大到小排列，所以預期值為 (總數 - 1 - 索引)
+                // 例如 3個: index 0 期望值為 2(最大), index 1 期望值為 1(中), index 2 期望值為 0(最小)
+                zone.dataset.expected = numObjects - 1 - i; 
+                zone.dataset.currentRank = "";
+                
+                const span = document.createElement('span');
+                span.className = "absolute pointer-events-none select-none whitespace-nowrap";
+                span.innerText = labels[i];
+                zone.appendChild(span);
+                
+                dropZonesContainer.appendChild(zone);
+                zones.push(zone); // 加入陣列方便後續比對
+            }
+
+            // 2. 動態計算圓形的大小
+            const baseSizes = [];
+            let currentSize = 45; // 最小起始尺寸
+            const step = Math.floor(120 / numObjects); // 根據數量分配級距
+            
+            for (let i = 0; i < numObjects; i++) {
+                // 確保每個大小都有明顯的落差
+                const size = currentSize + Math.floor(Math.random() * (step * 0.4));
+                baseSizes.push(size);
+                currentSize += step + 15; // 加上固定間距保證大小不同
+            }
+
+            // 3. 準備顏色庫 (最多支援 5 個)
+            const allColors = [
+                'rgba(239, 68, 68, 0.85)',   // 紅色
+                'rgba(59, 130, 246, 0.85)',  // 藍色
+                'rgba(250, 204, 21, 0.85)',  // 黃色
+                'rgba(16, 185, 129, 0.85)',  // 綠色
+                'rgba(168, 85, 247, 0.85)'   // 紫色
+            ];
+            const colors = allColors.slice(0, numObjects); // 取出所需數量的顏色
+
+            // 4. 定義不同的形狀池 (擴充了六邊形、菱形、梯形等多種形狀)
+            const shapeTypes = [
+                { borderRadius: '50%', clipPath: 'none' }, // 圓形
+                { borderRadius: '20%', clipPath: 'none' }, // 圓角方形
+                { borderRadius: '0', clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }, // 三角形
+                { borderRadius: '0', clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)' }, // 五邊形
+                { borderRadius: '0', clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)' }, // 星形
+                { borderRadius: '0', clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)' }, // 六邊形
+                { borderRadius: '0', clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }, // 菱形
+                { borderRadius: '0', clipPath: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)' }, // 八邊形
+                { borderRadius: '0', clipPath: 'polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)' }, // 梯形
+                { borderRadius: '0', clipPath: 'polygon(33% 0%, 66% 0%, 66% 33%, 100% 33%, 100% 66%, 66% 66%, 66% 100%, 33% 100%, 33% 66%, 0% 66%, 0% 33%, 33% 33%)' } // 十字形
+            ];
+
+            // 決定這一回合「統一」使用的形狀
+            const roundShape = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+
+            // 打亂大小與顏色的對應關係，並打亂生成順序
+            let objects = [];
+            for(let i = 0; i < numObjects; i++) {
+                objects.push({ rank: i, size: baseSizes[i] });
+            }
+            
+            objects.sort(() => Math.random() - 0.5); 
+            colors.sort(() => Math.random() - 0.5);
+
+            const pWidth = playArea.clientWidth;
+            const pHeight = playArea.clientHeight;
+
+            objects.forEach((obj, idx) => {
+                const el = document.createElement('div');
+                el.dataset.rank = obj.rank;
+                el.classList.add('shape');
+                el.style.width = obj.size + 'px';
+                el.style.height = obj.size + 'px';
+                el.style.backgroundColor = colors[idx];
+                
+                // 套用這一回合統一的形狀
+                el.style.borderRadius = roundShape.borderRadius;
+                el.style.clipPath = roundShape.clipPath;
+                el.style.WebkitClipPath = roundShape.clipPath; // 支援 Safari
+                
+                el.style.position = 'absolute';
+                el.style.cursor = 'grab';
+                // 改用 drop-shadow 讓自訂形狀的陰影更自然
+                el.style.filter = 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))';
+                
+                // 讓它們隨機散佈在中間區域
+                const cx = pWidth / 2;
+                const cy = pHeight / 2;
+                const left = cx - obj.size/2 + (Math.random() - 0.5) * (pWidth * 0.6);
+                const top = cy - obj.size/2 + (Math.random() - 0.5) * (pHeight * 0.6);
+                
+                // 確保不會超出邊界
+                el.style.left = Math.max(10, Math.min(left, pWidth - obj.size - 10)) + 'px';
+                el.style.top = Math.max(10, Math.min(top, pHeight - obj.size - 10)) + 'px';
+
+                el.addEventListener('pointerdown', onPointerDown);
+                playArea.appendChild(el);
+            });
+        }
+
+        // --- 拖曳事件處理 (與原版相同) ---
+        function onPointerDown(e) {
+            initAudio(); // 初始化音效
+            playSound('pick'); // 播放「拿起」音效
+
+            draggedEl = e.currentTarget;
+            draggedEl.style.zIndex = ++highestZ;
+            draggedEl.style.cursor = 'grabbing';
+            draggedEl.style.transform = 'scale(1.05)';
+            draggedEl.style.filter = 'drop-shadow(0 10px 15px rgba(0,0,0,0.2))';
+
+            const rect = draggedEl.getBoundingClientRect();
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
+
+            draggedEl.setPointerCapture(e.pointerId);
+
+            draggedEl.addEventListener('pointermove', onPointerMove);
+            draggedEl.addEventListener('pointerup', onPointerUp);
+            draggedEl.addEventListener('pointercancel', onPointerUp);
+        }
+
+        function onPointerMove(e) {
+            if (!draggedEl) return;
+            e.preventDefault();
+
+            const pRect = playArea.getBoundingClientRect();
+            let newLeft = e.clientX - pRect.left - startX;
+            let newTop = e.clientY - pRect.top - startY;
+
+            draggedEl.style.left = newLeft + 'px';
+            draggedEl.style.top = newTop + 'px';
+
+            checkHover(draggedEl);
+        }
+
+        function onPointerUp(e) {
+            if (!draggedEl) return;
+
+            draggedEl.style.cursor = 'grab';
+            draggedEl.style.transform = 'scale(1)';
+            draggedEl.style.filter = 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))';
+            draggedEl.releasePointerCapture(e.pointerId);
+
+            draggedEl.removeEventListener('pointermove', onPointerMove);
+            draggedEl.removeEventListener('pointerup', onPointerUp);
+            draggedEl.removeEventListener('pointercancel', onPointerUp);
+
+            checkDrop(draggedEl);
+            draggedEl = null;
+            clearHoverEffects();
+        }
+
+        function checkHover(el) {
+            const rect = el.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            let foundZone = null;
+            zones.forEach(zone => {
+                const zRect = zone.getBoundingClientRect();
+                if (centerX >= zRect.left && centerX <= zRect.right &&
+                    centerY >= zRect.top && centerY <= zRect.bottom) {
+                    foundZone = zone;
+                }
+            });
+
+            if (currentHoverZone !== foundZone) {
+                if (currentHoverZone) currentHoverZone.classList.remove('hovered');
+                if (foundZone) foundZone.classList.add('hovered');
+                currentHoverZone = foundZone;
+            }
+        }
+
+        function clearHoverEffects() {
+            if (currentHoverZone) {
+                currentHoverZone.classList.remove('hovered');
+                currentHoverZone = null;
+            }
+        }
+
+        function checkDrop(el) {
+            const rect = el.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            let droppedInZone = null;
+            zones.forEach(zone => {
+                const zRect = zone.getBoundingClientRect();
+                if (centerX >= zRect.left && centerX <= zRect.right &&
+                    centerY >= zRect.top && centerY <= zRect.bottom) {
+                    droppedInZone = zone;
+                }
+            });
+
+            zones.forEach(z => {
+                if(z.dataset.currentRank === el.dataset.rank) {
+                    z.dataset.currentRank = "";
+                }
+            });
+
+            let actionFeedback = null; // 紀錄這次拖放是對是錯
+
+            if (droppedInZone) {
+                droppedInZone.dataset.currentRank = el.dataset.rank;
+                snapToZone(el, droppedInZone);
+                
+                // 判斷是否放對位置
+                if (el.dataset.rank === droppedInZone.dataset.expected) {
+                    actionFeedback = 'correct';
+                    playSound('snap'); // 正確音效
+                    droppedInZone.classList.add('correct-flash'); // 閃綠光
+                    setTimeout(() => droppedInZone.classList.remove('correct-flash'), 500);
+                } else {
+                    actionFeedback = 'error';
+                    playSound('error'); // 錯誤音效
+                    droppedInZone.classList.add('error-flash'); // 閃紅光
+                    setTimeout(() => droppedInZone.classList.remove('error-flash'), 500);
+                }
+            } else {
+                playSound('drop'); // 放到空白處的音效
+            }
+
+            // 將結果傳給條件檢查
+            checkWinCondition(actionFeedback);
+        }
+
+        function snapToZone(el, zone) {
+            const zRect = zone.getBoundingClientRect();
+            const pRect = playArea.getBoundingClientRect();
+            const rect = el.getBoundingClientRect();
+            
+            const snapLeft = (zRect.left - pRect.left) + (zRect.width - rect.width) / 2;
+            const snapTop = (zRect.top - pRect.top) + (zRect.height - rect.height) / 2;
+            
+            el.style.transition = 'left 0.2s, top 0.2s, transform 0.1s, filter 0.1s';
+            el.style.left = snapLeft + 'px';
+            el.style.top = snapTop + 'px';
+            
+            setTimeout(() => {
+                if(el) el.style.transition = 'transform 0.1s ease-out, filter 0.1s ease-out';
+            }, 200);
+        }
+
+        // --- 動態檢查獲勝條件 (加入即時回饋參數) ---
+        function checkWinCondition(actionFeedback = null) {
+            let filledCount = 0;
+            let wrongCount = 0;
+
+            // 遍歷所有動態生成的框框
+            zones.forEach(zone => {
+                if (zone.dataset.currentRank !== "") {
+                    filledCount++;
+                    if (zone.dataset.currentRank !== zone.dataset.expected) {
+                        wrongCount++;
+                    }
+                }
+            });
+
+            if (filledCount === numObjects && wrongCount === 0) {
+                playSound('win');
+                messageEl.innerText = "🎉 恭喜你！大小排列完全正確！ 🎉";
+                messageEl.className = "text-xl md:text-2xl text-green-600 font-bold animate-pulse px-2";
+                fireConfetti();
+            } else if (actionFeedback === 'error') {
+                // 單次動作：放錯了
+                messageEl.innerText = "❌ 哎呀，這個圖形大小不對喔！再比比看！";
+                messageEl.className = "text-sm md:text-lg text-red-500 font-bold px-2";
+            } else if (actionFeedback === 'correct') {
+                // 單次動作：放對了
+                messageEl.innerText = "👍 放對了！繼續保持！";
+                messageEl.className = "text-sm md:text-lg text-green-600 font-bold px-2";
+            } else {
+                // 沒觸發特殊動作（例如拉到外面），則檢查目前整體狀態
+                if (wrongCount > 0) {
+                    messageEl.innerText = "🤔 框框裡有些圖形順序不對喔！";
+                    messageEl.className = "text-sm md:text-lg text-red-500 font-bold px-2";
+                } else if (filledCount > 0) {
+                    messageEl.innerText = "👍 目前都放對了！繼續加油！";
+                    messageEl.className = "text-sm md:text-lg text-green-600 font-bold px-2";
+                } else {
+                    messageEl.innerText = "拖動圖形疊在一起比較大小，然後由大到小放入下方框框！";
+                    messageEl.className = "text-sm md:text-lg text-gray-700 font-medium px-2";
+                }
+            }
+        }
+
+        function fireConfetti() {
+            for(let i=0; i<60; i++) {
+                let conf = document.createElement('div');
+                conf.style.position = 'fixed';
+                conf.style.width = '10px';
+                conf.style.height = '10px';
+                conf.style.backgroundColor = ['#ef4444','#3b82f6','#10b981','#f59e0b','#8b5cf6'][Math.floor(Math.random()*5)];
+                conf.style.zIndex = '9999';
+                conf.style.pointerEvents = 'none';
+                document.body.appendChild(conf);
+
+                let x = window.innerWidth / 2;
+                let y = window.innerHeight / 2;
+                let angle = Math.random() * Math.PI * 2;
+                let velocity = 10 + Math.random() * 25;
+                let vx = Math.cos(angle) * velocity;
+                let vy = Math.sin(angle) * velocity - 15;
+                let rotation = Math.random() * 360;
+                let dr = (Math.random() - 0.5) * 20;
+
+                let opacity = 1;
+                let frame = 0;
+                
+                function animate() {
+                    if (frame > 60) opacity -= 0.03;
+                    vy += 0.8; 
+                    x += vx;
+                    y += vy;
+                    rotation += dr;
+
+                    conf.style.left = x + 'px';
+                    conf.style.top = y + 'px';
+                    conf.style.transform = `rotate(${rotation}deg)`;
+                    conf.style.opacity = opacity;
+
+                    if (opacity > 0) {
+                        requestAnimationFrame(animate);
+                        frame++;
+                    } else {
+                        conf.remove();
+                    }
+                }
+                requestAnimationFrame(animate);
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            const shapes = document.querySelectorAll('.shape');
+            shapes.forEach(shape => {
+                const rank = shape.dataset.rank;
+                let currentZone = null;
+                zones.forEach(z => {
+                    if(z.dataset.currentRank === rank) currentZone = z;
+                });
+                if (currentZone) snapToZone(shape, currentZone);
+            });
+        });
+
+        // 啟動遊戲
+        document.addEventListener('DOMContentLoaded', initGame);
+
+    </script>
+</body>
+</html>
