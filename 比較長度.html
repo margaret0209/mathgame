@@ -339,8 +339,13 @@
 
             for (let i = 0; i < itemCount; i++) {
                 const id = `item-${i}`;
-                itemData.push({ id: id, length: lengths[i], colorClass: shuffledColors[i] });
-                createDraggableItem(id, lengths[i], yTracks[i], shuffledColors[i], boardWidth);
+                // 將索引 0, 1, 2... 轉換為對應的英文字母 A, B, C... (ASCII 碼 65 起)
+                const labelChar = String.fromCharCode(65 + i); 
+                itemData.push({ id: id, length: lengths[i], colorClass: shuffledColors[i], label: labelChar });
+                
+                // 判斷：如果是進階模式，就不要顯示字母
+                const displayLabel = isAdvancedMode ? '' : labelChar;
+                createDraggableItem(id, lengths[i], yTracks[i], shuffledColors[i], boardWidth, displayLabel);
             }
 
             // 找出最長和最短的物件 ID
@@ -354,7 +359,7 @@
         }
 
         // 建立可拖曳的物件
-        function createDraggableItem(id, width, topPos, colorClass, boardWidth) {
+        function createDraggableItem(id, width, topPos, colorClass, boardWidth, labelNum) {
             const item = document.createElement('div');
             item.id = id;
             item.className = `draggable absolute rounded-r-xl rounded-l-md shadow-md border-2 border-white flex items-center justify-end px-3 ${colorClass}`;
@@ -369,8 +374,9 @@
             const randomX = Math.floor(minX + Math.random() * (maxX - minX));
             item.style.left = `${randomX}px`;
 
-            // 加上裝飾刻度線
+            // 加上裝飾刻度線與編號
             item.innerHTML = `
+                <div class="absolute left-4 text-white font-black text-2xl drop-shadow-md">${labelNum}</div>
                 <div class="w-1 h-8 bg-white/50 rounded-full mx-1"></div>
                 <div class="w-1 h-8 bg-white/50 rounded-full mx-1"></div>
                 <div class="w-1 h-8 bg-white/50 rounded-full mx-1"></div>
@@ -528,6 +534,9 @@
             quizSection.classList.add('opacity-100', 'translate-y-0');
             quizSection.classList.remove('opacity-0', 'translate-y-4');
 
+            // 加入這行：如果已經產生過選項，就不再重複產生，避免玩家再次移動長條時造成選項重複
+            if (q1OptionsContainer.children.length > 0) return;
+
             // 產生選項按鈕
             itemData.forEach(item => {
                 const btn1 = createOptionButton(item, 1);
@@ -540,9 +549,11 @@
         // 建立選項按鈕
         function createOptionButton(item, qNum) {
             const btn = document.createElement('button');
-            // 將長條的漸層背景套用至方塊按鈕上
-            const bgClass = item.colorClass.replace('bg-gradient-to-r', 'bg-gradient-to-br');
-            btn.className = `w-14 h-14 rounded-xl shadow-sm border-4 border-transparent hover:scale-105 transition-all flex items-center justify-center text-2xl ${bgClass}`;
+            // 直接使用與長條完全相同的 colorClass，避免 Tailwind JIT 遺失動態產生的漸層樣式
+            btn.className = `w-14 h-14 rounded-xl shadow-sm border-4 border-transparent hover:scale-105 transition-all flex items-center justify-center text-2xl text-white font-black drop-shadow-md ${item.colorClass}`;
+            
+            // 顯示對應的數字編號
+            btn.innerText = item.label;
             
             btn.onclick = () => answerQuestion(qNum, item.id, btn);
             return btn;
@@ -559,6 +570,7 @@
             if (isCorrect) {
                 playSound('correct');
                 // 答對處理
+                btn.classList.remove('border-transparent');
                 btn.classList.add('border-green-400', 'scale-110');
                 btn.innerHTML = '✅';
                 if (qNum === 1) q1Answered = true;
@@ -588,9 +600,9 @@
                 }
             } else {
                 playSound('wrong');
-                // 答錯處理
+                // 答錯處理 - 保留原本的數字，加上紅框提示
+                btn.classList.remove('border-transparent');
                 btn.classList.add('border-red-400', 'opacity-50');
-                btn.innerHTML = '❌';
                 // 震動特效
                 btn.animate([
                     { transform: 'translateX(0)' },
