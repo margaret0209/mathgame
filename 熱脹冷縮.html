@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>熱脹冷縮小遊戲</title>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", system-ui, sans-serif;
+      background: #f4f9ff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .game-container {
+      width: 95%;
+      max-width: 900px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    .subtitle {
+      font-size: 18px;
+      margin-bottom: 16px;
+      color: #555;
+    }
+    .question-area {
+      margin: 10px 0 20px 0;
+      padding: 16px;
+      border-radius: 12px;
+      background: #e7f3ff;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .scene {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+    .question-text {
+      font-size: 26px;
+      font-weight: bold;
+      color: #222;
+    }
+    .image-hint {
+      font-size: 40px;
+      margin: 8px 0;
+    }
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+    .btn {
+      font-size: 24px;
+      padding: 14px 24px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      min-width: 160px;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .btn:active {
+      transform: scale(0.97);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .btn-hot {
+      background: #ff7979;
+      color: white;
+    }
+    .btn-cold {
+      background: #74b9ff;
+      color: white;
+    }
+    .btn-same {
+      background: #b2bec3;
+      color: #222;
+    }
+    .btn-next {
+      background: #00b894;
+      color: white;
+      font-size: 20px;
+      padding: 10px 18px;
+      margin-top: 4px;
+    }
+    .feedback {
+      font-size: 22px;
+      min-height: 32px;
+      margin-bottom: 6px;
+    }
+    .feedback.correct {
+      color: #00b894;
+    }
+    .feedback.wrong {
+      color: #d63031;
+    }
+    .score {
+      font-size: 20px;
+      margin: 6px 0;
+    }
+    .rule {
+      margin-top: 6px;
+      font-size: 18px;
+      color: #333;
+      font-weight: bold;
+    }
+    .read-btn {
+      font-size: 18px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid #0984e3;
+      background: #dfefff;
+      color: #0984e3;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 22px; }
+      .question-text { font-size: 22px; }
+      .btn { font-size: 20px; min-width: 130px; }
+    }
+  </style>
+</head>
+<body>
+<div class="game-container">
+  <h1>熱脹冷縮小遊戲</h1>
+  <div class="subtitle">口訣：熱變大，冷變小</div>
+
+  <button class="read-btn" onclick="readText(currentFullText)">
+    🔊 朗讀題目
+  </button>
+
+  <div class="question-area">
+    <div class="scene" id="scene"></div>
+    <div class="image-hint" id="imageHint">🌡️</div>
+    <div class="question-text" id="questionText"></div>
+  </div>
+
+  <div class="buttons">
+    <button class="btn btn-hot" onclick="checkAnswer('hot')">
+      🔥 變大
+    </button>
+    <button class="btn btn-cold" onclick="checkAnswer('cold')">
+      ❄️ 變小
+    </button>
+    <button class="btn btn-same" onclick="checkAnswer('same')">
+      ➖ 一樣大
+    </button>
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+  <div class="score" id="score">得分：0 / 0</div>
+  <button class="btn-next" onclick="nextQuestion()">下一題 ▶</button>
+
+  <div class="rule">老師可以一邊做動作：熱張開手，冷抱緊身體。</div>
+</div>
+
+<script>
+  const questions = [
+    {
+      scene: "氣球在太陽底下曬一曬。",
+      image: "🎈☀️",
+      text: "氣球裡的空氣會怎樣？",
+      answer: "hot"
+    },
+    {
+      scene: "熱湯放一會兒，變冷了。",
+      image: "🍲➡️❄️",
+      text: "湯會變得多一點還是少一點？",
+      answer: "cold"
+    },
+    {
+      scene: "鐵路在夏天很熱。",
+      image: "🚆☀️",
+      text: "鐵軌會變長一點還是短一點？",
+      answer: "hot"
+    },
+    {
+      scene: "玻璃瓶放進冰箱裡。",
+      image: "🧴❄️",
+      text: "裡面的空氣會變大還是變小？",
+      answer: "cold"
+    },
+    {
+      scene: "今天沒有變熱，也沒有變冷。",
+      image: "🙂",
+      text: "東西大小會有改變嗎？",
+      answer: "same"
+    },
+    {
+      scene: "金屬湯匙放進熱湯裡。",
+      image: "🥄🍲",
+      text: "湯匙會變大一點還是變小一點？",
+      answer: "hot"
+    },
+    {
+      scene: "晚上變冷，橋梁也變冷。",
+      image: "🌉🌙❄️",
+      text: "橋會變長一點還是短一點？",
+      answer: "cold"
+    }
+  ];
+
+  let currentIndex = 0;
+  let score = 0;
+  let total = 0;
+  let currentFullText = "";
+
+  function showQuestion() {
+    const q = questions[currentIndex];
+    document.getElementById("scene").textContent = q.scene;
+    document.getElementById("imageHint").textContent = q.image;
+    document.getElementById("questionText").textContent = q.text;
+    document.getElementById("feedback").textContent = "";
+    document.getElementById("feedback").className = "feedback";
+    currentFullText = q.scene + " " + q.text;
+  }
+
+  function checkAnswer(choice) {
+    const q = questions[currentIndex];
+    total++;
+    if (choice === q.answer) {
+      score++;
+      const fb = document.getElementById("feedback");
+      fb.textContent = "✔ 答對了！記得：熱變大，冷變小。";
+      fb.className = "feedback correct";
+    } else {
+      const fb = document.getElementById("feedback");
+      let hint = "";
+      if (q.answer === "hot") hint = "這一題是「變大」喔！";
+      if (q.answer === "cold") hint = "這一題是「變小」喔！";
+      if (q.answer === "same") hint = "這一題是「一樣大」喔！";
+      fb.textContent = "✘ 再想想～ " + hint;
+      fb.className = "feedback wrong";
+    }
+    document.getElementById("score").textContent =
+      "得分：" + score + " / " + total;
+  }
+
+  function nextQuestion() {
+    currentIndex++;
+    if (currentIndex >= questions.length) {
+      currentIndex = 0;
+    }
+    showQuestion();
+  }
+
+  function readText(text) {
+    if (!("speechSynthesis" in window)) {
+      alert("這個瀏覽器不支援語音朗讀。");
+      return;
+    }
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "zh-TW";
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
+  }
+
+  // 初始載入題目
+  showQuestion();
+</script>
+</body>
+</html>
