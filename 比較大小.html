@@ -36,8 +36,8 @@
 </head>
 <body class="bg-gray-200 h-screen w-screen overflow-hidden flex items-center justify-center p-2 md:p-4 font-sans">
 
-    <!-- 調整這裡：移除 h-full，改為 max-w-5xl (加寬) 以及 h-[75vh] md:h-[600px] (降低高度) -->
-    <div class="flex flex-col w-full max-w-5xl h-[75vh] md:h-[600px] min-h-[500px] bg-white shadow-2xl rounded-2xl overflow-hidden relative">
+    <!-- 調整這裡：移除固定高度 (h-[75vh], md:h-[600px], min-h-[500px])，讓整體高度根據內容自適應 -->
+    <div class="flex flex-col w-full max-w-5xl max-h-[98vh] bg-white shadow-2xl rounded-2xl overflow-hidden relative">
         
         <!-- 頂部標題區 -->
         <header class="bg-indigo-600 text-white p-3 md:p-4 text-center z-10 relative flex-shrink-0">
@@ -55,6 +55,13 @@
                         <option value="5">5 個</option>
                     </select>
                 </div>
+                
+                <!-- 新增：提示模式開關 -->
+                <label class="flex items-center bg-indigo-500 rounded-full px-3 py-1 shadow-inner cursor-pointer hover:bg-indigo-400 transition">
+                    <span class="text-sm font-medium mr-2 text-white">提示模式</span>
+                    <input type="checkbox" id="hint-toggle" class="w-4 h-4 accent-indigo-200 cursor-pointer" onchange="toggleHintMode()">
+                </label>
+
                 <button onclick="initGame()" class="bg-white text-indigo-600 px-5 py-1.5 rounded-full text-sm font-bold shadow hover:bg-indigo-50 active:scale-95 transition">
                     重新產生
                 </button>
@@ -68,13 +75,14 @@
             </p>
         </div>
 
-        <!-- 遊戲互動區 -->
-        <div id="play-area" class="flex-grow relative bg-gray-50 mx-4 mb-2 rounded-xl border-2 border-dashed border-gray-300">
+        <!-- 遊戲互動區：移除 flex-grow，加上 transition 讓高度改變時有滑順的動畫 -->
+        <div id="play-area" class="relative bg-gray-50 mx-4 mb-2 rounded-xl border-2 border-dashed border-gray-300 transition-all duration-300 ease-in-out">
             <!-- 動態生成的形狀會放在這裡 -->
         </div>
 
         <!-- 放置區域 (由 JS 動態生成) -->
-        <div id="drop-zones" class="flex justify-around items-center p-3 md:p-6 bg-white gap-1 md:gap-2 flex-shrink-0 border-t border-gray-100 min-h-[100px] md:min-h-[140px]">
+        <!-- 新增 flex-wrap 讓手機螢幕太小時，真實尺寸的方塊可以自動換行 -->
+        <div id="drop-zones" class="flex justify-around items-center p-3 md:p-6 bg-white gap-1 md:gap-2 flex-shrink-0 border-t border-gray-100 min-h-[100px] md:min-h-[140px] flex-wrap">
             <!-- 框框會在這裡產生 -->
         </div>
     </div>
@@ -86,6 +94,8 @@
         
         let numObjects = 3;
         let zones = []; // 動態儲存放置區
+        let baseSizes = []; // 儲存各等級大小，供提示模式參考
+        let isHintMode = false; // 提示模式狀態
         
         let highestZ = 10;
         let draggedEl = null;
@@ -106,9 +116,20 @@
             }
         }
 
+        // 綁定全域初始互動，確保 iOS/Safari 能順利解鎖音效
+        const enableAudio = () => {
+            initAudio();
+            document.removeEventListener('pointerdown', enableAudio);
+            document.removeEventListener('touchstart', enableAudio);
+        };
+        document.addEventListener('pointerdown', enableAudio);
+        document.addEventListener('touchstart', enableAudio);
+
         // 播放合成音效
         function playSound(type) {
             if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             
@@ -121,48 +142,59 @@
                 // 拿起：短促、音調微微上升
                 oscillator.type = 'sine';
                 oscillator.frequency.setValueAtTime(300, now);
-                oscillator.frequency.exponentialRampToValueAtTime(600, now + 0.1);
-                gainNode.gain.setValueAtTime(0.3, now);
+                oscillator.frequency.exponentialRampToValueAtTime(600, now + 0.08);
+                gainNode.gain.setValueAtTime(0, now); // 淡入防爆音
+                gainNode.gain.linearRampToValueAtTime(0.2, now + 0.02);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.12); // 淡出防爆音
                 oscillator.start(now);
-                oscillator.stop(now + 0.1);
+                oscillator.stop(now + 0.15);
             } else if (type === 'drop') {
                 // 放開 (未放進框框)：低沉、音調下降
                 oscillator.type = 'sine';
                 oscillator.frequency.setValueAtTime(400, now);
                 oscillator.frequency.exponentialRampToValueAtTime(200, now + 0.1);
-                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.2, now + 0.02);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.12);
                 oscillator.start(now);
-                oscillator.stop(now + 0.1);
+                oscillator.stop(now + 0.15);
             } else if (type === 'snap') {
                 // 吸附到框框：清脆的波形 (正確時播放)
                 oscillator.type = 'triangle';
                 oscillator.frequency.setValueAtTime(600, now);
                 oscillator.frequency.exponentialRampToValueAtTime(800, now + 0.1);
-                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.2, now + 0.02);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.12);
                 oscillator.start(now);
-                oscillator.stop(now + 0.1);
+                oscillator.stop(now + 0.15);
             } else if (type === 'error') {
                 // 錯誤：低沉短促的警告音 (放錯時播放)
                 oscillator.type = 'sawtooth';
                 oscillator.frequency.setValueAtTime(200, now);
                 oscillator.frequency.exponentialRampToValueAtTime(100, now + 0.2);
-                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.15, now + 0.02);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.22);
                 oscillator.start(now);
-                oscillator.stop(now + 0.2);
+                oscillator.stop(now + 0.25);
             } else if (type === 'win') {
                 // 獲勝：簡單的和弦琶音
                 oscillator.type = 'sine';
                 oscillator.frequency.setValueAtTime(440, now);       // A4
                 oscillator.frequency.setValueAtTime(554.37, now + 0.1); // C#5
                 oscillator.frequency.setValueAtTime(659.25, now + 0.2); // E5
-                gainNode.gain.setValueAtTime(0.3, now);
-                gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+                oscillator.frequency.setValueAtTime(880.00, now + 0.3); // A5 (多加一個音)
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.2, now + 0.05);
+                gainNode.gain.setValueAtTime(0.2, now + 0.3);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.6);
                 oscillator.start(now);
-                oscillator.stop(now + 0.5);
+                oscillator.stop(now + 0.65);
             }
         }
 
@@ -209,8 +241,8 @@
                 zones.push(zone); // 加入陣列方便後續比對
             }
 
-            // 2. 動態計算圓形的大小
-            const baseSizes = [];
+            // 2. 動態計算圖形的大小
+            baseSizes = []; // 確保重置全域的大小陣列
             let currentSize = 45; // 最小起始尺寸
             const step = Math.floor(120 / numObjects); // 根據數量分配級距
             
@@ -220,6 +252,10 @@
                 baseSizes.push(size);
                 currentSize += step + 15; // 加上固定間距保證大小不同
             }
+
+            // 動態調整中間遊戲區域的高度：最大圖形的尺寸 + 60px 的上下邊界緩衝
+            const maxSize = baseSizes[numObjects - 1];
+            playArea.style.height = (maxSize + 60) + 'px';
 
             // 3. 準備顏色庫 (最多支援 5 個)
             const allColors = [
@@ -291,6 +327,70 @@
                 el.addEventListener('pointerdown', onPointerDown);
                 playArea.appendChild(el);
             });
+
+            // 套用提示模式（若開啟）
+            updateZoneSizes();
+        }
+
+        // --- 提示模式切換與更新邏輯 ---
+        function toggleHintMode() {
+            isHintMode = document.getElementById('hint-toggle').checked;
+            updateZoneSizes();
+        }
+
+        function updateZoneSizes() {
+            if (zones.length === 0 || baseSizes.length === 0) return;
+
+            const maxSize = baseSizes[numObjects - 1]; // 最大尺寸 (等級最高)
+            
+            zones.forEach(zone => {
+                if (isHintMode) {
+                    const expectedRank = parseInt(zone.dataset.expected);
+                    const targetSize = baseSizes[expectedRank];
+                    
+                    zone.classList.remove('flex-1', 'max-w-[100px]');
+                    
+                    // 【修改這裡】：直接將寬高設定為與目標圖形完全一致的像素 (px)
+                    zone.style.flex = 'none'; // 取消彈性拉伸，強制固定大小
+                    zone.style.width = targetSize + 'px';
+                    zone.style.height = targetSize + 'px';
+                    zone.style.maxWidth = 'none';
+                    zone.style.minWidth = '0px'; 
+                    
+                    // 依照方塊的大小等比例縮小裡面的文字，確保文字不會破版
+                    const span = zone.querySelector('span');
+                    if (span) {
+                        span.style.transform = `scale(${Math.max(0.4, targetSize / maxSize)})`;
+                        span.style.transition = 'transform 0.2s ease';
+                    }
+                } else {
+                    zone.style.flex = '';
+                    zone.style.width = '';
+                    zone.style.height = '';
+                    zone.style.maxWidth = '';
+                    zone.style.minWidth = '';
+                    zone.classList.add('flex-1', 'max-w-[100px]');
+                    
+                    // 恢復文字大小
+                    const span = zone.querySelector('span');
+                    if (span) {
+                        span.style.transform = 'scale(1)';
+                    }
+                }
+            });
+
+            // 如果已經有圖形放在框框內，由於框的大小改變，需要重新吸附置中
+            setTimeout(() => {
+                const shapes = document.querySelectorAll('.shape');
+                shapes.forEach(shape => {
+                    const rank = shape.dataset.rank;
+                    let currentZone = null;
+                    zones.forEach(z => {
+                        if(z.dataset.currentRank === rank) currentZone = z;
+                    });
+                    if (currentZone) snapToZone(shape, currentZone);
+                });
+            }, 200); // 配合 CSS transition 延遲 200ms 等框框縮放完畢再移動
         }
 
         // --- 拖曳事件處理 (與原版相同) ---
@@ -453,7 +553,7 @@
             });
 
             if (filledCount === numObjects && wrongCount === 0) {
-                playSound('win');
+                setTimeout(() => playSound('win'), 150); // 延遲播放，避免與 snap 音效重疊
                 messageEl.innerText = "🎉 恭喜你！大小排列完全正確！ 🎉";
                 messageEl.className = "text-xl md:text-2xl text-green-600 font-bold animate-pulse px-2";
                 fireConfetti();
