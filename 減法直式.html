@@ -25,6 +25,7 @@
             border-radius: 0.5rem;
             outline: none;
             transition: all 0.3s ease;
+            cursor: default; /* 加入 readonly 後游標保持預設 */
         }
         .math-input:focus {
             border-color: #3b82f6;
@@ -165,6 +166,7 @@
             }
 
             getHTML(title, colorClass) {
+                // 新增了 readonly，避免在平板上彈出原生的虛擬鍵盤干擾雙人畫面
                 return `
                     <div class="bg-white p-5 rounded-3xl shadow-xl w-full max-w-[380px] border-t-8 ${colorClass} flex flex-col">
                         <h2 class="text-xl font-bold mb-3 text-center text-gray-700">${title}</h2>
@@ -179,8 +181,8 @@
                             <div class="grid grid-cols-3 gap-y-1 gap-x-4 text-6xl font-mono">
                                 <!-- 借位區 -->
                                 <div class="cell"></div>
-                                <div class="cell relative"><input type="text" inputmode="none" class="borrow-tens math-input borrow-input absolute bottom-0 hidden opacity-0 transition-opacity duration-300" maxlength="1"></div>
-                                <div class="cell relative"><input type="text" inputmode="none" class="borrow-ones math-input borrow-input absolute bottom-0 hidden opacity-0 transition-opacity duration-300" maxlength="2"></div>
+                                <div class="cell relative"><input type="text" readonly class="borrow-tens math-input borrow-input absolute bottom-0 hidden opacity-0 transition-opacity duration-300" maxlength="1"></div>
+                                <div class="cell relative"><input type="text" readonly class="borrow-ones math-input borrow-input absolute bottom-0 hidden opacity-0 transition-opacity duration-300" maxlength="2"></div>
 
                                 <!-- 被減數 A -->
                                 <div class="cell"></div>
@@ -197,26 +199,46 @@
 
                                 <!-- 答案 C -->
                                 <div class="cell"></div>
-                                <div class="cell"><input type="text" inputmode="none" class="ans-tens math-input transition-all duration-500" disabled></div>
-                                <div class="cell"><input type="text" inputmode="none" class="ans-ones math-input" disabled></div>
+                                <div class="cell"><input type="text" readonly class="ans-tens math-input transition-all duration-500" disabled></div>
+                                <div class="cell"><input type="text" readonly class="ans-ones math-input" disabled></div>
                             </div>
                         </div>
 
                         <!-- 九宮格數字鍵盤 -->
                         <div class="grid grid-cols-3 gap-2 mt-auto px-4 pb-2 max-w-[220px] mx-auto w-full">
-                            ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="keypad-btn bg-gray-100 hover:bg-gray-200 text-gray-800 text-lg font-bold py-2 rounded-lg shadow transition active:scale-95">${n}</button>`).join('')}
-                            <button class="keypad-btn bg-red-100 hover:bg-red-200 text-red-600 text-lg font-bold py-2 rounded-lg shadow transition active:scale-95" id="key-del">⌫</button>
-                            <button class="keypad-btn bg-gray-100 hover:bg-gray-200 text-gray-800 text-lg font-bold py-2 rounded-lg shadow transition active:scale-95">0</button>
+                            ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="keypad-btn bg-gray-100 hover:bg-gray-200 text-gray-800 text-lg font-bold py-2 rounded-lg shadow transition active:scale-95 touch-manipulation">${n}</button>`).join('')}
+                            <button class="keypad-btn bg-red-100 hover:bg-red-200 text-red-600 text-lg font-bold py-2 rounded-lg shadow transition active:scale-95 touch-manipulation" id="key-del">⌫</button>
+                            <button class="keypad-btn bg-gray-100 hover:bg-gray-200 text-gray-800 text-lg font-bold py-2 rounded-lg shadow transition active:scale-95 touch-manipulation">0</button>
                             <div></div>
                         </div>
                     </div>
                 `;
             }
 
+            // 優化的多點觸控綁定事件
+            bindTap(element, callback) {
+                let touched = false;
+                // 處理觸控螢幕，避免預設的點擊延遲
+                element.addEventListener('touchstart', (e) => {
+                    touched = true;
+                    e.preventDefault(); // 阻止原生行為，實現「零延遲」多點觸控
+                    callback(e);
+                    // 稍後重置狀態
+                    setTimeout(() => touched = false, 300);
+                }, { passive: false });
+
+                // 保留滑鼠支援 (電腦環境)
+                element.addEventListener('mousedown', (e) => {
+                    if (touched) return;
+                    e.preventDefault(); // 避免改變 input 的焦點
+                    callback(e);
+                });
+            }
+
             bindEvents() {
-                // 虛擬鍵盤點擊
+                // 虛擬鍵盤點擊 (支援多點觸控)
                 this.el.keypadBtns.forEach(btn => {
-                    btn.addEventListener('click', (e) => {
+                    this.bindTap(btn, (e) => {
                         if (this.isDisabled || !this.activeInput || this.activeInput.disabled) return;
                         
                         const key = e.target.textContent;
@@ -233,8 +255,8 @@
                     });
                 });
 
-                // A1 點擊借位
-                this.el.valA1.addEventListener('click', () => {
+                // A1 點擊借位 (支援多點觸控)
+                this.bindTap(this.el.valA1, () => {
                     if (this.isDisabled) return;
                     if (this.state === STATES.WAIT_CLICK_A1) this.setState(STATES.WAIT_INPUT_A1);
                 });
@@ -247,8 +269,8 @@
                     }
                 });
 
-                // A2 點擊接收借位
-                this.el.valA2.addEventListener('click', () => {
+                // A2 點擊接收借位 (支援多點觸控)
+                this.bindTap(this.el.valA2, () => {
                     if (this.isDisabled) return;
                     if (this.state === STATES.WAIT_CLICK_A2) this.setState(STATES.WAIT_INPUT_A2);
                 });
