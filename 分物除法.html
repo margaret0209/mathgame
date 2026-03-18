@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分物除法互動教學</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        .apple {
+            width: 24px;
+            height: 24px;
+            background-color: #ff4d4d;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 2px;
+            box-shadow: inset -3px -3px 5px rgba(0,0,0,0.2);
+            position: relative;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: grab;
+            touch-action: none; /* 防止在手機上拖拉時畫面捲動 */
+        }
+        .apple::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: 10px;
+            width: 8px;
+            height: 10px;
+            background-color: #4CAF50;
+            border-radius: 50% 0 50% 0;
+            transform: rotate(-15deg);
+        }
+        .apple:active {
+            cursor: grabbing;
+        }
+        .apple.dragging {
+            opacity: 0.8;
+            transform: scale(1.2);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            z-index: 50;
+        }
+        .apple.disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+            filter: grayscale(0.5);
+        }
+
+        .box {
+            border: 3px solid #8B4513;
+            background-color: #FFF8DC;
+            border-radius: 12px;
+            min-height: 80px;
+            padding: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 4px;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        }
+        .box.drag-over {
+            background-color: #fef08a; /* Tailwind yellow-200 */
+            border-color: #ca8a04; /* Tailwind yellow-600 */
+            transform: scale(1.02);
+        }
+        .box.round-full {
+            background-color: #f3f4f6; /* Tailwind gray-100 to indicate it's full for this round */
+        }
+
+        .input-box {
+            display: inline-block;
+            width: 45px;
+            height: 36px;
+            text-align: center;
+            line-height: 32px;
+            border: 2px solid #ccc;
+            border-radius: 6px;
+            background-color: white;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            vertical-align: middle;
+            font-size: 1.125rem;
+            user-select: none;
+        }
+        .input-box.active {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+            animation: pulse-border 1.5s infinite;
+        }
+        
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+
+        .shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); border-color: red;}
+            30%, 50%, 70% { transform: translate3d(-3px, 0, 0); border-color: red;}
+            40%, 60% { transform: translate3d(3px, 0, 0); border-color: red;}
+        }
+
+        .log-entry {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 小巧版數字盤樣式 */
+        .numpad-btn {
+            background: #fff;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px; /* 縮小圓角 */
+            font-size: 1.2rem; /* 縮小字體 */
+            font-weight: bold;
+            color: #374151;
+            padding: 8px 0; /* 減少內距 */
+            cursor: pointer;
+            transition: all 0.1s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* 減輕陰影 */
+        }
+        .numpad-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            background: #f3f4f6;
+        }
+        .numpad-action {
+            background: #dbeafe;
+            border-color: #bfdbfe;
+            color: #1e40af;
+            font-size: 1rem;
+        }
+        .numpad-submit {
+            background: #dcfce7;
+            border-color: #bbf7d0;
+            color: #166534;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-800">
+
+    <div class="max-w-6xl mx-auto p-4 sm:p-6">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-blue-700">🍎 分物除法教學</h1>
+                <p class="text-gray-500 text-sm mt-1" id="game-info">準備開始分發物品</p>
+            </div>
+            <button onclick="initGame()" class="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-lg shadow transition">
+                重新開始
+            </button>
+        </div>
+
+        <!-- 上半部：物品區 (左) 與 方格區 (右) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+            
+            <!-- 左區：未分配的物品 -->
+            <div class="col-span-1 lg:col-span-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col">
+                <h2 class="text-lg font-semibold mb-3 flex justify-between items-center">
+                    <span>未分配的物品</span>
+                    <span class="bg-red-100 text-red-600 px-2 py-1 rounded text-sm">餘下: <span id="pool-count" class="font-bold">0</span></span>
+                </h2>
+                <!-- 加入 content-start 讓物品從上方開始排，並給予一個最小高度 -->
+                <div id="pool-area" class="flex flex-wrap gap-1 min-h-[150px] p-3 bg-gray-50 rounded-lg border border-gray-100 transition-colors content-start flex-grow">
+                    <!-- Apples will be injected here -->
+                </div>
+            </div>
+
+            <!-- 右邊：目標方格區 -->
+            <div class="col-span-1 lg:col-span-8 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
+                    <h2 class="text-lg font-semibold">目標方格 (<span id="box-count" class="text-blue-600 font-bold">0</span> 個)</h2>
+                    <div id="drag-instruction" class="hidden text-sm px-3 py-1.5 bg-yellow-100 text-yellow-800 font-bold rounded shadow-sm border border-yellow-300 animate-pulse">
+                        👉 請把物品由左側拖拉到方格內
+                    </div>
+                </div>
+                <!-- 調整 grid-cols 讓排版更適應 8 個 column 的寬度 -->
+                <div id="boxes-area" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    <!-- Boxes will be injected here -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 下半部：句子 (左) 與 數字盤 (右) -->
+        <div class="flex flex-col lg:flex-row gap-6">
+            
+            <!-- 左側：分發過程句子 -->
+            <div class="flex-grow bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-lg font-semibold border-b pb-2 mb-3">分發過程</h2>
+                
+                <div id="history-log" class="space-y-3 text-lg">
+                    <!-- History and Active sentence go here -->
+                    <div class="text-gray-400 text-center py-4" id="empty-log-msg">拖拉上方物品到方格中開始</div>
+                </div>
+
+                <!-- Final Equation Area -->
+                <div id="final-equation-area" class="hidden mt-6 pt-4 border-t-2 border-dashed border-gray-300">
+                    <h3 class="font-bold text-xl text-green-700 mb-3">最後，請完成除法算式：</h3>
+                    <div class="text-2xl font-bold flex flex-wrap items-center gap-2">
+                        <span id="eq-total">0</span> <span class="text-gray-500">÷</span> <span id="eq-boxes">0</span> <span class="text-gray-500">=</span>
+                        <span class="input-box w-12" data-type="final-q" onclick="setActiveInput(this)"></span>
+                        <span class="text-gray-500 text-lg mx-1">···</span>
+                        <span class="input-box w-12" data-type="final-r" onclick="setActiveInput(this)"></span>
+                    </div>
+                </div>
+                
+                <div id="success-msg" class="hidden mt-4 p-3 bg-green-100 text-green-800 rounded-lg text-center font-bold text-xl">
+                    🎉 恭喜你！完成所有計算！
+                </div>
+            </div>
+
+            <!-- 右側：小巧版數字鍵盤 -->
+            <div class="w-full lg:w-64 flex-shrink-0 bg-white p-4 rounded-xl shadow-sm border border-gray-200 self-start" id="numpad-container">
+                <h3 class="text-sm font-bold text-gray-500 mb-3 text-center">數字鍵盤</h3>
+                <div class="grid grid-cols-3 gap-2">
+                    <button class="numpad-btn" onclick="inputDigit(1)">1</button>
+                    <button class="numpad-btn" onclick="inputDigit(2)">2</button>
+                    <button class="numpad-btn" onclick="inputDigit(3)">3</button>
+                    
+                    <button class="numpad-btn" onclick="inputDigit(4)">4</button>
+                    <button class="numpad-btn" onclick="inputDigit(5)">5</button>
+                    <button class="numpad-btn" onclick="inputDigit(6)">6</button>
+                    
+                    <button class="numpad-btn" onclick="inputDigit(7)">7</button>
+                    <button class="numpad-btn" onclick="inputDigit(8)">8</button>
+                    <button class="numpad-btn" onclick="inputDigit(9)">9</button>
+                    
+                    <button class="numpad-btn numpad-action" onclick="deleteDigit()">刪除</button>
+                    <button class="numpad-btn" onclick="inputDigit(0)">0</button>
+                    <button class="numpad-btn numpad-submit" onclick="checkAnswers()">確定</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Game State Variables
+        let totalObjects = 0;
+        let numBoxes = 0;
+        let poolLeft = 0;
+        
+        let targetPerBox = 1; // 這一輪每個箱子應該要有幾個
+        let currentPerBox = 0; // 已經完成的輪數
+        let boxCounts = []; // 追蹤每個箱子目前的蘋果數
+        
+        let expectedAnswers = []; // [perBox, sharedTotal, remaining]
+        let currentStage = 'idle'; // 'idle', 'inputting_sentence', 'inputting_equation', 'finished'
+        let activeInputEl = null;
+        let draggedApple = null;
+
+        // DOM Elements
+        const elPoolArea = document.getElementById('pool-area');
+        const elBoxesArea = document.getElementById('boxes-area');
+        const elPoolCount = document.getElementById('pool-count');
+        const elBoxCount = document.getElementById('box-count');
+        const elHistoryLog = document.getElementById('history-log');
+        const elEmptyLogMsg = document.getElementById('empty-log-msg');
+        const elGameInfo = document.getElementById('game-info');
+        const elFinalEquationArea = document.getElementById('final-equation-area');
+        const elSuccessMsg = document.getElementById('success-msg');
+        const elNumpadContainer = document.getElementById('numpad-container');
+        const elDragInstruction = document.getElementById('drag-instruction');
+
+        // Initialize a new game
+        function initGame() {
+            numBoxes = Math.floor(Math.random() * 5) + 3; // 3 to 7 boxes
+            
+            // Ensure at least 2 rounds, max ~5 rounds
+            let minTotal = numBoxes * 2 + 1;
+            let maxTotal = Math.min(50, numBoxes * 5 + (numBoxes - 1));
+            totalObjects = Math.floor(Math.random() * (maxTotal - minTotal + 1)) + minTotal;
+            
+            poolLeft = totalObjects;
+            targetPerBox = 1;
+            currentPerBox = 0;
+            boxCounts = new Array(numBoxes).fill(0);
+            currentStage = 'idle';
+            activeInputEl = null;
+
+            // Reset UI
+            elGameInfo.innerText = `總共 ${totalObjects} 個物品，要平分到 ${numBoxes} 個方格內。`;
+            elPoolCount.innerText = poolLeft;
+            elBoxCount.innerText = numBoxes;
+            elHistoryLog.innerHTML = '';
+            elEmptyLogMsg.style.display = 'block';
+            elHistoryLog.appendChild(elEmptyLogMsg);
+            elFinalEquationArea.classList.add('hidden');
+            elSuccessMsg.classList.add('hidden');
+            elDragInstruction.classList.remove('hidden');
+            
+            enableNumpad(false);
+
+            document.getElementById('eq-total').innerText = totalObjects;
+            document.getElementById('eq-boxes').innerText = numBoxes;
+
+            renderObjects();
+        }
+
+        function renderObjects() {
+            elPoolArea.innerHTML = '';
+            for (let i = 0; i < poolLeft; i++) {
+                elPoolArea.appendChild(createApple());
+            }
+
+            elBoxesArea.innerHTML = '';
+            for (let i = 0; i < numBoxes; i++) {
+                elBoxesArea.appendChild(createBox(i));
+            }
+            setDraggableState(true);
+        }
+
+        // --- Drag and Drop Logic ---
+
+        function createApple() {
+            let apple = document.createElement('div');
+            apple.className = 'apple';
+            
+            // Desktop Drag Events
+            apple.draggable = true;
+            apple.addEventListener('dragstart', handleDragStart);
+            apple.addEventListener('dragend', handleDragEnd);
+
+            // Mobile Touch Events (Polyfill for drag and drop)
+            apple.addEventListener('touchstart', handleTouchStart, {passive: false});
+            apple.addEventListener('touchmove', handleTouchMove, {passive: false});
+            apple.addEventListener('touchend', handleTouchEnd);
+
+            return apple;
+        }
+
+        function createBox(index) {
+            let box = document.createElement('div');
+            box.className = 'box';
+            box.dataset.index = index;
+            
+            box.addEventListener('dragover', (e) => {
+                e.preventDefault(); // allow drop
+                if (currentStage === 'idle' && boxCounts[index] < targetPerBox) {
+                    box.classList.add('drag-over');
+                }
+            });
+            
+            box.addEventListener('dragleave', () => {
+                box.classList.remove('drag-over');
+            });
+            
+            box.addEventListener('drop', (e) => {
+                e.preventDefault();
+                box.classList.remove('drag-over');
+                if (currentStage === 'idle' && draggedApple && boxCounts[index] < targetPerBox) {
+                    box.appendChild(draggedApple);
+                    processDrop(index);
+                }
+            });
+
+            return box;
+        }
+
+        // Desktop Handlers
+        function handleDragStart(e) {
+            if (currentStage !== 'idle' || !e.target.draggable) {
+                e.preventDefault();
+                return;
+            }
+            draggedApple = e.target;
+            setTimeout(() => e.target.classList.add('dragging'), 0);
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            draggedApple = null;
+            document.querySelectorAll('.box').forEach(b => b.classList.remove('drag-over'));
+        }
+
+        // Mobile Touch Handlers
+        let touchInitialX, touchInitialY;
+        function handleTouchStart(e) {
+            if (currentStage !== 'idle' || e.target.classList.contains('disabled')) return;
+            e.preventDefault(); // Prevent screen scroll
+            draggedApple = e.target;
+            const touch = e.touches[0];
+            
+            let rect = draggedApple.getBoundingClientRect();
+            
+            draggedApple.style.width = rect.width + 'px';
+            draggedApple.style.height = rect.height + 'px';
+            draggedApple.style.position = 'fixed';
+            draggedApple.style.zIndex = '1000';
+            draggedApple.style.left = rect.left + 'px';
+            draggedApple.style.top = rect.top + 'px';
+            
+            touchInitialX = touch.clientX - rect.left;
+            touchInitialY = touch.clientY - rect.top;
+            
+            draggedApple.classList.add('dragging');
+        }
+
+        function handleTouchMove(e) {
+            if (!draggedApple) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            
+            draggedApple.style.left = (touch.clientX - touchInitialX) + 'px';
+            draggedApple.style.top = (touch.clientY - touchInitialY) + 'px';
+            
+            // Check element below
+            draggedApple.style.display = 'none';
+            let elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+            draggedApple.style.display = 'inline-block';
+            
+            document.querySelectorAll('.box').forEach(b => b.classList.remove('drag-over'));
+            if (elemBelow) {
+                let box = elemBelow.closest('.box');
+                if (box) {
+                    let idx = parseInt(box.dataset.index);
+                    if (boxCounts[idx] < targetPerBox) {
+                        box.classList.add('drag-over');
+                    }
+                }
+            }
+        }
+
+        function handleTouchEnd(e) {
+            if (!draggedApple) return;
+            
+            draggedApple.style.display = 'none';
+            let touch = e.changedTouches[0];
+            let elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+            draggedApple.style.display = 'inline-block';
+            
+            let box = elemBelow ? elemBelow.closest('.box') : null;
+            
+            // Reset styles
+            draggedApple.style.position = '';
+            draggedApple.style.zIndex = '';
+            draggedApple.style.left = '';
+            draggedApple.style.top = '';
+            draggedApple.style.width = '';
+            draggedApple.style.height = '';
+            draggedApple.classList.remove('dragging');
+            document.querySelectorAll('.box').forEach(b => b.classList.remove('drag-over'));
+            
+            if (box) {
+                let idx = parseInt(box.dataset.index);
+                if (boxCounts[idx] < targetPerBox) {
+                    box.appendChild(draggedApple);
+                    processDrop(idx);
+                }
+            }
+            draggedApple = null;
+        }
+
+        // Processing a successful drop
+        function processDrop(boxIndex) {
+            boxCounts[boxIndex]++;
+            poolLeft--;
+            elPoolCount.innerText = poolLeft;
+            
+            let boxEl = elBoxesArea.children[boxIndex];
+            if (boxCounts[boxIndex] === targetPerBox) {
+                boxEl.classList.add('round-full');
+            }
+
+            checkRoundComplete();
+        }
+
+        function checkRoundComplete() {
+            // Check if all boxes reached the target count for this round
+            if (boxCounts.every(c => c === targetPerBox)) {
+                currentPerBox = targetPerBox;
+                let sharedTotal = currentPerBox * numBoxes;
+                expectedAnswers = [currentPerBox, sharedTotal, poolLeft];
+                
+                currentStage = 'inputting_sentence';
+                setDraggableState(false); // Lock dragging
+                
+                elEmptyLogMsg.style.display = 'none';
+                elDragInstruction.classList.add('hidden');
+
+                appendSentenceInput();
+                enableNumpad(true);
+            }
+        }
+
+        function setDraggableState(isDraggable) {
+            const apples = elPoolArea.querySelectorAll('.apple');
+            apples.forEach(apple => {
+                apple.draggable = isDraggable;
+                if(isDraggable) {
+                    apple.classList.remove('disabled');
+                } else {
+                    apple.classList.add('disabled');
+                }
+            });
+            if (isDraggable) {
+                elPoolArea.classList.remove('bg-gray-200');
+            } else {
+                elPoolArea.classList.add('bg-gray-200');
+            }
+        }
+
+        // --- Sentence and Math Logic ---
+
+        function appendSentenceInput() {
+            const sentenceDiv = document.createElement('div');
+            sentenceDiv.className = 'log-entry bg-blue-50 p-3 rounded-lg border border-blue-200 shadow-sm';
+            sentenceDiv.id = `sentence-round-${currentPerBox}`;
+            
+            let prefixText = currentPerBox === 1 ? "先" : "再";
+
+            sentenceDiv.innerHTML = `
+                <span class="text-gray-700">${prefixText}每個方格分得</span>
+                <span class="input-box" data-idx="0" onclick="setActiveInput(this)"></span>
+                <span class="text-gray-700">個，共分去</span>
+                <span class="input-box" data-idx="1" onclick="setActiveInput(this)"></span>
+                <span class="text-gray-700">，餘下</span>
+                <span class="input-box" data-idx="2" onclick="setActiveInput(this)"></span>
+            `;
+            
+            elHistoryLog.appendChild(sentenceDiv);
+            setActiveInput(sentenceDiv.querySelector('[data-idx="0"]'));
+            elHistoryLog.scrollTop = elHistoryLog.scrollHeight;
+        }
+
+        function setActiveInput(el) {
+            if (currentStage === 'idle' || currentStage === 'finished') return;
+            if (currentStage === 'inputting_equation' && !el.hasAttribute('data-type')) return;
+            if (currentStage === 'inputting_sentence' && el.hasAttribute('data-type')) return;
+
+            if (activeInputEl) {
+                activeInputEl.classList.remove('active');
+            }
+            activeInputEl = el;
+            activeInputEl.classList.add('active');
+        }
+
+        function inputDigit(digit) {
+            if (!activeInputEl) return;
+            let currentVal = activeInputEl.innerText;
+            if (currentVal.length < 3) {
+                activeInputEl.innerText = currentVal + digit;
+            }
+        }
+
+        function deleteDigit() {
+            if (!activeInputEl) return;
+            let currentVal = activeInputEl.innerText;
+            activeInputEl.innerText = currentVal.slice(0, -1);
+        }
+
+        function checkAnswers() {
+            if (currentStage === 'inputting_sentence') checkSentenceAnswers();
+            else if (currentStage === 'inputting_equation') checkEquationAnswers();
+        }
+
+        function checkSentenceAnswers() {
+            const currentDiv = document.getElementById(`sentence-round-${currentPerBox}`);
+            const inputs = currentDiv.querySelectorAll('.input-box');
+            let allCorrect = true;
+
+            inputs.forEach((input, index) => {
+                const userVal = parseInt(input.innerText);
+                if (userVal !== expectedAnswers[index]) {
+                    allCorrect = false;
+                    input.classList.add('shake');
+                    setTimeout(() => input.classList.remove('shake'), 400);
+                    input.innerText = '';
+                }
+            });
+
+            if (allCorrect) {
+                inputs.forEach(input => {
+                    input.classList.remove('active', 'input-box');
+                    input.classList.add('text-blue-700', 'font-bold', 'mx-1');
+                    input.onclick = null;
+                    input.innerText = `‘${input.innerText}’`;
+                });
+                
+                currentDiv.classList.remove('bg-blue-50', 'border-blue-200', 'shadow-sm');
+                activeInputEl = null;
+                currentStage = 'idle';
+                enableNumpad(false);
+
+                // Prepare next round or finish
+                if (poolLeft >= numBoxes) {
+                    targetPerBox++;
+                    elDragInstruction.classList.remove('hidden');
+                    document.querySelectorAll('.box').forEach(b => b.classList.remove('round-full'));
+                    setDraggableState(true);
+                } else {
+                    startEquationPhase();
+                }
+            } else {
+                for (let input of inputs) {
+                    if (input.innerText === '') {
+                        setActiveInput(input);
+                        break;
+                    }
+                }
+            }
+        }
+
+        function startEquationPhase() {
+            currentStage = 'inputting_equation';
+            elFinalEquationArea.classList.remove('hidden');
+            elFinalEquationArea.classList.add('log-entry');
+            enableNumpad(true);
+            
+            const qInput = document.querySelector('[data-type="final-q"]');
+            qInput.innerText = '';
+            document.querySelector('[data-type="final-r"]').innerText = '';
+            
+            setActiveInput(qInput);
+            elHistoryLog.scrollTop = elHistoryLog.scrollHeight;
+        }
+
+        function checkEquationAnswers() {
+            const qInput = document.querySelector('[data-type="final-q"]');
+            const rInput = document.querySelector('[data-type="final-r"]');
+            
+            const userQ = parseInt(qInput.innerText);
+            const userR = parseInt(rInput.innerText);
+            
+            let qCorrect = userQ === currentPerBox;
+            let rCorrect = userR === poolLeft;
+
+            if (!qCorrect) {
+                qInput.classList.add('shake');
+                setTimeout(() => qInput.classList.remove('shake'), 400);
+                qInput.innerText = '';
+            }
+            if (!rCorrect) {
+                rInput.classList.add('shake');
+                setTimeout(() => rInput.classList.remove('shake'), 400);
+                rInput.innerText = '';
+            }
+
+            if (qCorrect && rCorrect) {
+                qInput.classList.remove('active', 'input-box');
+                rInput.classList.remove('active', 'input-box');
+                qInput.classList.add('text-green-600', 'mx-1');
+                rInput.classList.add('text-green-600', 'mx-1');
+                qInput.onclick = null;
+                rInput.onclick = null;
+
+                currentStage = 'finished';
+                enableNumpad(false);
+                elSuccessMsg.classList.remove('hidden');
+                elSuccessMsg.classList.add('log-entry');
+            } else {
+                if (!qCorrect) setActiveInput(qInput);
+                else if (!rCorrect) setActiveInput(rInput);
+            }
+        }
+
+        function enableNumpad(enable) {
+            if (enable) {
+                elNumpadContainer.style.opacity = '1';
+                elNumpadContainer.style.pointerEvents = 'auto';
+            } else {
+                elNumpadContainer.style.opacity = '0.5';
+                elNumpadContainer.style.pointerEvents = 'none';
+            }
+        }
+
+        // Start game on load
+        window.onload = initGame;
+
+    </script>
+</body>
+</html>
