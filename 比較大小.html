@@ -10,8 +10,7 @@
             overscroll-behavior: none; /* 防止手機下拉更新干擾拖曳 */
         }
         .shape {
-            /* 讓重疊的顏色會加深，方便精準比較大小 */
-            mix-blend-mode: multiply;
+            /* 讓重疊的顏色會加深，將改由 JS 針對不同圖案動態控制 */
             transition: transform 0.1s ease-out, filter 0.1s ease-out;
             touch-action: none; /* 讓手機瀏覽器將觸控事件完全交給腳本處理 */
         }
@@ -46,13 +45,23 @@
             
             <!-- 控制面板 -->
             <div class="mt-3 flex flex-wrap justify-center items-center gap-3">
+                <!-- 新增：圖案選擇 -->
                 <div class="flex items-center bg-indigo-500 rounded-full px-3 py-1 shadow-inner">
-                    <label for="mode-select" class="text-sm font-medium mr-2">數量：</label>
+                    <label for="type-select" class="text-sm font-medium mr-2 text-white">圖案：</label>
+                    <select id="type-select" onchange="changeType()" class="bg-white text-indigo-700 text-sm rounded px-2 py-1 outline-none font-bold cursor-pointer">
+                        <option value="geometric" selected>形狀</option>
+                        <option value="object">物件</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center bg-indigo-500 rounded-full px-3 py-1 shadow-inner">
+                    <label for="mode-select" class="text-sm font-medium mr-2 text-white">數量：</label>
                     <select id="mode-select" onchange="changeMode()" class="bg-white text-indigo-700 text-sm rounded px-2 py-1 outline-none font-bold cursor-pointer">
                         <option value="2">2 個</option>
                         <option value="3" selected>3 個</option>
                         <option value="4">4 個</option>
                         <option value="5">5 個</option>
+                        <option value="6">6 個</option>
                     </select>
                 </div>
                 
@@ -82,7 +91,7 @@
 
         <!-- 放置區域 (由 JS 動態生成) -->
         <!-- 新增 flex-wrap 讓手機螢幕太小時，真實尺寸的方塊可以自動換行 -->
-        <div id="drop-zones" class="flex justify-around items-center p-3 md:p-6 bg-white gap-1 md:gap-2 flex-shrink-0 border-t border-gray-100 min-h-[100px] md:min-h-[140px] flex-wrap">
+        <div id="drop-zones" class="flex justify-center content-start p-3 md:p-4 bg-white gap-2 flex-shrink-0 border-t border-gray-100 min-h-[100px] max-h-[40vh] overflow-y-auto flex-wrap">
             <!-- 框框會在這裡產生 -->
         </div>
     </div>
@@ -93,6 +102,7 @@
         const messageEl = document.getElementById('message');
         
         let numObjects = 3;
+        let currentPatternType = 'geometric'; // 新增：紀錄目前的圖案種類
         let zones = []; // 動態儲存放置區
         let baseSizes = []; // 儲存各等級大小，供提示模式參考
         let isHintMode = false; // 提示模式狀態
@@ -204,6 +214,12 @@
             initGame();
         }
 
+        // 新增：當使用者改變圖案種類時觸發
+        function changeType() {
+            currentPatternType = document.getElementById('type-select').value;
+            initGame();
+        }
+
         function initGame() {
             // 清空畫面與狀態
             playArea.innerHTML = '';
@@ -212,28 +228,30 @@
             messageEl.innerText = "拖動圖形疊在一起比較大小，然後由大到小放入下方框框！";
             messageEl.className = "text-sm md:text-lg text-gray-700 font-medium px-2";
 
-            // 1. 動態產生放置框框的標籤文字
-            const zoneLabels = {
-                2: ["較大", "較小"],
-                3: ["最大", "中等", "最小"],
-                4: ["最大", "第二大", "第三大", "最小"],
-                5: ["最大", "第二大", "第三大", "第四大", "最小"]
-            };
-            const labels = zoneLabels[numObjects];
+            // 1. 動態產生放置框框的標籤文字 (支援最高 100 個)
+            const labels = [];
+            for (let i = 0; i < numObjects; i++) {
+                if (i === 0) labels.push("最大");
+                else if (i === numObjects - 1) labels.push("最小");
+                else labels.push(`第${i + 1}大`);
+            }
 
             // 動態生成下方框框
             for (let i = 0; i < numObjects; i++) {
                 const zone = document.createElement('div');
-                // 使用 flex-1 讓多個框框時能自動擠壓，並設定 max-width
-                zone.className = "zone drop-zone flex-1 max-w-[100px] aspect-square border-2 md:border-4 border-dashed border-gray-300 rounded-xl md:rounded-2xl flex items-center justify-center text-gray-400 font-bold text-xs md:text-lg relative bg-gray-50";
+                // 使用 flex-1 讓多個框框時能自動擠壓，並設定 max-width 與 min-width 以防 100 個時崩潰
+                zone.className = "zone drop-zone flex-1 min-w-[45px] max-w-[100px] aspect-square border-2 md:border-4 border-dashed border-gray-300 rounded-lg md:rounded-xl flex items-center justify-center text-gray-400 font-bold text-xs md:text-sm relative bg-gray-50 m-0.5";
                 
                 // 由大到小排列，所以預期值為 (總數 - 1 - 索引)
-                // 例如 3個: index 0 期望值為 2(最大), index 1 期望值為 1(中), index 2 期望值為 0(最小)
                 zone.dataset.expected = numObjects - 1 - i; 
                 zone.dataset.currentRank = "";
                 
                 const span = document.createElement('span');
                 span.className = "absolute pointer-events-none select-none whitespace-nowrap";
+                // 如果文字較長，自動縮小字體
+                if (labels[i].length > 2) {
+                    span.style.transform = 'scale(0.7)';
+                }
                 span.innerText = labels[i];
                 zone.appendChild(span);
                 
@@ -243,29 +261,33 @@
 
             // 2. 動態計算圖形的大小
             baseSizes = []; // 確保重置全域的大小陣列
-            let currentSize = 45; // 最小起始尺寸
-            const step = Math.floor(120 / numObjects); // 根據數量分配級距
+            const minSize = 30; // 最小尺寸
+            // 根據視窗限制最大尺寸，避免 100 個時圖形過大塞爆畫面
+            const maxAllowedSize = Math.min(window.innerWidth * 0.6, window.innerHeight * 0.4, 250); 
+            
+            let actualMaxSize = maxAllowedSize;
+            if (numObjects <= 5) {
+                actualMaxSize = minSize + (numObjects - 1) * 40; // 數量少時維持原本明顯的級距
+            }
+            
+            const step = (actualMaxSize - minSize) / Math.max(1, numObjects - 1);
             
             for (let i = 0; i < numObjects; i++) {
-                // 確保每個大小都有明顯的落差
-                const size = currentSize + Math.floor(Math.random() * (step * 0.4));
-                baseSizes.push(size);
-                currentSize += step + 15; // 加上固定間距保證大小不同
+                // 如果數量小於10，加入極微小的隨機抖動；如果高達 100，則不抖動避免排序過於接近難以分辨
+                const jitter = (numObjects <= 10) ? Math.random() * (step * 0.2) : 0;
+                baseSizes.push(minSize + i * step + jitter);
             }
 
-            // 動態調整中間遊戲區域的高度：最大圖形的尺寸 + 60px 的上下邊界緩衝
+            // 動態調整中間遊戲區域的高度：最大圖形的尺寸 + 60px 的上下邊界緩衝，並給予至少 300px 的空間
             const maxSize = baseSizes[numObjects - 1];
-            playArea.style.height = (maxSize + 60) + 'px';
+            playArea.style.height = Math.max(maxSize + 60, 300) + 'px';
 
-            // 3. 準備顏色庫 (最多支援 5 個)
-            const allColors = [
-                'rgba(239, 68, 68, 0.85)',   // 紅色
-                'rgba(59, 130, 246, 0.85)',  // 藍色
-                'rgba(250, 204, 21, 0.85)',  // 黃色
-                'rgba(16, 185, 129, 0.85)',  // 綠色
-                'rgba(168, 85, 247, 0.85)'   // 紫色
-            ];
-            const colors = allColors.slice(0, numObjects); // 取出所需數量的顏色
+            // 3. 準備顏色庫 (動態支援高達 100 種顏色)
+            const colors = [];
+            for (let i = 0; i < numObjects; i++) {
+                // 使用黃金角度 137.5 分散色相，確保每個相鄰物件顏色差異明顯且不重複
+                colors.push(`hsla(${(i * 137.5) % 360}, 80%, 60%, 0.85)`);
+            }
 
             // 4. 定義不同的形狀池 (擴充了六邊形、菱形、梯形等多種形狀)
             const shapeTypes = [
@@ -281,8 +303,23 @@
                 { borderRadius: '0', clipPath: 'polygon(33% 0%, 66% 0%, 66% 33%, 100% 33%, 100% 66%, 66% 66%, 66% 100%, 33% 100%, 33% 66%, 0% 66%, 0% 33%, 33% 33%)' } // 十字形
             ];
 
-            // 決定這一回合「統一」使用的形狀
+            // 準備可愛物件 (Emoji) 庫 (已擴充至 100 種)
+            const emojis = [
+                '🧸', '🚗', '🍎', '🐶', '⚽', '🚀', '🐢', '🎈', '🦖', '🍓',
+                '🌻', '🦋', '🐟', '🐙', '🐱', '🐰', '🦊', '🐻', '🐼', '🐨',
+                '🦁', '🐮', '🐷', '🐸', '🐵', '🐧', '🦆', '🦉', '🦄', '🐝',
+                '🐞', '🦕', '🐬', '🐳', '🐘', '🦒', '🦘', '🦔', '🍔', '🍟',
+                '🍕', '🌭', '🍿', '🍩', '🍪', '🍫', '🍬', '🍭', '🧁', '🍰',
+                '🍉', '🍌', '🍍', '🥭', '🍇', '🍒', '🥑', '🥕', '🌽', '🥦',
+                '🍄', '🌲', '🌵', '🌴', '🌸', '🌼', '🌍', '🌙', '⭐', '🔥',
+                '💧', '⛄', '🏀', '🏈', '⚾', '🎾', '🏐', '🎱', '🏓', '🏸',
+                '🎮', '🎲', '🧩', '🎸', '🎺', '🥁', '🎨', '✈️', '🚁', '🚤',
+                '🛳️', '⛵', '🚂', '🚜', '🛵', '🚲', '🛴', '🛸', '💎', '🎁'
+            ];
+
+            // 決定這一回合「統一」使用的形狀或物件
             const roundShape = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+            const roundEmoji = emojis[Math.floor(Math.random() * emojis.length)];
 
             // 打亂大小與顏色的對應關係，並打亂生成順序
             let objects = [];
@@ -302,12 +339,38 @@
                 el.classList.add('shape');
                 el.style.width = obj.size + 'px';
                 el.style.height = obj.size + 'px';
-                el.style.backgroundColor = colors[idx];
                 
-                // 套用這一回合統一的形狀
-                el.style.borderRadius = roundShape.borderRadius;
-                el.style.clipPath = roundShape.clipPath;
-                el.style.WebkitClipPath = roundShape.clipPath; // 支援 Safari
+                // 根據選取的模式套用對應的外觀
+                if (currentPatternType === 'geometric') {
+                    // 幾何形狀模式
+                    el.style.backgroundColor = colors[idx];
+                    el.style.borderRadius = roundShape.borderRadius;
+                    el.style.clipPath = roundShape.clipPath;
+                    el.style.WebkitClipPath = roundShape.clipPath;
+                    el.style.mixBlendMode = 'multiply'; // 保留疊色效果
+                    el.style.opacity = '1';
+                } else {
+                    // 可愛物件模式 (使用 Emoji)
+                    el.style.backgroundColor = 'transparent';
+                    el.style.borderRadius = '0';
+                    el.style.clipPath = 'none';
+                    el.style.WebkitClipPath = 'none';
+                    el.style.mixBlendMode = 'normal'; // 物件不套用疊色以免變黑
+                    el.style.opacity = '0.9'; // 微透明，讓疊加時仍稍微看得見下方物件
+                    
+                    // 使用 flex 置中 Emoji
+                    el.style.display = 'flex';
+                    el.style.alignItems = 'center';
+                    el.style.justifyContent = 'center';
+                    
+                    const emojiSpan = document.createElement('span');
+                    emojiSpan.innerText = roundEmoji;
+                    emojiSpan.style.fontSize = (obj.size * 0.8) + 'px'; // 讓表情符號隨著物件設定的大小縮放
+                    emojiSpan.style.pointerEvents = 'none';
+                    emojiSpan.style.userSelect = 'none';
+                    emojiSpan.style.lineHeight = '1';
+                    el.appendChild(emojiSpan);
+                }
                 
                 el.style.position = 'absolute';
                 el.style.cursor = 'grab';
@@ -344,8 +407,11 @@
             const maxSize = baseSizes[numObjects - 1]; // 最大尺寸 (等級最高)
             
             zones.forEach(zone => {
+                const expectedRank = parseInt(zone.dataset.expected);
+                const originalIndex = numObjects - 1 - expectedRank;
+                const span = zone.querySelector('span');
+
                 if (isHintMode) {
-                    const expectedRank = parseInt(zone.dataset.expected);
                     const targetSize = baseSizes[expectedRank];
                     
                     zone.classList.remove('flex-1', 'max-w-[100px]');
@@ -358,9 +424,9 @@
                     zone.style.minWidth = '0px'; 
                     
                     // 依照方塊的大小等比例縮小裡面的文字，確保文字不會破版
-                    const span = zone.querySelector('span');
                     if (span) {
-                        span.style.transform = `scale(${Math.max(0.4, targetSize / maxSize)})`;
+                        const baseScale = (originalIndex === 0 || originalIndex === numObjects - 1) ? 1 : 0.7; // 文字超過2個字時稍微縮小
+                        span.style.transform = `scale(${Math.max(0.2, (targetSize / maxSize) * baseScale)})`;
                         span.style.transition = 'transform 0.2s ease';
                     }
                 } else {
@@ -372,9 +438,8 @@
                     zone.classList.add('flex-1', 'max-w-[100px]');
                     
                     // 恢復文字大小
-                    const span = zone.querySelector('span');
                     if (span) {
-                        span.style.transform = 'scale(1)';
+                        span.style.transform = (originalIndex === 0 || originalIndex === numObjects - 1) ? 'scale(1)' : 'scale(0.7)';
                     }
                 }
             });
