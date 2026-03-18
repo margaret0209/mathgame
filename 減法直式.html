@@ -12,12 +12,9 @@
             -webkit-appearance: none; 
             margin: 0; 
         }
-        /* 自訂輸入框樣式 */
+        /* 自訂輸入框樣式，取消固定長寬，改由外層容器決定 */
         .math-input {
-            width: 4rem;
-            height: 4rem;
-            font-size: 3.75rem;
-            line-height: 1;
+            font-line-height: 1;
             padding: 0;
             text-align: center;
             background-color: white;
@@ -25,7 +22,7 @@
             border-radius: 0.5rem;
             outline: none;
             transition: all 0.3s ease;
-            cursor: default; /* 加入 readonly 後游標保持預設 */
+            cursor: default;
         }
         .math-input:focus {
             border-color: #3b82f6;
@@ -40,11 +37,8 @@
         }
         /* 借位用的小輸入框 */
         .borrow-input {
-            width: 2.75rem;
-            height: 2.75rem;
-            font-size: 1.5rem;
             border-color: #fca5a5;
-            background-color: white; /* 確保背景不透明 */
+            background-color: white; /* 確保背景不透明遮蓋後方 */
             z-index: 10;
         }
         .borrow-input:focus {
@@ -57,14 +51,7 @@
             color: #ef4444; 
             opacity: 1 !important; 
         }
-        .cell {
-            width: 4rem;
-            height: 4rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        /* C1消失動畫輔助 */
+        /* 消失動畫輔助 */
         .fade-out {
             opacity: 0 !important;
             transform: scale(0.8);
@@ -82,8 +69,29 @@
 
     <!-- 頂部控制區 -->
     <div class="w-full max-w-4xl px-4 flex flex-col items-center mb-6">
-        <h1 class="text-3xl font-bold text-blue-800 mb-4">減法直式大挑戰</h1>
+        <h1 class="text-3xl md:text-4xl font-bold text-blue-800 mb-4">減法直式大挑戰</h1>
         
+        <!-- 難度設定區 -->
+        <div class="flex flex-wrap justify-center gap-4 bg-white p-3 md:p-4 rounded-xl shadow-md mb-4 w-full max-w-2xl items-center">
+            <div class="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+                <span class="font-bold text-gray-700">🔢 位數：</span>
+                <select id="config-digits" class="bg-white border border-gray-300 rounded p-1 font-bold text-blue-800 outline-none cursor-pointer hover:border-blue-400">
+                    <option value="2" selected>兩位數</option>
+                    <option value="3">三位數</option>
+                    <option value="4">四位數</option>
+                    <option value="5">五位數</option>
+                    <option value="6">六位數</option>
+                </select>
+            </div>
+            <div class="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+                <span class="font-bold text-gray-700">🔄 退位設定：</span>
+                <select id="config-borrow" class="bg-white border border-gray-300 rounded p-1 font-bold text-blue-800 outline-none cursor-pointer hover:border-blue-400">
+                    <option value="MIXED" selected>隨機 (含退位)</option>
+                    <option value="NO_BORROW">完全不退位</option>
+                </select>
+            </div>
+        </div>
+
         <!-- 模式切換 -->
         <div class="flex flex-wrap justify-center gap-2 md:gap-4 bg-white p-2 rounded-xl shadow-md mb-4">
             <button class="mode-btn active px-4 py-2 rounded-lg border-2 border-gray-200 font-bold transition-colors" data-mode="SOLO_HINT">
@@ -103,39 +111,71 @@
         </div>
     </div>
 
-    <!-- 遊戲區域 (單人或雙人會在這裡生成) -->
-    <div id="game-arena" class="w-full max-w-5xl px-2 flex flex-col md:flex-row gap-6 justify-center items-center md:items-start">
+    <!-- 遊戲區域 -->
+    <div id="game-arena" class="w-full max-w-[1200px] px-2 flex flex-col lg:flex-row gap-6 justify-center items-center lg:items-start">
         <!-- 面板容器由 JS 動態生成 -->
     </div>
 
     <!-- 全域控制按鈕 -->
-    <div class="mt-8 h-16">
+    <div class="mt-8 h-16 pb-8">
         <button id="global-next-btn" class="hidden bg-green-500 hover:bg-green-600 text-white text-xl font-bold py-3 px-12 rounded-full shadow-lg transform transition hover:scale-105">
             下一題
         </button>
     </div>
 
     <script>
-        // 常數狀態
-        const STATES = {
-            WAIT_CLICK_A1: 'WAIT_CLICK_A1',
-            WAIT_INPUT_A1: 'WAIT_INPUT_A1',
-            WAIT_CLICK_A2: 'WAIT_CLICK_A2',
-            WAIT_INPUT_A2: 'WAIT_INPUT_A2',
-            WAIT_C2: 'WAIT_C2',
-            WAIT_C1: 'WAIT_C1',
-            DONE: 'DONE'
-        };
-
         // 玩家面板類別 (封裝單一遊戲面板的邏輯與 UI)
         class PlayerBoard {
-            constructor(container, id, title, colorClass, mode, onFinishCallback) {
+            constructor(container, id, title, colorClass, mode, digitsCount, onFinishCallback) {
                 this.container = container;
                 this.id = id;
                 this.mode = mode; // 'HINT' 或 'NOHINT'
+                this.digitsCount = digitsCount;
                 this.onFinish = onFinishCallback;
                 this.activeInput = null;
                 this.isDisabled = false;
+                this.isLeadingZero = false;
+
+                // 根據位數決定 UI 尺寸，確保五、六位數也能完美塞入畫面
+                let cClass, iSize, bSize, gClass;
+                switch(this.digitsCount) {
+                    case 6:
+                        cClass = 'w-7 h-7 sm:w-8 sm:h-8 text-xl sm:text-2xl';
+                        iSize = 'text-xl sm:text-2xl';
+                        bSize = 'w-5 h-5 sm:w-6 sm:h-6 text-[10px] sm:text-xs';
+                        gClass = 'gap-x-0.5 sm:gap-x-1';
+                        break;
+                    case 5:
+                        cClass = 'w-8 h-8 sm:w-10 sm:h-10 text-2xl sm:text-3xl';
+                        iSize = 'text-2xl sm:text-3xl';
+                        bSize = 'w-6 h-6 sm:w-7 sm:h-7 text-xs sm:text-sm';
+                        gClass = 'gap-x-1 sm:gap-x-1';
+                        break;
+                    case 4:
+                        cClass = 'w-10 h-10 sm:w-12 sm:h-12 text-3xl sm:text-4xl';
+                        iSize = 'text-3xl sm:text-4xl';
+                        bSize = 'w-7 h-7 sm:w-8 sm:h-8 text-xs sm:text-sm';
+                        gClass = 'gap-x-1 sm:gap-x-2';
+                        break;
+                    case 3:
+                        cClass = 'w-12 h-12 sm:w-14 sm:h-14 text-4xl sm:text-5xl';
+                        iSize = 'text-4xl sm:text-5xl';
+                        bSize = 'w-8 h-8 sm:w-10 sm:h-10 text-sm sm:text-base';
+                        gClass = 'gap-x-2 sm:gap-x-4';
+                        break;
+                    case 2:
+                    default:
+                        cClass = 'w-14 h-14 sm:w-16 sm:h-16 text-5xl sm:text-6xl';
+                        iSize = 'text-5xl sm:text-6xl';
+                        bSize = 'w-10 h-10 sm:w-11 sm:h-11 text-lg sm:text-xl';
+                        gClass = 'gap-x-2 sm:gap-x-4';
+                        break;
+                }
+                
+                this.cellClass = cClass;
+                this.inputSize = iSize;
+                this.borrowSize = bSize;
+                this.gapClass = gClass;
 
                 // 初始化 HTML
                 this.container.innerHTML = this.getHTML(title, colorClass);
@@ -143,14 +183,6 @@
                 // 綁定 DOM 元素
                 this.el = {
                     messageBox: this.container.querySelector('.message-box'),
-                    borrowTens: this.container.querySelector('.borrow-tens'),
-                    borrowOnes: this.container.querySelector('.borrow-ones'),
-                    valA1: this.container.querySelector('.val-a1'),
-                    valA2: this.container.querySelector('.val-a2'),
-                    valB1: this.container.querySelector('.val-b1'),
-                    valB2: this.container.querySelector('.val-b2'),
-                    ansTens: this.container.querySelector('.ans-tens'),
-                    ansOnes: this.container.querySelector('.ans-ones'),
                     keypadBtns: this.container.querySelectorAll('.keypad-btn')
                 };
 
@@ -166,48 +198,60 @@
             }
 
             getHTML(title, colorClass) {
-                // 新增了 readonly，避免在平板上彈出原生的虛擬鍵盤干擾雙人畫面
+                let cols = this.digitsCount + 1; // 加上減號欄位
+                let gap = this.gapClass;
+
+                // 動態生成網格結構
                 return `
-                    <div class="bg-white p-5 rounded-3xl shadow-xl w-full max-w-[380px] border-t-8 ${colorClass} flex flex-col">
+                    <div class="bg-white p-4 sm:p-5 rounded-3xl shadow-xl w-full max-w-[480px] border-t-8 ${colorClass} flex flex-col items-center">
                         <h2 class="text-xl font-bold mb-3 text-center text-gray-700">${title}</h2>
                         
                         <!-- 提示訊息區塊 -->
-                        <div class="message-box bg-gray-100 text-gray-800 p-2 rounded-lg mb-4 text-center font-bold text-sm min-h-[3rem] flex items-center justify-center transition-colors">
+                        <div class="message-box bg-gray-100 text-gray-800 p-2 rounded-lg mb-4 text-center font-bold text-sm min-h-[3rem] w-full flex items-center justify-center transition-colors">
                             準備開始
                         </div>
 
                         <!-- 直式計算區塊 -->
-                        <div class="flex justify-center mb-6 select-none">
-                            <div class="grid grid-cols-3 gap-y-1 gap-x-4 text-6xl font-mono">
-                                <!-- 借位區 -->
-                                <div class="cell"></div>
-                                <div class="cell relative"><input type="text" readonly class="borrow-tens math-input borrow-input absolute bottom-0 hidden opacity-0 transition-opacity duration-300" maxlength="1"></div>
-                                <div class="cell relative"><input type="text" readonly class="borrow-ones math-input borrow-input absolute bottom-0 hidden opacity-0 transition-opacity duration-300" maxlength="2"></div>
+                        <div class="flex justify-center mb-6 select-none w-full">
+                            <div style="display: grid; grid-template-columns: repeat(${cols}, minmax(0, auto));" class="gap-y-1 ${gap} font-mono">
+                                
+                                <!-- 第一排：借位區 -->
+                                <div class="${this.cellClass}"></div>
+                                ${Array.from({length: this.digitsCount}, (_, i) => `
+                                    <div class="${this.cellClass} relative flex justify-center">
+                                        <input type="text" readonly data-type="BORROW" data-col="${i}" class="math-input borrow-input absolute bottom-0 hidden opacity-0 transition-opacity duration-300 ${this.borrowSize}" maxlength="2">
+                                    </div>
+                                `).join('')}
 
-                                <!-- 被減數 A -->
-                                <div class="cell"></div>
-                                <div class="val-a1 cell transition-all duration-300"></div>
-                                <div class="val-a2 cell transition-all duration-300"></div>
+                                <!-- 第二排：被減數 A -->
+                                <div class="${this.cellClass}"></div>
+                                ${Array.from({length: this.digitsCount}, (_, i) => `
+                                    <div data-type="A" data-col="${i}" class="${this.cellClass} flex items-center justify-center transition-all duration-300 font-bold text-gray-800"></div>
+                                `).join('')}
 
-                                <!-- 減數 B -->
-                                <div class="cell text-gray-500 text-4xl">-</div>
-                                <div class="val-b1 cell"></div>
-                                <div class="val-b2 cell"></div>
+                                <!-- 第三排：減數 B -->
+                                <div class="${this.cellClass} flex items-center justify-center text-gray-500 font-bold">-</div>
+                                ${Array.from({length: this.digitsCount}, (_, i) => `
+                                    <div data-type="B" data-col="${i}" class="${this.cellClass} flex items-center justify-center font-bold text-gray-800"></div>
+                                `).join('')}
 
                                 <!-- 分隔線 -->
-                                <div class="col-span-3 border-t-4 border-gray-800 my-1"></div>
+                                <div style="grid-column: span ${cols} / span ${cols};" class="border-t-4 border-gray-800 my-1 w-full"></div>
 
-                                <!-- 答案 C -->
-                                <div class="cell"></div>
-                                <div class="cell"><input type="text" readonly class="ans-tens math-input transition-all duration-500" disabled></div>
-                                <div class="cell"><input type="text" readonly class="ans-ones math-input" disabled></div>
+                                <!-- 第四排：答案 C -->
+                                <div class="${this.cellClass}"></div>
+                                ${Array.from({length: this.digitsCount}, (_, i) => `
+                                    <div class="${this.cellClass} flex justify-center">
+                                        <input type="text" readonly data-type="C" data-col="${i}" class="math-input transition-all duration-500 w-full h-full ${this.inputSize}" maxlength="1" disabled>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
 
                         <!-- 九宮格數字鍵盤 -->
-                        <div class="grid grid-cols-3 gap-2 mt-auto px-4 pb-2 max-w-[220px] mx-auto w-full">
+                        <div class="grid grid-cols-3 gap-2 mt-auto px-4 pb-2 max-w-[220px] w-full mx-auto">
                             ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="keypad-btn bg-gray-100 hover:bg-gray-200 text-gray-800 text-lg font-bold py-2 rounded-lg shadow transition active:scale-95 touch-manipulation">${n}</button>`).join('')}
-                            <button class="keypad-btn bg-red-100 hover:bg-red-200 text-red-600 text-lg font-bold py-2 rounded-lg shadow transition active:scale-95 touch-manipulation" id="key-del">⌫</button>
+                            <button class="keypad-btn bg-red-100 hover:bg-red-200 text-red-600 text-lg font-bold py-2 rounded-lg shadow transition active:scale-95 touch-manipulation">⌫</button>
                             <button class="keypad-btn bg-gray-100 hover:bg-gray-200 text-gray-800 text-lg font-bold py-2 rounded-lg shadow transition active:scale-95 touch-manipulation">0</button>
                             <div></div>
                         </div>
@@ -218,25 +262,26 @@
             // 優化的多點觸控綁定事件
             bindTap(element, callback) {
                 let touched = false;
-                // 處理觸控螢幕，避免預設的點擊延遲
                 element.addEventListener('touchstart', (e) => {
                     touched = true;
-                    e.preventDefault(); // 阻止原生行為，實現「零延遲」多點觸控
+                    e.preventDefault(); 
                     callback(e);
-                    // 稍後重置狀態
                     setTimeout(() => touched = false, 300);
                 }, { passive: false });
 
-                // 保留滑鼠支援 (電腦環境)
                 element.addEventListener('mousedown', (e) => {
                     if (touched) return;
-                    e.preventDefault(); // 避免改變 input 的焦點
+                    e.preventDefault(); 
                     callback(e);
                 });
             }
 
+            getEl(type, idx) {
+                return this.container.querySelector(`[data-type="${type}"][data-col="${idx}"]`);
+            }
+
             bindEvents() {
-                // 虛擬鍵盤點擊 (支援多點觸控)
+                // 虛擬鍵盤點擊
                 this.el.keypadBtns.forEach(btn => {
                     this.bindTap(btn, (e) => {
                         if (this.isDisabled || !this.activeInput || this.activeInput.disabled) return;
@@ -255,113 +300,118 @@
                     });
                 });
 
-                // A1 點擊借位 (支援多點觸控)
-                this.bindTap(this.el.valA1, () => {
-                    if (this.isDisabled) return;
-                    if (this.state === STATES.WAIT_CLICK_A1) this.setState(STATES.WAIT_INPUT_A1);
-                });
-
-                // 借位十位數輸入
-                this.el.borrowTens.addEventListener('input', (e) => {
-                    if (this.state === STATES.WAIT_INPUT_A1 && parseInt(e.target.value) === this.a1 - 1) {
-                        e.target.disabled = true;
-                        this.setState(STATES.WAIT_CLICK_A2);
-                    }
-                });
-
-                // A2 點擊接收借位 (支援多點觸控)
-                this.bindTap(this.el.valA2, () => {
-                    if (this.isDisabled) return;
-                    if (this.state === STATES.WAIT_CLICK_A2) this.setState(STATES.WAIT_INPUT_A2);
-                });
-
-                // 借位個位數輸入
-                this.el.borrowOnes.addEventListener('input', (e) => {
-                    if (this.state === STATES.WAIT_INPUT_A2 && parseInt(e.target.value) === this.a2 + 10) {
-                        e.target.disabled = true;
-                        this.setState(STATES.WAIT_C2);
-                    }
-                });
-
-                // 答案個位數輸入
-                this.el.ansOnes.addEventListener('input', (e) => {
-                    if (this.state === STATES.WAIT_C2) {
-                        if (parseInt(e.target.value) === this.expectedC2) {
-                            e.target.disabled = true;
-                            this.setState(STATES.WAIT_C1);
+                // A排數字點擊 (借位來源)
+                for (let i = 0; i < this.digitsCount; i++) {
+                    const el = this.getEl('A', i);
+                    this.bindTap(el, () => {
+                        if (this.isDisabled) return;
+                        if (this.expectedEvent === 'CLICK' && this.currentTarget === el) {
+                            this.actionIdx++;
+                            this.doNextAction();
                         }
-                    }
-                });
+                    });
+                }
 
-                // 答案十位數輸入
-                this.el.ansTens.addEventListener('input', (e) => {
-                    if (this.state === STATES.WAIT_C1) {
+                // 輸入框監聽 (包含借位與答案)
+                const handleInput = (e) => {
+                    if (this.isDisabled) return;
+                    if (this.expectedEvent === 'INPUT' && this.currentTarget === e.target) {
                         const val = parseInt(e.target.value);
-                        if (val === this.expectedC1 || (this.expectedC1 === 0 && e.target.value === '0')) {
+                        // 處理預期為 0 的字串比對
+                        if (val === this.expectedValue || (this.expectedValue === 0 && e.target.value === '0')) {
                             e.target.disabled = true;
                             
-                            // 0自動消失特效
-                            if (this.expectedC1 === 0) {
+                            // 最左側若是 0 則自動隱藏 (0自動消失特效)
+                            if (this.isLeadingZero && e.target.dataset.type === 'C' && e.target.dataset.col === '0') {
                                 setTimeout(() => {
                                     e.target.classList.add('fade-out');
                                     setTimeout(() => { e.target.value = ''; }, 300);
                                 }, 500);
                             }
-                            this.setState(STATES.DONE);
+                            this.actionIdx++;
+                            this.doNextAction();
                         }
                     }
-                });
+                };
+
+                for (let i = 0; i < this.digitsCount; i++) {
+                    this.getEl('BORROW', i).addEventListener('input', handleInput);
+                    this.getEl('C', i).addEventListener('input', handleInput);
+                }
+            }
+
+            clearHighlights() {
+                for(let i=0; i<this.digitsCount; i++) {
+                    const el = this.getEl('A', i);
+                    el.classList.remove('cursor-pointer', 'ring-4', 'ring-yellow-400', 'bg-yellow-50', 'rounded-lg', 'animate-pulse');
+                }
             }
 
             resetUI() {
                 this.isDisabled = false;
-                const inputs = [this.el.borrowTens, this.el.borrowOnes, this.el.ansTens, this.el.ansOnes];
-                inputs.forEach(input => {
-                    input.value = '';
-                    input.disabled = true;
-                    input.classList.remove('fade-out');
-                });
                 this.activeInput = null;
+                
+                for (let i = 0; i < this.digitsCount; i++) {
+                    const borrowEl = this.getEl('BORROW', i);
+                    borrowEl.value = '';
+                    borrowEl.disabled = true;
+                    borrowEl.classList.add('hidden', 'opacity-0');
+                    
+                    const aEl = this.getEl('A', i);
+                    aEl.className = `${this.cellClass} flex items-center justify-center transition-all duration-300 font-bold text-gray-800`;
+                    aEl.textContent = this.digitsA[i];
+                    
+                    const bEl = this.getEl('B', i);
+                    bEl.textContent = this.digitsB_display[i];
 
-                this.el.borrowTens.classList.add('hidden', 'opacity-0');
-                this.el.borrowOnes.classList.add('hidden', 'opacity-0');
+                    const cEl = this.getEl('C', i);
+                    cEl.value = '';
+                    cEl.disabled = true;
+                    cEl.classList.remove('fade-out');
+                }
+                this.clearHighlights();
+            }
 
-                this.el.valA1.className = 'val-a1 cell transition-all duration-300';
-                this.el.valA2.className = 'val-a2 cell transition-all duration-300';
+            getDigitName(idx) {
+                const names = ['個', '十', '百', '千', '萬', '十萬', '百萬'];
+                return names[this.digitsCount - 1 - idx] + '位數';
             }
 
             startRound(A, B) {
-                this.a1 = Math.floor(A / 10);
-                this.a2 = A % 10;
-                this.b1 = Math.floor(B / 10);
-                this.b2 = B % 10;
-                this.isBorrowing = (this.a2 < this.b2);
+                this.digitsA = A.toString().split('').map(Number);
+                this.digitsB_logic = B.toString().padStart(this.digitsCount, '0').split('').map(Number);
+                // 為了顯示美觀，減數若位數較少前方補空白
+                this.digitsB_display = B.toString().padStart(this.digitsCount, ' ').split('');
 
-                if (this.isBorrowing) {
-                    this.expectedC1 = (this.a1 - 1) - this.b1;
-                    this.expectedC2 = (this.a2 + 10) - this.b2;
-                } else {
-                    this.expectedC1 = this.a1 - this.b1;
-                    this.expectedC2 = this.a2 - this.b2;
+                // 產生動作序列 (State Machine Queue) - 從右到左計算
+                this.actions = [];
+                let curA = [...this.digitsA];
+                
+                for (let i = this.digitsCount - 1; i >= 0; i--) {
+                    if (curA[i] < this.digitsB_logic[i]) {
+                        // 產生借位動作序列
+                        let dName = this.getDigitName(i);
+                        let dNameNext = this.getDigitName(i-1);
+
+                        this.actions.push({ type: 'BORROW_CLICK_SRC', idx: i - 1, hint: `${dName}不夠減，請點擊${dNameNext} [${curA[i-1]}] 借位` });
+                        curA[i-1] -= 1;
+                        this.actions.push({ type: 'BORROW_INPUT_SRC', idx: i - 1, expect: curA[i-1], hint: `請輸入：${curA[i-1]+1} - 1 = ?` });
+                        
+                        this.actions.push({ type: 'BORROW_CLICK_DST', idx: i, hint: `正確！請點擊被借位的 [${curA[i]}]` });
+                        curA[i] += 10;
+                        this.actions.push({ type: 'BORROW_INPUT_DST', idx: i, expect: curA[i], hint: `請輸入：${curA[i]-10} + 10 = ?` });
+                    }
+                    this.actions.push({ type: 'ANSWER_INPUT', idx: i, expect: curA[i] - this.digitsB_logic[i], hint: `請計算：${curA[i]} - ${this.digitsB_logic[i]} = ?` });
                 }
 
                 this.resetUI();
-
-                this.el.valA1.textContent = this.a1;
-                this.el.valA2.textContent = this.a2;
-                this.el.valB1.textContent = this.b1;
-                this.el.valB2.textContent = this.b2;
-
-                if (this.isBorrowing) {
-                    this.setState(STATES.WAIT_CLICK_A1);
-                } else {
-                    this.setState(STATES.WAIT_C2);
-                }
+                this.actionIdx = 0;
+                this.doNextAction();
             }
 
             setMessage(text, bgClass, textClass) {
                 this.el.messageBox.textContent = text;
-                this.el.messageBox.className = `message-box ${bgClass} ${textClass} p-2 rounded-lg mb-4 text-center font-bold text-sm min-h-[3rem] flex items-center justify-center transition-colors`;
+                this.el.messageBox.className = `message-box ${bgClass} ${textClass} p-2 rounded-lg mb-4 text-center font-bold text-sm min-h-[3rem] w-full flex items-center justify-center transition-colors`;
             }
 
             focusInput(inputEl) {
@@ -370,60 +420,55 @@
                 this.activeInput = inputEl;
             }
 
-            setState(newState) {
-                this.state = newState;
+            doNextAction() {
+                if (this.actionIdx >= this.actions.length) {
+                    this.setMessage("🎉 完全正確！", 'bg-green-100', 'text-green-800');
+                    this.activeInput = null;
+                    if (this.onFinish) this.onFinish(this.id);
+                    return;
+                }
+
+                const action = this.actions[this.actionIdx];
                 const isHint = (this.mode === 'HINT');
-                this.currentA1 = this.isBorrowing ? this.a1 - 1 : this.a1;
-                this.currentA2 = this.isBorrowing ? this.a2 + 10 : this.a2;
+                this.clearHighlights();
 
-                switch(this.state) {
-                    case STATES.WAIT_CLICK_A1:
-                        this.setMessage(isHint ? `個位數不夠減，請點擊十位數 [${this.a1}] 借位` : `請進行計算`, 
-                                        isHint ? 'bg-yellow-100' : 'bg-gray-200', 
-                                        isHint ? 'text-yellow-800' : 'text-gray-800');
-                        this.el.valA1.classList.add('cursor-pointer');
-                        if (isHint) this.el.valA1.classList.add('ring-4', 'ring-yellow-400', 'bg-yellow-50', 'rounded-lg', 'animate-pulse');
-                        break;
-                        
-                    case STATES.WAIT_INPUT_A1:
-                        this.setMessage(isHint ? `請在上方輸入：${this.a1} - 1 = ?` : `請輸入借位後的數字`, 'bg-blue-100', 'text-blue-800');
-                        this.el.valA1.className = 'val-a1 cell transition-all duration-300 line-through text-gray-400';
-                        this.el.borrowTens.classList.remove('hidden');
-                        setTimeout(() => this.el.borrowTens.classList.remove('opacity-0'), 10);
-                        this.focusInput(this.el.borrowTens);
-                        break;
+                if (action.type === 'BORROW_CLICK_SRC' || action.type === 'BORROW_CLICK_DST') {
+                    this.setMessage(isHint ? action.hint : `請進行計算`, isHint ? 'bg-yellow-100' : 'bg-gray-200', isHint ? 'text-yellow-800' : 'text-gray-800');
+                    const el = this.getEl('A', action.idx);
+                    el.classList.add('cursor-pointer');
+                    if (isHint) el.classList.add('ring-4', 'ring-yellow-400', 'bg-yellow-50', 'rounded-lg', 'animate-pulse');
+                    
+                    this.currentTarget = el;
+                    this.expectedEvent = 'CLICK';
 
-                    case STATES.WAIT_CLICK_A2:
-                        this.setMessage(isHint ? `正確！請點擊個位數 [${this.a2}]` : `請進行計算`, 
-                                        isHint ? 'bg-yellow-100' : 'bg-gray-200', 
-                                        isHint ? 'text-yellow-800' : 'text-gray-800');
-                        this.el.valA2.classList.add('cursor-pointer');
-                        if (isHint) this.el.valA2.classList.add('ring-4', 'ring-yellow-400', 'bg-yellow-50', 'rounded-lg', 'animate-pulse');
-                        break;
+                } else if (action.type === 'BORROW_INPUT_SRC' || action.type === 'BORROW_INPUT_DST') {
+                    this.setMessage(isHint ? action.hint : `請輸入借位數字`, 'bg-blue-100', 'text-blue-800');
+                    
+                    // 被借位後畫刪除線
+                    const aEl = this.getEl('A', action.idx);
+                    aEl.classList.add('line-through', 'text-gray-400');
+                    aEl.classList.remove('font-bold', 'text-gray-800');
+                    
+                    const el = this.getEl('BORROW', action.idx);
+                    el.classList.remove('hidden');
+                    setTimeout(() => el.classList.remove('opacity-0'), 10);
+                    this.focusInput(el);
+                    
+                    this.currentTarget = el;
+                    this.expectedEvent = 'INPUT';
+                    this.expectedValue = action.expect;
 
-                    case STATES.WAIT_INPUT_A2:
-                        this.setMessage(isHint ? `請在上方輸入：${this.a2} + 10 = ?` : `請輸入借位後的數字`, 'bg-blue-100', 'text-blue-800');
-                        this.el.valA2.className = 'val-a2 cell transition-all duration-300 line-through text-gray-400';
-                        this.el.borrowOnes.classList.remove('hidden');
-                        setTimeout(() => this.el.borrowOnes.classList.remove('opacity-0'), 10);
-                        this.focusInput(this.el.borrowOnes);
-                        break;
-
-                    case STATES.WAIT_C2:
-                        this.setMessage(isHint ? `請計算：${this.currentA2} - ${this.b2} = ?` : `請輸入個位數答案`, 'bg-blue-100', 'text-blue-800');
-                        this.focusInput(this.el.ansOnes);
-                        break;
-
-                    case STATES.WAIT_C1:
-                        this.setMessage(isHint ? `請計算：${this.currentA1} - ${this.b1} = ?` : `請輸入十位數答案`, 'bg-blue-100', 'text-blue-800');
-                        this.focusInput(this.el.ansTens);
-                        break;
-
-                    case STATES.DONE:
-                        this.setMessage("🎉 完全正確！", 'bg-green-100', 'text-green-800');
-                        this.activeInput = null;
-                        if (this.onFinish) this.onFinish(this.id);
-                        break;
+                } else if (action.type === 'ANSWER_INPUT') {
+                    this.setMessage(isHint ? action.hint : `請輸入答案`, 'bg-blue-100', 'text-blue-800');
+                    const el = this.getEl('C', action.idx);
+                    this.focusInput(el);
+                    
+                    this.currentTarget = el;
+                    this.expectedEvent = 'INPUT';
+                    this.expectedValue = action.expect;
+                    
+                    // 特殊處理：最高位數的答案若是0，啟動自動淡出特效
+                    this.isLeadingZero = (action.idx === 0 && action.expect === 0);
                 }
             }
 
@@ -442,7 +487,7 @@
         let players = [];
         let currentMode = 'SOLO_HINT'; // 'SOLO_HINT', 'SOLO_NOHINT', 'VERSUS'
 
-        // 綁定模式切換按鈕
+        // 綁定設定切換
         document.querySelectorAll('.mode-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
@@ -451,12 +496,12 @@
                 initGame();
             });
         });
-
-        // 下一題按鈕
+        
+        document.getElementById('config-digits').addEventListener('change', initGame);
+        document.getElementById('config-borrow').addEventListener('change', initGame);
         globalNextBtn.addEventListener('click', initGame);
 
         function handleWin(winnerId) {
-            // 如果是雙人模式，鎖定另一位玩家
             if (currentMode === 'VERSUS') {
                 players.forEach(p => {
                     if (p.id !== winnerId) p.disableAll();
@@ -472,16 +517,57 @@
             globalNextBtn.classList.remove('hidden');
         }
 
-        function initGame() {
-            // 隨機生成題目 (確保 A > B，範圍 10~99)
+        function generateProblem(digits, allowBorrow) {
             let A, B;
-            // 設定 80% 的機率產生需要借位的題目 ([A2] < [B2])
-            const wantBorrow = Math.random() < 0.8;
+            let valid = false;
+            let maxA = Math.pow(10, digits) - 1;
+            let minA = Math.pow(10, digits - 1); 
+            const wantBorrow = allowBorrow ? (Math.random() < 0.8) : false; // 80% 機率強迫退位
+
+            while(!valid) {
+                A = Math.floor(Math.random() * (maxA - minA + 1)) + minA;
+                B = Math.floor(Math.random() * (maxA - minA + 1)) + minA;
+                
+                if (A <= B) continue;
+                
+                let strA = A.toString();
+                let strB = B.toString().padStart(digits, '0');
+                let currentA = strA.split('').map(Number);
+                let bArr = strB.split('').map(Number);
+                let borrowCount = 0;
+                let reject = false;
+                
+                // 由右至左檢測借位狀態
+                for (let i = digits - 1; i >= 0; i--) {
+                    if (currentA[i] < bArr[i]) {
+                        if (!allowBorrow) { reject = true; break; }
+                        borrowCount++;
+                        // 為保持 UI 簡單，排除「連續借位」(例如 204 - 18) 出現中間數字是 0 的情況
+                        if (i - 1 < 0 || currentA[i-1] === 0) { 
+                            reject = true; 
+                            break; 
+                        }
+                        currentA[i-1] -= 1;
+                        currentA[i] += 10;
+                    }
+                }
+                
+                if (reject) continue;
+                if (!allowBorrow && borrowCount === 0) valid = true;
+                if (allowBorrow && wantBorrow && borrowCount > 0) valid = true;
+                if (allowBorrow && !wantBorrow && borrowCount === 0) valid = true;
+            }
+            return { A, B };
+        }
+
+        function initGame() {
+            // 讀取設定
+            const digitsConfig = parseInt(document.getElementById('config-digits').value);
+            const borrowConfig = document.getElementById('config-borrow').value;
+            const allowBorrow = borrowConfig !== 'NO_BORROW';
             
-            do {
-                A = Math.floor(Math.random() * 90) + 10;
-                B = Math.floor(Math.random() * 90) + 10;
-            } while (A <= B || (wantBorrow ? (A % 10 >= B % 10) : (A % 10 < B % 10)));
+            // 生成題目
+            const { A, B } = generateProblem(digitsConfig, allowBorrow);
 
             // 重置 UI
             winnerBanner.classList.add('hidden');
@@ -498,9 +584,8 @@
                 gameArena.appendChild(p1Container);
                 gameArena.appendChild(p2Container);
 
-                // 雙人皆為無提示模式
-                players.push(new PlayerBoard(p1Container, 1, '🔵 玩家 1', 'border-blue-500', 'NOHINT', handleWin));
-                players.push(new PlayerBoard(p2Container, 2, '🔴 玩家 2', 'border-red-500', 'NOHINT', handleWin));
+                players.push(new PlayerBoard(p1Container, 1, '🔵 玩家 1 (左)', 'border-blue-500', 'NOHINT', digitsConfig, handleWin));
+                players.push(new PlayerBoard(p2Container, 2, '🔴 玩家 2 (右)', 'border-red-500', 'NOHINT', digitsConfig, handleWin));
             } else {
                 const p1Container = document.createElement('div');
                 p1Container.className = 'w-full flex justify-center';
@@ -508,10 +593,10 @@
                 
                 const modeParam = currentMode === 'SOLO_HINT' ? 'HINT' : 'NOHINT';
                 const title = currentMode === 'SOLO_HINT' ? '一般練習模式' : '無提示挑戰模式';
-                players.push(new PlayerBoard(p1Container, 1, title, 'border-indigo-500', modeParam, handleWin));
+                players.push(new PlayerBoard(p1Container, 1, title, 'border-indigo-500', modeParam, digitsConfig, handleWin));
             }
 
-            // 發送相同題目給所有玩家開始
+            // 發送題目開始遊戲
             players.forEach(p => p.startRound(A, B));
         }
 
