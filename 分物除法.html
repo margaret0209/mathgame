@@ -335,10 +335,27 @@
                 totalObjects = forceTotal;
                 numBoxes = forceBoxes;
             } else {
-                numBoxes = Math.floor(Math.random() * 5) + 3;
-                let minTotal = numBoxes * 2 + 1;
-                let maxTotal = Math.min(50, numBoxes * 5 + (numBoxes - 1));
-                totalObjects = Math.floor(Math.random() * (maxTotal - minTotal + 1)) + minTotal;
+                if (mode === 'challenge') {
+                    // 挑戰模式：方格 2~10
+                    numBoxes = Math.floor(Math.random() * 9) + 2;
+                    // 分得的數量（商數）範圍為 1~10
+                    let q = Math.floor(Math.random() * 10) + 1;
+                    // 餘數 0 ~ (numBoxes - 1)
+                    let r = Math.floor(Math.random() * numBoxes);
+                    
+                    totalObjects = numBoxes * q + r;
+                    
+                    // 確保總數最高不超過 100
+                    if (totalObjects > 100) {
+                        totalObjects = 100;
+                    }
+                } else {
+                    // 基本模式：方格 3~7，物品總數上限 50
+                    numBoxes = Math.floor(Math.random() * 5) + 3;
+                    let minTotal = numBoxes * 2 + 1;
+                    let maxTotal = Math.min(50, numBoxes * 5 + (numBoxes - 1));
+                    totalObjects = Math.floor(Math.random() * (maxTotal - minTotal + 1)) + minTotal;
+                }
             }
             
             poolLeft = totalObjects;
