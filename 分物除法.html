@@ -19,7 +19,7 @@
             position: relative;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             cursor: grab;
-            touch-action: none; /* 防止在手機上拖拉時畫面捲動 */
+            touch-action: none;
         }
         .apple::after {
             content: '';
@@ -61,12 +61,12 @@
             transition: all 0.2s ease;
         }
         .box.drag-over {
-            background-color: #fef08a; /* Tailwind yellow-200 */
-            border-color: #ca8a04; /* Tailwind yellow-600 */
+            background-color: #fef08a;
+            border-color: #ca8a04;
             transform: scale(1.02);
         }
         .box.round-full {
-            background-color: #f3f4f6; /* Tailwind gray-100 to indicate it's full for this round */
+            background-color: #f3f4f6;
         }
 
         .input-box {
@@ -84,6 +84,7 @@
             vertical-align: middle;
             font-size: 1.125rem;
             user-select: none;
+            transition: all 0.2s;
         }
         .input-box.active {
             border-color: #3b82f6;
@@ -116,18 +117,17 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* 小巧版數字盤樣式 */
         .numpad-btn {
             background: #fff;
             border: 2px solid #e5e7eb;
-            border-radius: 8px; /* 縮小圓角 */
-            font-size: 1.2rem; /* 縮小字體 */
+            border-radius: 8px;
+            font-size: 1.2rem;
             font-weight: bold;
             color: #374151;
-            padding: 8px 0; /* 減少內距 */
+            padding: 8px 0;
             cursor: pointer;
             transition: all 0.1s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* 減輕陰影 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .numpad-btn:active {
             transform: translateY(2px);
@@ -148,30 +148,59 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen text-gray-800">
+<body class="bg-gray-100 min-h-screen text-gray-800 relative">
+
+    <!-- 自訂模式 Modal -->
+    <div id="custom-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-[100] flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm mx-4 transform transition-all">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <span>⚙️</span> 自訂遊戲模式
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">物品總數 (如 1-100)</label>
+                    <input type="number" id="custom-total" class="w-full rounded-lg border-gray-300 border p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value="20" min="1" max="100">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">目標方格數量 (如 2-20)</label>
+                    <input type="number" id="custom-boxes" class="w-full rounded-lg border-gray-300 border p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value="4" min="1" max="20">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeCustomModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition">取消</button>
+                <button onclick="startCustomGame()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow transition">開始遊戲</button>
+            </div>
+        </div>
+    </div>
 
     <div class="max-w-6xl mx-auto p-4 sm:p-6">
         <!-- Header -->
-        <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+        <div class="flex flex-wrap justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-200 gap-4">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-bold text-blue-700">🍎 分物除法教學</h1>
                 <p class="text-gray-500 text-sm mt-1" id="game-info">準備開始分發物品</p>
             </div>
-            <button onclick="initGame()" class="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-lg shadow transition">
-                重新開始
-            </button>
+            <div class="flex gap-2 flex-wrap">
+                <button onclick="openCustomModal()" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-lg shadow transition">
+                    自訂模式
+                </button>
+                <button onclick="initGame(undefined, undefined, 'step')" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-lg shadow transition">
+                    基本模式
+                </button>
+                <button onclick="initGame(undefined, undefined, 'challenge')" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg shadow transition">
+                    ⚔️ 挑戰模式
+                </button>
+            </div>
         </div>
 
         <!-- 上半部：物品區 (左) 與 方格區 (右) -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-            
             <!-- 左區：未分配的物品 -->
             <div class="col-span-1 lg:col-span-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col">
                 <h2 class="text-lg font-semibold mb-3 flex justify-between items-center">
                     <span>未分配的物品</span>
                     <span class="bg-red-100 text-red-600 px-2 py-1 rounded text-sm">餘下: <span id="pool-count" class="font-bold">0</span></span>
                 </h2>
-                <!-- 加入 content-start 讓物品從上方開始排，並給予一個最小高度 -->
                 <div id="pool-area" class="flex flex-wrap gap-1 min-h-[150px] p-3 bg-gray-50 rounded-lg border border-gray-100 transition-colors content-start flex-grow">
                     <!-- Apples will be injected here -->
                 </div>
@@ -185,23 +214,19 @@
                         👉 請把物品由左側拖拉到方格內
                     </div>
                 </div>
-                <!-- 調整 grid-cols 讓排版更適應 8 個 column 的寬度 -->
                 <div id="boxes-area" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     <!-- Boxes will be injected here -->
                 </div>
             </div>
-
         </div>
 
         <!-- 下半部：句子 (左) 與 數字盤 (右) -->
         <div class="flex flex-col lg:flex-row gap-6">
-            
             <!-- 左側：分發過程句子 -->
             <div class="flex-grow bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                 <h2 class="text-lg font-semibold border-b pb-2 mb-3">分發過程</h2>
                 
                 <div id="history-log" class="space-y-3 text-lg">
-                    <!-- History and Active sentence go here -->
                     <div class="text-gray-400 text-center py-4" id="empty-log-msg">拖拉上方物品到方格中開始</div>
                 </div>
 
@@ -211,7 +236,7 @@
                     <div class="text-2xl font-bold flex flex-wrap items-center gap-2">
                         <span id="eq-total">0</span> <span class="text-gray-500">÷</span> <span id="eq-boxes">0</span> <span class="text-gray-500">=</span>
                         <span class="input-box w-12" data-type="final-q" onclick="setActiveInput(this)"></span>
-                        <span class="text-gray-500 text-lg mx-1">···</span>
+                        <span class="text-gray-500 text-lg mx-1" id="eq-dots">···</span>
                         <span class="input-box w-12" data-type="final-r" onclick="setActiveInput(this)"></span>
                     </div>
                 </div>
@@ -252,14 +277,16 @@
         let numBoxes = 0;
         let poolLeft = 0;
         
-        let targetPerBox = 1; // 這一輪每個箱子應該要有幾個
-        let currentPerBox = 0; // 已經完成的輪數
-        let boxCounts = []; // 追蹤每個箱子目前的蘋果數
+        let targetPerBox = 1;
+        let currentPerBox = 0;
+        let boxCounts = [];
         
-        let expectedAnswers = []; // [perBox, sharedTotal, remaining]
-        let currentStage = 'idle'; // 'idle', 'inputting_sentence', 'inputting_equation', 'finished'
+        let expectedAnswers = [];
+        let currentStage = 'idle';
         let activeInputEl = null;
         let draggedApple = null;
+        let gameMode = 'step'; // 'step' or 'challenge'
+        let animationTimeouts = [];
 
         // DOM Elements
         const elPoolArea = document.getElementById('pool-area');
@@ -274,14 +301,45 @@
         const elNumpadContainer = document.getElementById('numpad-container');
         const elDragInstruction = document.getElementById('drag-instruction');
 
-        // Initialize a new game
-        function initGame() {
-            numBoxes = Math.floor(Math.random() * 5) + 3; // 3 to 7 boxes
+        // Modal Functions
+        function openCustomModal() {
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+
+        function closeCustomModal() {
+            document.getElementById('custom-modal').classList.add('hidden');
+        }
+
+        function startCustomGame() {
+            let t = parseInt(document.getElementById('custom-total').value) || 20;
+            let b = parseInt(document.getElementById('custom-boxes').value) || 4;
             
-            // Ensure at least 2 rounds, max ~5 rounds
-            let minTotal = numBoxes * 2 + 1;
-            let maxTotal = Math.min(50, numBoxes * 5 + (numBoxes - 1));
-            totalObjects = Math.floor(Math.random() * (maxTotal - minTotal + 1)) + minTotal;
+            t = Math.max(1, t);
+            b = Math.max(1, b);
+            
+            if (t < b) {
+                t = b;
+                document.getElementById('custom-total').value = t;
+            }
+            
+            initGame(t, b, 'step');
+            closeCustomModal();
+        }
+
+        function initGame(forceTotal, forceBoxes, mode = 'step') {
+            gameMode = mode;
+            animationTimeouts.forEach(clearTimeout);
+            animationTimeouts = [];
+
+            if (forceTotal !== undefined && forceBoxes !== undefined) {
+                totalObjects = forceTotal;
+                numBoxes = forceBoxes;
+            } else {
+                numBoxes = Math.floor(Math.random() * 5) + 3;
+                let minTotal = numBoxes * 2 + 1;
+                let maxTotal = Math.min(50, numBoxes * 5 + (numBoxes - 1));
+                totalObjects = Math.floor(Math.random() * (maxTotal - minTotal + 1)) + minTotal;
+            }
             
             poolLeft = totalObjects;
             targetPerBox = 1;
@@ -291,22 +349,49 @@
             activeInputEl = null;
 
             // Reset UI
-            elGameInfo.innerText = `總共 ${totalObjects} 個物品，要平分到 ${numBoxes} 個方格內。`;
+            elGameInfo.innerText = gameMode === 'challenge' 
+                ? `挑戰模式：總共 ${totalObjects} 個物品，平分到 ${numBoxes} 個方格內，請一次過計算出結果！`
+                : `總共 ${totalObjects} 個物品，要平分到 ${numBoxes} 個方格內。`;
             elPoolCount.innerText = poolLeft;
             elBoxCount.innerText = numBoxes;
             elHistoryLog.innerHTML = '';
-            elEmptyLogMsg.style.display = 'block';
-            elHistoryLog.appendChild(elEmptyLogMsg);
             elFinalEquationArea.classList.add('hidden');
             elSuccessMsg.classList.add('hidden');
-            elDragInstruction.classList.remove('hidden');
             
-            enableNumpad(false);
+            if (gameMode === 'challenge') {
+                currentStage = 'inputting_challenge';
+                elDragInstruction.classList.add('hidden');
+                elEmptyLogMsg.style.display = 'none';
+                
+                elHistoryLog.innerHTML = `
+                    <div id="challenge-input-area" class="log-entry bg-purple-50 p-4 rounded-lg border border-purple-200 shadow-sm">
+                        <h3 class="font-bold text-lg text-purple-800 mb-2">⚔️ 挑戰模式：一次過分發</h3>
+                        <div class="flex items-center gap-2 text-lg flex-wrap">
+                            <span class="text-gray-700">我算好了！每個方格可以分得</span>
+                            <span class="input-box w-12" data-type="challenge-q" onclick="setActiveInput(this)"></span>
+                            <span class="text-gray-700">個</span>
+                        </div>
+                    </div>
+                `;
+                enableNumpad(true);
+            } else {
+                elDragInstruction.classList.remove('hidden');
+                elEmptyLogMsg.style.display = 'block';
+                elHistoryLog.appendChild(elEmptyLogMsg);
+                enableNumpad(false);
+            }
 
             document.getElementById('eq-total').innerText = totalObjects;
             document.getElementById('eq-boxes').innerText = numBoxes;
 
             renderObjects();
+            
+            if (gameMode === 'challenge') {
+                setDraggableState(false);
+                setTimeout(() => {
+                    setActiveInput(document.querySelector('[data-type="challenge-q"]'));
+                }, 50);
+            }
         }
 
         function renderObjects() {
@@ -328,12 +413,10 @@
             let apple = document.createElement('div');
             apple.className = 'apple';
             
-            // Desktop Drag Events
             apple.draggable = true;
             apple.addEventListener('dragstart', handleDragStart);
             apple.addEventListener('dragend', handleDragEnd);
 
-            // Mobile Touch Events (Polyfill for drag and drop)
             apple.addEventListener('touchstart', handleTouchStart, {passive: false});
             apple.addEventListener('touchmove', handleTouchMove, {passive: false});
             apple.addEventListener('touchend', handleTouchEnd);
@@ -347,7 +430,7 @@
             box.dataset.index = index;
             
             box.addEventListener('dragover', (e) => {
-                e.preventDefault(); // allow drop
+                e.preventDefault(); 
                 if (currentStage === 'idle' && boxCounts[index] < targetPerBox) {
                     box.classList.add('drag-over');
                 }
@@ -389,7 +472,7 @@
         let touchInitialX, touchInitialY;
         function handleTouchStart(e) {
             if (currentStage !== 'idle' || e.target.classList.contains('disabled')) return;
-            e.preventDefault(); // Prevent screen scroll
+            e.preventDefault(); 
             draggedApple = e.target;
             const touch = e.touches[0];
             
@@ -416,7 +499,6 @@
             draggedApple.style.left = (touch.clientX - touchInitialX) + 'px';
             draggedApple.style.top = (touch.clientY - touchInitialY) + 'px';
             
-            // Check element below
             draggedApple.style.display = 'none';
             let elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
             draggedApple.style.display = 'inline-block';
@@ -443,7 +525,6 @@
             
             let box = elemBelow ? elemBelow.closest('.box') : null;
             
-            // Reset styles
             draggedApple.style.position = '';
             draggedApple.style.zIndex = '';
             draggedApple.style.left = '';
@@ -478,14 +559,13 @@
         }
 
         function checkRoundComplete() {
-            // Check if all boxes reached the target count for this round
             if (boxCounts.every(c => c === targetPerBox)) {
                 currentPerBox = targetPerBox;
                 let sharedTotal = currentPerBox * numBoxes;
                 expectedAnswers = [currentPerBox, sharedTotal, poolLeft];
                 
                 currentStage = 'inputting_sentence';
-                setDraggableState(false); // Lock dragging
+                setDraggableState(false); 
                 
                 elEmptyLogMsg.style.display = 'none';
                 elDragInstruction.classList.add('hidden');
@@ -539,6 +619,7 @@
             if (currentStage === 'idle' || currentStage === 'finished') return;
             if (currentStage === 'inputting_equation' && !el.hasAttribute('data-type')) return;
             if (currentStage === 'inputting_sentence' && el.hasAttribute('data-type')) return;
+            if (currentStage === 'inputting_challenge' && el.dataset.type !== 'challenge-q') return;
 
             if (activeInputEl) {
                 activeInputEl.classList.remove('active');
@@ -547,11 +628,33 @@
             activeInputEl.classList.add('active');
         }
 
+        function getExpectedFor(el) {
+            if (el.dataset.type === 'challenge-q') {
+                return Math.floor(totalObjects / numBoxes);
+            } else if (currentStage === 'inputting_sentence') {
+                return expectedAnswers[parseInt(el.dataset.idx)];
+            } else if (currentStage === 'inputting_equation') {
+                if(el.dataset.type === 'final-q') return currentPerBox;
+                if(el.dataset.type === 'final-r') return poolLeft;
+            }
+            return null;
+        }
+
         function inputDigit(digit) {
             if (!activeInputEl) return;
-            let currentVal = activeInputEl.innerText;
+            let el = activeInputEl;
+            let currentVal = el.innerText;
             if (currentVal.length < 3) {
-                activeInputEl.innerText = currentVal + digit;
+                el.innerText = currentVal + digit;
+                
+                let expected = getExpectedFor(el);
+                if (parseInt(el.innerText) === expected) {
+                    setTimeout(() => {
+                        if (el && parseInt(el.innerText) === expected) {
+                            lockCurrentInputAndMove(el);
+                        }
+                    }, 150);
+                }
             }
         }
 
@@ -562,55 +665,126 @@
         }
 
         function checkAnswers() {
-            if (currentStage === 'inputting_sentence') checkSentenceAnswers();
-            else if (currentStage === 'inputting_equation') checkEquationAnswers();
+            if (!activeInputEl) return;
+            let el = activeInputEl;
+            let val = parseInt(el.innerText);
+            let expected = getExpectedFor(el);
+            
+            if (isNaN(val) || val !== expected) {
+                el.classList.add('shake');
+                setTimeout(() => el.classList.remove('shake'), 400);
+                el.innerText = '';
+            } else {
+                lockCurrentInputAndMove(el);
+            }
         }
 
-        function checkSentenceAnswers() {
-            const currentDiv = document.getElementById(`sentence-round-${currentPerBox}`);
-            const inputs = currentDiv.querySelectorAll('.input-box');
-            let allCorrect = true;
-
-            inputs.forEach((input, index) => {
-                const userVal = parseInt(input.innerText);
-                if (userVal !== expectedAnswers[index]) {
-                    allCorrect = false;
-                    input.classList.add('shake');
-                    setTimeout(() => input.classList.remove('shake'), 400);
-                    input.innerText = '';
-                }
-            });
-
-            if (allCorrect) {
-                inputs.forEach(input => {
-                    input.classList.remove('active', 'input-box');
-                    input.classList.add('text-blue-700', 'font-bold', 'mx-1');
-                    input.onclick = null;
-                    input.innerText = `‘${input.innerText}’`;
-                });
-                
-                currentDiv.classList.remove('bg-blue-50', 'border-blue-200', 'shadow-sm');
-                activeInputEl = null;
-                currentStage = 'idle';
+        // 鎖定當前輸入格並自動跳轉
+        function lockCurrentInputAndMove(el) {
+            if (!el || !el.classList.contains('active')) return;
+            
+            let val = el.innerText;
+            el.classList.remove('active', 'input-box');
+            el.onclick = null;
+            
+            if (currentStage === 'inputting_challenge') {
+                el.classList.add('text-purple-700', 'font-bold', 'mx-1');
+                currentPerBox = parseInt(val);
                 enableNumpad(false);
+                
+                let statusSpan = document.createElement('div');
+                statusSpan.className = 'text-green-600 font-bold mt-2 log-entry';
+                statusSpan.innerText = '✅ 正確！正在自動分發...';
+                el.closest('#challenge-input-area').appendChild(statusSpan);
 
-                // Prepare next round or finish
-                if (poolLeft >= numBoxes) {
-                    targetPerBox++;
-                    elDragInstruction.classList.remove('hidden');
-                    document.querySelectorAll('.box').forEach(b => b.classList.remove('round-full'));
-                    setDraggableState(true);
-                } else {
+                animateBatchDistribution(currentPerBox, () => {
+                    statusSpan.innerText = '✅ 分發完成！請完成最後的算式。';
                     startEquationPhase();
-                }
+                });
+                return;
+            } else if(currentStage === 'inputting_sentence') {
+                el.classList.add('text-blue-700', 'font-bold', 'mx-1');
+                el.innerText = `‘${val}’`;
             } else {
-                for (let input of inputs) {
-                    if (input.innerText === '') {
-                        setActiveInput(input);
-                        break;
+                el.classList.add('text-green-600', 'mx-1');
+            }
+
+            let container = currentStage === 'inputting_sentence' ? document.getElementById(`sentence-round-${currentPerBox}`) : elFinalEquationArea;
+            let nextInput = container.querySelector('.input-box');
+            
+            if (nextInput) {
+                setActiveInput(nextInput);
+            } else {
+                activeInputEl = null;
+                if(currentStage === 'inputting_sentence') {
+                    container.classList.remove('bg-blue-50', 'border-blue-200', 'shadow-sm');
+                    currentStage = 'idle';
+                    enableNumpad(false);
+
+                    if (poolLeft >= numBoxes) {
+                        targetPerBox++;
+                        elDragInstruction.classList.remove('hidden');
+                        document.querySelectorAll('.box').forEach(b => b.classList.remove('round-full'));
+                        setDraggableState(true);
+                    } else {
+                        startEquationPhase();
+                    }
+                } else if(currentStage === 'inputting_equation') {
+                    currentStage = 'finished';
+                    enableNumpad(false);
+                    elSuccessMsg.classList.remove('hidden');
+                    elSuccessMsg.classList.add('log-entry');
+
+                    // ==========================================
+                    // 如果餘數是0，則自動淡出消失「··· 0」
+                    // ==========================================
+                    if (poolLeft === 0) {
+                        let dots = document.getElementById('eq-dots');
+                        let rInput = document.querySelector('[data-type="final-r"]');
+                        
+                        // 加入動畫過渡效果
+                        dots.style.transition = "all 0.5s ease-out";
+                        rInput.style.transition = "all 0.5s ease-out";
+                        
+                        // 透明度與縮小
+                        dots.style.opacity = "0";
+                        rInput.style.opacity = "0";
+                        dots.style.transform = "scale(0.5)";
+                        rInput.style.transform = "scale(0.5)";
+                        
+                        // 等待動畫結束後，完全移除空間佔用
+                        setTimeout(() => {
+                            dots.style.display = "none";
+                            rInput.style.display = "none";
+                        }, 500);
                     }
                 }
             }
+        }
+
+        function animateBatchDistribution(q, callback) {
+            let apples = Array.from(elPoolArea.querySelectorAll('.apple'));
+            let delay = 0;
+            
+            for (let i = 0; i < q; i++) {
+                for (let j = 0; j < numBoxes; j++) {
+                    let box = elBoxesArea.children[j];
+                    let apple = apples.pop();
+                    let t = setTimeout(() => {
+                        box.appendChild(apple);
+                        poolLeft--;
+                        elPoolCount.innerText = poolLeft;
+                    }, delay);
+                    animationTimeouts.push(t);
+                    delay += 80; 
+                }
+            }
+            
+            let tEnd = setTimeout(() => {
+                document.querySelectorAll('.box').forEach(b => b.classList.add('round-full'));
+                if(callback) callback();
+            }, delay + 200);
+            animationTimeouts.push(tEnd);
         }
 
         function startEquationPhase() {
@@ -620,50 +794,27 @@
             enableNumpad(true);
             
             const qInput = document.querySelector('[data-type="final-q"]');
+            const rInput = document.querySelector('[data-type="final-r"]');
+            const dots = document.getElementById('eq-dots');
+            
+            // 每次建立算式區時，重置可能被隱藏的「··· 0」
+            dots.style.transition = "";
+            rInput.style.transition = "";
+            dots.style.opacity = "1";
+            rInput.style.opacity = "1";
+            dots.style.transform = "scale(1)";
+            dots.style.display = "inline";
+            rInput.style.display = "inline-block";
+            
+            qInput.className = 'input-box w-12';
+            rInput.className = 'input-box w-12';
             qInput.innerText = '';
-            document.querySelector('[data-type="final-r"]').innerText = '';
+            rInput.innerText = '';
+            qInput.onclick = function() { setActiveInput(this); };
+            rInput.onclick = function() { setActiveInput(this); };
             
             setActiveInput(qInput);
             elHistoryLog.scrollTop = elHistoryLog.scrollHeight;
-        }
-
-        function checkEquationAnswers() {
-            const qInput = document.querySelector('[data-type="final-q"]');
-            const rInput = document.querySelector('[data-type="final-r"]');
-            
-            const userQ = parseInt(qInput.innerText);
-            const userR = parseInt(rInput.innerText);
-            
-            let qCorrect = userQ === currentPerBox;
-            let rCorrect = userR === poolLeft;
-
-            if (!qCorrect) {
-                qInput.classList.add('shake');
-                setTimeout(() => qInput.classList.remove('shake'), 400);
-                qInput.innerText = '';
-            }
-            if (!rCorrect) {
-                rInput.classList.add('shake');
-                setTimeout(() => rInput.classList.remove('shake'), 400);
-                rInput.innerText = '';
-            }
-
-            if (qCorrect && rCorrect) {
-                qInput.classList.remove('active', 'input-box');
-                rInput.classList.remove('active', 'input-box');
-                qInput.classList.add('text-green-600', 'mx-1');
-                rInput.classList.add('text-green-600', 'mx-1');
-                qInput.onclick = null;
-                rInput.onclick = null;
-
-                currentStage = 'finished';
-                enableNumpad(false);
-                elSuccessMsg.classList.remove('hidden');
-                elSuccessMsg.classList.add('log-entry');
-            } else {
-                if (!qCorrect) setActiveInput(qInput);
-                else if (!rCorrect) setActiveInput(rInput);
-            }
         }
 
         function enableNumpad(enable) {
@@ -677,7 +828,7 @@
         }
 
         // Start game on load
-        window.onload = initGame;
+        window.onload = () => initGame();
 
     </script>
 </body>
