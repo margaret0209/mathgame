@@ -14,7 +14,7 @@
         }
         /* 自訂輸入框樣式，取消固定長寬，改由外層容器決定 */
         .math-input {
-            font-line-height: 1;
+            line-height: 1;
             padding: 0;
             text-align: center;
             background-color: white;
@@ -53,18 +53,26 @@
             opacity: 1 !important; 
             box-shadow: none !important;
         }
-        /* 新增：被二次借位劃掉時的樣式 */
+        /* 新增：被二次借位劃掉時的樣式 (改為套用淡主題色) */
         .borrow-input.crossed-out.is-locked {
-            color: #9ca3af !important; /* text-gray-400 */
+            color: var(--borrow-color-light, #9ca3af) !important; 
             text-decoration: line-through;
             background-color: transparent;
             border-color: transparent;
             box-shadow: none !important;
         }
-        /* 消失動畫輔助 */
+        /* 消失動畫與錯誤震動輔助 */
         .fade-out {
             opacity: 0 !important;
             transform: scale(0.8);
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+        .error-shake {
+            animation: shake 0.2s ease-in-out 0s 2;
         }
         
         /* 模式選擇按鈕樣式 */
@@ -77,8 +85,13 @@
 </head>
 <body class="bg-blue-50 min-h-screen flex flex-col items-center py-6 font-sans">
 
+    <!-- 頂部右上角分數顯示 -->
+    <div id="score-display" class="fixed top-3 right-3 sm:top-5 sm:right-5 bg-white border-2 border-indigo-400 text-indigo-800 font-bold px-3 py-1.5 md:px-5 md:py-2 rounded-xl shadow-lg text-sm md:text-lg z-50 flex items-center gap-2 transition-opacity duration-300">
+        🎯 答對：<span id="score-correct" class="text-green-600 text-xl">0</span> / <span id="score-total" class="text-gray-600">0</span>
+    </div>
+
     <!-- 頂部控制區 -->
-    <div class="w-full max-w-4xl px-4 flex flex-col items-center mb-6">
+    <div class="w-full max-w-4xl px-4 flex flex-col items-center mb-6 mt-8 sm:mt-0">
         <h1 class="text-3xl md:text-4xl font-bold text-blue-800 mb-4">減法直式大挑戰</h1>
         
         <!-- 難度設定區 -->
@@ -145,15 +158,17 @@
 
         // 玩家面板類別 (封裝單一遊戲面板的邏輯與 UI)
         class PlayerBoard {
-            constructor(container, id, title, colorClass, mode, digitsCount, onFinishCallback) {
+            constructor(container, id, title, colorClass, mode, isVersus, digitsCount, onFinishCallback) {
                 this.container = container;
                 this.id = id;
                 this.mode = mode; // 'HINT' 或 'NOHINT'
+                this.isVersus = isVersus; // 決定排版佈局
                 this.digitsCount = digitsCount;
                 this.onFinish = onFinishCallback;
                 this.activeInput = null;
                 this.isDisabled = false;
                 this.isLeadingZero = false;
+                this.mistakes = 0; // 追蹤此局是否完美
 
                 // 根據位數決定 UI 尺寸，確保五、六位數也能完美塞入畫面
                 let cClass, iSize, bSize, gClass;
@@ -200,9 +215,13 @@
                 this.handleInputBound = (e) => {
                     if (this.isDisabled) return;
                     if (this.expectedEvent === 'INPUT' && this.currentTarget === e.target) {
-                        const val = parseInt(e.target.value);
-                        // 處理預期為 0 的字串比對
-                        if (val === this.expectedValue || (this.expectedValue === 0 && e.target.value === '0')) {
+                        const valStr = e.target.value;
+                        if (valStr === '') return; // 允許回退為空
+                        
+                        const expectedStr = this.expectedValue.toString();
+                        
+                        // 正確並完整輸入
+                        if (valStr === expectedStr || (expectedStr === '0' && valStr === '0')) {
                             e.target.classList.add('is-locked');
                             e.target.blur(); // 移除焦點以取消高亮外框
                             
@@ -214,7 +233,18 @@
                             }
                             this.actionIdx++;
                             this.doNextAction();
+                        } 
+                        // 前綴檢查錯誤 (例如預期14，輸入2，立刻視為錯誤)
+                        else if (!expectedStr.startsWith(valStr)) {
+                            this.mistakes++;
+                            e.target.classList.add('bg-red-100', 'text-red-600', 'error-shake');
+                            // 強制清空重來並顯示紅色警告
+                            setTimeout(() => {
+                                e.target.value = '';
+                                e.target.classList.remove('bg-red-100', 'text-red-600', 'error-shake');
+                            }, 300);
                         }
+                        // 若是正確的前綴 (例如預期14，剛輸入1)，則繼續等待下一個字元
                     }
                 };
 
@@ -243,10 +273,13 @@
             getHTML(title, colorClass) {
                 let cols = this.digitsCount + 1; // 加上減號欄位
                 let gap = this.gapClass;
+                // 非對戰模式時讓面板變寬，容納左右排列
+                let boardWidthClass = this.isVersus ? 'max-w-[480px]' : 'max-w-[700px]';
+                let layoutClass = this.isVersus ? 'flex-col' : 'flex-col md:flex-row';
 
                 // 動態生成網格結構
                 return `
-                    <div class="bg-white p-4 sm:p-5 rounded-3xl shadow-xl w-full max-w-[480px] border-t-8 ${colorClass} flex flex-col items-center">
+                    <div class="bg-white p-4 sm:p-5 rounded-3xl shadow-xl w-full ${boardWidthClass} border-t-8 ${colorClass} flex flex-col items-center transition-all duration-300">
                         <h2 class="text-xl font-bold mb-3 text-center text-gray-700">${title}</h2>
                         
                         <!-- 提示訊息區塊 -->
@@ -254,50 +287,53 @@
                             準備開始
                         </div>
 
-                        <!-- 直式計算區塊 -->
-                        <div class="flex justify-center mb-6 select-none w-full">
-                            <div style="display: grid; grid-template-columns: repeat(${cols}, minmax(0, auto));" class="gap-y-1 ${gap} font-mono">
-                                
-                                <!-- 第一排：借位區 (支援多次退位向上堆疊) -->
-                                <div class="${this.cellClass} !h-20 sm:!h-24"></div>
-                                ${Array.from({length: this.digitsCount}, (_, i) => `
-                                    <div class="${this.cellClass} !h-20 sm:!h-24 relative flex justify-center">
-                                        <div data-type="BORROW_STACK" data-col="${i}" class="absolute bottom-0 w-full flex flex-col-reverse items-center gap-1">
+                        <!-- 內容佈局：根據模式決定上下或左右 -->
+                        <div class="flex ${layoutClass} items-center justify-center gap-6 md:gap-10 w-full mb-2">
+                            <!-- 直式計算區塊 -->
+                            <div class="flex justify-center select-none w-full md:w-auto">
+                                <div style="display: grid; grid-template-columns: repeat(${cols}, minmax(0, auto));" class="gap-y-1 ${gap} font-mono">
+                                    
+                                    <!-- 第一排：借位區 (支援多次退位向上堆疊) -->
+                                    <div class="${this.cellClass} !h-20 sm:!h-24"></div>
+                                    ${Array.from({length: this.digitsCount}, (_, i) => `
+                                        <div class="${this.cellClass} !h-20 sm:!h-24 relative flex justify-center">
+                                            <div data-type="BORROW_STACK" data-col="${i}" class="absolute bottom-0 w-full flex flex-col-reverse items-center gap-1">
+                                            </div>
                                         </div>
-                                    </div>
-                                `).join('')}
+                                    `).join('')}
 
-                                <!-- 第二排：被減數 A -->
-                                <div class="${this.cellClass}"></div>
-                                ${Array.from({length: this.digitsCount}, (_, i) => `
-                                    <div data-type="A" data-col="${i}" class="${this.cellClass} flex items-center justify-center transition-all duration-300 font-bold text-gray-800"></div>
-                                `).join('')}
+                                    <!-- 第二排：被減數 A -->
+                                    <div class="${this.cellClass}"></div>
+                                    ${Array.from({length: this.digitsCount}, (_, i) => `
+                                        <div data-type="A" data-col="${i}" class="${this.cellClass} flex items-center justify-center transition-all duration-300 font-bold text-gray-800 rounded-lg"></div>
+                                    `).join('')}
 
-                                <!-- 第三排：減數 B -->
-                                <div class="${this.cellClass} flex items-center justify-center text-gray-500 font-bold">-</div>
-                                ${Array.from({length: this.digitsCount}, (_, i) => `
-                                    <div data-type="B" data-col="${i}" class="${this.cellClass} flex items-center justify-center font-bold text-gray-800"></div>
-                                `).join('')}
+                                    <!-- 第三排：減數 B -->
+                                    <div class="${this.cellClass} flex items-center justify-center text-gray-500 font-bold">-</div>
+                                    ${Array.from({length: this.digitsCount}, (_, i) => `
+                                        <div data-type="B" data-col="${i}" class="${this.cellClass} flex items-center justify-center font-bold text-gray-800"></div>
+                                    `).join('')}
 
-                                <!-- 分隔線 -->
-                                <div style="grid-column: span ${cols} / span ${cols};" class="border-t-4 border-gray-800 my-1 w-full"></div>
+                                    <!-- 分隔線 -->
+                                    <div style="grid-column: span ${cols} / span ${cols};" class="border-t-4 border-gray-800 my-1 w-full"></div>
 
-                                <!-- 第四排：答案 C -->
-                                <div class="${this.cellClass}"></div>
-                                ${Array.from({length: this.digitsCount}, (_, i) => `
-                                    <div class="${this.cellClass} flex justify-center">
-                                        <input type="text" readonly data-type="C" data-col="${i}" class="math-input transition-all duration-500 w-full h-full ${this.inputSize} is-locked" maxlength="1">
-                                    </div>
-                                `).join('')}
+                                    <!-- 第四排：答案 C -->
+                                    <div class="${this.cellClass}"></div>
+                                    ${Array.from({length: this.digitsCount}, (_, i) => `
+                                        <div class="${this.cellClass} flex justify-center">
+                                            <input type="text" readonly data-type="C" data-col="${i}" class="math-input transition-all duration-500 w-full h-full ${this.inputSize} is-locked" maxlength="1">
+                                        </div>
+                                    `).join('')}
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- 九宮格數字鍵盤 -->
-                        <div class="grid grid-cols-3 gap-2 mt-auto px-4 pb-2 max-w-[220px] w-full mx-auto">
-                            ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="keypad-btn bg-gray-100 hover:bg-gray-200 text-gray-800 text-lg font-bold py-2 rounded-lg shadow transition active:scale-95 touch-manipulation">${n}</button>`).join('')}
-                            <button class="keypad-btn bg-red-100 hover:bg-red-200 text-red-600 text-lg font-bold py-2 rounded-lg shadow transition active:scale-95 touch-manipulation">⌫</button>
-                            <button class="keypad-btn bg-gray-100 hover:bg-gray-200 text-gray-800 text-lg font-bold py-2 rounded-lg shadow transition active:scale-95 touch-manipulation">0</button>
-                            <div></div>
+                            <!-- 九宮格數字鍵盤 -->
+                            <div class="grid grid-cols-3 gap-2 ${this.isVersus ? 'mt-auto' : 'mt-4 md:mt-0'} px-4 md:px-0 pb-2 w-full max-w-[220px] mx-auto md:mx-0">
+                                ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="keypad-btn bg-gray-100 hover:bg-gray-200 text-gray-800 text-lg font-bold py-2 md:py-3 rounded-lg shadow transition active:scale-95 touch-manipulation">${n}</button>`).join('')}
+                                <button class="keypad-btn bg-red-100 hover:bg-red-200 text-red-600 text-lg font-bold py-2 md:py-3 rounded-lg shadow transition active:scale-95 touch-manipulation">⌫</button>
+                                <button class="keypad-btn bg-gray-100 hover:bg-gray-200 text-gray-800 text-lg font-bold py-2 md:py-3 rounded-lg shadow transition active:scale-95 touch-manipulation">0</button>
+                                <div></div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -339,6 +375,7 @@
                                 this.activeInput.value += key;
                             }
                         }
+                        // 手動觸發 input 事件交由 handleInputBound 驗證
                         this.activeInput.dispatchEvent(new Event('input'));
                         if (this.activeInput) this.activeInput.focus();
                     });
@@ -349,9 +386,16 @@
                     const el = this.getEl('A', i);
                     this.bindTap(el, () => {
                         if (this.isDisabled) return;
-                        if (this.expectedEvent === 'CLICK' && this.currentTarget === el) {
-                            this.actionIdx++;
-                            this.doNextAction();
+                        if (this.expectedEvent === 'CLICK') {
+                            if (this.currentTarget === el) {
+                                this.actionIdx++;
+                                this.doNextAction();
+                            } else {
+                                // 點錯位子紀錄為失誤
+                                this.mistakes++;
+                                el.classList.add('bg-red-200', 'text-red-800', 'error-shake');
+                                setTimeout(() => el.classList.remove('bg-red-200', 'text-red-800', 'error-shake'), 300);
+                            }
                         }
                     });
                 }
@@ -363,8 +407,9 @@
             }
 
             clearHighlights() {
-                const removeClasses = ['cursor-pointer', 'ring-4', 'animate-pulse', 'rounded-lg', 'ring-yellow-400', 'bg-yellow-50'];
-                BORROW_PALETTE.forEach(p => removeClasses.push(p.bg, p.ring)); // 確保清除所有調色盤顏色
+                // 不清除 theme.bg 以保留痕跡
+                const removeClasses = ['cursor-pointer', 'ring-4', 'animate-pulse', 'ring-yellow-400', 'bg-yellow-50'];
+                BORROW_PALETTE.forEach(p => removeClasses.push(p.ring)); // 清除提示光圈
 
                 for(let i=0; i<this.digitsCount; i++) {
                     const el = this.getEl('A', i);
@@ -382,6 +427,7 @@
             resetUI() {
                 this.isDisabled = false;
                 this.activeInput = null;
+                this.mistakes = 0; // 新局歸零失誤
                 
                 for (let i = 0; i < this.digitsCount; i++) {
                     // 清空堆疊區
@@ -389,7 +435,8 @@
                     if(stack) stack.innerHTML = '';
                     
                     const aEl = this.getEl('A', i);
-                    aEl.className = `${this.cellClass} flex items-center justify-center transition-all duration-300 font-bold text-gray-800`;
+                    aEl.className = `${this.cellClass} flex items-center justify-center transition-all duration-300 font-bold text-gray-800 rounded-lg`;
+                    aEl.style.color = ''; 
                     aEl.textContent = this.digitsA[i];
                     
                     const bEl = this.getEl('B', i);
@@ -415,7 +462,7 @@
             spawnBorrowInput(idx, theme) {
                 const stack = this.getEl('BORROW_STACK', idx);
                 
-                // 處理原本的數字 (加上刪除線)
+                // 處理原本的數字 (加上刪除線，並套用專屬主題的淡色)
                 const existingInputs = stack.querySelectorAll('input');
                 if (existingInputs.length > 0) {
                     const lastInput = existingInputs[existingInputs.length - 1];
@@ -423,7 +470,12 @@
                     lastInput.classList.remove('cursor-pointer', 'ring-4', 'ring-yellow-400', 'bg-yellow-50', 'animate-pulse');
                 } else {
                     const aEl = this.getEl('A', idx);
-                    aEl.classList.add('line-through', 'text-gray-400', 'opacity-50');
+                    aEl.classList.add('line-through', 'opacity-60');
+                    if (theme) {
+                        aEl.style.color = theme.light; 
+                    } else {
+                        aEl.classList.add('text-gray-400');
+                    }
                     aEl.classList.remove('font-bold', 'text-gray-800');
                     aEl.classList.remove('cursor-pointer', 'ring-4', 'ring-yellow-400', 'bg-yellow-50', 'animate-pulse');
                 }
@@ -437,14 +489,13 @@
                 newInput.dataset.type = 'BORROW_INPUT';
                 newInput.dataset.col = idx;
                 
-                // 應用動態主題顏色
                 if (theme) {
                     newInput.style.setProperty('--borrow-color-main', theme.main);
                     newInput.style.setProperty('--borrow-color-light', theme.light);
                     newInput.style.setProperty('--borrow-color-shadow', theme.shadow);
                 }
 
-                stack.appendChild(newInput); // flex-col-reverse 會讓新的加在上面
+                stack.appendChild(newInput); 
                 
                 newInput.addEventListener('input', this.handleInputBound);
                 newInput.addEventListener('focus', () => {
@@ -456,9 +507,15 @@
                 // 綁定點擊事件，以便未來若又被借位時可點擊
                 this.bindTap(newInput, () => {
                     if (this.isDisabled) return;
-                    if (this.expectedEvent === 'CLICK' && this.currentTarget === newInput) {
-                        this.actionIdx++;
-                        this.doNextAction();
+                    if (this.expectedEvent === 'CLICK') {
+                        if (this.currentTarget === newInput) {
+                            this.actionIdx++;
+                            this.doNextAction();
+                        } else {
+                            this.mistakes++;
+                            newInput.classList.add('bg-red-200', 'error-shake');
+                            setTimeout(() => newInput.classList.remove('bg-red-200', 'error-shake'), 300);
+                        }
                     }
                 });
                 
@@ -473,28 +530,23 @@
             startRound(A, B) {
                 this.digitsA = A.toString().split('').map(Number);
                 this.digitsB_logic = B.toString().padStart(this.digitsCount, '0').split('').map(Number);
-                // 為了顯示美觀，減數若位數較少前方補空白
                 this.digitsB_display = B.toString().padStart(this.digitsCount, ' ').split('');
 
-                // 產生動作序列 (State Machine Queue) - 從右到左計算
                 this.actions = [];
                 let curA = [...this.digitsA];
-                let borrowGroupIndex = 0; // 追蹤這是第幾組借位
+                let borrowGroupIndex = 0; 
                 
                 for (let i = this.digitsCount - 1; i >= 0; i--) {
                     if (curA[i] < this.digitsB_logic[i]) {
                         
-                        // 取得這組借位的顏色主題
                         const currentTheme = BORROW_PALETTE[borrowGroupIndex % BORROW_PALETTE.length];
                         borrowGroupIndex++;
 
-                        // 尋找可以借位的來源 (支援跨越 0 的連續退位)
                         let srcIdx = i - 1;
                         while(srcIdx >= 0 && curA[srcIdx] === 0) {
                             srcIdx--;
                         }
                         
-                        // 依序向右方傳遞借位
                         for (let j = srcIdx; j < i; j++) {
                             let dName = this.getDigitName(j+1);
                             let dNameNext = this.getDigitName(j);
@@ -529,9 +581,9 @@
 
             doNextAction() {
                 if (this.actionIdx >= this.actions.length) {
-                    this.setMessage("🎉 完全正確！", 'bg-green-100', 'text-green-800');
+                    this.setMessage("🎉 計算完成！", 'bg-green-100', 'text-green-800');
                     this.activeInput = null;
-                    if (this.onFinish) this.onFinish(this.id);
+                    if (this.onFinish) this.onFinish(this.id, this.mistakes);
                     return;
                 }
 
@@ -544,7 +596,7 @@
                     
                     const el = this.getCurrentClickableEl(action.idx);
                     el.classList.add('cursor-pointer');
-                    if (isHint) el.classList.add('ring-4', action.theme.ring, action.theme.bg, 'rounded-lg', 'animate-pulse');
+                    if (isHint) el.classList.add('ring-4', action.theme.ring, action.theme.bg, 'animate-pulse');
                     
                     this.currentTarget = el;
                     this.expectedEvent = 'CLICK';
@@ -552,9 +604,12 @@
                 } else if (action.type === 'BORROW_INPUT_SRC' || action.type === 'BORROW_INPUT_DST') {
                     this.setMessage(isHint ? action.hint : `請輸入借位數字`, 'bg-blue-100', 'text-blue-800');
                     
-                    // 動態產生堆疊輸入框，並帶入專屬主題色
                     const el = this.spawnBorrowInput(action.idx, action.theme);
                     this.focusInput(el);
+                    
+                    // 加上主題底色與圓角永久保留
+                    const aEl = this.getEl('A', action.idx);
+                    aEl.classList.add(action.theme.bg, 'rounded-lg');
                     
                     this.currentTarget = el;
                     this.expectedEvent = 'INPUT';
@@ -569,7 +624,6 @@
                     this.expectedEvent = 'INPUT';
                     this.expectedValue = action.expect;
                     
-                    // 特殊處理：最高位數的答案若是0，啟動自動淡出特效
                     this.isLeadingZero = (action.idx === 0 && action.expect === 0);
                 }
             }
@@ -589,21 +643,45 @@
         let players = [];
         let currentMode = 'SOLO_HINT'; // 'SOLO_HINT', 'SOLO_NOHINT', 'VERSUS'
 
+        // 全域分數系統
+        let globalScoreTotal = 0;
+        let globalScoreCorrect = 0;
+
+        function updateScoreDisplay() {
+            const scoreEl = document.getElementById('score-display');
+            if (currentMode === 'VERSUS') {
+                scoreEl.classList.add('hidden'); // 對戰模式隱藏分數
+            } else {
+                scoreEl.classList.remove('hidden');
+                document.getElementById('score-correct').textContent = globalScoreCorrect;
+                document.getElementById('score-total').textContent = globalScoreTotal;
+            }
+        }
+
+        function resetScore() {
+            globalScoreTotal = 0;
+            globalScoreCorrect = 0;
+            updateScoreDisplay();
+        }
+
         // 綁定設定切換
         document.querySelectorAll('.mode-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
                 currentMode = e.target.getAttribute('data-mode');
+                resetScore();
                 initGame();
             });
         });
         
-        document.getElementById('config-digits').addEventListener('change', initGame);
-        document.getElementById('config-borrow').addEventListener('change', initGame);
+        document.getElementById('config-digits').addEventListener('change', () => { resetScore(); initGame(); });
+        document.getElementById('config-borrow').addEventListener('change', () => { resetScore(); initGame(); });
+        
+        // 「下一題」按鈕只重啟遊戲不重設分數 (無限題數)
         globalNextBtn.addEventListener('click', initGame);
 
-        function handleWin(winnerId) {
+        function handleWin(winnerId, mistakesCount) {
             if (currentMode === 'VERSUS') {
                 players.forEach(p => {
                     if (p.id !== winnerId) p.disableAll();
@@ -611,8 +689,17 @@
                 winnerBanner.innerHTML = `🏆 玩家 ${winnerId} 速度最快，獲得勝利！`;
                 winnerBanner.className = `text-2xl font-bold text-center mb-6 py-3 px-6 rounded-xl shadow-lg animate-bounce ${winnerId === 1 ? 'bg-blue-100 text-blue-800 border-2 border-blue-400' : 'bg-red-100 text-red-800 border-2 border-red-400'} w-full max-w-lg`;
             } else {
-                winnerBanner.innerHTML = `🎉 恭喜你完成計算！`;
-                winnerBanner.className = `text-2xl font-bold text-center mb-6 py-3 px-6 rounded-xl shadow-lg animate-bounce bg-green-100 text-green-800 border-2 border-green-400 w-full max-w-md`;
+                globalScoreTotal++;
+                // 只有完全 0 失誤才算答對
+                if (mistakesCount === 0) {
+                    globalScoreCorrect++;
+                    winnerBanner.innerHTML = `🎉 恭喜你完美答對了！`;
+                    winnerBanner.className = `text-2xl font-bold text-center mb-6 py-3 px-6 rounded-xl shadow-lg animate-bounce bg-green-100 text-green-800 border-2 border-green-400 w-full max-w-md`;
+                } else {
+                    winnerBanner.innerHTML = `👍 完成了！(過程有失誤：${mistakesCount}次)`;
+                    winnerBanner.className = `text-xl font-bold text-center mb-6 py-3 px-6 rounded-xl shadow-lg bg-yellow-100 text-yellow-800 border-2 border-yellow-400 w-full max-w-md`;
+                }
+                updateScoreDisplay();
             }
             
             winnerBanner.classList.remove('hidden');
@@ -624,7 +711,7 @@
             let valid = false;
             let maxA = Math.pow(10, digits) - 1;
             let minA = Math.pow(10, digits - 1); 
-            const wantBorrow = allowBorrow ? (Math.random() < 0.8) : false; // 80% 機率強迫退位
+            const wantBorrow = allowBorrow ? (Math.random() < 0.8) : false;
 
             while(!valid) {
                 A = Math.floor(Math.random() * (maxA - minA + 1)) + minA;
@@ -638,17 +725,14 @@
                 let bArr = strB.split('').map(Number);
                 let borrowCount = 0;
                 
-                // 由右至左檢測借位狀態
                 for (let i = digits - 1; i >= 0; i--) {
                     if (currentA[i] < bArr[i]) {
                         if (!allowBorrow) break;
                         
-                        // 偵測借位來源 (容許跨 0 借位)
                         let src = i - 1;
                         while(src >= 0 && currentA[src] === 0) src--;
-                        if (src < 0) break; // 防呆
+                        if (src < 0) break;
                         
-                        // 模擬連續借位改變的數值
                         for (let j = src; j < i; j++) {
                             currentA[j] -= 1;
                             currentA[j+1] += 10;
@@ -665,21 +749,19 @@
         }
 
         function initGame() {
-            // 讀取設定
             const digitsConfig = parseInt(document.getElementById('config-digits').value);
             const borrowConfig = document.getElementById('config-borrow').value;
             const allowBorrow = borrowConfig !== 'NO_BORROW';
             
-            // 生成題目
             const { A, B } = generateProblem(digitsConfig, allowBorrow);
 
-            // 重置 UI
             winnerBanner.classList.add('hidden');
             globalNextBtn.classList.add('hidden');
             gameArena.innerHTML = '';
             players = [];
+            
+            updateScoreDisplay();
 
-            // 依據模式建立玩家面板
             if (currentMode === 'VERSUS') {
                 const p1Container = document.createElement('div');
                 const p2Container = document.createElement('div');
@@ -688,8 +770,8 @@
                 gameArena.appendChild(p1Container);
                 gameArena.appendChild(p2Container);
 
-                players.push(new PlayerBoard(p1Container, 1, '🔵 玩家 1 (左)', 'border-blue-500', 'NOHINT', digitsConfig, handleWin));
-                players.push(new PlayerBoard(p2Container, 2, '🔴 玩家 2 (右)', 'border-red-500', 'NOHINT', digitsConfig, handleWin));
+                players.push(new PlayerBoard(p1Container, 1, '🔵 玩家 1 (左)', 'border-blue-500', 'NOHINT', true, digitsConfig, handleWin));
+                players.push(new PlayerBoard(p2Container, 2, '🔴 玩家 2 (右)', 'border-red-500', 'NOHINT', true, digitsConfig, handleWin));
             } else {
                 const p1Container = document.createElement('div');
                 p1Container.className = 'w-full flex justify-center';
@@ -697,15 +779,17 @@
                 
                 const modeParam = currentMode === 'SOLO_HINT' ? 'HINT' : 'NOHINT';
                 const title = currentMode === 'SOLO_HINT' ? '一般練習模式' : '無提示挑戰模式';
-                players.push(new PlayerBoard(p1Container, 1, title, 'border-indigo-500', modeParam, digitsConfig, handleWin));
+                players.push(new PlayerBoard(p1Container, 1, title, 'border-indigo-500', modeParam, false, digitsConfig, handleWin));
             }
 
-            // 發送題目開始遊戲
             players.forEach(p => p.startRound(A, B));
         }
 
         // 初始化遊戲
-        window.addEventListener('DOMContentLoaded', initGame);
+        window.addEventListener('DOMContentLoaded', () => {
+            resetScore();
+            initGame();
+        });
 
     </script>
 </body>
