@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>高矮比一比</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            overscroll-behavior: none; 
+        }
+        .shape {
+            transition: transform 0.1s ease-out, filter 0.1s ease-out;
+            touch-action: none; 
+            transform-origin: bottom center; /* 縮放時以底部為基準，強調高度 */
+        }
+        .zone {
+            transition: all 0.3s ease;
+            /* 讓框框看起來像從地上長出來的凹槽 */
+            border-bottom: none !important; 
+            border-radius: 12px 12px 0 0;
+        }
+        .zone.hovered {
+            background-color: #d1fae5;
+            border-color: #10b981;
+            transform: scaleY(1.02);
+        }
+        .zone.correct-flash {
+            border-color: #22c55e !important;
+            background-color: #dcfce7 !important;
+        }
+        .zone.error-flash {
+            border-color: #ef4444 !important;
+            background-color: #fee2e2 !important;
+        }
+        /* 讓遊戲區域有明確的「地板」 */
+        .ground-line {
+            border-bottom: 6px solid #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-gray-200 h-screen w-screen overflow-hidden flex items-center justify-center p-2 md:p-4 font-sans">
+
+    <div class="flex flex-col w-full max-w-5xl max-h-[98vh] bg-white shadow-2xl rounded-2xl overflow-hidden relative pb-2 md:pb-4">
+        
+        <!-- 頂部標題區 -->
+        <header class="bg-emerald-600 text-white p-3 md:p-4 text-center z-10 relative flex-shrink-0">
+            <h1 class="text-2xl md:text-3xl font-bold tracking-wider">📏 高矮比一比 🦒</h1>
+            <p class="text-sm md:text-base mt-1 opacity-90 hidden sm:block">把它們放在一起「比身高」，看看誰最高！</p>
+            
+            <!-- 控制面板 -->
+            <div class="mt-3 flex flex-wrap justify-center items-center gap-3">
+                <div class="flex items-center bg-emerald-500 rounded-full px-3 py-1 shadow-inner">
+                    <label for="type-select" class="text-sm font-medium mr-2 text-white">圖案：</label>
+                    <select id="type-select" onchange="changeType()" class="bg-white text-emerald-700 text-sm rounded px-2 py-1 outline-none font-bold cursor-pointer">
+                        <option value="geometric" selected>長條</option>
+                        <option value="object">堆疊物品</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center bg-emerald-500 rounded-full px-3 py-1 shadow-inner">
+                    <label for="mode-select" class="text-sm font-medium mr-2 text-white">數量：</label>
+                    <select id="mode-select" onchange="changeMode()" class="bg-white text-emerald-700 text-sm rounded px-2 py-1 outline-none font-bold cursor-pointer">
+                        <option value="2">2 個</option>
+                        <option value="3" selected>3 個</option>
+                        <option value="4">4 個</option>
+                        <option value="5">5 個</option>
+                        <option value="6">6 個</option>
+                    </select>
+                </div>
+                
+                <!-- 提示模式開關 -->
+                <label class="flex items-center bg-emerald-500 rounded-full px-3 py-1 shadow-inner cursor-pointer hover:bg-emerald-400 transition">
+                    <span class="text-sm font-medium mr-2 text-white">提示模式</span>
+                    <input type="checkbox" id="hint-toggle" class="w-4 h-4 accent-emerald-200 cursor-pointer" onchange="toggleHintMode()">
+                </label>
+
+                <button onclick="initGame()" class="bg-white text-emerald-600 px-5 py-1.5 rounded-full text-sm font-bold shadow hover:bg-emerald-50 active:scale-95 transition">
+                    重新產生
+                </button>
+            </div>
+        </header>
+
+        <!-- 訊息提示區 -->
+        <div id="message-container" class="text-center p-2 h-14 flex items-center justify-center flex-shrink-0 bg-emerald-50/50">
+            <p id="message" class="text-sm md:text-lg text-gray-700 font-medium px-2">
+                拖動物件排排站，由最高排到最矮放入右方框框！
+            </p>
+        </div>
+
+        <!-- 主遊戲區：左右並排佈局 -->
+        <div id="game-container" class="flex flex-row w-full flex-1 relative ground-line transition-all duration-300 ease-in-out mt-1 md:mt-2">
+            
+            <!-- 左側：遊戲互動生成區 -->
+            <div id="play-area" class="w-[45%] md:w-[50%] relative bg-gray-50 border-r border-dashed border-gray-400 z-10 flex-shrink-0 shadow-[inset_-10px_0_15px_-10px_rgba(0,0,0,0.05)]">
+                <!-- 動態生成的形狀會放在這裡 -->
+            </div>
+
+            <!-- 右側：放置區域 (對齊底部 items-end，創造放置在地上的感覺) -->
+            <div id="drop-zones" class="w-[55%] md:w-[50%] flex justify-center items-end content-end px-1 md:px-3 pt-2 pb-0 bg-white gap-1 md:gap-2 z-0 flex-nowrap">
+                <!-- 框框會在這裡產生 -->
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        const playArea = document.getElementById('play-area');
+        const dropZonesContainer = document.getElementById('drop-zones');
+        const messageEl = document.getElementById('message');
+        const gameContainer = document.getElementById('game-container');
+        
+        let numObjects = 3;
+        let currentPatternType = 'geometric'; 
+        let zones = []; 
+        let baseHeights = []; 
+        let isHintMode = false; 
+        
+        let highestZ = 10;
+        let draggedEl = null;
+        let startX = 0, startY = 0;
+        let currentHoverZone = null;
+
+        // --- 音效系統 ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        const enableAudio = () => {
+            initAudio();
+            document.removeEventListener('pointerdown', enableAudio);
+            document.removeEventListener('touchstart', enableAudio);
+        };
+        document.addEventListener('pointerdown', enableAudio);
+        document.addEventListener('touchstart', enableAudio);
+
+        function playSound(type) {
+            if (!audioCtx || audioCtx.state === 'suspended') return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            
+            if (type === 'pick') {
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(300, now);
+                oscillator.frequency.exponentialRampToValueAtTime(600, now + 0.08);
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.2, now + 0.02);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.12);
+                oscillator.start(now);
+                oscillator.stop(now + 0.15);
+            } else if (type === 'drop') {
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(400, now);
+                oscillator.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.2, now + 0.02);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.12);
+                oscillator.start(now);
+                oscillator.stop(now + 0.15);
+            } else if (type === 'snap') {
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(600, now);
+                oscillator.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.2, now + 0.02);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.12);
+                oscillator.start(now);
+                oscillator.stop(now + 0.15);
+            } else if (type === 'error') {
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(200, now);
+                oscillator.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.15, now + 0.02);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.22);
+                oscillator.start(now);
+                oscillator.stop(now + 0.25);
+            } else if (type === 'win') {
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(440, now);       
+                oscillator.frequency.setValueAtTime(554.37, now + 0.1); 
+                oscillator.frequency.setValueAtTime(659.25, now + 0.2); 
+                oscillator.frequency.setValueAtTime(880.00, now + 0.3); 
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.2, now + 0.05);
+                gainNode.gain.setValueAtTime(0.2, now + 0.3);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.6);
+                oscillator.start(now);
+                oscillator.stop(now + 0.65);
+            }
+        }
+
+        function changeMode() {
+            numObjects = parseInt(document.getElementById('mode-select').value);
+            initGame();
+        }
+
+        function changeType() {
+            currentPatternType = document.getElementById('type-select').value;
+            initGame();
+        }
+
+        function initGame() {
+            playArea.innerHTML = '';
+            dropZonesContainer.innerHTML = '';
+            zones = [];
+            messageEl.innerText = "拖動物件排排站，由最高排到最矮放入右方框框！";
+            messageEl.className = "text-sm md:text-lg text-gray-700 font-medium px-2";
+
+            // 1. 動態產生標籤：最高、第2高、最矮
+            const labels = [];
+            for (let i = 0; i < numObjects; i++) {
+                if (i === 0) labels.push("最高");
+                else if (i === numObjects - 1) labels.push("最矮");
+                else labels.push(`第${i + 1}高`);
+            }
+
+            // 2. 基於「單位高度 (積木)」來計算所有高度，強調高度差異
+            const blockHeight = 35; 
+            let baseBlocks = [];
+            let currentB = 2; // 最矮至少 2 個單位
+            
+            const blockStep = numObjects <= 4 ? 2 : 1;
+            for (let i = 0; i < numObjects; i++) {
+                baseBlocks.push(currentB);
+                currentB += blockStep;
+            }
+            
+            baseHeights = baseBlocks.map(b => b * blockHeight);
+            const maxHeight = baseHeights[numObjects - 1];
+
+            // 調整整個遊戲區域的高度
+            gameContainer.style.height = Math.max(maxHeight + 120, 300) + 'px';
+
+            // 3. 準備框框 (放置於右側)
+            for (let i = 0; i < numObjects; i++) {
+                const zone = document.createElement('div');
+                // 框框改為彈性寬度 flex-1，確保即使 6 個也能並排不換行
+                zone.className = "zone drop-zone flex-1 min-w-[35px] max-w-[80px] border-4 border-dashed border-gray-300 flex flex-col items-center justify-start text-gray-400 font-bold text-xs md:text-sm relative bg-gray-50 mx-0.5 md:mx-1";
+                zone.style.height = (maxHeight + 50) + 'px';
+                
+                zone.dataset.expected = numObjects - 1 - i; 
+                zone.dataset.currentRank = "";
+                
+                const span = document.createElement('span');
+                span.className = "absolute top-2 pointer-events-none select-none whitespace-nowrap bg-white/80 px-1 rounded";
+                if (labels[i].length > 2 || numObjects >= 5) span.style.transform = 'scale(0.75)'; // 數量多時文字稍微縮小防破版
+                span.innerText = labels[i];
+                zone.appendChild(span);
+                
+                dropZonesContainer.appendChild(zone);
+                zones.push(zone); 
+            }
+
+            // 4. 定義顏色與圖案庫
+            const colors = [];
+            for (let i = 0; i < numObjects; i++) {
+                colors.push(`hsla(${(i * 137.5) % 360}, 75%, 55%, 0.9)`);
+            }
+
+            const stackEmojis = ['🍔', '🥞', '📚', '🧱', '📦', '🪙', '🍩', '🎁'];
+            const roundEmoji = stackEmojis[Math.floor(Math.random() * stackEmojis.length)];
+
+            let objects = [];
+            for(let i = 0; i < numObjects; i++) {
+                objects.push({ rank: i, height: baseHeights[i], blocks: baseBlocks[i] });
+            }
+            
+            objects.sort(() => Math.random() - 0.5); 
+            colors.sort(() => Math.random() - 0.5);
+
+            // 使用 setTimeout 確保 DOM 已經更新，才能抓到正確的寬高
+            setTimeout(() => {
+                const pWidth = playArea.clientWidth;
+                const pHeight = gameContainer.clientHeight; // 基準高度使用外部容器
+
+                objects.forEach((obj, idx) => {
+                    const el = document.createElement('div');
+                    el.dataset.rank = obj.rank;
+                    el.classList.add('shape');
+                    el.style.width = '55px';
+                    el.style.height = obj.height + 'px';
+                    
+                    if (currentPatternType === 'geometric') {
+                        el.style.backgroundColor = colors[idx];
+                        el.style.borderRadius = '8px 8px 0 0';
+                        el.style.backgroundImage = `repeating-linear-gradient(to top, transparent, transparent ${blockHeight - 2}px, rgba(255,255,255,0.4) ${blockHeight - 2}px, rgba(255,255,255,0.4) ${blockHeight}px)`;
+                        el.style.boxShadow = 'inset 0 0 10px rgba(0,0,0,0.1)';
+                    } else {
+                        el.style.backgroundColor = 'transparent';
+                        el.style.display = 'flex';
+                        el.style.flexDirection = 'column-reverse';
+                        el.style.alignItems = 'center';
+                        
+                        for(let j=0; j < obj.blocks; j++) {
+                            const span = document.createElement('span');
+                            span.innerText = roundEmoji;
+                            span.style.fontSize = '35px';
+                            span.style.height = blockHeight + 'px';
+                            span.style.display = 'flex';
+                            span.style.alignItems = 'center';
+                            span.style.justifyContent = 'center';
+                            span.style.pointerEvents = 'none';
+                            if (j > 0 && (roundEmoji === '🍔' || roundEmoji === '🥞')) {
+                                span.style.marginBottom = '-10px';
+                            }
+                            el.appendChild(span);
+                        }
+                    }
+                    
+                    el.style.position = 'absolute';
+                    el.style.cursor = 'grab';
+                    el.style.filter = 'drop-shadow(0 4px 6px rgba(0,0,0,0.2))';
+                    
+                    // 確保生成在「左半邊」的範圍內
+                    const maxLeftRange = Math.max(5, pWidth - 65);
+                    const left = 10 + Math.random() * maxLeftRange;
+                    const top = pHeight - obj.height - (Math.random() * 20) - 6; // 扣除地平線厚度
+                    
+                    el.style.left = left + 'px';
+                    el.style.top = top + 'px';
+
+                    el.addEventListener('pointerdown', onPointerDown);
+                    playArea.appendChild(el);
+                });
+
+                updateZoneSizes();
+            }, 50);
+        }
+
+        function toggleHintMode() {
+            isHintMode = document.getElementById('hint-toggle').checked;
+            updateZoneSizes();
+        }
+
+        function updateZoneSizes() {
+            if (zones.length === 0 || baseHeights.length === 0) return;
+
+            const maxHeight = baseHeights[numObjects - 1]; 
+            
+            zones.forEach(zone => {
+                const expectedRank = parseInt(zone.dataset.expected);
+                if (isHintMode) {
+                    zone.style.height = (baseHeights[expectedRank] + 50) + 'px';
+                } else {
+                    zone.style.height = (maxHeight + 50) + 'px';
+                }
+            });
+
+            setTimeout(() => {
+                const shapes = document.querySelectorAll('.shape');
+                shapes.forEach(shape => {
+                    const rank = shape.dataset.rank;
+                    let currentZone = null;
+                    zones.forEach(z => {
+                        if(z.dataset.currentRank === rank) currentZone = z;
+                    });
+                    if (currentZone) snapToZone(shape, currentZone);
+                });
+            }, 300); 
+        }
+
+        function onPointerDown(e) {
+            initAudio(); 
+            playSound('pick'); 
+
+            draggedEl = e.currentTarget;
+            draggedEl.style.zIndex = ++highestZ;
+            draggedEl.style.cursor = 'grabbing';
+            draggedEl.style.transform = 'scaleY(1.05)'; 
+            draggedEl.style.filter = 'drop-shadow(0 15px 20px rgba(0,0,0,0.3))';
+
+            const rect = draggedEl.getBoundingClientRect();
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
+
+            draggedEl.setPointerCapture(e.pointerId);
+
+            draggedEl.addEventListener('pointermove', onPointerMove);
+            draggedEl.addEventListener('pointerup', onPointerUp);
+            draggedEl.addEventListener('pointercancel', onPointerUp);
+        }
+
+        function onPointerMove(e) {
+            if (!draggedEl) return;
+            e.preventDefault();
+
+            const pRect = playArea.getBoundingClientRect();
+            let newLeft = e.clientX - pRect.left - startX;
+            let newTop = e.clientY - pRect.top - startY;
+
+            // 因為是掛載在左側的 playArea 上，X 軸可以超出右邊界以到達右邊的區塊
+            draggedEl.style.left = newLeft + 'px';
+            draggedEl.style.top = newTop + 'px';
+
+            checkHover(draggedEl);
+        }
+
+        function onPointerUp(e) {
+            if (!draggedEl) return;
+
+            draggedEl.style.cursor = 'grab';
+            draggedEl.style.transform = 'scaleY(1)';
+            draggedEl.style.filter = 'drop-shadow(0 4px 6px rgba(0,0,0,0.2))';
+            draggedEl.releasePointerCapture(e.pointerId);
+
+            draggedEl.removeEventListener('pointermove', onPointerMove);
+            draggedEl.removeEventListener('pointerup', onPointerUp);
+            draggedEl.removeEventListener('pointercancel', onPointerUp);
+
+            checkDrop(draggedEl);
+            draggedEl = null;
+            clearHoverEffects();
+        }
+
+        function checkHover(el) {
+            const rect = el.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            let foundZone = null;
+            zones.forEach(zone => {
+                const zRect = zone.getBoundingClientRect();
+                if (centerX >= zRect.left && centerX <= zRect.right &&
+                    centerY >= zRect.top && centerY <= zRect.bottom) {
+                    foundZone = zone;
+                }
+            });
+
+            if (currentHoverZone !== foundZone) {
+                if (currentHoverZone) currentHoverZone.classList.remove('hovered');
+                if (foundZone) foundZone.classList.add('hovered');
+                currentHoverZone = foundZone;
+            }
+        }
+
+        function clearHoverEffects() {
+            if (currentHoverZone) {
+                currentHoverZone.classList.remove('hovered');
+                currentHoverZone = null;
+            }
+        }
+
+        function checkDrop(el) {
+            const rect = el.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            let droppedInZone = null;
+            zones.forEach(zone => {
+                const zRect = zone.getBoundingClientRect();
+                if (centerX >= zRect.left && centerX <= zRect.right &&
+                    centerY >= (zRect.top - 50) && centerY <= zRect.bottom + 50) {
+                    droppedInZone = zone;
+                }
+            });
+
+            zones.forEach(z => {
+                if(z.dataset.currentRank === el.dataset.rank) {
+                    z.dataset.currentRank = "";
+                }
+            });
+
+            let actionFeedback = null; 
+
+            if (droppedInZone) {
+                droppedInZone.dataset.currentRank = el.dataset.rank;
+                snapToZone(el, droppedInZone);
+                
+                if (el.dataset.rank === droppedInZone.dataset.expected) {
+                    actionFeedback = 'correct';
+                    playSound('snap'); 
+                    droppedInZone.classList.add('correct-flash'); 
+                    setTimeout(() => droppedInZone.classList.remove('correct-flash'), 500);
+                } else {
+                    actionFeedback = 'error';
+                    playSound('error'); 
+                    droppedInZone.classList.add('error-flash'); 
+                    setTimeout(() => droppedInZone.classList.remove('error-flash'), 500);
+                }
+            } else {
+                playSound('drop'); 
+                const pRect = playArea.getBoundingClientRect();
+                const floorTop = pRect.height - rect.height;
+                
+                // 防呆機制：如果丟到右邊的白色區域卻沒放進框裡，自動彈回左邊！
+                const currentLeft = parseFloat(el.style.left);
+                if (currentLeft > pRect.width - 20) {
+                    const safeLeft = 10 + Math.random() * Math.max(10, pRect.width - 65);
+                    el.style.transition = 'left 0.3s ease-out, top 0.3s ease-in';
+                    el.style.left = safeLeft + 'px';
+                } else {
+                    el.style.transition = 'top 0.3s ease-in';
+                }
+                
+                el.style.top = floorTop + 'px';
+                setTimeout(() => el.style.transition = 'transform 0.1s ease-out', 300);
+            }
+
+            checkWinCondition(actionFeedback);
+        }
+
+        function snapToZone(el, zone) {
+            const zRect = zone.getBoundingClientRect();
+            const pRect = playArea.getBoundingClientRect();
+            const rect = el.getBoundingClientRect();
+            
+            // X 軸：計算從左側區塊跨越到右側框框的絕對距離
+            const snapLeft = (zRect.left - pRect.left) + (zRect.width - rect.width) / 2;
+            
+            // Y 軸對齊底部
+            const borderThickness = 4;
+            const zoneBottom = zRect.bottom - pRect.top;
+            const snapTop = zoneBottom - rect.height - borderThickness;
+            
+            el.style.transition = 'left 0.2s, top 0.2s, transform 0.1s, filter 0.1s';
+            el.style.left = snapLeft + 'px';
+            el.style.top = snapTop + 'px';
+            
+            setTimeout(() => {
+                if(el) el.style.transition = 'transform 0.1s ease-out, filter 0.1s ease-out';
+            }, 200);
+        }
+
+        function checkWinCondition(actionFeedback = null) {
+            let filledCount = 0;
+            let wrongCount = 0;
+
+            zones.forEach(zone => {
+                if (zone.dataset.currentRank !== "") {
+                    filledCount++;
+                    if (zone.dataset.currentRank !== zone.dataset.expected) {
+                        wrongCount++;
+                    }
+                }
+            });
+
+            if (filledCount === numObjects && wrongCount === 0) {
+                setTimeout(() => playSound('win'), 150); 
+                messageEl.innerText = "🎉 恭喜你！高矮排列完全正確！ 🎉";
+                messageEl.className = "text-xl md:text-2xl text-emerald-600 font-bold animate-pulse px-2";
+                fireConfetti();
+            } else if (actionFeedback === 'error') {
+                messageEl.innerText = "❌ 哎呀，這個高度順序不對喔！再比比看！";
+                messageEl.className = "text-sm md:text-lg text-red-500 font-bold px-2";
+            } else if (actionFeedback === 'correct') {
+                messageEl.innerText = "👍 放對了！繼續保持！";
+                messageEl.className = "text-sm md:text-lg text-emerald-600 font-bold px-2";
+            } else {
+                if (wrongCount > 0) {
+                    messageEl.innerText = "🤔 框框裡有些圖案高矮順序不對喔！";
+                    messageEl.className = "text-sm md:text-lg text-red-500 font-bold px-2";
+                } else if (filledCount > 0) {
+                    messageEl.innerText = "👍 目前都放對了！繼續加油！";
+                    messageEl.className = "text-sm md:text-lg text-emerald-600 font-bold px-2";
+                } else {
+                    messageEl.innerText = "拖動物件排排站，由最高排到最矮放入右方框框！";
+                    messageEl.className = "text-sm md:text-lg text-gray-700 font-medium px-2";
+                }
+            }
+        }
+
+        function fireConfetti() {
+            for(let i=0; i<60; i++) {
+                let conf = document.createElement('div');
+                conf.style.position = 'fixed';
+                conf.style.width = '10px';
+                conf.style.height = '10px';
+                conf.style.backgroundColor = ['#10b981','#059669','#34d399','#fcd34d','#3b82f6'][Math.floor(Math.random()*5)];
+                conf.style.zIndex = '9999';
+                conf.style.pointerEvents = 'none';
+                document.body.appendChild(conf);
+
+                let x = window.innerWidth / 2;
+                let y = window.innerHeight / 2;
+                let angle = Math.random() * Math.PI * 2;
+                let velocity = 10 + Math.random() * 25;
+                let vx = Math.cos(angle) * velocity;
+                let vy = Math.sin(angle) * velocity - 15;
+                let rotation = Math.random() * 360;
+                let dr = (Math.random() - 0.5) * 20;
+
+                let opacity = 1;
+                let frame = 0;
+                
+                function animate() {
+                    if (frame > 60) opacity -= 0.03;
+                    vy += 0.8; 
+                    x += vx;
+                    y += vy;
+                    rotation += dr;
+
+                    conf.style.left = x + 'px';
+                    conf.style.top = y + 'px';
+                    conf.style.transform = `rotate(${rotation}deg)`;
+                    conf.style.opacity = opacity;
+
+                    if (opacity > 0) {
+                        requestAnimationFrame(animate);
+                        frame++;
+                    } else {
+                        conf.remove();
+                    }
+                }
+                requestAnimationFrame(animate);
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            const shapes = document.querySelectorAll('.shape');
+            shapes.forEach(shape => {
+                const rank = shape.dataset.rank;
+                let currentZone = null;
+                zones.forEach(z => {
+                    if(z.dataset.currentRank === rank) currentZone = z;
+                });
+                if (currentZone) {
+                    snapToZone(shape, currentZone);
+                } else {
+                    const pRect = playArea.getBoundingClientRect();
+                    const rect = shape.getBoundingClientRect();
+                    shape.style.top = (pRect.height - rect.height) + 'px';
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', initGame);
+
+    </script>
+</body>
+</html>
