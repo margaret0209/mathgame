@@ -29,27 +29,37 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
             background-color: #eff6ff;
         }
-        .math-input:disabled {
+        .math-input.is-locked {
             background-color: transparent;
             border-color: transparent;
             color: black;
             font-weight: bold;
+            box-shadow: none !important;
         }
-        /* 借位用的小輸入框 */
+        /* 借位用的小輸入框 (改為動態接收 CSS 變數) */
         .borrow-input {
-            border-color: #fca5a5;
+            border-color: var(--borrow-color-light, #fca5a5);
             background-color: white; /* 確保背景不透明遮蓋後方 */
             z-index: 10;
         }
         .borrow-input:focus {
-            border-color: #ef4444;
-            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+            border-color: var(--borrow-color-main, #ef4444);
+            box-shadow: 0 0 0 3px var(--borrow-color-shadow, rgba(239, 68, 68, 0.3));
         }
-        .borrow-input:disabled {
+        .borrow-input.is-locked {
             background-color: white; 
             border-color: transparent;
-            color: #ef4444; 
+            color: var(--borrow-color-main, #ef4444); 
             opacity: 1 !important; 
+            box-shadow: none !important;
+        }
+        /* 新增：被二次借位劃掉時的樣式 */
+        .borrow-input.crossed-out.is-locked {
+            color: #9ca3af !important; /* text-gray-400 */
+            text-decoration: line-through;
+            background-color: transparent;
+            border-color: transparent;
+            box-shadow: none !important;
         }
         /* 消失動畫輔助 */
         .fade-out {
@@ -124,6 +134,15 @@
     </div>
 
     <script>
+        // 定義借位專用的動態調色盤
+        const BORROW_PALETTE = [
+            { main: '#ef4444', light: '#fca5a5', shadow: 'rgba(239, 68, 68, 0.3)', bg: 'bg-red-50', ring: 'ring-red-400' },       // 🔴 紅
+            { main: '#3b82f6', light: '#93c5fd', shadow: 'rgba(59, 130, 246, 0.3)', bg: 'bg-blue-50', ring: 'ring-blue-400' },    // 🔵 藍
+            { main: '#10b981', light: '#6ee7b7', shadow: 'rgba(16, 185, 129, 0.3)', bg: 'bg-green-50', ring: 'ring-green-400' },  // 🟢 綠
+            { main: '#8b5cf6', light: '#c4b5fd', shadow: 'rgba(139, 92, 246, 0.3)', bg: 'bg-purple-50', ring: 'ring-purple-400' },// 🟣 紫
+            { main: '#f97316', light: '#fdba74', shadow: 'rgba(249, 115, 22, 0.3)', bg: 'bg-orange-50', ring: 'ring-orange-400' } // 🟠 橘
+        ];
+
         // 玩家面板類別 (封裝單一遊戲面板的邏輯與 UI)
         class PlayerBoard {
             constructor(container, id, title, colorClass, mode, digitsCount, onFinishCallback) {
@@ -177,6 +196,28 @@
                 this.borrowSize = bSize;
                 this.gapClass = gClass;
 
+                // 綁定共用的輸入處理 (給動態生成的輸入框使用)
+                this.handleInputBound = (e) => {
+                    if (this.isDisabled) return;
+                    if (this.expectedEvent === 'INPUT' && this.currentTarget === e.target) {
+                        const val = parseInt(e.target.value);
+                        // 處理預期為 0 的字串比對
+                        if (val === this.expectedValue || (this.expectedValue === 0 && e.target.value === '0')) {
+                            e.target.classList.add('is-locked');
+                            e.target.blur(); // 移除焦點以取消高亮外框
+                            
+                            if (this.isLeadingZero && e.target.dataset.type === 'C' && e.target.dataset.col === '0') {
+                                setTimeout(() => {
+                                    e.target.classList.add('fade-out');
+                                    setTimeout(() => { e.target.value = ''; }, 300);
+                                }, 500);
+                            }
+                            this.actionIdx++;
+                            this.doNextAction();
+                        }
+                    }
+                };
+
                 // 初始化 HTML
                 this.container.innerHTML = this.getHTML(title, colorClass);
                 
@@ -190,7 +231,9 @@
                 const inputs = this.container.querySelectorAll('input[type="text"]');
                 inputs.forEach(input => {
                     input.addEventListener('focus', () => {
-                        if (!this.isDisabled) this.activeInput = input;
+                        if (!this.isDisabled && !input.classList.contains('is-locked')) {
+                            this.activeInput = input;
+                        }
                     });
                 });
 
@@ -215,11 +258,12 @@
                         <div class="flex justify-center mb-6 select-none w-full">
                             <div style="display: grid; grid-template-columns: repeat(${cols}, minmax(0, auto));" class="gap-y-1 ${gap} font-mono">
                                 
-                                <!-- 第一排：借位區 -->
-                                <div class="${this.cellClass}"></div>
+                                <!-- 第一排：借位區 (支援多次退位向上堆疊) -->
+                                <div class="${this.cellClass} !h-20 sm:!h-24"></div>
                                 ${Array.from({length: this.digitsCount}, (_, i) => `
-                                    <div class="${this.cellClass} relative flex justify-center">
-                                        <input type="text" readonly data-type="BORROW" data-col="${i}" class="math-input borrow-input absolute bottom-0 hidden opacity-0 transition-opacity duration-300 ${this.borrowSize}" maxlength="2">
+                                    <div class="${this.cellClass} !h-20 sm:!h-24 relative flex justify-center">
+                                        <div data-type="BORROW_STACK" data-col="${i}" class="absolute bottom-0 w-full flex flex-col-reverse items-center gap-1">
+                                        </div>
                                     </div>
                                 `).join('')}
 
@@ -242,7 +286,7 @@
                                 <div class="${this.cellClass}"></div>
                                 ${Array.from({length: this.digitsCount}, (_, i) => `
                                     <div class="${this.cellClass} flex justify-center">
-                                        <input type="text" readonly data-type="C" data-col="${i}" class="math-input transition-all duration-500 w-full h-full ${this.inputSize}" maxlength="1" disabled>
+                                        <input type="text" readonly data-type="C" data-col="${i}" class="math-input transition-all duration-500 w-full h-full ${this.inputSize} is-locked" maxlength="1">
                                     </div>
                                 `).join('')}
                             </div>
@@ -284,7 +328,7 @@
                 // 虛擬鍵盤點擊
                 this.el.keypadBtns.forEach(btn => {
                     this.bindTap(btn, (e) => {
-                        if (this.isDisabled || !this.activeInput || this.activeInput.disabled) return;
+                        if (this.isDisabled || !this.activeInput || this.activeInput.classList.contains('is-locked')) return;
                         
                         const key = e.target.textContent;
                         if (key === '⌫') {
@@ -312,38 +356,26 @@
                     });
                 }
 
-                // 輸入框監聽 (包含借位與答案)
-                const handleInput = (e) => {
-                    if (this.isDisabled) return;
-                    if (this.expectedEvent === 'INPUT' && this.currentTarget === e.target) {
-                        const val = parseInt(e.target.value);
-                        // 處理預期為 0 的字串比對
-                        if (val === this.expectedValue || (this.expectedValue === 0 && e.target.value === '0')) {
-                            e.target.disabled = true;
-                            
-                            // 最左側若是 0 則自動隱藏 (0自動消失特效)
-                            if (this.isLeadingZero && e.target.dataset.type === 'C' && e.target.dataset.col === '0') {
-                                setTimeout(() => {
-                                    e.target.classList.add('fade-out');
-                                    setTimeout(() => { e.target.value = ''; }, 300);
-                                }, 500);
-                            }
-                            this.actionIdx++;
-                            this.doNextAction();
-                        }
-                    }
-                };
-
+                // 輸入框監聽 (答案區)
                 for (let i = 0; i < this.digitsCount; i++) {
-                    this.getEl('BORROW', i).addEventListener('input', handleInput);
-                    this.getEl('C', i).addEventListener('input', handleInput);
+                    this.getEl('C', i).addEventListener('input', this.handleInputBound);
                 }
             }
 
             clearHighlights() {
+                const removeClasses = ['cursor-pointer', 'ring-4', 'animate-pulse', 'rounded-lg', 'ring-yellow-400', 'bg-yellow-50'];
+                BORROW_PALETTE.forEach(p => removeClasses.push(p.bg, p.ring)); // 確保清除所有調色盤顏色
+
                 for(let i=0; i<this.digitsCount; i++) {
                     const el = this.getEl('A', i);
-                    el.classList.remove('cursor-pointer', 'ring-4', 'ring-yellow-400', 'bg-yellow-50', 'rounded-lg', 'animate-pulse');
+                    el.classList.remove(...removeClasses);
+                    
+                    const stack = this.getEl('BORROW_STACK', i);
+                    if(stack) {
+                        stack.querySelectorAll('input').forEach(input => {
+                            input.classList.remove(...removeClasses);
+                        });
+                    }
                 }
             }
 
@@ -352,10 +384,9 @@
                 this.activeInput = null;
                 
                 for (let i = 0; i < this.digitsCount; i++) {
-                    const borrowEl = this.getEl('BORROW', i);
-                    borrowEl.value = '';
-                    borrowEl.disabled = true;
-                    borrowEl.classList.add('hidden', 'opacity-0');
+                    // 清空堆疊區
+                    const stack = this.getEl('BORROW_STACK', i);
+                    if(stack) stack.innerHTML = '';
                     
                     const aEl = this.getEl('A', i);
                     aEl.className = `${this.cellClass} flex items-center justify-center transition-all duration-300 font-bold text-gray-800`;
@@ -366,10 +397,72 @@
 
                     const cEl = this.getEl('C', i);
                     cEl.value = '';
-                    cEl.disabled = true;
+                    cEl.classList.add('is-locked');
                     cEl.classList.remove('fade-out');
                 }
                 this.clearHighlights();
+            }
+
+            // 取得目前最上層可點擊的數字
+            getCurrentClickableEl(idx) {
+                const stack = this.getEl('BORROW_STACK', idx);
+                const inputs = stack.querySelectorAll('input');
+                if (inputs.length > 0) return inputs[inputs.length - 1]; // 最上層的退位數字
+                return this.getEl('A', idx); // 原始數字
+            }
+
+            // 在堆疊區產生新的退位輸入框，並將舊的劃掉
+            spawnBorrowInput(idx, theme) {
+                const stack = this.getEl('BORROW_STACK', idx);
+                
+                // 處理原本的數字 (加上刪除線)
+                const existingInputs = stack.querySelectorAll('input');
+                if (existingInputs.length > 0) {
+                    const lastInput = existingInputs[existingInputs.length - 1];
+                    lastInput.classList.add('crossed-out');
+                    lastInput.classList.remove('cursor-pointer', 'ring-4', 'ring-yellow-400', 'bg-yellow-50', 'animate-pulse');
+                } else {
+                    const aEl = this.getEl('A', idx);
+                    aEl.classList.add('line-through', 'text-gray-400', 'opacity-50');
+                    aEl.classList.remove('font-bold', 'text-gray-800');
+                    aEl.classList.remove('cursor-pointer', 'ring-4', 'ring-yellow-400', 'bg-yellow-50', 'animate-pulse');
+                }
+
+                // 產生新的輸入框疊在上方
+                const newInput = document.createElement('input');
+                newInput.type = 'text';
+                newInput.readOnly = true;
+                newInput.className = `math-input borrow-input z-10 transition-opacity duration-300 ${this.borrowSize}`;
+                newInput.maxLength = 2;
+                newInput.dataset.type = 'BORROW_INPUT';
+                newInput.dataset.col = idx;
+                
+                // 應用動態主題顏色
+                if (theme) {
+                    newInput.style.setProperty('--borrow-color-main', theme.main);
+                    newInput.style.setProperty('--borrow-color-light', theme.light);
+                    newInput.style.setProperty('--borrow-color-shadow', theme.shadow);
+                }
+
+                stack.appendChild(newInput); // flex-col-reverse 會讓新的加在上面
+                
+                newInput.addEventListener('input', this.handleInputBound);
+                newInput.addEventListener('focus', () => {
+                    if (!this.isDisabled && !newInput.classList.contains('is-locked')) {
+                        this.activeInput = newInput;
+                    }
+                });
+                
+                // 綁定點擊事件，以便未來若又被借位時可點擊
+                this.bindTap(newInput, () => {
+                    if (this.isDisabled) return;
+                    if (this.expectedEvent === 'CLICK' && this.currentTarget === newInput) {
+                        this.actionIdx++;
+                        this.doNextAction();
+                    }
+                });
+                
+                return newInput;
             }
 
             getDigitName(idx) {
@@ -386,20 +479,34 @@
                 // 產生動作序列 (State Machine Queue) - 從右到左計算
                 this.actions = [];
                 let curA = [...this.digitsA];
+                let borrowGroupIndex = 0; // 追蹤這是第幾組借位
                 
                 for (let i = this.digitsCount - 1; i >= 0; i--) {
                     if (curA[i] < this.digitsB_logic[i]) {
-                        // 產生借位動作序列
-                        let dName = this.getDigitName(i);
-                        let dNameNext = this.getDigitName(i-1);
-
-                        this.actions.push({ type: 'BORROW_CLICK_SRC', idx: i - 1, hint: `${dName}不夠減，請點擊${dNameNext} [${curA[i-1]}] 借位` });
-                        curA[i-1] -= 1;
-                        this.actions.push({ type: 'BORROW_INPUT_SRC', idx: i - 1, expect: curA[i-1], hint: `請輸入：${curA[i-1]+1} - 1 = ?` });
                         
-                        this.actions.push({ type: 'BORROW_CLICK_DST', idx: i, hint: `正確！請點擊被借位的 [${curA[i]}]` });
-                        curA[i] += 10;
-                        this.actions.push({ type: 'BORROW_INPUT_DST', idx: i, expect: curA[i], hint: `請輸入：${curA[i]-10} + 10 = ?` });
+                        // 取得這組借位的顏色主題
+                        const currentTheme = BORROW_PALETTE[borrowGroupIndex % BORROW_PALETTE.length];
+                        borrowGroupIndex++;
+
+                        // 尋找可以借位的來源 (支援跨越 0 的連續退位)
+                        let srcIdx = i - 1;
+                        while(srcIdx >= 0 && curA[srcIdx] === 0) {
+                            srcIdx--;
+                        }
+                        
+                        // 依序向右方傳遞借位
+                        for (let j = srcIdx; j < i; j++) {
+                            let dName = this.getDigitName(j+1);
+                            let dNameNext = this.getDigitName(j);
+
+                            this.actions.push({ type: 'BORROW_CLICK_SRC', idx: j, theme: currentTheme, hint: `${dName}不夠減，請點擊${dNameNext} [${curA[j]}] 借位` });
+                            curA[j] -= 1;
+                            this.actions.push({ type: 'BORROW_INPUT_SRC', idx: j, theme: currentTheme, expect: curA[j], hint: `請輸入：${curA[j]+1} - 1 = ?` });
+                            
+                            this.actions.push({ type: 'BORROW_CLICK_DST', idx: j+1, theme: currentTheme, hint: `正確！請點擊被借位的 [${curA[j+1]}]` });
+                            curA[j+1] += 10;
+                            this.actions.push({ type: 'BORROW_INPUT_DST', idx: j+1, theme: currentTheme, expect: curA[j+1], hint: `請輸入：${curA[j+1]-10} + 10 = ?` });
+                        }
                     }
                     this.actions.push({ type: 'ANSWER_INPUT', idx: i, expect: curA[i] - this.digitsB_logic[i], hint: `請計算：${curA[i]} - ${this.digitsB_logic[i]} = ?` });
                 }
@@ -415,7 +522,7 @@
             }
 
             focusInput(inputEl) {
-                inputEl.disabled = false;
+                inputEl.classList.remove('is-locked');
                 inputEl.focus();
                 this.activeInput = inputEl;
             }
@@ -434,9 +541,10 @@
 
                 if (action.type === 'BORROW_CLICK_SRC' || action.type === 'BORROW_CLICK_DST') {
                     this.setMessage(isHint ? action.hint : `請進行計算`, isHint ? 'bg-yellow-100' : 'bg-gray-200', isHint ? 'text-yellow-800' : 'text-gray-800');
-                    const el = this.getEl('A', action.idx);
+                    
+                    const el = this.getCurrentClickableEl(action.idx);
                     el.classList.add('cursor-pointer');
-                    if (isHint) el.classList.add('ring-4', 'ring-yellow-400', 'bg-yellow-50', 'rounded-lg', 'animate-pulse');
+                    if (isHint) el.classList.add('ring-4', action.theme.ring, action.theme.bg, 'rounded-lg', 'animate-pulse');
                     
                     this.currentTarget = el;
                     this.expectedEvent = 'CLICK';
@@ -444,14 +552,8 @@
                 } else if (action.type === 'BORROW_INPUT_SRC' || action.type === 'BORROW_INPUT_DST') {
                     this.setMessage(isHint ? action.hint : `請輸入借位數字`, 'bg-blue-100', 'text-blue-800');
                     
-                    // 被借位後畫刪除線
-                    const aEl = this.getEl('A', action.idx);
-                    aEl.classList.add('line-through', 'text-gray-400');
-                    aEl.classList.remove('font-bold', 'text-gray-800');
-                    
-                    const el = this.getEl('BORROW', action.idx);
-                    el.classList.remove('hidden');
-                    setTimeout(() => el.classList.remove('opacity-0'), 10);
+                    // 動態產生堆疊輸入框，並帶入專屬主題色
+                    const el = this.spawnBorrowInput(action.idx, action.theme);
                     this.focusInput(el);
                     
                     this.currentTarget = el;
@@ -535,24 +637,26 @@
                 let currentA = strA.split('').map(Number);
                 let bArr = strB.split('').map(Number);
                 let borrowCount = 0;
-                let reject = false;
                 
                 // 由右至左檢測借位狀態
                 for (let i = digits - 1; i >= 0; i--) {
                     if (currentA[i] < bArr[i]) {
-                        if (!allowBorrow) { reject = true; break; }
-                        borrowCount++;
-                        // 為保持 UI 簡單，排除「連續借位」(例如 204 - 18) 出現中間數字是 0 的情況
-                        if (i - 1 < 0 || currentA[i-1] === 0) { 
-                            reject = true; 
-                            break; 
+                        if (!allowBorrow) break;
+                        
+                        // 偵測借位來源 (容許跨 0 借位)
+                        let src = i - 1;
+                        while(src >= 0 && currentA[src] === 0) src--;
+                        if (src < 0) break; // 防呆
+                        
+                        // 模擬連續借位改變的數值
+                        for (let j = src; j < i; j++) {
+                            currentA[j] -= 1;
+                            currentA[j+1] += 10;
+                            borrowCount++;
                         }
-                        currentA[i-1] -= 1;
-                        currentA[i] += 10;
                     }
                 }
                 
-                if (reject) continue;
                 if (!allowBorrow && borrowCount === 0) valid = true;
                 if (allowBorrow && wantBorrow && borrowCount > 0) valid = true;
                 if (allowBorrow && !wantBorrow && borrowCount === 0) valid = true;
