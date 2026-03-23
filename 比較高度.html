@@ -269,7 +269,14 @@
                 colors.push(`hsla(${(i * 137.5) % 360}, 75%, 55%, 0.9)`);
             }
 
-            const stackEmojis = ['🍔', '🥞', '📚', '🧱', '📦', '🪙', '🍩', '🎁'];
+            // 大幅擴充堆疊物件的種類
+            const stackEmojis = [
+                '🍔', '🥞', '📚', '🧱', '📦', '🪙', '🍩', '🎁',
+                '🍎', '🍊', '🍓', '🧀', '🥪', '🌮', '🍙', '🍘',
+                '🧁', '🍪', '🍫', '🍬', '🧊', '🎲', '🧶', '🥎',
+                '🏀', '⚽', '⚾', '🎾', '🏐', '🎱', '🪀', '🔮',
+                '🧿', '🍄', '🌵', '🌲', '🍵', '🥫', '🥣'
+            ];
             const roundEmoji = stackEmojis[Math.floor(Math.random() * stackEmojis.length)];
 
             let objects = [];
@@ -312,7 +319,10 @@
                             span.style.alignItems = 'center';
                             span.style.justifyContent = 'center';
                             span.style.pointerEvents = 'none';
-                            if (j > 0 && (roundEmoji === '🍔' || roundEmoji === '🥞')) {
+                            
+                            // 針對比較扁平的物品，增加堆疊時的交疊感 (-10px margin)
+                            const overlapEmojis = ['🍔', '🥞', '🍘', '🍪', '🧊', '🥪', '📚', '🧱', '🥣', '🥫', '🧀', '🍩'];
+                            if (j > 0 && overlapEmojis.includes(roundEmoji)) {
                                 span.style.marginBottom = '-10px';
                             }
                             el.appendChild(span);
