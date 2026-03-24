@@ -1,276 +1,512 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <title>熱脹冷縮小遊戲</title>
-  <style>
-    body {
-      font-family: "Microsoft JhengHei", system-ui, sans-serif;
-      background: #f4f9ff;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .game-container {
-      width: 95%;
-      max-width: 900px;
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 20px;
-      text-align: center;
-    }
-    h1 {
-      font-size: 28px;
-      margin-bottom: 8px;
-      color: #333;
-    }
-    .subtitle {
-      font-size: 18px;
-      margin-bottom: 16px;
-      color: #555;
-    }
-    .question-area {
-      margin: 10px 0 20px 0;
-      padding: 16px;
-      border-radius: 12px;
-      background: #e7f3ff;
-      min-height: 140px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-    .scene {
-      font-size: 22px;
-      margin-bottom: 8px;
-    }
-    .question-text {
-      font-size: 26px;
-      font-weight: bold;
-      color: #222;
-    }
-    .image-hint {
-      font-size: 40px;
-      margin: 8px 0;
-    }
-    .buttons {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 16px;
-      margin-bottom: 12px;
-    }
-    .btn {
-      font-size: 24px;
-      padding: 14px 24px;
-      border-radius: 12px;
-      border: none;
-      cursor: pointer;
-      min-width: 160px;
-      transition: transform 0.1s, box-shadow 0.1s;
-    }
-    .btn:active {
-      transform: scale(0.97);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-    .btn-hot {
-      background: #ff7979;
-      color: white;
-    }
-    .btn-cold {
-      background: #74b9ff;
-      color: white;
-    }
-    .btn-same {
-      background: #b2bec3;
-      color: #222;
-    }
-    .btn-next {
-      background: #00b894;
-      color: white;
-      font-size: 20px;
-      padding: 10px 18px;
-      margin-top: 4px;
-    }
-    .feedback {
-      font-size: 22px;
-      min-height: 32px;
-      margin-bottom: 6px;
-    }
-    .feedback.correct {
-      color: #00b894;
-    }
-    .feedback.wrong {
-      color: #d63031;
-    }
-    .score {
-      font-size: 20px;
-      margin: 6px 0;
-    }
-    .rule {
-      margin-top: 6px;
-      font-size: 18px;
-      color: #333;
-      font-weight: bold;
-    }
-    .read-btn {
-      font-size: 18px;
-      padding: 8px 16px;
-      border-radius: 8px;
-      border: 1px solid #0984e3;
-      background: #dfefff;
-      color: #0984e3;
-      cursor: pointer;
-      margin-bottom: 8px;
-    }
-    @media (max-width: 600px) {
-      h1 { font-size: 22px; }
-      .question-text { font-size: 22px; }
-      .btn { font-size: 20px; min-width: 130px; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>熱脹冷縮魔法實驗室</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f0fdf4;
+            user-select: none;
+        }
+
+        .animate-transform {
+            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-press:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes bounce-in {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-bounce-in {
+            animation: bounce-in 0.5s ease-out forwards;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-15px); }
+            40%, 80% { transform: translateX(15px); }
+        }
+        .animate-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7); }
+            50% { box-shadow: 0 0 20px 10px rgba(234, 179, 8, 0.4); }
+        }
+        .glow-effect {
+            animation: pulse-glow 2s infinite;
+        }
+
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            animation: float-up 1s ease-out forwards;
+        }
+        @keyframes float-up {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(0); opacity: 0; }
+        }
+
+        .bg-pattern {
+            background-image: radial-gradient(#4ade80 20%, transparent 20%), radial-gradient(#4ade80 20%, transparent 20%);
+            background-color: #f0fdf4;
+            background-position: 0 0, 25px 25px;
+            background-size: 50px 50px;
+            opacity: 0.3;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+        }
+    </style>
 </head>
-<body>
-<div class="game-container">
-  <h1>熱脹冷縮小遊戲</h1>
-  <div class="subtitle">口訣：熱變大，冷變小</div>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="bg-pattern"></div>
 
-  <button class="read-btn" onclick="readText(currentFullText)">
-    🔊 朗讀題目
-  </button>
+    <!-- ===== 首頁主選單 ===== -->
+    <div id="main-menu" class="max-w-3xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden border-8 border-green-400 p-8 text-center">
+        <h1 class="text-5xl md:text-6xl font-black text-green-500 mb-4 animate-bounce-in">🧪 熱脹冷縮魔法</h1>
+        <p class="text-2xl text-gray-600 font-bold mb-8">請選擇一個模式開始玩吧！</p>
+        
+        <div class="flex flex-col gap-5 items-center pb-4">
+            <button onclick="startGame('lab')" class="w-full max-w-md bg-yellow-400 hover:bg-yellow-500 text-yellow-900 text-3xl font-black py-6 px-6 rounded-3xl shadow-[0_8px_0_rgb(161,98,7)] btn-press flex flex-col items-center transition-transform">
+                <span class="text-5xl mb-1">🔬</span>
+                <span>模式一：觀察實驗室</span>
+                <span class="text-base font-bold mt-1 opacity-80">50題！無壓力隨便按按看</span>
+            </button>
 
-  <div class="question-area">
-    <div class="scene" id="scene"></div>
-    <div class="image-hint" id="imageHint">🌡️</div>
-    <div class="question-text" id="questionText"></div>
-  </div>
+            <button onclick="startGame('challenge')" class="w-full max-w-md bg-purple-500 hover:bg-purple-600 text-white text-3xl font-black py-6 px-6 rounded-3xl shadow-[0_8px_0_rgb(107,33,168)] btn-press flex flex-col items-center transition-transform">
+                <span class="text-5xl mb-1">🕵️‍♂️</span>
+                <span>模式二：生活解難</span>
+                <span class="text-base font-bold mt-1 opacity-90">50大挑戰！動腦解決問題</span>
+            </button>
 
-  <div class="buttons">
-    <button class="btn btn-hot" onclick="checkAnswer('hot')">
-      🔥 變大
-    </button>
-    <button class="btn btn-cold" onclick="checkAnswer('cold')">
-      ❄️ 變小
-    </button>
-    <button class="btn btn-same" onclick="checkAnswer('same')">
-      ➖ 一樣大
-    </button>
-  </div>
+            <button onclick="startGame('why')" class="w-full max-w-md bg-cyan-500 hover:bg-cyan-600 text-white text-3xl font-black py-6 px-6 rounded-3xl shadow-[0_8px_0_rgb(8,145,178)] btn-press flex flex-col items-center transition-transform">
+                <span class="text-5xl mb-1">💡</span>
+                <span>模式三：十萬個為什麼</span>
+                <span class="text-base font-bold mt-1 opacity-90">50個現象！是熱脹還是冷縮？</span>
+            </button>
+        </div>
+    </div>
 
-  <div class="feedback" id="feedback"></div>
-  <div class="score" id="score">得分：0 / 0</div>
-  <button class="btn-next" onclick="nextQuestion()">下一題 ▶</button>
+    <!-- ===== 遊戲主要容器 ===== -->
+    <div id="game-area" class="hidden max-w-3xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden border-8 border-green-400 relative">
+        <div id="game-header" class="bg-green-400 text-white text-center py-4 relative flex items-center justify-center">
+            <button onclick="backToMenu()" class="absolute left-4 bg-white text-green-600 font-bold py-2 px-4 rounded-full shadow-md hover:bg-gray-100 btn-press flex items-center gap-2">
+                <span>🏠</span> <span class="hidden md:inline">回首頁</span>
+            </button>
+            <h1 id="mode-title" class="text-3xl md:text-4xl font-black tracking-wider text-shadow">🧪 實驗室</h1>
+            <div id="level-counter" class="absolute right-4 text-xl font-bold bg-white text-green-600 px-3 py-1 rounded-full shadow">
+                1 / 50
+            </div>
+        </div>
 
-  <div class="rule">老師可以一邊做動作：熱張開手，冷抱緊身體。</div>
-</div>
+        <div id="instruction-box" class="p-6 text-center border-b-4 transition-colors duration-300">
+            <p id="instruction-text" class="text-2xl md:text-3xl font-bold leading-snug"></p>
+        </div>
 
-<script>
-  const questions = [
-    {
-      scene: "氣球在太陽底下曬一曬。",
-      image: "🎈☀️",
-      text: "氣球裡的空氣會怎樣？",
-      answer: "hot"
-    },
-    {
-      scene: "熱湯放一會兒，變冷了。",
-      image: "🍲➡️❄️",
-      text: "湯會變得多一點還是少一點？",
-      answer: "cold"
-    },
-    {
-      scene: "鐵路在夏天很熱。",
-      image: "🚆☀️",
-      text: "鐵軌會變長一點還是短一點？",
-      answer: "hot"
-    },
-    {
-      scene: "玻璃瓶放進冰箱裡。",
-      image: "🧴❄️",
-      text: "裡面的空氣會變大還是變小？",
-      answer: "cold"
-    },
-    {
-      scene: "今天沒有變熱，也沒有變冷。",
-      image: "🙂",
-      text: "東西大小會有改變嗎？",
-      answer: "same"
-    },
-    {
-      scene: "金屬湯匙放進熱湯裡。",
-      image: "🥄🍲",
-      text: "湯匙會變大一點還是變小一點？",
-      answer: "hot"
-    },
-    {
-      scene: "晚上變冷，橋梁也變冷。",
-      image: "🌉🌙❄️",
-      text: "橋會變長一點還是短一點？",
-      answer: "cold"
-    }
-  ];
+        <div class="relative h-64 md:h-80 bg-blue-50 flex items-center justify-center overflow-hidden" id="visual-area">
+            <div id="game-object" class="animate-transform text-8xl md:text-9xl relative">🎈</div>
+            
+            <div id="thermometer-container" class="hidden h-48 w-16 bg-gray-200 rounded-full border-4 border-gray-400 relative overflow-hidden">
+                <div id="thermometer-liquid" class="absolute bottom-0 left-0 w-full bg-red-500 animate-transform" style="height: 30%;"></div>
+            </div>
+            
+            <div id="track-container" class="hidden flex-row items-center justify-center w-full px-10 gap-8 animate-transform">
+                <div id="track-left" class="h-16 w-1/3 bg-gray-600 rounded-r-lg animate-transform"></div>
+                <div id="track-right" class="h-16 w-1/3 bg-gray-600 rounded-l-lg animate-transform"></div>
+            </div>
+        </div>
 
-  let currentIndex = 0;
-  let score = 0;
-  let total = 0;
-  let currentFullText = "";
+        <div class="h-24 flex items-center justify-center bg-white px-4 text-center">
+            <p id="feedback-message" class="text-2xl md:text-3xl font-bold opacity-0 transition-opacity duration-300"></p>
+        </div>
 
-  function showQuestion() {
-    const q = questions[currentIndex];
-    document.getElementById("scene").textContent = q.scene;
-    document.getElementById("imageHint").textContent = q.image;
-    document.getElementById("questionText").textContent = q.text;
-    document.getElementById("feedback").textContent = "";
-    document.getElementById("feedback").className = "feedback";
-    currentFullText = q.scene + " " + q.text;
-  }
+        <div class="flex p-6 gap-6 justify-center bg-gray-50 border-t-4 border-gray-100">
+            <button id="btn-heat" onclick="handleAction('heat')" class="flex-1 max-w-[200px] bg-red-500 hover:bg-red-600 text-white text-3xl font-bold py-6 px-4 rounded-2xl shadow-[0_8px_0_rgb(185,28,28)] btn-press flex flex-col items-center transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                <span class="text-5xl mb-2">🔥</span>
+                <span id="text-heat">加 熱</span>
+            </button>
+            <button id="btn-cool" onclick="handleAction('cool')" class="flex-1 max-w-[200px] bg-blue-400 hover:bg-blue-500 text-white text-3xl font-bold py-6 px-4 rounded-2xl shadow-[0_8px_0_rgb(37,99,235)] btn-press flex flex-col items-center transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                <span class="text-5xl mb-2">❄️</span>
+                <span id="text-cool">變 冷</span>
+            </button>
+        </div>
 
-  function checkAnswer(choice) {
-    const q = questions[currentIndex];
-    total++;
-    if (choice === q.answer) {
-      score++;
-      const fb = document.getElementById("feedback");
-      fb.textContent = "✔ 答對了！記得：熱變大，冷變小。";
-      fb.className = "feedback correct";
-    } else {
-      const fb = document.getElementById("feedback");
-      let hint = "";
-      if (q.answer === "hot") hint = "這一題是「變大」喔！";
-      if (q.answer === "cold") hint = "這一題是「變小」喔！";
-      if (q.answer === "same") hint = "這一題是「一樣大」喔！";
-      fb.textContent = "✘ 再想想～ " + hint;
-      fb.className = "feedback wrong";
-    }
-    document.getElementById("score").textContent =
-      "得分：" + score + " / " + total;
-  }
+        <div class="p-4 bg-white flex justify-center hidden absolute bottom-6 left-0 right-0" id="next-level-container">
+            <button id="btn-next" onclick="nextLevel()" class="bg-green-500 hover:bg-green-600 text-white text-3xl font-black py-4 px-12 rounded-full shadow-[0_6px_0_rgb(21,128,61)] btn-press glow-effect transition-colors z-10">
+                太棒了！去下一關 ➡️
+            </button>
+        </div>
+    </div>
 
-  function nextQuestion() {
-    currentIndex++;
-    if (currentIndex >= questions.length) {
-      currentIndex = 0;
-    }
-    showQuestion();
-  }
+    <!-- 滿畫面過關特效 -->
+    <div id="celebration" class="fixed inset-0 pointer-events-none flex items-center justify-center hidden z-50 bg-black bg-opacity-60">
+        <div class="bg-white p-10 rounded-3xl text-center transform scale-150 animate-bounce-in shadow-2xl border-8 border-yellow-400">
+            <div class="text-8xl mb-4">🏆</div>
+            <h2 id="celebration-title" class="text-4xl font-black text-yellow-500 mb-2">恭喜全破 50 關！</h2>
+            <p id="celebration-text" class="text-2xl font-bold text-gray-700">你太厲害了！</p>
+            <button onclick="backToMenu()" class="mt-8 pointer-events-auto bg-green-500 text-white font-bold text-xl py-3 px-8 rounded-full shadow-[0_4px_0_rgb(21,128,61)] btn-press hover:bg-green-600">
+                回到主選單 🏠
+            </button>
+        </div>
+    </div>
 
-  function readText(text) {
-    if (!("speechSynthesis" in window)) {
-      alert("這個瀏覽器不支援語音朗讀。");
-      return;
-    }
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = "zh-TW";
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utter);
-  }
+    <script>
+        // ==========================================
+        //  進階題庫生成引擎 (自動生成 3個模式各 50 題)
+        // ==========================================
+        
+        // 核心 50 種生活物品與物理特性
+        const baseEntities = [
+            ['GAS', '🎈', '氣球'], ['LIQUID', '🌡️', '溫度計'], ['TRACK', '🛤️', '火車鐵軌'],
+            ['GAS', '🏓', '乒乓球'], ['METAL_CAP', '🥫', '果醬罐鐵蓋'], ['METAL_DOOR', '🚪', '金屬大門'],
+            ['GAS', '🛞', '汽車輪胎'], ['GAS', '🍼', '裝著熱水的水壺'], ['WIRE', '🔌', '戶外電線'],
+            ['METAL_CAP', '💍', '金屬戒指'], ['GAS', '🏀', '籃球'], ['GAS', '⚽', '足球'],
+            ['GAS', '🏐', '排球'], ['GAS', '🎾', '網球'], ['GAS', '🛟', '游泳圈'],
+            ['GAS', '🚲', '腳踏車胎'], ['GAS', '🛶', '充氣橡皮艇'], ['GAS', '🚁', '熱氣球'],
+            ['GAS', '🫧', '氣泡紙'], ['GAS', '🛏️', '充氣床墊'], ['METAL_CAP', '🍯', '蜂蜜罐鐵蓋'],
+            ['METAL_CAP', '🍾', '玻璃瓶金屬蓋'], ['METAL_CAP', '🔩', '金屬螺絲帽'], ['METAL_CAP', '🗜️', '金屬夾具'],
+            ['METAL_DOOR', '🪟', '鋁製窗框'], ['METAL_DOOR', '🏚️', '鐵捲門'], ['METAL_DOOR', '🗄️', '金屬抽屜'],
+            ['METAL_DOOR', '🗃️', '鐵製檔案櫃'], ['TRACK', '🌉', '鐵橋縫隙'], ['TRACK', '🛣️', '水泥路面縫隙'],
+            ['TRACK', '🧱', '磁磚縫隙'], ['WIRE', '🪢', '金屬鋼纜'], ['LIQUID', '💧', '燒杯裡的水'],
+            ['LIQUID', '🧪', '試管裡的藥水'], ['LIQUID', '🍲', '裝滿熱湯的鍋子'], ['LIQUID', '🍷', '裝滿果汁的玻璃杯'],
+            ['GAS', '🏈', '橄欖球'], ['GAS', '🏰', '充氣城堡'], ['GAS', '🛋️', '充氣沙發'],
+            ['METAL_CAP', '🛢️', '鐵桶金屬蓋'], ['METAL_CAP', '⌚', '金屬手錶帶'], ['METAL_DOOR', '🛗', '電梯金屬門'],
+            ['METAL_DOOR', '🚗', '汽車金屬車門'], ['WIRE', '🎸', '吉他金屬弦'], ['WIRE', '🎻', '小提琴金屬弦'],
+            ['TRACK', '🎢', '雲霄飛車軌道縫隙'], ['GAS', '🍪', '密封餅乾包裝'], ['GAS', '🎒', '密封的塑膠袋'],
+            ['GAS', '🛍️', '百貨公司充氣裝飾'], ['GAS', '🍩', '充氣甜甜圈玩具']
+        ];
 
-  // 初始載入題目
-  showQuestion();
-</script>
+        let labLevels = [];
+        let challengeLevels = [];
+        let whyLevels = [];
+
+        // 依據物品特性自動衍生題目
+        baseEntities.forEach((item, index) => {
+            const [type, emoji, name] = item;
+            const qNum = index + 1;
+            // 交替設計：雙數題需要加熱解決/產生熱脹，單數題需要變冷解決/產生冷縮
+            let needsHeat = (index % 2 === 0);
+
+            // -- 初始化視覺設定 --
+            let cType = 'emoji';
+            let initialTransform = 'scale(1)', successTransform = 'scale(1)', errorTransform = 'scale(1)';
+            let heatScale = 'scale(1)', coolScale = 'scale(1)';
+            let initialGap = 'gap-8', successGap = 'gap-8', errorGap = 'gap-8';
+
+            if (type === 'GAS') {
+                heatScale = 'scale(1.8)'; coolScale = 'scale(0.6)';
+                if (needsHeat) {
+                    initialTransform = 'scale(0.6)'; successTransform = 'scale(1.5)'; errorTransform = 'scale(0.4)';
+                } else {
+                    initialTransform = 'scale(1.7)'; successTransform = 'scale(0.8)'; errorTransform = 'scale(2)';
+                }
+            } else if (type === 'METAL_CAP' || type === 'METAL_DOOR') {
+                heatScale = 'scale(1.4)'; coolScale = 'scale(0.8)';
+                if (needsHeat) {
+                    initialTransform = 'scale(0.9)'; successTransform = 'scale(1.4)'; errorTransform = 'scale(0.7)';
+                } else {
+                    initialTransform = 'scale(1.4)'; successTransform = 'scale(0.9)'; errorTransform = 'scale(1.7)';
+                }
+            } else if (type === 'WIRE') {
+                heatScale = 'scaleY(1.5) translateY(20px)'; coolScale = 'scaleY(0.7) translateY(-20px)';
+                if (needsHeat) {
+                    initialTransform = 'scaleY(0.8)'; successTransform = 'scaleY(1.3) translateY(10px)'; errorTransform = 'scaleY(0.5)';
+                } else {
+                    initialTransform = 'scaleY(1.4) translateY(15px)'; successTransform = 'scaleY(0.9)'; errorTransform = 'scaleY(1.8) translateY(25px)';
+                }
+            } else if (type === 'TRACK') {
+                cType = 'track';
+                if (needsHeat) {
+                    initialGap = 'gap-12'; successGap = 'gap-1'; errorGap = 'gap-20';
+                } else {
+                    initialGap = 'gap-1'; successGap = 'gap-12'; errorGap = 'gap-0';
+                }
+            } else if (type === 'LIQUID') {
+                cType = 'thermometer';
+            }
+
+            // ================= Mode 1: 觀察實驗室 (無壓力) =================
+            let labH = `熱脹！${name}變大/變長/升高了！`;
+            let labC = `冷縮！${name}變小/變短/降低了！`;
+            if(type==='GAS') { labH=`哇！熱脹！${name}裡的空氣變大鼓起來了！`; labC=`喔！冷縮！${name}裡的空氣變小縮水了！`; }
+            if(type==='METAL_CAP') { labH=`熱脹！${name}變大變鬆了！`; labC=`冷縮！${name}縮小變緊了！`; }
+            if(type==='METAL_DOOR') { labH=`熱脹！${name}膨脹變大卡卡的！`; labC=`冷縮！${name}縮小變好開了！`; }
+            if(type==='WIRE') { labH=`熱脹！${name}變長垂下來了！`; labC=`冷縮！${name}變短繃緊了！`; }
+            if(type==='TRACK') { labH=`熱脹！軌道變長，空隙變小了！`; labC=`冷縮！軌道變短，空隙變大了！`; }
+            if(type==='LIQUID') { labH=`熱脹！液體體積變大升高了！`; labC=`冷縮！液體體積變小降低了！`; }
+
+            labLevels.push({
+                type: cType, emoji: emoji,
+                instruction: `👉 【第 ${qNum} 題】按「加熱」或「變冷」，看看【${name}】會怎樣？`,
+                heatText: labH, coolText: labC,
+                heatScale: heatScale, coolScale: coolScale, normalScale: 'scale(1)',
+                heatGap: 'gap-1', coolGap: 'gap-12', normalGap: 'gap-8',
+                heatHeight: '95%', coolHeight: '15%', normalHeight: '40%'
+            });
+
+            // ================= Mode 2: 生活解難 (解決問題) =================
+            let cInst, cAns = needsHeat ? 'heat' : 'cool';
+            let actionName = needsHeat ? '加熱' : '變冷';
+            let wrongAction = needsHeat ? '變冷' : '加熱';
+            let effectName = needsHeat ? '熱脹' : '冷縮';
+            let wrongEffect = needsHeat ? '冷縮' : '熱脹';
+
+            if(type==='GAS') {
+                cInst = needsHeat ? `🕵️‍♂️【挑戰 ${qNum}】${name}扁扁的沒有氣！要選哪個魔法讓裡面的空氣「膨脹」鼓起來？` : `🕵️‍♂️【挑戰 ${qNum}】${name}膨脹得太大快要破了！怎麼讓裡面的空氣「縮小」一點？`;
+            } else if(type==='METAL_CAP') {
+                cInst = needsHeat ? `🕵️‍♂️【挑戰 ${qNum}】${name}卡得太緊打不開！要選哪個魔法讓它「變大」鬆開？` : `🕵️‍♂️【挑戰 ${qNum}】${name}變得太鬆了鎖不緊！怎麼讓它「縮小」變緊固？`;
+            } else if(type==='METAL_DOOR') {
+                cInst = needsHeat ? `🕵️‍♂️【挑戰 ${qNum}】${name}之間的縫隙太大了會灌風！怎麼讓它「膨脹」填滿縫隙？` : `🕵️‍♂️【挑戰 ${qNum}】${name}因為太熱膨脹卡死推不動！怎麼讓它「縮小」一點才好推？`;
+            } else if(type==='WIRE') {
+                cInst = needsHeat ? `🕵️‍♂️【挑戰 ${qNum}】${name}繃得太緊了快斷掉了！怎麼讓它「變長」放鬆一點？` : `🕵️‍♂️【挑戰 ${qNum}】${name}垂得太低了很危險！怎麼讓它「縮短」拉緊一點？`;
+            } else if(type==='TRACK') {
+                cInst = needsHeat ? `🕵️‍♂️【挑戰 ${qNum}】${name}的空隙太大了！怎麼讓軌道「變長」填補空隙？` : `🕵️‍♂️【挑戰 ${qNum}】${name}快要擠在一起變形了！怎麼讓軌道「變短」，把空隙讓出來？`;
+            } else if(type==='LIQUID') {
+                cInst = needsHeat ? `🕵️‍♂️【挑戰 ${qNum}】想讓${name}的高度「升上來」，要怎麼做？` : `🕵️‍♂️【挑戰 ${qNum}】想讓${name}的高度「降下來」，要怎麼做？`;
+            }
+
+            challengeLevels.push({
+                type: cType, emoji: emoji,
+                instruction: cInst, correctAction: cAns, 
+                successText: `✅ 答對了！「${actionName}」讓它${effectName}，解決啦！`, 
+                errorText: `❌ 哎呀！「${wrongAction}」會讓它${wrongEffect}，情況會更糟喔！`,
+                initialTransform: initialTransform, successTransform: successTransform, errorTransform: errorTransform,
+                initialGap: initialGap, successGap: successGap, errorGap: errorGap,
+                initialHeight: needsHeat ? '20%' : '80%', successHeight: needsHeat ? '90%' : '15%', errorHeight: needsHeat ? '10%' : '100%'
+            });
+
+            // ================= Mode 3: 十萬個為什麼 (推敲原理) =================
+            let wInst;
+            if(type==='GAS') {
+                wInst = needsHeat ? `💡【現象 ${qNum}】放在大太陽下的${name}自己鼓起來變大了，這是因為什麼呢？` : `💡【現象 ${qNum}】放進冰箱裡的${name}變得扁扁皺皺的，這是因為什麼呢？`;
+            } else if(type==='METAL_CAP') {
+                wInst = needsHeat ? `💡【現象 ${qNum}】打不開的${name}，沖一沖熱水後就輕鬆打開了，這是因為？` : `💡【現象 ${qNum}】冬天寒流來的時候，${name}感覺變得特別緊，這是因為什麼呢？`;
+            } else if(type==='METAL_DOOR') {
+                wInst = needsHeat ? `💡【現象 ${qNum}】夏天中午的時候，${name}常常會卡卡的很難關上，這是因為？` : `💡【現象 ${qNum}】原本卡住的${name}，到了晚上天氣變涼後，就變得好開了，這是因為？`;
+            } else if(type==='WIRE') {
+                wInst = needsHeat ? `💡【現象 ${qNum}】夏天高溫時，外面的${name}總是垂垂的、變長了，這是因為什麼呢？` : `💡【現象 ${qNum}】冬天寒冷時，${name}會繃得直直的、變短了，這是因為什麼呢？`;
+            } else if(type==='TRACK') {
+                wInst = needsHeat ? `💡【現象 ${qNum}】炎熱的夏天，${name}之間的空隙會變得很小，這是因為軌道發生了什麼事？` : `💡【現象 ${qNum}】到了冬天，${name}之間的空隙會變得特別大，這是因為軌道發生了什麼事？`;
+            } else if(type==='LIQUID') {
+                wInst = needsHeat ? `💡【現象 ${qNum}】當${name}遇到熱水時，體積變大、高度上升了，這是因為？` : `💡【現象 ${qNum}】當${name}放進冰水裡，體積變小、高度下降了，這是因為？`;
+            }
+
+            whyLevels.push({
+                type: cType, emoji: emoji,
+                instruction: wInst, correctAction: cAns, 
+                successText: `✅ 答對了！這就是「${effectName}」造成的現象！`, 
+                errorText: `❌ 不對喔，如果是${wrongEffect}，現象會剛好相反！`,
+                initialTransform: initialTransform, successTransform: successTransform, errorTransform: errorTransform,
+                initialGap: initialGap, successGap: successGap, errorGap: errorGap,
+                initialHeight: needsHeat ? '20%' : '80%', successHeight: needsHeat ? '90%' : '15%', errorHeight: needsHeat ? '10%' : '100%'
+            });
+        });
+
+        // --- 系統變數 ---
+        let currentMode = ''; 
+        let currentLevels = [];
+        let currentLevelIndex = 0;
+
+        // --- DOM 元素 ---
+        const elMainMenu = document.getElementById('main-menu');
+        const elGameArea = document.getElementById('game-area');
+        const elModeTitle = document.getElementById('mode-title');
+        const elGameHeader = document.getElementById('game-header');
+        const instructionBox = document.getElementById('instruction-box');
+        const instructionText = document.getElementById('instruction-text');
+        const gameObject = document.getElementById('game-object');
+        const thermometerContainer = document.getElementById('thermometer-container');
+        const thermometerLiquid = document.getElementById('thermometer-liquid');
+        const trackContainer = document.getElementById('track-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const btnHeat = document.getElementById('btn-heat');
+        const btnCool = document.getElementById('btn-cool');
+        const textHeat = document.getElementById('text-heat');
+        const textCool = document.getElementById('text-cool');
+        const nextLevelContainer = document.getElementById('next-level-container');
+        const levelCounter = document.getElementById('level-counter');
+        const celebration = document.getElementById('celebration');
+
+        // --- 遊戲流程控制 ---
+        function startGame(mode) {
+            currentMode = mode;
+            currentLevelIndex = 0;
+            
+            elMainMenu.classList.add('hidden');
+            elGameArea.classList.remove('hidden');
+            celebration.classList.add('hidden');
+
+            if (mode === 'lab') {
+                currentLevels = labLevels;
+                elModeTitle.innerText = '🔬 觀察實驗室';
+                elGameHeader.className = "bg-yellow-400 text-yellow-900 text-center py-4 relative flex items-center justify-center";
+                instructionBox.className = "p-6 bg-yellow-50 text-center border-b-4 border-yellow-200 transition-colors duration-300";
+                instructionText.className = "text-2xl md:text-3xl font-bold text-gray-700 leading-snug";
+                textHeat.innerText = "加 熱"; textCool.innerText = "變 冷";
+            } else if (mode === 'challenge') {
+                currentLevels = challengeLevels;
+                elModeTitle.innerText = '🕵️‍♂️ 生活解難';
+                elGameHeader.className = "bg-purple-500 text-white text-center py-4 relative flex items-center justify-center";
+                instructionBox.className = "p-6 bg-purple-100 text-center border-b-4 border-purple-300 transition-colors duration-300";
+                instructionText.className = "text-2xl md:text-3xl font-black text-purple-800 leading-snug";
+                textHeat.innerText = "加 熱"; textCool.innerText = "變 冷";
+            } else if (mode === 'why') {
+                currentLevels = whyLevels;
+                elModeTitle.innerText = '💡 十萬個為什麼';
+                elGameHeader.className = "bg-cyan-500 text-white text-center py-4 relative flex items-center justify-center";
+                instructionBox.className = "p-6 bg-cyan-50 text-center border-b-4 border-cyan-200 transition-colors duration-300";
+                instructionText.className = "text-2xl md:text-3xl font-black text-cyan-800 leading-snug";
+                textHeat.innerText = "熱 脹"; textCool.innerText = "冷 縮";
+            }
+
+            loadLevel();
+        }
+
+        function backToMenu() {
+            elGameArea.classList.add('hidden');
+            celebration.classList.add('hidden');
+            elMainMenu.classList.remove('hidden');
+        }
+
+        function loadLevel() {
+            const level = currentLevels[currentLevelIndex];
+            instructionText.innerText = level.instruction;
+            levelCounter.innerText = `${currentLevelIndex + 1} / ${currentLevels.length}`;
+            
+            nextLevelContainer.classList.add('hidden');
+            feedbackMessage.style.opacity = '0';
+            
+            gameObject.classList.remove('animate-shake');
+            trackContainer.classList.remove('animate-shake');
+            thermometerContainer.classList.remove('animate-shake');
+            
+            gameObject.classList.add('hidden');
+            thermometerContainer.classList.add('hidden');
+            trackContainer.classList.add('hidden');
+
+            if (level.type === 'emoji') {
+                gameObject.classList.remove('hidden');
+                gameObject.innerText = level.emoji;
+                gameObject.style.transform = level.initialTransform || level.normalScale;
+            } else if (level.type === 'thermometer') {
+                thermometerContainer.classList.remove('hidden');
+                thermometerLiquid.style.height = level.initialHeight || level.normalHeight;
+            } else if (level.type === 'track') {
+                trackContainer.classList.remove('hidden');
+                trackContainer.className = `flex-row items-center justify-center w-full px-10 ${level.initialGap || level.normalGap} animate-transform`;
+            }
+            
+            btnHeat.disabled = false;
+            btnCool.disabled = false;
+        }
+
+        function handleAction(actionType) {
+            const level = currentLevels[currentLevelIndex];
+            const rect = document.getElementById('visual-area').getBoundingClientRect();
+            
+            if (currentMode === 'challenge' || currentMode === 'why') {
+                if (actionType === level.correctAction) {
+                    createParticles('✨', rect.width/2, rect.height/2);
+                    showFeedback(level.successText, 'text-green-600');
+                    
+                    if (level.type === 'emoji') gameObject.style.transform = level.successTransform;
+                    if (level.type === 'thermometer') thermometerLiquid.style.height = level.successHeight;
+                    if (level.type === 'track') trackContainer.className = `flex-row items-center justify-center w-full px-10 ${level.successGap} animate-transform`;
+
+                    btnHeat.disabled = true;
+                    btnCool.disabled = true;
+
+                    setTimeout(() => { nextLevelContainer.classList.remove('hidden'); }, 800);
+                } else {
+                    showFeedback(level.errorText, 'text-red-500');
+                    
+                    if (level.type === 'emoji') {
+                        gameObject.style.transform = level.errorTransform;
+                        triggerShake(gameObject);
+                    }
+                    if (level.type === 'thermometer') {
+                        thermometerLiquid.style.height = level.errorHeight;
+                        triggerShake(thermometerContainer);
+                    }
+                    if (level.type === 'track') {
+                        trackContainer.className = `flex-row items-center justify-center w-full px-10 ${level.errorGap} animate-transform`;
+                        triggerShake(trackContainer);
+                    }
+                }
+            } else {
+                // Mode 1: Lab
+                if (actionType === 'heat') {
+                    createParticles('🔥', rect.width/2, rect.height/2);
+                    if (level.type === 'emoji') gameObject.style.transform = level.heatScale;
+                    if (level.type === 'thermometer') thermometerLiquid.style.height = level.heatHeight;
+                    if (level.type === 'track') trackContainer.className = `flex-row items-center justify-center w-full px-10 ${level.heatGap} animate-transform`;
+                    showFeedback(level.heatText, 'text-red-500');
+                } else if (actionType === 'cool') {
+                    createParticles('❄️', rect.width/2, rect.height/2);
+                    if (level.type === 'emoji') gameObject.style.transform = level.coolScale;
+                    if (level.type === 'thermometer') thermometerLiquid.style.height = level.coolHeight;
+                    if (level.type === 'track') trackContainer.className = `flex-row items-center justify-center w-full px-10 ${level.coolGap} animate-transform`;
+                    showFeedback(level.coolText, 'text-blue-500');
+                }
+                setTimeout(() => { nextLevelContainer.classList.remove('hidden'); }, 1500);
+            }
+        }
+
+        function triggerShake(element) {
+            element.classList.remove('animate-shake');
+            void element.offsetWidth; // 強制重繪
+            element.classList.add('animate-shake');
+        }
+
+        function nextLevel() {
+            currentLevelIndex++;
+            if (currentLevelIndex < currentLevels.length) {
+                loadLevel();
+            } else {
+                showCelebration();
+            }
+        }
+
+        function showCelebration() {
+            celebration.classList.remove('hidden');
+            let count = 0;
+            const interval = setInterval(() => {
+                createParticles('✨', Math.random() * window.innerWidth, Math.random() * window.innerHeight);
+                count++;
+                if(count > 20) clearInterval(interval);
+            }, 100);
+        }
+
+        function showFeedback(text, colorClass) {
+            feedbackMessage.innerText = text;
+            feedbackMessage.className = `text-2xl md:text-3xl font-bold ${colorClass} transition-opacity duration-300 animate-bounce-in`;
+            feedbackMessage.style.opacity = '1';
+            setTimeout(() => { feedbackMessage.classList.remove('animate-bounce-in'); }, 500);
+        }
+
+        function createParticles(emoji, x, y) {
+            for(let i=0; i<6; i++) {
+                const particle = document.createElement('div');
+                particle.innerText = emoji;
+                particle.className = 'particle text-4xl absolute z-50';
+                particle.style.left = (x + (Math.random() * 100 - 50)) + 'px';
+                particle.style.top = (y + (Math.random() * 80 - 40)) + 'px';
+                document.body.appendChild(particle);
+                setTimeout(() => { particle.remove(); }, 1000);
+            }
+        }
+    </script>
 </body>
 </html>
