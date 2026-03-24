@@ -69,8 +69,18 @@
                     </select>
                 </div>
                 
+                <!-- 玩法模式選擇 -->
+                <div class="flex items-center bg-emerald-500 rounded-full px-3 py-1 shadow-inner">
+                    <label for="game-mode-select" class="text-sm font-medium mr-2 text-white">玩法：</label>
+                    <select id="game-mode-select" onchange="changeGameMode()" class="bg-white text-emerald-700 text-sm rounded px-2 py-1 outline-none font-bold cursor-pointer">
+                        <option value="sort" selected>排排站</option>
+                        <option value="tallest">找最高</option>
+                        <option value="shortest">找最矮</option>
+                    </select>
+                </div>
+
                 <!-- 提示模式開關 -->
-                <label class="flex items-center bg-emerald-500 rounded-full px-3 py-1 shadow-inner cursor-pointer hover:bg-emerald-400 transition">
+                <label id="hint-label" class="flex items-center bg-emerald-500 rounded-full px-3 py-1 shadow-inner cursor-pointer hover:bg-emerald-400 transition">
                     <span class="text-sm font-medium mr-2 text-white">提示模式</span>
                     <input type="checkbox" id="hint-toggle" class="w-4 h-4 accent-emerald-200 cursor-pointer" onchange="toggleHintMode()">
                 </label>
@@ -112,6 +122,7 @@
         
         let numObjects = 3;
         let currentPatternType = 'geometric'; 
+        let currentGameMode = 'sort'; // 新增遊戲模式變數
         let zones = []; 
         let baseHeights = []; 
         let isHintMode = false; 
@@ -211,11 +222,36 @@
             initGame();
         }
 
+        function changeGameMode() {
+            currentGameMode = document.getElementById('game-mode-select').value;
+            const hintLabel = document.getElementById('hint-label');
+            const playArea = document.getElementById('play-area');
+            const dropZones = document.getElementById('drop-zones');
+
+            if (currentGameMode === 'sort') {
+                hintLabel.style.display = 'flex';
+                dropZones.style.display = 'flex';
+                playArea.className = "w-[45%] md:w-[50%] relative bg-gray-50 border-r border-dashed border-gray-400 z-10 flex-shrink-0 shadow-[inset_-10px_0_15px_-10px_rgba(0,0,0,0.05)]";
+            } else {
+                hintLabel.style.display = 'none';
+                dropZones.style.display = 'none';
+                playArea.className = "w-full relative bg-gray-50 z-10 flex-shrink-0";
+            }
+            initGame();
+        }
+
         function initGame() {
             playArea.innerHTML = '';
             dropZonesContainer.innerHTML = '';
             zones = [];
-            messageEl.innerText = "拖動物件排排站，由最高排到最矮放入右方框框！";
+            
+            if (currentGameMode === 'sort') {
+                messageEl.innerText = "拖動物件排排站，由最高排到最矮放入右方框框！";
+            } else if (currentGameMode === 'tallest') {
+                messageEl.innerText = "🤔 哪個最高？點擊選出最高的圖案！";
+            } else if (currentGameMode === 'shortest') {
+                messageEl.innerText = "🤔 哪個最矮？點擊選出最矮的圖案！";
+            }
             messageEl.className = "text-sm md:text-lg text-gray-700 font-medium px-2";
 
             // 1. 動態產生標籤：最高、第2高、最矮
@@ -241,26 +277,33 @@
             const maxHeight = baseHeights[numObjects - 1];
 
             // 調整整個遊戲區域的高度
-            gameContainer.style.height = Math.max(maxHeight + 120, 300) + 'px';
+            if (currentGameMode === 'sort') {
+                gameContainer.style.height = Math.max(maxHeight + 120, 300) + 'px';
+            } else {
+                // 找最高/最矮模式：高度剛好符合最高圖案加上頂部留白
+                gameContainer.style.height = (maxHeight + 60) + 'px';
+            }
 
             // 3. 準備框框 (放置於右側)
-            for (let i = 0; i < numObjects; i++) {
-                const zone = document.createElement('div');
-                // 框框改為彈性寬度 flex-1，確保即使 6 個也能並排不換行
-                zone.className = "zone drop-zone flex-1 min-w-[35px] max-w-[80px] border-4 border-dashed border-gray-300 flex flex-col items-center justify-start text-gray-400 font-bold text-xs md:text-sm relative bg-gray-50 mx-0.5 md:mx-1";
-                zone.style.height = (maxHeight + 50) + 'px';
-                
-                zone.dataset.expected = numObjects - 1 - i; 
-                zone.dataset.currentRank = "";
-                
-                const span = document.createElement('span');
-                span.className = "absolute top-2 pointer-events-none select-none whitespace-nowrap bg-white/80 px-1 rounded";
-                if (labels[i].length > 2 || numObjects >= 5) span.style.transform = 'scale(0.75)'; // 數量多時文字稍微縮小防破版
-                span.innerText = labels[i];
-                zone.appendChild(span);
-                
-                dropZonesContainer.appendChild(zone);
-                zones.push(zone); 
+            if (currentGameMode === 'sort') {
+                for (let i = 0; i < numObjects; i++) {
+                    const zone = document.createElement('div');
+                    // 框框改為彈性寬度 flex-1，確保即使 6 個也能並排不換行
+                    zone.className = "zone drop-zone flex-1 min-w-[35px] max-w-[80px] border-4 border-dashed border-gray-300 flex flex-col items-center justify-start text-gray-400 font-bold text-xs md:text-sm relative bg-gray-50 mx-0.5 md:mx-1";
+                    zone.style.height = (maxHeight + 50) + 'px';
+                    
+                    zone.dataset.expected = numObjects - 1 - i; 
+                    zone.dataset.currentRank = "";
+                    
+                    const span = document.createElement('span');
+                    span.className = "absolute top-2 pointer-events-none select-none whitespace-nowrap bg-white/80 px-1 rounded";
+                    if (labels[i].length > 2 || numObjects >= 5) span.style.transform = 'scale(0.75)'; // 數量多時文字稍微縮小防破版
+                    span.innerText = labels[i];
+                    zone.appendChild(span);
+                    
+                    dropZonesContainer.appendChild(zone);
+                    zones.push(zone); 
+                }
             }
 
             // 4. 定義顏色與圖案庫
@@ -271,11 +314,11 @@
 
             // 大幅擴充堆疊物件的種類
             const stackEmojis = [
-                '🍔', '🥞', '📚', '🧱', '📦',  '🍩', '🎁', '🥪', '🚂',
+                '🍔', '🥞', '📚', '🧱', '📦', '🪙', '🍩', '🎁',
                 '🍎', '🍊', '🍓', '🧀', '🥪', '🌮', '🍙', '🍘',
                 '🧁', '🍪', '🍫', '🍬', '🧊', '🎲', '🧶', '🥎',
                 '🏀', '⚽', '⚾', '🎾', '🏐', '🎱', '🪀', '🔮',
-                '🧿', '🍄', '🌵', '🌲', '🍵', '🥫', '🥣'
+                '🧿', '🪵', '🍄', '🌵', '🌲', '🍵', '🥫', '🥣'
             ];
             const roundEmoji = stackEmojis[Math.floor(Math.random() * stackEmojis.length)];
 
@@ -321,7 +364,7 @@
                             span.style.pointerEvents = 'none';
                             
                             // 針對比較扁平的物品，增加堆疊時的交疊感 (-10px margin)
-                            const overlapEmojis = ['🍔', '🥞', '🍘', '🍪', '🧊', '🥪', '📚', '🧱', '🥣', '🥫', '🧀', '🍩'];
+                            const overlapEmojis = ['🍔', '🥞', '🪙', '🍘', '🍪', '🧊', '🥪', '📚', '🧱', '🥣', '🥫', '🧀', '🍩'];
                             if (j > 0 && overlapEmojis.includes(roundEmoji)) {
                                 span.style.marginBottom = '-10px';
                             }
@@ -330,22 +373,45 @@
                     }
                     
                     el.style.position = 'absolute';
-                    el.style.cursor = 'grab';
                     el.style.filter = 'drop-shadow(0 4px 6px rgba(0,0,0,0.2))';
                     
-                    // 確保生成在「左半邊」的範圍內
-                    const maxLeftRange = Math.max(5, pWidth - 65);
-                    const left = 10 + Math.random() * maxLeftRange;
-                    const top = pHeight - obj.height - (Math.random() * 20) - 6; // 扣除地平線厚度
-                    
-                    el.style.left = left + 'px';
-                    el.style.top = top + 'px';
+                    if (currentGameMode === 'sort') {
+                        el.style.cursor = 'grab';
+                        // 確保生成在「左半邊」的範圍內
+                        const maxLeftRange = Math.max(5, pWidth - 65);
+                        const left = 10 + Math.random() * maxLeftRange;
+                        const top = pHeight - obj.height - (Math.random() * 20) - 6; // 扣除地平線厚度
+                        
+                        el.style.left = left + 'px';
+                        el.style.top = top + 'px';
 
-                    el.addEventListener('pointerdown', onPointerDown);
+                        el.addEventListener('pointerdown', onPointerDown);
+                    } else {
+                        el.style.cursor = 'pointer';
+                        // 找最高/最矮模式：均勻散佈在整個畫面上
+                        const spacing = pWidth / numObjects;
+                        const left = (idx * spacing) + (spacing / 2) - 27.5; // 27.5 是物件寬度 55 的一半
+                        
+                        // 貼齊畫面最下方 (扣除地板厚度)
+                        const top = pHeight - obj.height - 6; 
+                        
+                        el.style.left = left + 'px';
+                        el.style.top = top + 'px';
+                        
+                        // 加入懸停動畫
+                        el.addEventListener('mouseenter', () => el.style.transform = 'scale(1.05)');
+                        el.addEventListener('mouseleave', () => el.style.transform = 'scale(1)');
+                        
+                        // 點擊事件
+                        el.addEventListener('click', () => checkClickModeTarget(el, obj.rank));
+                    }
+
                     playArea.appendChild(el);
                 });
 
-                updateZoneSizes();
+                if (currentGameMode === 'sort') {
+                    updateZoneSizes();
+                }
             }, 50);
         }
 
@@ -581,6 +647,45 @@
             }
         }
 
+        function checkClickModeTarget(el, rank) {
+            initAudio();
+            let isCorrect = false;
+            // rank 0 是最矮，rank (numObjects - 1) 是最高
+            if (currentGameMode === 'tallest' && rank == numObjects - 1) isCorrect = true;
+            if (currentGameMode === 'shortest' && rank == 0) isCorrect = true;
+
+            if (isCorrect) {
+                playSound('win');
+                messageEl.innerText = "🎉 答對了！這就是" + (currentGameMode === 'tallest' ? '最高' : '最矮') + "的圖案！ 🎉";
+                messageEl.className = "text-xl md:text-2xl text-emerald-600 font-bold animate-pulse px-2";
+                
+                // 視覺回饋：突顯正確答案，暗化其他選項
+                el.style.filter = 'drop-shadow(0 0 15px #10b981) brightness(1.1)';
+                el.style.transform = 'scale(1.1)';
+                
+                document.querySelectorAll('.shape').forEach(s => {
+                    s.style.pointerEvents = 'none'; // 禁用點擊，並防止滑鼠移開時取消放大
+                    if (s !== el) s.style.opacity = '0.3';
+                });
+                
+                fireConfetti();
+            } else {
+                playSound('error');
+                messageEl.innerText = "❌ 哎呀，不對喔！再找找看哪個" + (currentGameMode === 'tallest' ? '最高' : '最矮') + "！";
+                messageEl.className = "text-sm md:text-lg text-red-500 font-bold px-2";
+                
+                // 錯誤時的震動動畫
+                el.animate([
+                    { transform: 'translateX(0px)' },
+                    { transform: 'translateX(-8px)' },
+                    { transform: 'translateX(8px)' },
+                    { transform: 'translateX(-8px)' },
+                    { transform: 'translateX(8px)' },
+                    { transform: 'translateX(0px)' }
+                ], { duration: 300 });
+            }
+        }
+
         function fireConfetti() {
             for(let i=0; i<60; i++) {
                 let conf = document.createElement('div');
@@ -629,20 +734,35 @@
 
         window.addEventListener('resize', () => {
             const shapes = document.querySelectorAll('.shape');
-            shapes.forEach(shape => {
-                const rank = shape.dataset.rank;
-                let currentZone = null;
-                zones.forEach(z => {
-                    if(z.dataset.currentRank === rank) currentZone = z;
+            const pRect = playArea.getBoundingClientRect();
+            
+            if (currentGameMode === 'sort') {
+                shapes.forEach(shape => {
+                    const rank = shape.dataset.rank;
+                    let currentZone = null;
+                    zones.forEach(z => {
+                        if(z.dataset.currentRank === rank) currentZone = z;
+                    });
+                    if (currentZone) {
+                        snapToZone(shape, currentZone);
+                    } else {
+                        const rect = shape.getBoundingClientRect();
+                        shape.style.top = (pRect.height - rect.height) + 'px';
+                    }
                 });
-                if (currentZone) {
-                    snapToZone(shape, currentZone);
-                } else {
-                    const pRect = playArea.getBoundingClientRect();
-                    const rect = shape.getBoundingClientRect();
-                    shape.style.top = (pRect.height - rect.height) + 'px';
-                }
-            });
+            } else {
+                // 找最高/最矮模式的重新排列
+                const pWidth = playArea.clientWidth;
+                const pHeight = gameContainer.clientHeight;
+                const spacing = pWidth / numObjects;
+                
+                shapes.forEach((shape, idx) => {
+                    const left = (idx * spacing) + (spacing / 2) - 27.5;
+                    const top = pHeight - parseFloat(shape.style.height) - 6; // 貼齊地板
+                    shape.style.left = left + 'px';
+                    shape.style.top = top + 'px';
+                });
+            }
         });
 
         document.addEventListener('DOMContentLoaded', initGame);
