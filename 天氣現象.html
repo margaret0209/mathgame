@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動天氣探索站</title>
+    <style>
+        /* 全局樣式 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+            color: #333;
+        }
+
+        header {
+            background: linear-gradient(135deg, #4ea5ff, #0056b3);
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            background-color: #333;
+            flex-wrap: wrap; /* 讓手機版選單可以換行 */
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            color: white;
+            padding: 15px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            flex: 1; /* 手機版平均分配寬度 */
+            min-width: 120px;
+        }
+
+        nav button:hover, nav button.active {
+            background-color: #555;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            min-height: 500px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 認識天氣卡片 */
+        .weather-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            background: #fafafa;
+            border-left: 5px solid #4ea5ff;
+        }
+
+        /* 天氣模擬器 */
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .controls button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 1px solid #0056b3;
+            background: white;
+            color: #0056b3;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+
+        .controls button:hover {
+            background: #0056b3;
+            color: white;
+        }
+
+        /* 模擬器按鈕啟用狀態 */
+        .controls button.active-btn {
+            background: #0056b3;
+            color: white;
+            box-shadow: 0 0 10px rgba(0, 86, 179, 0.5);
+            transform: scale(1.05);
+        }
+
+        #simulator-window {
+            width: 100%;
+            height: 400px;
+            background: #87CEEB; /* 預設天空藍 */
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            transition: background 1s;
+            cursor: pointer; /* 提示使用者可以點擊互動 */
+        }
+
+        /* 模擬器資訊疊加層 */
+        .sim-overlay {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none; /* 讓滑鼠點擊可以穿透 */
+            width: 85%;
+            max-width: 500px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .sim-overlay.show {
+            opacity: 1;
+        }
+
+        .sim-overlay h3 { margin: 0 0 5px 0; color: #4ea5ff; font-size: 18px; }
+        .sim-overlay p { margin: 0; font-size: 14px; line-height: 1.4; color: #eee; }
+
+        /* 雲朵特效 */
+        .cloud {
+            position: absolute;
+            background: #fff;
+            border-radius: 50px;
+            animation: driftCloud linear infinite;
+            z-index: 1;
+        }
+        .cloud::before, .cloud::after {
+            content: '';
+            position: absolute;
+            background: inherit;
+            border-radius: 50%;
+        }
+        .cloud::before {
+            width: 50px; height: 50px;
+            top: -20px; left: 15px;
+        }
+        .cloud::after {
+            width: 35px; height: 35px;
+            top: -10px; left: 50px;
+        }
+
+        @keyframes driftCloud {
+            from { transform: translateX(-150px); }
+            to { transform: translateX(1000px); }
+        }
+
+        /* 手動閃電特效 */
+        .manual-lightning {
+            position: absolute;
+            font-size: 40px;
+            color: #FFD700;
+            filter: drop-shadow(0 0 10px white);
+            animation: lightningStrike 0.5s forwards;
+            pointer-events: none;
+            z-index: 20;
+            transform: translate(-50%, -50%);
+        }
+        @keyframes lightningStrike {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1.5); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* 模擬器動畫元素 */
+        .drop {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.6);
+            width: 2px;
+            height: 20px;
+            bottom: 100%;
+            transform: rotate(15deg); /* 讓雨滴有傾斜感 */
+            animation: fall linear infinite;
+        }
+
+        .flake {
+            position: absolute;
+            background: white;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            bottom: 100%;
+            animation: snowFall linear infinite;
+        }
+
+        .sun {
+            position: absolute;
+            top: 50px;
+            left: 50px;
+            width: 80px;
+            height: 80px;
+            background: #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 0 40px #FFD700;
+            animation: pulse 2s infinite alternate;
+        }
+
+        .tornado-container {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* 讓龍捲風在畫面中左右移動 */
+            animation: moveTornado 5s linear infinite alternate;
+            transform: translateX(-50%);
+        }
+
+        .tornado-part {
+            background: rgba(100, 100, 100, 0.8);
+            border-radius: 50%;
+            animation: spinTornado 0.5s linear infinite;
+            margin-top: -5px;
+        }
+
+        /* 新增的天氣動畫 */
+        @keyframes flash {
+            0%, 95%, 98% { background: #424242; }
+            96%, 99% { background: #fff; }
+            100% { background: #424242; }
+        }
+        
+        .flash-bg {
+            animation: flash 5s infinite;
+        }
+
+        .sand {
+            position: absolute;
+            background: rgba(194, 178, 128, 0.8);
+            border-radius: 50%;
+            animation: blowRight linear infinite;
+        }
+
+        @keyframes blowRight {
+            to { transform: translateX(1200px); }
+        }
+
+        .fog-layer {
+            position: absolute;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(to right, rgba(200,200,200,0.1), rgba(220,220,220,0.8), rgba(200,200,200,0.1));
+            animation: driftFog 20s linear infinite alternate;
+        }
+
+        @keyframes driftFog {
+            from { transform: translateX(-50%); }
+            to { transform: translateX(0); }
+        }
+
+        /* 新增：彩虹、熱浪、極光特效 */
+        .rainbow {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 200px;
+            border-radius: 200px 200px 0 0;
+            box-shadow: inset 0 0 0 10px rgba(255,0,0,0.5), 
+                        inset 0 0 0 20px rgba(255,127,0,0.5), 
+                        inset 0 0 0 30px rgba(255,255,0,0.5), 
+                        inset 0 0 0 40px rgba(0,255,0,0.5), 
+                        inset 0 0 0 50px rgba(0,0,255,0.5), 
+                        inset 0 0 0 60px rgba(75,0,130,0.5), 
+                        inset 0 0 0 70px rgba(148,0,211,0.5);
+            opacity: 0;
+            animation: fadeInRainbow 2s forwards 0.5s;
+        }
+        @keyframes fadeInRainbow {
+            to { opacity: 0.9; }
+        }
+
+        .heat-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, rgba(255,69,0,0.4), transparent);
+            animation: heatPulse 1.5s infinite alternate;
+        }
+        @keyframes heatPulse {
+            from { opacity: 0.4; }
+            to { opacity: 0.8; }
+        }
+
+        .aurora-layer {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at center, rgba(0,255,128,0.25) 0%, transparent 50%),
+                        radial-gradient(ellipse at bottom right, rgba(128,0,255,0.25) 0%, transparent 50%);
+            filter: blur(30px);
+            animation: shiftAurora 8s infinite alternate linear;
+        }
+        @keyframes shiftAurora {
+            from { transform: rotate(-5deg) scale(1); }
+            to { transform: rotate(5deg) scale(1.1); }
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite alternate;
+        }
+        @keyframes twinkle {
+            from { opacity: 0.1; }
+            to { opacity: 1; box-shadow: 0 0 6px white; }
+        }
+
+        /* 新增：冰雹、流星雨、日食特效 */
+        .hailstone {
+            position: absolute;
+            width: 7px;
+            height: 7px;
+            background: #ffffff;
+            border-radius: 50%;
+            box-shadow: inset -2px -2px 4px rgba(0,0,0,0.2);
+            animation: hailFall linear infinite;
+        }
+        @keyframes hailFall {
+            0% { transform: translateY(-10px) translateX(0); }
+            100% { transform: translateY(450px) translateX(30px); }
+        }
+
+        .meteor {
+            position: absolute;
+            width: 2px;
+            height: 60px;
+            background: linear-gradient(to bottom, transparent, #ffffff, #ffffff);
+            transform: rotate(-45deg);
+            border-radius: 2px;
+            animation: meteorFall linear infinite;
+        }
+        @keyframes meteorFall {
+            0% { transform: translate(0, -50px) rotate(-45deg); opacity: 1; }
+            100% { transform: translate(-300px, 300px) rotate(-45deg); opacity: 0; }
+        }
+
+        .eclipse-sky {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            animation: skyDim 10s infinite alternate linear;
+        }
+        @keyframes skyDim {
+            0%, 15% { background: #87CEEB; }
+            50% { background: #0a0a2a; }
+            85%, 100% { background: #87CEEB; }
+        }
+
+        .eclipse-sun {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 120px;
+            background: #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 0 50px #FFD700;
+        }
+
+        .eclipse-moon {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            width: 120px;
+            height: 120px;
+            background: #0a0a2a; /* 配合天空變暗的顏色 */
+            border-radius: 50%;
+            animation: eclipseMove 10s infinite alternate linear;
+        }
+        @keyframes eclipseMove {
+            0%, 10% { transform: translateX(100px); background: transparent; }
+            50% { transform: translateX(-50%); background: #0a0a2a; box-shadow: 0 0 20px rgba(255,255,255,0.8); } /* 食甚，日冕出現 */
+            90%, 100% { transform: translateX(-200px); background: transparent; }
+        }
+
+        @keyframes fall {
+            to { transform: translateY(450px); }
+        }
+
+        @keyframes snowFall {
+            to { transform: translateY(450px) translateX(20px); }
+        }
+
+        @keyframes pulse {
+            to { transform: scale(1.1); box-shadow: 0 0 60px #FFD700; }
+        }
+
+        @keyframes moveTornado {
+            from { transform: translateX(-150px); }
+            to { transform: translateX(150px); }
+        }
+
+        @keyframes spinTornado {
+            0% { transform: scaleX(1); }
+            50% { transform: scaleX(0.5); }
+            100% { transform: scaleX(1); }
+        }
+
+        /* 互動遊戲 */
+        #quiz-container {
+            text-align: center;
+        }
+
+        .option-btn {
+            display: block;
+            width: 80%;
+            max-width: 400px;
+            margin: 10px auto;
+            padding: 15px;
+            background: #f1f1f1;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background: #e2e2e2;
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        #result-msg {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            min-height: 27px; /* 預留空間避免畫面跳動 */
+        }
+
+        #next-btn {
+            display: none;
+            padding: 10px 20px;
+            margin-top: 15px;
+            background: #4ea5ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        #next-btn:hover {
+            background: #0056b3;
+        }
+
+        /* 即時天氣搜尋區 */
+        .search-box {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 60%;
+            max-width: 300px;
+        }
+
+        .search-box button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #4ea5ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .search-box button:hover {
+            background: #0056b3;
+        }
+
+        /* 十萬個為什麼 (FAQ) 樣式 */
+        .faq-list {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .faq-item {
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fafafa;
+        }
+        
+        .faq-item summary {
+            padding: 15px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            background: #eef5ff;
+            color: #0056b3;
+            cursor: pointer;
+            list-style: none; /* 隱藏預設箭頭 */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+        
+        .faq-item summary::-webkit-details-marker {
+            display: none; /* 隱藏 Safari 的箭頭 */
+        }
+        
+        .faq-item summary:hover {
+            background: #d0e4ff;
+        }
+        
+        .faq-item summary::after {
+            content: '➕';
+            font-size: 14px;
+        }
+        
+        .faq-item[open] summary::after {
+            content: '➖';
+        }
+        
+        .faq-item p {
+            padding: 15px 20px;
+            margin: 0;
+            border-top: 1px solid #ddd;
+            line-height: 1.6;
+            color: #444;
+            background: #fff;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🌤️ 互動天氣探索站</h1>
+        <p>學習、模擬與挑戰你的天氣知識！</p>
+    </header>
+
+    <nav>
+        <button class="nav-btn active" onclick="switchTab('learn', this)">📖 認識天氣</button>
+        <button class="nav-btn" onclick="switchTab('simulate', this)">🌩️ 天氣模擬器</button>
+        <button class="nav-btn" onclick="switchTab('game', this)">🎮 互動遊戲</button>
+        <button class="nav-btn" onclick="switchTab('realtime', this)">📍 即時天氣</button>
+        <button class="nav-btn" onclick="switchTab('faq', this)">💡 十萬個為什麼</button>
+    </nav>
+
+    <div class="container">
+        <!-- Section 1: 認識天氣 -->
+        <div id="learn" class="section active">
+            <h2>🌍 探索極端天氣現象</h2>
+            <div class="weather-cards">
+                <div class="card">
+                    <h3>🌪️ 龍捲風 (Tornado)</h3>
+                    <p>龍捲風是一種猛烈的對流風暴，形成漏斗狀的雲柱從雷雨雲底延伸至地面。它的風速極快，具有極強的破壞力，通常伴隨著劇烈的雷暴發生。</p>
+                </div>
+                <div class="card">
+                    <h3>⛈️ 雷暴 (Thunderstorm)</h3>
+                    <p>由積雨雲產生的強烈天氣現象，伴有閃電、雷鳴，通常會帶來強降雨、強風，甚至可能出現冰雹或龍捲風。</p>
+                </div>
+                <div class="card">
+                    <h3>❄️ 暴風雪 (Blizzard)</h3>
+                    <p>強烈的冬季風暴，特徵是低溫、強風以及大量降雪，會導致能見度極低（出現白矇天現象），對交通和生活造成巨大影響。</p>
+                </div>
+                <div class="card">
+                    <h3>🌀 颱風/颶風 (Typhoon/Hurricane)</h3>
+                    <p>形成於熱帶海洋上的強烈氣旋。中心氣壓極低，伴隨狂風暴雨，雖然破壞力大，但也為許多地區帶來必要的水資源。</p>
+                </div>
+                <div class="card">
+                    <h3>🌩️ 冰雹 (Hail)</h3>
+                    <p>堅硬的冰塊降水，通常伴隨強烈雷暴發生。雷雨雲中的強烈上升氣流將水滴帶到高空凝結成冰，反覆上下運動變大後掉落地面。</p>
+                </div>
+                <div class="card">
+                    <h3>🌫️ 濃霧 (Fog)</h3>
+                    <p>懸浮在近地面空氣中的微小水滴或冰晶。當空氣中的水氣達到飽和並凝結時形成，會嚴重降低能見度，影響交通安全。</p>
+                </div>
+                <div class="card">
+                    <h3>🏜️ 沙塵暴 (Sandstorm)</h3>
+                    <p>強風將地面大量沙塵吹起，使空氣變得混濁、能見度大幅下降的天氣現象，常見於乾旱或半乾旱地區。</p>
+                </div>
+                <div class="card">
+                    <h3>🥵 熱浪 (Heatwave)</h3>
+                    <p>指一段持續數天甚至數週的異常炎熱天氣，常伴隨高濕度。這會對人體健康、農業及電力供應造成嚴重影響。</p>
+                </div>
+                <div class="card">
+                    <h3>🌈 彩虹 (Rainbow)</h3>
+                    <p>一種光學現象，當陽光照射到半空中的水滴，光線被折射及反射，在天空上形成拱形的七彩光譜。</p>
+                </div>
+                <div class="card">
+                    <h3>🌌 極光 (Aurora)</h3>
+                    <p>出現在高緯度地區的高空大氣發光現象，由太陽風中的帶電粒子與地球大氣層的氣體分子碰撞所產生。</p>
+                </div>
+                <div class="card">
+                    <h3>🌘 日食 (Solar Eclipse)</h3>
+                    <p>當月球運行到地球與太陽之間，且三者幾乎成一直線時，月球會遮住太陽的光芒，使地球上部分地區暫時變暗的天文現象。</p>
+                </div>
+                <div class="card">
+                    <h3>🌠 流星雨 (Meteor Shower)</h3>
+                    <p>當地球穿過彗星或小行星遺留的碎屑帶時，大量流星體高速進入地球大氣層，因摩擦生熱而燃燒發光的壯麗天文景觀。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: 天氣模擬器 -->
+        <div id="simulate" class="section">
+            <h2>🎛️ 控制大自然</h2>
+            <p>點擊下方的按鈕切換天氣，或是<strong>試著在畫面中點擊看看（例如在雷暴天點擊）</strong>！</p>
+            <div class="controls">
+                <button onclick="setWeather('sunny', this)">☀️ 晴天</button>
+                <button onclick="setWeather('rain', this)">🌧️ 下雨</button>
+                <button onclick="setWeather('snow', this)">❄️ 下雪</button>
+                <button onclick="setWeather('hail', this)">🌩️ 冰雹</button>
+                <button onclick="setWeather('tornado', this)">🌪️ 龍捲風</button>
+                <button onclick="setWeather('thunderstorm', this)">⛈️ 雷暴</button>
+                <button onclick="setWeather('sandstorm', this)">🏜️ 沙塵暴</button>
+                <button onclick="setWeather('fog', this)">🌫️ 濃霧</button>
+                <button onclick="setWeather('heatwave', this)">🥵 熱浪</button>
+                <button onclick="setWeather('rainbow', this)">🌈 彩虹</button>
+                <button onclick="setWeather('aurora', this)">🌌 極光</button>
+                <button onclick="setWeather('eclipse', this)">🌘 日食</button>
+                <button onclick="setWeather('meteor', this)">🌠 流星雨</button>
+            </div>
+            <div id="simulator-window" onclick="handleSimulatorClick(event)">
+                <!-- 動畫元素將透過 JS 生成於此 -->
+                <div id="sim-particles">
+                    <div class="sun"></div>
+                </div>
+                <!-- 資訊疊加層 -->
+                <div id="sim-info-overlay" class="sim-overlay">
+                    <h3 id="sim-title">☀️ 晴天</h3>
+                    <p id="sim-desc">陽光明媚，大氣相對穩定。適宜戶外活動，但要注意防曬！</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: 互動遊戲 -->
+        <div id="game" class="section">
+            <h2>🧠 天氣知識大挑戰</h2>
+            <div id="quiz-container">
+                <h3 id="question-text">載入中...</h3>
+                <div id="options-container"></div>
+                <p id="result-msg"></p>
+                <button onclick="nextQuestion()" id="next-btn">下一題</button>
+            </div>
+        </div>
+
+        <!-- Section 4: 即時天氣 -->
+        <div id="realtime" class="section">
+            <h2>🌍 查詢全球即時天氣</h2>
+            <p style="text-align: center;">輸入你想查詢的城市，獲取最新的天氣資訊！</p>
+            <div class="search-box">
+                <!-- 支援按 Enter 鍵搜尋 -->
+                <input type="text" id="city-input" placeholder="例如: 台北, Tokyo, London" onkeypress="if(event.key === 'Enter') fetchRealtimeWeather()">
+                <button onclick="fetchRealtimeWeather()">搜尋</button>
+            </div>
+            <div id="weather-result" style="display:none; margin-top: 20px;">
+                <!-- 天氣結果將顯示於此 -->
+            </div>
+        </div>
+
+        <!-- Section 5: 十萬個為什麼 -->
+        <div id="faq" class="section">
+            <h2>💡 天氣的十萬個為什麼</h2>
+            <p style="text-align: center; margin-bottom: 30px;">為你解答那些關於天氣的有趣冷知識！點擊問題看看答案吧。</p>
+            
+            <div class="faq-list">
+                <details class="faq-item">
+                    <summary>為什麼天空是藍色的？</summary>
+                    <p>這是因為一種叫做「瑞利散射 (Rayleigh scattering)」的光學現象。太陽光包含了各種顏色的光（就像彩虹一樣），當陽光進入地球大氣層時，波長較短的「藍光」比較容易被大氣中的氣體分子散射到四面八方，所以我們抬頭看到的天空就是藍色的！</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>為什麼總是先看到閃電，才聽到雷聲？</summary>
+                    <p>這是因為「光速」遠遠大於「聲速」！光在空氣中傳播的速度大約是每秒 300,000 公里，而聲音每秒只能傳播約 340 公尺。所以閃電發出的光瞬間就能抵達我們的眼睛，但雷聲卻需要花一點時間才能傳到我們的耳朵。</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>雨滴真的是「水滴形狀 (💧)」的嗎？</summary>
+                    <p>其實不是哦！小雨滴在空中落下時，形狀比較接近完美的「圓球體」。當雨滴變大且掉落速度變快時，空氣阻力會把它們的底部壓平，讓它們看起來更像「漢堡包的頂蓋」或是「降落傘」，而不是我們常畫的那種帶尖頭的水滴形狀。</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>為什麼颱風的中心（風眼）沒有風雨？</summary>
+                    <p>颱風是一個強烈的熱帶氣旋，周圍的空氣因為強烈的旋轉而產生很大的「離心力」，把雲層和水氣往外甩。而在最中心的地方，空氣反而會往下沉，這種下沉氣流會讓雲層消散，所以在狂風暴雨的颱風中，反而會有一個晴朗無風的「風眼」。</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>雪花為什麼都是六角形的？</summary>
+                    <p>這與水分子（H₂O）的化學結構有關。當水氣在雲層中凝華成冰晶時，水分子會以六邊形的幾何結構排列組合，這是它們最穩定的狀態。雖然每一片雪花的具體形狀都不一樣，但它們的基本對稱結構一定都是六角形的！</p>
+                </details>
+                
+                <details class="faq-item">
+                    <summary>為什麼下大雨前經常覺得特別悶熱？</summary>
+                    <p>下雨前，空氣中的水氣（濕度）通常會變得很高，這會阻礙我們人體汗水的蒸發。因為汗水無法有效蒸發散熱，我們的身體就會覺得熱氣排不出去，從而產生「悶熱、黏膩」的感覺。同時，下雨前氣壓通常較低，也會讓人感到胸悶。</p>
+                </details>
+
+                <!-- 新增的 14 個為什麼 -->
+                <details class="faq-item">
+                    <summary>為什麼會出現彩虹？</summary>
+                    <p>彩虹是陽光照射到空氣中的水滴時，光線產生了「折射」和「反射」。因為不同顏色的光折射的角度稍微不同，所以原本白色的陽光就被分散成了紅、橙、黃、綠、藍、靛、紫的七彩光譜！這也是為什麼彩虹通常出現在雨後且有太陽的時候。</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>為什麼傍晚的晚霞是紅色的？</summary>
+                    <p>這同樣是因為「瑞利散射」。在清晨或傍晚，太陽位置很低，陽光需要穿過更厚的大氣層才能到達我們的眼睛。波長較短的藍光、紫光在途中幾乎都被散射光了，只剩下波長較長、穿透力最強的紅光和橘光能進入我們的眼睛，所以天空看起來就是紅彤彤的。</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>龍捲風和颱風有什麼不同？</summary>
+                    <p>雖然它們都是強烈的旋風，但有很大區別。**尺寸**：颱風非常巨大（數百公里寬），龍捲風則很小（通常幾十到幾百公尺）。**形成地點**：颱風形成於熱帶海洋，而龍捲風通常形成於陸地上的強烈雷雨雲底。**持續時間**：颱風可存活數天甚至數週，龍捲風通常只維持幾分鐘到幾小時。</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>極光是怎麼產生的？</summary>
+                    <p>極光是太陽送給地球的絢麗光影秀！太陽會不斷釋放帶電粒子（太陽風），當這些帶電粒子來到地球，被地球磁場引導到南北極的高空，並與大氣層中的氧氣或氮氣分子發生劇烈碰撞時，就會發出不同顏色的光芒，形成極光。</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>炎熱的夏天為什麼會下冰雹？</summary>
+                    <p>冰雹其實需要靠「強烈的上升氣流」才能形成，而這種氣流通常出現在夏天旺盛的積雨雲中。地表的高溫讓空氣快速上升，把雲層底層的水滴帶到高空（高空溫度低於零度），水滴結成冰。冰塊在雲層中上上下下滾動、不斷變大，直到氣流撐不住它的重量，就會掉到地面變成冰雹。</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>什麼是「聖嬰現象 (El Niño)」？</summary>
+                    <p>聖嬰現象是指「赤道東太平洋」的海水溫度異常升高的自然現象。這會打亂全球大氣的環流，導致原本該下雨的地方發生嚴重乾旱，原本乾燥的地方卻暴雨成災，對全球氣候、農業和生態都會造成巨大影響。</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>什麼是「反聖嬰現象 (La Niña)」？</summary>
+                    <p>反聖嬰現象與聖嬰現象剛好相反，是指赤道東太平洋的海水溫度異常「降低」。它同樣會引發全球氣候異常，通常會讓原本多雨的地方降雨更多（甚至引發水患），並可能使大西洋的颶風變得更加頻繁。</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>為什麼高山上比較冷？</summary>
+                    <p>很多人以為高山離太陽比較近應該比較熱，但其實地球大氣層的熱量主要來自「地表吸收太陽熱能後向外散發的輻射」。高山上的空氣比較稀薄，留住熱量的能力很差，所以隨著海拔升高，氣溫反而會跟著下降（大約每上升1000公尺，氣溫下降約6度）。</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>霧和雲有什麼差別？</summary>
+                    <p>其實，霧和雲的成分是一模一樣的，都是由空氣中極微小的水滴或冰晶組成！它們唯一的差別在於「位置」：飄浮在高空中的我們叫它「雲」，而發生在地面上、讓我們看不清前方的，我們就叫它「霧」。你可以把霧想像成掉到地面上的雲。</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>海邊為什麼白天吹海風，晚上吹陸風？</summary>
+                    <p>這是因為水和陸地的「吸熱能力」不同。白天時，陸地吸熱快，溫度比海水高，陸地上的熱空氣上升，海面上的冷空氣就會吹過來填補（海風）。到了晚上，陸地散熱也快，溫度比海水低，海面上的熱空氣上升，陸地的冷空氣就會吹向海面（陸風）。</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>早晨葉子上的「露水」是從哪裡來的？</summary>
+                    <p>露水不是從天上掉下來的雨，也不是植物自己流的汗！在晴朗無風的夜晚，地表散熱很快，當氣溫下降到一定程度，空氣中原本看不見的水氣就會因為變冷而「凝結」，附著在草木、樹葉或汽車玻璃上，變成小水滴，這就是露水。</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>為什麼會下「酸雨」？</summary>
+                    <p>酸雨主要是人類活動造成的。工廠、發電廠和汽機車燃燒化石燃料時，會排放出大量的「二氧化硫」和「氮氧化物」到空氣中。這些有害氣體遇到雲層中的水氣，就會發生化學反應變成硫酸和硝酸，並隨著雨水降落下來，對植物、建築物和湖泊生態造成破壞。</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>沙漠裡的「海市蜃樓」是怎麼形成的？</summary>
+                    <p>海市蜃樓是一種光學折射現象。在炎熱的沙漠或夏天發燙的柏油路上，靠近地面的空氣非常熱，而上方的空氣比較冷。因為冷熱空氣密度不同，光線在穿過這些不同密度的空氣層時發生了彎曲（折射），把遠處天空或物體的影像投射到了地面上，讓人以為看到了水泊或幻影。</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary>為什麼秋天或初冬的清晨特別容易起霧？</summary>
+                    <p>秋天和初冬的「日夜溫差」通常很大。白天太陽照射讓空氣中充滿了蒸發的水氣，到了晚上，氣溫快速下降，冷空氣無法容納那麼多水氣，多餘的水氣就會凝結成微小的水滴懸浮在低空中，這就是我們常說的「輻射霧」。</p>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 頁籤切換邏輯 ---
+        function switchTab(tabId, btnElement) {
+            // 隱藏所有區塊
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            // 取消所有按鈕的活躍狀態
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // 顯示目標區塊
+            document.getElementById(tabId).classList.add('active');
+            // 標記當前按鈕
+            btnElement.classList.add('active');
+
+            // 如果切換到模擬器，預設為晴天
+            if(tabId === 'simulate' && document.getElementById('sim-particles').innerHTML.trim() === '') {
+                const firstBtn = document.querySelector('.controls button');
+                setWeather('sunny', firstBtn);
+            }
+        }
+
+        // --- 天氣模擬器邏輯 ---
+        const simWindow = document.getElementById('simulator-window');
+        const simParticles = document.getElementById('sim-particles');
+        let currentWeatherType = 'sunny';
+
+        // 天氣資訊解說字典
+        const weatherDescriptions = {
+            'sunny': { title: '☀️ 晴天', desc: '陽光明媚，大氣相對穩定。適宜戶外活動，但要注意紫外線防曬！' },
+            'rain': { title: '🌧️ 下雨', desc: '水氣凝結成水滴降落。可以滋潤大地、淨化空氣，出門記得帶傘喔。' },
+            'snow': { title: '❄️ 下雪', desc: '氣溫低於冰點時，水氣直接凝華成美麗的六角形冰晶，輕柔地飄落。' },
+            'hail': { title: '🌩️ 冰雹', desc: '強烈對流將水滴帶到高空結成冰塊，反覆上下滾動變大後掉落，破壞力不小。' },
+            'tornado': { title: '🌪️ 龍捲風', desc: '極度強烈的旋轉氣流！漏斗雲伴隨著極高的風速，通常與強烈雷暴一起發生。' },
+            'thunderstorm': { title: '⛈️ 雷暴', desc: '積雨雲帶來的劇烈天氣，伴隨閃電與雷聲。(💡試著在畫面上點擊看看！)' },
+            'sandstorm': { title: '🏜️ 沙塵暴', desc: '強風捲起大量乾燥地表的沙塵，導致能見度極低，出門需保護呼吸道。' },
+            'fog': { title: '🌫️ 濃霧', desc: '其實就是「掉到地面上的雲」！空氣中充滿微小水滴，開車請務必減速慢行。' },
+            'heatwave': { title: '🥵 熱浪', desc: '一段持續的異常高溫天氣，容易導致中暑或熱傷害。請多待在室內並補充水分！' },
+            'rainbow': { title: '🌈 彩虹', desc: '陽光穿透半空中的水滴時，產生的折射與反射現象，通常在雨過天晴時出現。' },
+            'aurora': { title: '🌌 極光', desc: '太陽風的帶電粒子被地球磁場引導，與極地大氣層碰撞產生的絢麗發光現象。' },
+            'eclipse': { title: '🌘 日食', desc: '月球剛好運行到地球與太陽之間，遮擋了太陽的光芒，讓白天瞬間變暗的奇觀。' },
+            'meteor': { title: '🌠 流星雨', desc: '地球穿過彗星遺留的碎屑帶，流星體高速進入大氣層，因劇烈摩擦而燃燒發光。' }
+        };
+
+        function clearWeather() {
+            simParticles.innerHTML = '';
+            simWindow.classList.remove('flash-bg'); // 移除閃電特效
+        }
+
+        function setWeather(type, btnElement) {
+            currentWeatherType = type;
+            
+            // 更新按鈕外觀
+            document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active-btn'));
+            if(btnElement) btnElement.classList.add('active-btn');
+
+            clearWeather();
+            
+            // 更新資訊疊加層
+            const overlay = document.getElementById('sim-info-overlay');
+            const titleEl = document.getElementById('sim-title');
+            const descEl = document.getElementById('sim-desc');
+            
+            if(weatherDescriptions[type]) {
+                titleEl.innerText = weatherDescriptions[type].title;
+                descEl.innerText = weatherDescriptions[type].desc;
+                overlay.classList.add('show');
+            }
+
+            // 根據類型設定天氣場景
+            if (type === 'sunny') {
+                simWindow.style.background = '#87CEEB'; // 藍天
+                simParticles.innerHTML = '<div class="sun"></div>';
+                createClouds(4, 'rgba(255, 255, 255, 0.9)'); // 晴面白雲
+            } 
+            else if (type === 'rain') {
+                simWindow.style.background = '#546E7A'; // 烏雲密布
+                createClouds(5, 'rgba(100, 120, 130, 0.8)'); // 烏雲
+                createParticles('drop', 120, 0.6);
+            } 
+            else if (type === 'snow') {
+                simWindow.style.background = '#B0BEC5'; // 灰白天空
+                createClouds(3, 'rgba(200, 210, 215, 0.6)'); 
+                createParticles('flake', 100, 2);
+            } 
+            else if (type === 'hail') {
+                simWindow.style.background = '#607D8B'; // 灰藍色雷雨雲天空
+                createParticles('hailstone', 80, 0.4); 
+            }
+            else if (type === 'tornado') {
+                simWindow.style.background = '#424242'; // 暗黑天空
+                createTornado();
+            }
+            else if (type === 'thunderstorm') {
+                simWindow.style.background = '#424242'; // 暗黑天空
+                simWindow.classList.add('flash-bg'); // 加入閃電背景動畫
+                createClouds(6, 'rgba(50, 50, 50, 0.9)'); // 深色烏雲
+                createParticles('drop', 150, 0.5); // 暴雨
+            }
+            else if (type === 'sandstorm') {
+                simWindow.style.background = '#C2B280'; // 沙土色
+                createHorizontalParticles('sand', 200, 1.5);
+            }
+            else if (type === 'fog') {
+                simWindow.style.background = '#cfd8dc'; // 淺灰色
+                simParticles.innerHTML = `
+                    <div class="fog-layer"></div>
+                    <div class="fog-layer" style="animation-duration: 30s; opacity: 0.6; animation-direction: alternate-reverse;"></div>
+                `;
+            }
+            else if (type === 'heatwave') {
+                simWindow.style.background = '#FFCC80'; // 悶熱的橘色
+                simParticles.innerHTML = `
+                    <div class="sun" style="width:120px; height:120px; background:#FF5722; box-shadow:0 0 80px #FF5722;"></div>
+                    <div class="heat-overlay"></div>
+                `;
+            }
+            else if (type === 'rainbow') {
+                simWindow.style.background = '#87CEEB'; // 藍天
+                simParticles.innerHTML = `
+                    <div class="sun"></div>
+                    <div class="rainbow"></div>
+                `;
+                createClouds(3, 'rgba(255, 255, 255, 0.9)');
+            }
+            else if (type === 'aurora') {
+                simWindow.style.background = '#0a0a2a'; // 深邃夜空
+                simParticles.innerHTML = '<div class="aurora-layer"></div>';
+                createStars(60);
+            }
+            else if (type === 'eclipse') {
+                simWindow.style.background = 'transparent'; 
+                simParticles.innerHTML = `
+                    <div class="eclipse-sky">
+                        <div class="eclipse-sun"></div>
+                        <div class="eclipse-moon"></div>
+                    </div>
+                `;
+            }
+            else if (type === 'meteor') {
+                simWindow.style.background = '#050515'; // 極黑的夜空
+                createStars(80);
+                createMeteors(25);
+            }
+        }
+
+        // 模擬器互動點擊事件
+        function handleSimulatorClick(event) {
+            // 如果是雷暴天氣，點擊會產生手動閃電
+            if (currentWeatherType === 'thunderstorm') {
+                // 產生畫面閃爍
+                simWindow.style.backgroundColor = '#fff';
+                setTimeout(() => { simWindow.style.backgroundColor = '#424242'; }, 100);
+
+                // 在點擊位置產生閃電 Emoji 特效
+                const rect = simWindow.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+
+                const lightning = document.createElement('div');
+                lightning.className = 'manual-lightning';
+                lightning.innerText = '⚡';
+                lightning.style.left = x + 'px';
+                lightning.style.top = y + 'px';
+                simParticles.appendChild(lightning);
+
+                // 動畫結束後移除
+                setTimeout(() => {
+                    if (simParticles.contains(lightning)) {
+                        simParticles.removeChild(lightning);
+                    }
+                }, 500);
+            } 
+            // 晴天時點擊可以產生小鳥或愛心作為彩蛋
+            else if (currentWeatherType === 'sunny') {
+                const rect = simWindow.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+
+                const bird = document.createElement('div');
+                bird.className = 'manual-lightning'; // 共用淡出動畫
+                bird.innerText = '🐦';
+                bird.style.left = x + 'px';
+                bird.style.top = y + 'px';
+                bird.style.fontSize = '24px';
+                simParticles.appendChild(bird);
+
+                setTimeout(() => {
+                    if (simParticles.contains(bird)) simParticles.removeChild(bird);
+                }, 500);
+            }
+        }
+
+        function createClouds(count, color) {
+            for (let i = 0; i < count; i++) {
+                let cloud = document.createElement('div');
+                cloud.className = 'cloud';
+                cloud.style.background = color;
+                cloud.style.top = (Math.random() * 30 + 5) + '%'; // 主要在上半部
+                cloud.style.width = (Math.random() * 40 + 60) + 'px';
+                cloud.style.height = '30px';
+                cloud.style.animationDuration = (Math.random() * 20 + 30) + 's'; // 緩慢飄動 30~50s
+                cloud.style.animationDelay = '-' + (Math.random() * 20) + 's'; // 隨機初始位置
+                simParticles.appendChild(cloud);
+            }
+        }
+
+        function createParticles(className, count, durationBase) {
+            for (let i = 0; i < count; i++) {
+                let particle = document.createElement('div');
+                particle.className = className;
+                particle.style.left = Math.random() * 120 - 10 + '%'; // 稍微超出版面以適應傾斜雨滴
+                // 隨機掉落速度與延遲
+                particle.style.animationDuration = (Math.random() * 1.5 + durationBase) + 's';
+                particle.style.animationDelay = Math.random() * 2 + 's';
+                if(className === 'flake') {
+                    particle.style.opacity = Math.random() * 0.7 + 0.3; // 雪花隨機透明度
+                    particle.style.width = particle.style.height = (Math.random() * 6 + 4) + 'px'; // 雪花隨機大小
+                }
+                simParticles.appendChild(particle);
+            }
+        }
+
+        function createTornado() {
+            let container = document.createElement('div');
+            container.className = 'tornado-container';
+            
+            // 用多個寬度遞減的圓形組成漏斗狀
+            let width = 140;
+            for(let i=0; i<18; i++) {
+                let part = document.createElement('div');
+                part.className = 'tornado-part';
+                part.style.width = width + 'px';
+                part.style.height = '18px';
+                part.style.animationDelay = (i * 0.05) + 's';
+                container.appendChild(part);
+                width -= 7.5; 
+                // 防止寬度變成負數
+                if(width < 10) width = 10;
+            }
+            simWindow.appendChild(container);
+        }
+
+        function createHorizontalParticles(className, count, durationBase) {
+            for (let i = 0; i < count; i++) {
+                let particle = document.createElement('div');
+                particle.className = className;
+                let size = Math.random() * 4 + 2; // 2px ~ 6px 隨機大小
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.left = '-30px'; // 從畫面外左側開始
+                // 隨機風速與延遲
+                particle.style.animationDuration = (Math.random() * 2 + durationBase) + 's';
+                particle.style.animationDelay = Math.random() * 5 + 's';
+                simWindow.appendChild(particle);
+            }
+        }
+
+        function createStars(count) {
+            for (let i = 0; i < count; i++) {
+                let star = document.createElement('div');
+                star.className = 'star';
+                let size = Math.random() * 3 + 1; // 1px ~ 4px
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.top = Math.random() * 70 + '%'; // 主要在上半部夜空
+                star.style.left = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                simParticles.appendChild(star);
+            }
+        }
+
+        function createMeteors(count) {
+            for (let i = 0; i < count; i++) {
+                let meteor = document.createElement('div');
+                meteor.className = 'meteor';
+                // 讓流星從畫面偏上方及偏右側隨機出現
+                meteor.style.left = (Math.random() * 150 + 20) + '%';
+                meteor.style.top = (Math.random() * -50) + '%';
+                meteor.style.animationDuration = (Math.random() * 0.8 + 0.4) + 's';
+                meteor.style.animationDelay = (Math.random() * 8) + 's';
+                simParticles.appendChild(meteor);
+            }
+        }
+
+        // --- 互動遊戲 (問答) 邏輯 ---
+        const questions = [
+            {
+                q: "哪一種天氣現象擁有被稱為「風眼」的平靜中心？",
+                options: ["龍捲風", "颱風/颶風", "雷暴", "暴風雪"],
+                ans: 1
+            },
+            {
+                q: "龍捲風通常會從哪一種雲層的底部延伸出來？",
+                options: ["卷雲 (高雲)", "層雲 (低雲)", "積雨雲 (雷雨雲)", "高積雲"],
+                ans: 2
+            },
+            {
+                q: "以下哪一項不是形成颱風的必要條件？",
+                options: ["溫暖的海洋表面", "強烈的垂直風切變", "地球自轉的科氏力", "充足的水氣"],
+                ans: 1
+            },
+            {
+                q: "暴風雪發生時，常會導致能見度極低，這種現象稱為什麼？",
+                options: ["日食", "海市蜃樓", "白矇天 (Whiteout)", "極光"],
+                ans: 2
+            },
+            {
+                q: "下列哪一種天氣現象的形成與『強烈上升氣流將水滴帶到高空凝結成冰』有關？",
+                options: ["濃霧", "沙塵暴", "冰雹", "颱風"],
+                ans: 2
+            },
+            {
+                q: "沙塵暴通常最容易發生在哪種地理環境中？",
+                options: ["熱帶雨林", "乾旱或半乾旱地區", "極地冰原", "沿海地區"],
+                ans: 1
+            },
+            {
+                q: "極光是由太陽風中的帶電粒子與地球大氣層碰撞所產生的，它最常發生在哪裡？",
+                options: ["赤道地區", "高緯度地區 (極地)", "沙漠地區", "熱帶海洋"],
+                ans: 1
+            },
+            {
+                q: "彩虹是一種光學現象，它是由於陽光在水滴中經過了哪些過程形成的？",
+                options: ["僅有折射", "僅有反射", "折射與反射", "散射與吸收"],
+                ans: 2
+            },
+            {
+                q: "日食發生時，是哪一個天體擋在了地球與太陽之間？",
+                options: ["火星", "月球", "金星", "木星"],
+                ans: 1
+            },
+            {
+                q: "流星發光的主要原因是什麼？",
+                options: ["反射太陽光", "自身核聚變", "與地球大氣層高速摩擦生熱", "吸收月光後釋放"],
+                ans: 2
+            },
+            // 以下為新增的 40 題，擴充至 50 題
+            {
+                q: "氣象學上，通常使用什麼單位來測量氣壓？",
+                options: ["毫米", "百帕 (hPa)", "赫茲", "焦耳"],
+                ans: 1
+            },
+            {
+                q: "太陽系中哪顆行星擁有著名的大風暴，被稱為「大紅斑」？",
+                options: ["火星", "木星", "土星", "金星"],
+                ans: 1
+            },
+            {
+                q: "國際上衡量風力等級最常用的標準是什麼？",
+                options: ["芮氏規模", "蒲福風級", "莫氏硬度", "卡爾文溫標"],
+                ans: 1
+            },
+            {
+                q: "導致溫室效應加劇，人類活動排放最多的溫室氣體是？",
+                options: ["氧氣", "氮氣", "二氧化碳", "甲烷"],
+                ans: 2
+            },
+            {
+                q: "下列哪一種雲通常預示著晴朗的好天氣？",
+                options: ["積雨雲", "層雲", "卷雲", "雨層雲"],
+                ans: 2
+            },
+            {
+                q: "全球氣候暖化會導致海平面發生什麼變化？",
+                options: ["下降", "上升", "不變", "時高時低"],
+                ans: 1
+            },
+            {
+                q: "地球的大氣層中，人類活動和天氣現象主要發生在哪一層？",
+                options: ["對流層", "平流層", "中氣層", "熱氣層"],
+                ans: 0
+            },
+            {
+                q: "能保護地球生物免受紫外線傷害的「臭氧層」主要存在於哪一層？",
+                options: ["對流層", "平流層", "中氣層", "散逸層"],
+                ans: 1
+            },
+            {
+                q: "常聽到的「秋老虎」通常是指哪個季節出現的短暫炎熱天氣？",
+                options: ["春季", "夏季", "秋季", "冬季"],
+                ans: 2
+            },
+            {
+                q: "哪一種天氣現象會伴隨劇烈的放電（閃電）？",
+                options: ["起霧", "雷暴", "毛毛雨", "下雪"],
+                ans: 1
+            },
+            {
+                q: "氣象站用來測量降雨量的儀器叫什麼？",
+                options: ["溫度計", "氣壓計", "雨量計", "風速計"],
+                ans: 2
+            },
+            {
+                q: "如果風向標的箭頭指向東方，代表現在吹什麼風？",
+                options: ["東風", "西風", "南風", "北風"],
+                ans: 0
+            },
+            {
+                q: "「梅雨」是東亞特有的天氣現象，通常發生在什麼季節交替時？",
+                options: ["秋冬之交", "冬春之交", "春末夏初", "夏秋之交"],
+                ans: 2
+            },
+            {
+                q: "閃電中心的溫度非常高，大約是太陽表面溫度的幾倍？",
+                options: ["1倍", "5倍", "10倍", "50倍"],
+                ans: 1
+            },
+            {
+                q: "強烈的熱帶氣旋在亞洲稱為颱風，在北大西洋和東北太平洋地區被稱為什麼？",
+                options: ["氣旋", "颱風", "颶風", "龍捲風"],
+                ans: 2
+            },
+            {
+                q: "承上題，如果強烈熱帶氣旋發生在印度洋地區，通常被稱為什麼？",
+                options: ["颱風", "氣旋", "颶風", "沙塵暴"],
+                ans: 1
+            },
+            {
+                q: "下列哪種天氣警告信號代表可能發生廣泛地區的水浸（淹水）？",
+                options: ["強風警告", "暴雪警告", "暴雨警告", "大霧警告"],
+                ans: 2
+            },
+            {
+                q: "當空氣中的水氣達到飽和時，相對濕度是多少？",
+                options: ["0%", "50%", "100%", "200%"],
+                ans: 2
+            },
+            {
+                q: "哪種地形最容易阻擋水氣，形成「背風坡少雨」的現象？",
+                options: ["平原", "盆地", "高山", "丘陵"],
+                ans: 2
+            },
+            {
+                q: "傳統的二十四節氣中，代表一年中最冷的時候是哪一個節氣？",
+                options: ["大雪", "冬至", "小寒", "大寒"],
+                ans: 3
+            },
+            {
+                q: "海嘯通常是由什麼自然力量引起的？",
+                options: ["強烈颱風", "海底地震或火山爆發", "月球引力", "全球暖化"],
+                ans: 1
+            },
+            {
+                q: "沙漠地區日夜溫差非常大的主要原因是？",
+                options: ["風太大", "綠色植物多", "沙子吸熱快散熱快，且缺乏水分調節", "緯度太高"],
+                ans: 2
+            },
+            {
+                q: "氣象雷達主要用來觀測什麼天氣資訊？",
+                options: ["氣溫變化", "降水分佈和強度", "空氣污染指數", "紫外線指數"],
+                ans: 1
+            },
+            {
+                q: "在寒冷的冬天，為了融化道路上的冰雪，人們通常會在路面上撒什麼？",
+                options: ["沙子", "泥土", "鹽", "糖"],
+                ans: 2
+            },
+            {
+                q: "氣象學上的「焚風」是一種什麼樣性質的風？",
+                options: ["濕冷風", "乾熱風", "強烈颱風", "微弱海風"],
+                ans: 1
+            },
+            {
+                q: "傳統的氣溫計裡面，通常裝的是什麼液體？",
+                options: ["水或油", "水銀或酒精", "鹽水或糖水", "液態氮"],
+                ans: 1
+            },
+            {
+                q: "下列哪種自然災害「不屬於」氣象災害？",
+                options: ["颱風", "暴雨", "地震", "乾旱"],
+                ans: 2
+            },
+            {
+                q: "全球降水量最多的地方通常位於哪個區域附近？",
+                options: ["極地", "赤道", "副熱帶高壓帶", "內陸沙漠"],
+                ans: 1
+            },
+            {
+                q: "什麼大氣現象會導致原本應該下雪的天氣，變成下冰珠或凍雨？",
+                options: ["溫室效應", "聖嬰現象", "大氣中出現逆溫層", "臭氧層破洞"],
+                ans: 2
+            },
+            {
+                q: "在亞洲季風氣候區，夏季通常吹什麼風帶來豐沛的雨量？",
+                options: ["來自大陸的乾燥風", "來自海洋的潮濕風", "極地冷風", "高空噴射氣流"],
+                ans: 1
+            },
+            {
+                q: "哪種顏色「不在」彩虹標準的七彩光譜中？",
+                options: ["紅色", "綠色", "粉紅色", "靛色"],
+                ans: 2
+            },
+            {
+                q: "當地表溫度低於零度，空氣中的水氣直接在物體上凝華成白色的冰晶，這叫做？",
+                options: ["露", "霜", "雪", "冰雹"],
+                ans: 1
+            },
+            {
+                q: "氣象站用來測量風速的儀器叫做什麼？",
+                options: ["風向標", "風速計", "氣壓計", "濕度計"],
+                ans: 1
+            },
+            {
+                q: "夏天常見的午後雷陣雨，通常是來自哪一種雲層？",
+                options: ["卷雲", "層雲", "高積雲", "積雨雲"],
+                ans: 3
+            },
+            {
+                q: "氣候變遷導致極端天氣（如熱浪、暴雨）的發生頻率發生了什麼變化？",
+                options: ["減少", "增加", "不變", "完全消失"],
+                ans: 1
+            },
+            {
+                q: "「聖嬰現象」(El Niño) 會導致地球上哪裡的海水溫度異常升高？",
+                options: ["北冰洋", "大西洋", "赤道東太平洋", "印度洋"],
+                ans: 2
+            },
+            {
+                q: "我們呼吸的空氣中，哪一種氣體佔的比例最多（約78%）？",
+                options: ["氧氣", "二氧化碳", "氮氣", "氫氣"],
+                ans: 2
+            },
+            {
+                q: "為什麼高山上通常比平地冷？",
+                options: ["離太陽比較遠", "空氣稀薄，無法有效保留地表散發的熱量", "高山容易下雪", "風比較大"],
+                ans: 1
+            },
+            {
+                q: "早晨草葉上的「露水」是怎麼來的？",
+                options: ["昨天下雨留下的", "植物自己分泌的", "夜間氣溫下降，空氣中的水氣凝結而成", "從地下湧出來的"],
+                ans: 2
+            },
+            {
+                q: "造成「酸雨」最主要的成因是什麼？",
+                options: ["工廠及汽機車排放的二氧化硫和氮氧化物", "天空中有太多雲", "閃電把雨水變酸", "全球暖化"],
+                ans: 0
+            }
+        ];
+
+        let currentQIndex = 0;
+        let score = 0;
+
+        function loadQuestion() {
+            const qObj = questions[currentQIndex];
+            document.getElementById('question-text').innerText = `問題 ${currentQIndex + 1} / ${questions.length}: ${qObj.q}`;
+            document.getElementById('result-msg').innerText = '';
+            document.getElementById('next-btn').style.display = 'none';
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            qObj.options.forEach((opt, index) => {
+                let btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(index, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedIndex, btnElement) {
+            const correctIndex = questions[currentQIndex].ans;
+            const buttons = document.querySelectorAll('.option-btn');
+            
+            // 禁用所有按鈕防止重複點擊
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (selectedIndex === correctIndex) {
+                btnElement.style.background = '#5cb85c';
+                btnElement.style.color = 'white';
+                btnElement.style.borderColor = '#4cae4c';
+                document.getElementById('result-msg').innerText = "✅ 答對了！";
+                document.getElementById('result-msg').style.color = "#5cb85c";
+                score++;
+            } else {
+                btnElement.style.background = '#d9534f';
+                btnElement.style.color = 'white';
+                btnElement.style.borderColor = '#d43f3a';
+                
+                // 標示出正確答案
+                buttons[correctIndex].style.background = '#5cb85c';
+                buttons[correctIndex].style.color = 'white';
+                buttons[correctIndex].style.borderColor = '#4cae4c';
+                
+                document.getElementById('result-msg').innerText = "❌ 答錯了！正確答案是綠色的選項。";
+                document.getElementById('result-msg').style.color = "#d9534f";
+            }
+
+            // 顯示下一題按鈕
+            if (currentQIndex < questions.length - 1) {
+                document.getElementById('next-btn').innerText = '下一題';
+            } else {
+                document.getElementById('next-btn').innerText = '查看結果';
+            }
+            document.getElementById('next-btn').style.display = 'inline-block';
+        }
+
+        function nextQuestion() {
+            currentQIndex++;
+            if (currentQIndex < questions.length) {
+                loadQuestion();
+            } else {
+                // 顯示最終結果
+                document.getElementById('question-text').innerText = "🎉 遊戲結束！";
+                document.getElementById('options-container').innerHTML = `<h3>你的總得分是：${score} / ${questions.length}</h3>`;
+                document.getElementById('result-msg').innerText = score === questions.length ? "太厲害了！你是天氣大師！" : "繼續努力，多了解天氣知識吧！";
+                document.getElementById('result-msg').style.color = "#333";
+                document.getElementById('next-btn').style.display = 'none';
+                
+                // 產生重玩按鈕
+                let replayBtn = document.createElement('button');
+                replayBtn.innerText = "🔄 重新挑戰";
+                replayBtn.className = 'option-btn';
+                replayBtn.style.background = '#4ea5ff';
+                replayBtn.style.color = 'white';
+                replayBtn.style.borderColor = '#337ab7';
+                replayBtn.onclick = () => {
+                    currentQIndex = 0;
+                    score = 0;
+                    loadQuestion();
+                };
+                document.getElementById('options-container').appendChild(replayBtn);
+            }
+        }
+
+        // 頁面載入時初始化遊戲
+        window.onload = function() {
+            loadQuestion();
+        };
+
+        // --- 即時天氣邏輯 (使用免費、免金鑰的 Open-Meteo API) ---
+        async function fetchRealtimeWeather() {
+            const city = document.getElementById('city-input').value.trim();
+            const resultDiv = document.getElementById('weather-result');
+            
+            if (!city) {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '<p style="text-align:center; color:#d9534f; font-weight:bold;">請輸入城市名稱！</p>';
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p style="text-align:center;">🔍 正在搜尋天氣資訊...</p>';
+
+            try {
+                // 1. 透過 Geocoding API 將城市名稱轉為經緯度
+                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=zh`);
+                const geoData = await geoRes.json();
+
+                if (!geoData.results || geoData.results.length === 0) {
+                    resultDiv.innerHTML = '<p style="text-align:center; color:#d9534f; font-weight:bold;">❌ 找不到該城市，請嘗試輸入英文或其他名稱（例如：Taipei）。</p>';
+                    return;
+                }
+
+                const location = geoData.results[0];
+                const lat = location.latitude;
+                const lon = location.longitude;
+                const locationName = location.name + (location.country ? `, ${location.country}` : '');
+
+                // 2. 透過天氣 API 獲取該經緯度的即時天氣
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+                const weatherData = await weatherRes.json();
+
+                const current = weatherData.current_weather;
+                const temp = current.temperature;
+                const windSpeed = current.windspeed;
+                const code = current.weathercode;
+
+                // 解析 WMO 天氣代碼
+                const weatherInfo = decodeWMOCode(code);
+
+                // 顯示結果
+                resultDiv.innerHTML = `
+                    <div class="card" style="text-align: center; max-width: 300px; margin: 0 auto; background: #e0f7fa; border-color: #26c6da; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                        <h3 style="margin-top: 0; color: #00838f;">📍 ${locationName}</h3>
+                        <div style="font-size: 60px; margin: 15px 0;">${weatherInfo.emoji}</div>
+                        <h2 style="font-size: 36px; margin: 10px 0; color: #006064;">${temp}°C</h2>
+                        <p style="font-size: 18px; font-weight: bold; color: #00838f; margin-bottom: 5px;">${weatherInfo.desc}</p>
+                        <p style="color: #555; margin-top: 0;">💨 風速: ${windSpeed} km/h</p>
+                    </div>
+                `;
+
+            } catch (error) {
+                resultDiv.innerHTML = '<p style="text-align:center; color:#d9534f; font-weight:bold;">⚠️ 獲取天氣資料時發生錯誤，請檢查網路連線後再試。</p>';
+                console.error("API 錯誤:", error);
+            }
+        }
+
+        // WMO 天氣代碼對應表 (Open-Meteo 使用的標準)
+        function decodeWMOCode(code) {
+            const weatherMap = {
+                0: { desc: "晴朗", emoji: "☀️" },
+                1: { desc: "多雲時晴", emoji: "🌤️" },
+                2: { desc: "多雲", emoji: "⛅" },
+                3: { desc: "陰天", emoji: "☁️" },
+                45: { desc: "起霧", emoji: "🌫️" },
+                48: { desc: "霧霾", emoji: "🌫️" },
+                51: { desc: "微弱毛毛雨", emoji: "🌦️" },
+                53: { desc: "中等毛毛雨", emoji: "🌦️" },
+                55: { desc: "強烈毛毛雨", emoji: "🌧️" },
+                61: { desc: "小雨", emoji: "🌧️" },
+                63: { desc: "中雨", emoji: "🌧️" },
+                65: { desc: "大雨", emoji: "🌧️" },
+                71: { desc: "小雪", emoji: "🌨️" },
+                73: { desc: "中雪", emoji: "❄️" },
+                75: { desc: "大雪", emoji: "❄️" },
+                95: { desc: "雷暴", emoji: "⛈️" },
+                96: { desc: "輕微冰雹雷暴", emoji: "⛈️" },
+                99: { desc: "強烈冰雹雷暴", emoji: "⛈️" }
+            };
+            return weatherMap[code] || { desc: "未知天氣", emoji: "🌍" };
+        }
+
+    </script>
+</body>
+</html>
