@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>班際計分板 - Class Scoreboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            scroll-behavior: smooth;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
+        }
+
+        .class-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .class-card:active {
+            transform: scale(0.96);
+        }
+
+        .score-block { 
+            width: 24px; 
+            height: 24px; 
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            border: 1px solid #d97706;
+            margin: 2px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
+
+        @keyframes scoreBump {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); color: #059669; }
+            100% { transform: scale(1); }
+        }
+
+        .bump-anim {
+            animation: scoreBump 0.3s ease-out;
+        }
+
+        /* 各班級專屬顏色 */
+        .color-p1 { @apply bg-blue-50 border-blue-200 text-blue-700 hover:border-blue-400 hover:bg-blue-100; }
+        .color-p2 { @apply bg-emerald-50 border-emerald-200 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100; }
+        .color-p3 { @apply bg-amber-50 border-amber-200 text-amber-700 hover:border-amber-400 hover:bg-amber-100; }
+        .color-p4 { @apply bg-rose-50 border-rose-200 text-rose-700 hover:border-rose-400 hover:bg-rose-100; }
+        .color-p5 { @apply bg-purple-50 border-purple-200 text-purple-700 hover:border-purple-400 hover:bg-purple-100; }
+        .color-p6 { @apply bg-cyan-50 border-cyan-200 text-cyan-700 hover:border-cyan-400 hover:bg-cyan-100; }
+
+        .btn-minus {
+            transition: all 0.2s;
+            opacity: 0;
+        }
+        .class-card:hover .btn-minus {
+            opacity: 1;
+        }
+
+        .pending-badge {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+    </style>
+</head>
+<body class="text-slate-800 pb-12">
+
+    <!-- 頂部導航 -->
+    <header class="bg-indigo-800 text-white p-5 shadow-xl sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto flex justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="bg-indigo-100 p-2.5 rounded-xl shadow-inner">
+                    <span class="text-3xl">🎯</span>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black tracking-tight leading-tight">班際計分板</h1>
+                    <span class="text-xs uppercase opacity-70 font-bold block tracking-widest">Class Scoreboard</span>
+                </div>
+            </div>
+            <button onclick="resetAllScores()" class="bg-indigo-900/50 hover:bg-red-500 border border-indigo-700 hover:border-red-400 text-white px-5 py-2.5 rounded-xl font-bold transition-all text-sm shadow-sm flex items-center gap-2">
+                <span>🔄</span> 重新開始
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto w-full p-6 flex flex-col gap-8 mt-4">
+        
+        <!-- 中間區域：加分操作區 -->
+        <section class="glass-card rounded-[2rem] p-8 shadow-xl">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-black text-slate-800 mb-2">⭐ 點擊班級加分</h2>
+                <p class="text-slate-500 font-bold text-sm">請老師點擊下方對應的班級卡片來增加分數 (游標移至卡片可扣分)</p>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-6" id="classGrid">
+                <!-- 班級按鈕由 JS 生成 -->
+            </div>
+
+            <!-- 確認/取消按鈕區域 (預設隱藏) -->
+            <div id="actionButtons" class="hidden mt-8 flex justify-center gap-4 border-t border-slate-100 pt-6">
+                <button onclick="cancelScores()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-8 py-3 rounded-xl font-bold text-lg transition-all active:scale-95">❌ 取消</button>
+                <button onclick="confirmScores()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-12 py-3 rounded-xl font-black text-xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 active:scale-95">✅ 確定計分</button>
+            </div>
+        </section>
+
+        <!-- 下方區域：龍虎榜 -->
+        <section class="glass-card rounded-[2rem] p-8">
+            <div class="relative mb-10 border-b-2 border-slate-100 pb-5">
+                <div class="text-center">
+                    <h2 class="text-3xl font-black text-slate-800">📊 累積得分龍虎榜</h2>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest block mt-1">Score Leaderboard</span>
+                </div>
+                <div class="md:absolute md:right-0 md:top-1/2 md:-translate-y-1/2 text-right mt-4 md:mt-0">
+                    <span class="bg-indigo-50 text-indigo-600 border border-indigo-100 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm inline-block">
+                        🏆 一個方格代表 1 分
+                    </span>
+                </div>
+            </div>
+
+            <!-- 排行榜清單 -->
+            <div id="leaderboard" class="max-w-5xl mx-auto flex flex-col gap-5">
+                <!-- 列表內容由 JS 生成 -->
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // 定義班級與對應的顏色主題
+        const classesData = [
+            { id: 'P1B', theme: 'color-p1', border: 'border-blue-400', bg: 'bg-blue-500' },
+            { id: 'P2B', theme: 'color-p2', border: 'border-emerald-400', bg: 'bg-emerald-500' },
+            { id: 'P3B', theme: 'color-p3', border: 'border-amber-400', bg: 'bg-amber-500' },
+            { id: 'P4B', theme: 'color-p4', border: 'border-rose-400', bg: 'bg-rose-500' },
+            { id: 'P5B', theme: 'color-p5', border: 'border-purple-400', bg: 'bg-purple-500' },
+            { id: 'P6B', theme: 'color-p6', border: 'border-cyan-400', bg: 'bg-cyan-500' }
+        ];
+
+        // 初始化分數與暫存分數
+        let scores = {};
+        let pendingScores = {};
+        classesData.forEach(c => {
+            scores[c.id] = 0;
+            pendingScores[c.id] = 0;
+        });
+
+        // 頁面載入時初始化
+        window.onload = () => {
+            renderClassGrid();
+            renderLeaderboard();
+        };
+
+        // 渲染操作區網格
+        function renderClassGrid() {
+            const grid = document.getElementById('classGrid');
+            grid.innerHTML = '';
+            
+            let hasPending = false;
+
+            classesData.forEach(cls => {
+                const pending = pendingScores[cls.id];
+                if (pending !== 0) hasPending = true;
+                
+                // 顯示的分數為：原分數 + 暫存分數
+                const currentDisplayScore = scores[cls.id] + pending;
+
+                const card = document.createElement('div');
+                // 如果有暫存分數，卡片邊框會發光
+                card.className = `class-card relative cursor-pointer border-4 rounded-3xl p-8 flex flex-col items-center justify-center shadow-sm ${cls.theme} ${pending !== 0 ? 'ring-4 ring-emerald-300 ring-offset-2' : ''}`;
+                
+                // 點擊卡片加分 (排除點擊到扣分按鈕)
+                card.onclick = (e) => {
+                    if(!e.target.closest('.btn-minus')) {
+                        addScore(cls.id, 1);
+                    }
+                };
+
+                // 產生右上角的暫存徽章
+                let badgeHtml = '';
+                if (pending > 0) {
+                    badgeHtml = `<div class="pending-badge absolute -top-4 -right-4 bg-emerald-500 text-white font-black text-2xl rounded-full h-12 w-12 flex items-center justify-center shadow-lg border-4 border-white">+${pending}</div>`;
+                } else if (pending < 0) {
+                    badgeHtml = `<div class="pending-badge absolute -top-4 -right-4 bg-red-500 text-white font-black text-2xl rounded-full h-12 w-12 flex items-center justify-center shadow-lg border-4 border-white">${pending}</div>`;
+                }
+
+                card.innerHTML = `
+                    ${badgeHtml}
+                    <div class="text-4xl font-black tracking-tight mb-2">${cls.id}</div>
+                    <div class="text-6xl font-black mt-2 drop-shadow-sm transition-all" id="score-display-${cls.id}">${currentDisplayScore}</div>
+                    
+                    <!-- 隱藏的扣分按鈕 (Hover時顯示) -->
+                    <button onclick="addScore('${cls.id}', -1)" class="btn-minus absolute top-4 right-4 bg-white/80 backdrop-blur border-2 border-current rounded-full w-10 h-10 flex items-center justify-center text-xl font-black hover:bg-white hover:scale-110 shadow-sm transition-transform z-10">
+                        -
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+
+            // 顯示或隱藏操作按鈕
+            const actionBtnContainer = document.getElementById('actionButtons');
+            if (actionBtnContainer) {
+                actionBtnContainer.classList.toggle('hidden', !hasPending);
+            }
+        }
+
+        // 加減分邏輯 (改為修改暫存分數)
+        function addScore(classId, amount) {
+            // 防止總分變為負數
+            if (scores[classId] + pendingScores[classId] + amount < 0) return;
+
+            pendingScores[classId] += amount;
+            
+            // 重新渲染網格以顯示暫存狀態
+            renderClassGrid();
+            
+            // 觸發數字跳動動畫
+            const scoreDisplay = document.getElementById(`score-display-${classId}`);
+            if (scoreDisplay) {
+                scoreDisplay.classList.remove('bump-anim');
+                void scoreDisplay.offsetWidth; // 觸發重繪
+                scoreDisplay.classList.add('bump-anim');
+            }
+        }
+
+        // 確定計分：將暫存分數寫入正式分數
+        function confirmScores() {
+            classesData.forEach(c => {
+                scores[c.id] += pendingScores[c.id];
+                pendingScores[c.id] = 0; // 清空暫存
+            });
+            renderClassGrid();
+            renderLeaderboard();
+        }
+
+        // 取消計分：清空暫存分數
+        function cancelScores() {
+            classesData.forEach(c => {
+                pendingScores[c.id] = 0; // 清空暫存
+            });
+            renderClassGrid();
+        }
+
+        // 渲染龍虎榜 (固定順序)
+        function renderLeaderboard() {
+            const board = document.getElementById('leaderboard');
+            board.innerHTML = '';
+
+            // 如果想要最高分排在最上面，可以取消下方兩行的註解 (此處保留固定順序較不易眼花)
+            // const sortedClasses = [...classesData].sort((a, b) => scores[b.id] - scores[a.id]);
+            const sortedClasses = classesData; 
+
+            sortedClasses.forEach((cls, index) => {
+                const currentScore = scores[cls.id];
+                
+                const row = document.createElement('div');
+                row.className = "flex items-center gap-4 group";
+
+                // 生成分數方格 HTML
+                let blocksHtml = '';
+                if (currentScore > 0) {
+                    blocksHtml = Array(currentScore).fill(0).map(() => `<div class="score-block"></div>`).join('');
+                } else {
+                    blocksHtml = `<span class="text-sm text-slate-300 italic font-bold ml-2">尚未得分</span>`;
+                }
+
+                row.innerHTML = `
+                    <!-- 班級名稱區塊 -->
+                    <div class="w-24 shrink-0 flex items-center justify-between bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 shadow-sm">
+                        <span class="font-black text-xl text-slate-700">${cls.id}</span>
+                    </div>
+
+                    <!-- 分數方格顯示區 -->
+                    <div class="flex-grow bg-slate-100/50 border border-slate-200 rounded-2xl p-2 min-h-[56px] flex flex-wrap items-center justify-start px-3 shadow-inner">
+                        ${blocksHtml}
+                    </div>
+
+                    <!-- 數字總分 -->
+                    <div class="w-16 shrink-0 text-center">
+                        <span class="text-3xl font-black text-slate-800">${currentScore}</span>
+                    </div>
+                `;
+                board.appendChild(row);
+            });
+        }
+
+        // 重置所有分數
+        function resetAllScores() {
+            if(confirm("確定要將所有班級分數歸零嗎？")) {
+                classesData.forEach(c => {
+                    scores[c.id] = 0;
+                    pendingScores[c.id] = 0; // 同時清空暫存
+                });
+                renderClassGrid();
+                renderLeaderboard();
+            }
+        }
+    </script>
+</body>
+</html>
