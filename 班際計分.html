@@ -30,14 +30,31 @@
         }
 
         .score-block { 
-            width: 24px; 
-            height: 24px; 
+            height: 20px; 
             background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
             border: 1px solid #d97706;
-            margin: 2px;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 3px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .score-block-empty {
+            height: 20px; 
+            background: rgba(203, 213, 225, 0.2);
+            border: 1px solid rgba(203, 213, 225, 0.4);
+            border-radius: 3px;
+        }
+
+        .score-track {
+            display: grid;
+            grid-template-columns: repeat(40, 1fr);
+            gap: 2px;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .score-track { gap: 4px; }
+            .score-block, .score-block-empty { height: 24px; border-radius: 4px; }
         }
 
         @keyframes popIn {
@@ -125,7 +142,7 @@
                 </div>
                 <div class="md:absolute md:right-0 md:top-1/2 md:-translate-y-1/2 text-right mt-4 md:mt-0">
                     <span class="bg-indigo-50 text-indigo-600 border border-indigo-100 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm inline-block">
-                        🏆 一個方格代表 1 分
+                        🏆 一個方格代表 1 分 (每行 40 分)
                     </span>
                 </div>
             </div>
@@ -268,12 +285,16 @@
                 const row = document.createElement('div');
                 row.className = "flex items-center gap-4 group";
 
-                // 生成分數方格 HTML
+                // 生成分數方格 HTML (固定顯示 40 格/行，超過則增加行數)
                 let blocksHtml = '';
-                if (currentScore > 0) {
-                    blocksHtml = Array(currentScore).fill(0).map(() => `<div class="score-block"></div>`).join('');
-                } else {
-                    blocksHtml = `<span class="text-sm text-slate-300 italic font-bold ml-2">尚未得分</span>`;
+                const totalSlots = Math.max(40, Math.ceil(currentScore / 40) * 40);
+                
+                for (let i = 0; i < totalSlots; i++) {
+                    if (i < currentScore) {
+                        blocksHtml += `<div class="score-block"></div>`;
+                    } else {
+                        blocksHtml += `<div class="score-block-empty"></div>`;
+                    }
                 }
 
                 row.innerHTML = `
@@ -282,9 +303,11 @@
                         <span class="font-black text-xl text-slate-700">${cls.id}</span>
                     </div>
 
-                    <!-- 分數方格顯示區 -->
-                    <div class="flex-grow bg-slate-100/50 border border-slate-200 rounded-2xl p-2 min-h-[56px] flex flex-wrap items-center justify-start px-3 shadow-inner">
-                        ${blocksHtml}
+                    <!-- 分數方格顯示區 (套用 grid 40 欄) -->
+                    <div class="flex-grow bg-slate-100/50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-center shadow-inner overflow-hidden">
+                        <div class="score-track">
+                            ${blocksHtml}
+                        </div>
                     </div>
 
                     <!-- 數字總分 -->
