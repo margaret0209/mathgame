@@ -39,7 +39,7 @@
         /* 借位用的小輸入框 (改為動態接收 CSS 變數) */
         .borrow-input {
             border-color: var(--borrow-color-light, #fca5a5);
-            background-color: white; /* 確保背景不透明遮蓋後方 */
+            background-color: white; 
             z-index: 10;
         }
         .borrow-input:focus {
@@ -53,7 +53,7 @@
             opacity: 1 !important; 
             box-shadow: none !important;
         }
-        /* 新增：被二次借位劃掉時的樣式 (改為套用淡主題色) */
+        /* 被二次借位劃掉時的樣式 */
         .borrow-input.crossed-out.is-locked {
             color: var(--borrow-color-light, #9ca3af) !important; 
             text-decoration: line-through;
@@ -74,7 +74,6 @@
         .error-shake {
             animation: shake 0.2s ease-in-out 0s 2;
         }
-        
         /* 模式選擇按鈕樣式 */
         .mode-btn.active {
             background-color: #3b82f6;
@@ -85,7 +84,7 @@
 </head>
 <body class="bg-blue-50 min-h-screen flex flex-col items-center py-6 font-sans">
 
-    <!-- 頂部右上角分數顯示 -->
+    <!-- 頂部右上角分數顯示 (單人模式使用) -->
     <div id="score-display" class="fixed top-3 right-3 sm:top-5 sm:right-5 bg-white border-2 border-indigo-400 text-indigo-800 font-bold px-3 py-1.5 md:px-5 md:py-2 rounded-xl shadow-lg text-sm md:text-lg z-50 flex items-center gap-2 transition-opacity duration-300">
         🎯 答對：<span id="score-correct" class="text-green-600 text-xl">0</span> / <span id="score-total" class="text-gray-600">0</span>
     </div>
@@ -94,8 +93,8 @@
     <div class="w-full max-w-4xl px-4 flex flex-col items-center mb-6 mt-8 sm:mt-0">
         <h1 class="text-3xl md:text-4xl font-bold text-blue-800 mb-4">減法直式大挑戰</h1>
         
-        <!-- 難度設定區 -->
-        <div class="flex flex-wrap justify-center gap-4 bg-white p-3 md:p-4 rounded-xl shadow-md mb-4 w-full max-w-2xl items-center">
+        <!-- 難度與題數設定區 -->
+        <div class="flex flex-wrap justify-center gap-3 bg-white p-3 md:p-4 rounded-xl shadow-md mb-4 w-full max-w-3xl items-center">
             <div class="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
                 <span class="font-bold text-gray-700">🔢 位數：</span>
                 <select id="config-digits" class="bg-white border border-gray-300 rounded p-1 font-bold text-blue-800 outline-none cursor-pointer hover:border-blue-400">
@@ -107,10 +106,25 @@
                 </select>
             </div>
             <div class="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
-                <span class="font-bold text-gray-700">🔄 退位設定：</span>
+                <span class="font-bold text-gray-700">🔄 退位：</span>
                 <select id="config-borrow" class="bg-white border border-gray-300 rounded p-1 font-bold text-blue-800 outline-none cursor-pointer hover:border-blue-400">
-                    <option value="MIXED" selected>隨機 (含退位)</option>
-                    <option value="NO_BORROW">完全不退位</option>
+                    <option value="MIXED" selected>隨機(含退位)</option>
+                    <option value="NO_BORROW">不退位</option>
+                </select>
+            </div>
+            <div class="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg border border-green-200">
+                <span class="font-bold text-gray-700">🏆 競賽題數：</span>
+                <select id="config-questions" class="bg-white border border-gray-300 rounded p-1 font-bold text-green-800 outline-none cursor-pointer hover:border-green-400">
+                    <option value="1">1 題</option>
+                    <option value="2">2 題</option>
+                    <option value="3" selected>3 題</option>
+                    <option value="4">4 題</option>
+                    <option value="5">5 題</option>
+                    <option value="6">6 題</option>
+                    <option value="7">7 題</option>
+                    <option value="8">8 題</option>
+                    <option value="9">9 題</option>
+                    <option value="10">10 題</option>
                 </select>
             </div>
         </div>
@@ -124,12 +138,15 @@
                 🔥 無提示挑戰
             </button>
             <button class="mode-btn px-4 py-2 rounded-lg border-2 border-gray-200 font-bold transition-colors" data-mode="VERSUS">
-                ⚔️ 雙人競賽
+                ⚔️ 雙人競速
+            </button>
+            <button class="mode-btn px-4 py-2 rounded-lg border-2 border-gray-200 font-bold transition-colors" data-mode="VERSUS_SCORE">
+                💯 計分競賽
             </button>
         </div>
 
         <!-- 獲勝/完成提示橫幅 -->
-        <div id="winner-banner" class="hidden text-2xl font-bold text-center py-2 px-6 rounded-lg shadow animate-bounce w-full max-w-md">
+        <div id="winner-banner" class="hidden text-2xl font-bold text-center py-2 px-6 rounded-lg shadow animate-bounce w-full max-w-lg">
             <!-- 內容由 JS 填寫 -->
         </div>
     </div>
@@ -142,68 +159,54 @@
     <!-- 全域控制按鈕 -->
     <div class="mt-8 h-16 pb-8">
         <button id="global-next-btn" class="hidden bg-green-500 hover:bg-green-600 text-white text-xl font-bold py-3 px-12 rounded-full shadow-lg transform transition hover:scale-105">
-            下一題
+            重新開始 / 下一題
         </button>
     </div>
 
     <script>
         // 定義借位專用的動態調色盤
         const BORROW_PALETTE = [
-            { main: '#ef4444', light: '#fca5a5', shadow: 'rgba(239, 68, 68, 0.3)', bg: 'bg-red-50', ring: 'ring-red-400' },       // 🔴 紅
-            { main: '#3b82f6', light: '#93c5fd', shadow: 'rgba(59, 130, 246, 0.3)', bg: 'bg-blue-50', ring: 'ring-blue-400' },    // 🔵 藍
-            { main: '#10b981', light: '#6ee7b7', shadow: 'rgba(16, 185, 129, 0.3)', bg: 'bg-green-50', ring: 'ring-green-400' },  // 🟢 綠
-            { main: '#8b5cf6', light: '#c4b5fd', shadow: 'rgba(139, 92, 246, 0.3)', bg: 'bg-purple-50', ring: 'ring-purple-400' },// 🟣 紫
-            { main: '#f97316', light: '#fdba74', shadow: 'rgba(249, 115, 22, 0.3)', bg: 'bg-orange-50', ring: 'ring-orange-400' } // 🟠 橘
+            { main: '#ef4444', light: '#fca5a5', shadow: 'rgba(239, 68, 68, 0.3)', bg: 'bg-red-50', ring: 'ring-red-400' },       
+            { main: '#3b82f6', light: '#93c5fd', shadow: 'rgba(59, 130, 246, 0.3)', bg: 'bg-blue-50', ring: 'ring-blue-400' },    
+            { main: '#10b981', light: '#6ee7b7', shadow: 'rgba(16, 185, 129, 0.3)', bg: 'bg-green-50', ring: 'ring-green-400' },  
+            { main: '#8b5cf6', light: '#c4b5fd', shadow: 'rgba(139, 92, 246, 0.3)', bg: 'bg-purple-50', ring: 'ring-purple-400' },
+            { main: '#f97316', light: '#fdba74', shadow: 'rgba(249, 115, 22, 0.3)', bg: 'bg-orange-50', ring: 'ring-orange-400' } 
         ];
 
-        // 玩家面板類別 (封裝單一遊戲面板的邏輯與 UI)
+        // 玩家面板類別
         class PlayerBoard {
             constructor(container, id, title, colorClass, mode, isVersus, digitsCount, onFinishCallback) {
                 this.container = container;
                 this.id = id;
-                this.mode = mode; // 'HINT' 或 'NOHINT'
-                this.isVersus = isVersus; // 決定排版佈局
+                this.mode = mode; // 'HINT', 'NOHINT', 'VERSUS', 'VERSUS_SCORE'
+                this.isVersus = isVersus; 
                 this.digitsCount = digitsCount;
                 this.onFinish = onFinishCallback;
+                
                 this.activeInput = null;
                 this.isDisabled = false;
                 this.isLeadingZero = false;
-                this.mistakes = 0; // 追蹤此局是否完美
+                this.mistakes = 0; 
 
-                // 根據位數決定 UI 尺寸，確保五、六位數也能完美塞入畫面
+                // 計分競賽專用變數
+                this.questions = [];
+                this.currentQIdx = 0;
+                this.totalScore = 0;
+
+                // 根據位數決定 UI 尺寸
                 let cClass, iSize, bSize, gClass;
                 switch(this.digitsCount) {
                     case 6:
-                        cClass = 'w-7 h-7 sm:w-8 sm:h-8 text-xl sm:text-2xl';
-                        iSize = 'text-xl sm:text-2xl';
-                        bSize = 'w-5 h-5 sm:w-6 sm:h-6 text-[10px] sm:text-xs';
-                        gClass = 'gap-x-0.5 sm:gap-x-1';
-                        break;
+                        cClass = 'w-7 h-7 sm:w-8 sm:h-8 text-xl sm:text-2xl'; iSize = 'text-xl sm:text-2xl'; bSize = 'w-5 h-5 sm:w-6 sm:h-6 text-[10px] sm:text-xs'; gClass = 'gap-x-0.5 sm:gap-x-1'; break;
                     case 5:
-                        cClass = 'w-8 h-8 sm:w-10 sm:h-10 text-2xl sm:text-3xl';
-                        iSize = 'text-2xl sm:text-3xl';
-                        bSize = 'w-6 h-6 sm:w-7 sm:h-7 text-xs sm:text-sm';
-                        gClass = 'gap-x-1 sm:gap-x-1';
-                        break;
+                        cClass = 'w-8 h-8 sm:w-10 sm:h-10 text-2xl sm:text-3xl'; iSize = 'text-2xl sm:text-3xl'; bSize = 'w-6 h-6 sm:w-7 sm:h-7 text-xs sm:text-sm'; gClass = 'gap-x-1 sm:gap-x-1'; break;
                     case 4:
-                        cClass = 'w-10 h-10 sm:w-12 sm:h-12 text-3xl sm:text-4xl';
-                        iSize = 'text-3xl sm:text-4xl';
-                        bSize = 'w-7 h-7 sm:w-8 sm:h-8 text-xs sm:text-sm';
-                        gClass = 'gap-x-1 sm:gap-x-2';
-                        break;
+                        cClass = 'w-10 h-10 sm:w-12 sm:h-12 text-3xl sm:text-4xl'; iSize = 'text-3xl sm:text-4xl'; bSize = 'w-7 h-7 sm:w-8 sm:h-8 text-xs sm:text-sm'; gClass = 'gap-x-1 sm:gap-x-2'; break;
                     case 3:
-                        cClass = 'w-12 h-12 sm:w-14 sm:h-14 text-4xl sm:text-5xl';
-                        iSize = 'text-4xl sm:text-5xl';
-                        bSize = 'w-8 h-8 sm:w-10 sm:h-10 text-sm sm:text-base';
-                        gClass = 'gap-x-2 sm:gap-x-4';
-                        break;
+                        cClass = 'w-12 h-12 sm:w-14 sm:h-14 text-4xl sm:text-5xl'; iSize = 'text-4xl sm:text-5xl'; bSize = 'w-8 h-8 sm:w-10 sm:h-10 text-sm sm:text-base'; gClass = 'gap-x-2 sm:gap-x-4'; break;
                     case 2:
                     default:
-                        cClass = 'w-14 h-14 sm:w-16 sm:h-16 text-5xl sm:text-6xl';
-                        iSize = 'text-5xl sm:text-6xl';
-                        bSize = 'w-10 h-10 sm:w-11 sm:h-11 text-lg sm:text-xl';
-                        gClass = 'gap-x-2 sm:gap-x-4';
-                        break;
+                        cClass = 'w-14 h-14 sm:w-16 sm:h-16 text-5xl sm:text-6xl'; iSize = 'text-5xl sm:text-6xl'; bSize = 'w-10 h-10 sm:w-11 sm:h-11 text-lg sm:text-xl'; gClass = 'gap-x-2 sm:gap-x-4'; break;
                 }
                 
                 this.cellClass = cClass;
@@ -211,19 +214,18 @@
                 this.borrowSize = bSize;
                 this.gapClass = gClass;
 
-                // 綁定共用的輸入處理 (給動態生成的輸入框使用)
+                // 輸入框監聽邏輯
                 this.handleInputBound = (e) => {
                     if (this.isDisabled) return;
                     if (this.expectedEvent === 'INPUT' && this.currentTarget === e.target) {
                         const valStr = e.target.value;
-                        if (valStr === '') return; // 允許回退為空
+                        if (valStr === '') return; 
                         
                         const expectedStr = this.expectedValue.toString();
                         
-                        // 正確並完整輸入
                         if (valStr === expectedStr || (expectedStr === '0' && valStr === '0')) {
                             e.target.classList.add('is-locked');
-                            e.target.blur(); // 移除焦點以取消高亮外框
+                            e.target.blur(); 
                             
                             if (this.isLeadingZero && e.target.dataset.type === 'C' && e.target.dataset.col === '0') {
                                 setTimeout(() => {
@@ -234,30 +236,26 @@
                             this.actionIdx++;
                             this.doNextAction();
                         } 
-                        // 前綴檢查錯誤 (例如預期14，輸入2，立刻視為錯誤)
                         else if (!expectedStr.startsWith(valStr)) {
                             this.mistakes++;
                             e.target.classList.add('bg-red-100', 'text-red-600', 'error-shake');
-                            // 強制清空重來並顯示紅色警告
                             setTimeout(() => {
                                 e.target.value = '';
                                 e.target.classList.remove('bg-red-100', 'text-red-600', 'error-shake');
                             }, 300);
                         }
-                        // 若是正確的前綴 (例如預期14，剛輸入1)，則繼續等待下一個字元
                     }
                 };
 
-                // 初始化 HTML
                 this.container.innerHTML = this.getHTML(title, colorClass);
                 
-                // 綁定 DOM 元素
                 this.el = {
                     messageBox: this.container.querySelector('.message-box'),
-                    keypadBtns: this.container.querySelectorAll('.keypad-btn')
+                    keypadBtns: this.container.querySelectorAll('.keypad-btn'),
+                    progressText: this.container.querySelector('.progress-text'),
+                    scoreText: this.container.querySelector('.score-text')
                 };
 
-                // 追蹤焦點
                 const inputs = this.container.querySelectorAll('input[type="text"]');
                 inputs.forEach(input => {
                     input.addEventListener('focus', () => {
@@ -271,53 +269,54 @@
             }
 
             getHTML(title, colorClass) {
-                let cols = this.digitsCount + 1; // 加上減號欄位
+                let cols = this.digitsCount + 1; 
                 let gap = this.gapClass;
-                // 非對戰模式時讓面板變寬，容納左右排列
                 let boardWidthClass = this.isVersus ? 'max-w-[480px]' : 'max-w-[700px]';
                 let layoutClass = this.isVersus ? 'flex-col' : 'flex-col md:flex-row';
+                
+                // 計分競賽專屬頂部資訊
+                let scoreHeaderHTML = (this.mode === 'VERSUS_SCORE') ? `
+                    <div class="w-full flex justify-between px-4 mb-2 text-sm md:text-base font-bold text-gray-600 bg-gray-100 rounded-lg py-1">
+                        <span class="progress-text text-blue-700">準備中</span>
+                        <span class="score-text text-green-600">分數: 0</span>
+                    </div>
+                ` : '';
 
-                // 動態生成網格結構
                 return `
                     <div class="bg-white p-4 sm:p-5 rounded-3xl shadow-xl w-full ${boardWidthClass} border-t-8 ${colorClass} flex flex-col items-center transition-all duration-300">
                         <h2 class="text-xl font-bold mb-3 text-center text-gray-700">${title}</h2>
                         
+                        ${scoreHeaderHTML}
+
                         <!-- 提示訊息區塊 -->
                         <div class="message-box bg-gray-100 text-gray-800 p-2 rounded-lg mb-4 text-center font-bold text-sm min-h-[3rem] w-full flex items-center justify-center transition-colors">
                             準備開始
                         </div>
 
-                        <!-- 內容佈局：根據模式決定上下或左右 -->
                         <div class="flex ${layoutClass} items-center justify-center gap-6 md:gap-10 w-full mb-2">
                             <!-- 直式計算區塊 -->
-                            <div class="flex justify-center select-none w-full md:w-auto">
+                            <div class="flex justify-center select-none w-full md:w-auto relative">
                                 <div style="display: grid; grid-template-columns: repeat(${cols}, minmax(0, auto));" class="gap-y-1 ${gap} font-mono">
                                     
-                                    <!-- 第一排：借位區 (支援多次退位向上堆疊) -->
                                     <div class="${this.cellClass} !h-20 sm:!h-24"></div>
                                     ${Array.from({length: this.digitsCount}, (_, i) => `
                                         <div class="${this.cellClass} !h-20 sm:!h-24 relative flex justify-center">
-                                            <div data-type="BORROW_STACK" data-col="${i}" class="absolute bottom-0 w-full flex flex-col-reverse items-center gap-1">
-                                            </div>
+                                            <div data-type="BORROW_STACK" data-col="${i}" class="absolute bottom-0 w-full flex flex-col-reverse items-center gap-1"></div>
                                         </div>
                                     `).join('')}
 
-                                    <!-- 第二排：被減數 A -->
                                     <div class="${this.cellClass}"></div>
                                     ${Array.from({length: this.digitsCount}, (_, i) => `
                                         <div data-type="A" data-col="${i}" class="${this.cellClass} flex items-center justify-center transition-all duration-300 font-bold text-gray-800 rounded-lg"></div>
                                     `).join('')}
 
-                                    <!-- 第三排：減數 B -->
                                     <div class="${this.cellClass} flex items-center justify-center text-gray-500 font-bold">-</div>
                                     ${Array.from({length: this.digitsCount}, (_, i) => `
                                         <div data-type="B" data-col="${i}" class="${this.cellClass} flex items-center justify-center font-bold text-gray-800"></div>
                                     `).join('')}
 
-                                    <!-- 分隔線 -->
                                     <div style="grid-column: span ${cols} / span ${cols};" class="border-t-4 border-gray-800 my-1 w-full"></div>
 
-                                    <!-- 第四排：答案 C -->
                                     <div class="${this.cellClass}"></div>
                                     ${Array.from({length: this.digitsCount}, (_, i) => `
                                         <div class="${this.cellClass} flex justify-center">
@@ -339,7 +338,6 @@
                 `;
             }
 
-            // 優化的多點觸控綁定事件
             bindTap(element, callback) {
                 let touched = false;
                 element.addEventListener('touchstart', (e) => {
@@ -361,7 +359,6 @@
             }
 
             bindEvents() {
-                // 虛擬鍵盤點擊
                 this.el.keypadBtns.forEach(btn => {
                     this.bindTap(btn, (e) => {
                         if (this.isDisabled || !this.activeInput || this.activeInput.classList.contains('is-locked')) return;
@@ -375,13 +372,11 @@
                                 this.activeInput.value += key;
                             }
                         }
-                        // 手動觸發 input 事件交由 handleInputBound 驗證
                         this.activeInput.dispatchEvent(new Event('input'));
                         if (this.activeInput) this.activeInput.focus();
                     });
                 });
 
-                // A排數字點擊 (借位來源)
                 for (let i = 0; i < this.digitsCount; i++) {
                     const el = this.getEl('A', i);
                     this.bindTap(el, () => {
@@ -391,7 +386,6 @@
                                 this.actionIdx++;
                                 this.doNextAction();
                             } else {
-                                // 點錯位子紀錄為失誤
                                 this.mistakes++;
                                 el.classList.add('bg-red-200', 'text-red-800', 'error-shake');
                                 setTimeout(() => el.classList.remove('bg-red-200', 'text-red-800', 'error-shake'), 300);
@@ -400,16 +394,14 @@
                     });
                 }
 
-                // 輸入框監聽 (答案區)
                 for (let i = 0; i < this.digitsCount; i++) {
                     this.getEl('C', i).addEventListener('input', this.handleInputBound);
                 }
             }
 
             clearHighlights() {
-                // 不清除 theme.bg 以保留痕跡
                 const removeClasses = ['cursor-pointer', 'ring-4', 'animate-pulse', 'ring-yellow-400', 'bg-yellow-50'];
-                BORROW_PALETTE.forEach(p => removeClasses.push(p.ring)); // 清除提示光圈
+                BORROW_PALETTE.forEach(p => removeClasses.push(p.ring)); 
 
                 for(let i=0; i<this.digitsCount; i++) {
                     const el = this.getEl('A', i);
@@ -427,10 +419,8 @@
             resetUI() {
                 this.isDisabled = false;
                 this.activeInput = null;
-                this.mistakes = 0; // 新局歸零失誤
                 
                 for (let i = 0; i < this.digitsCount; i++) {
-                    // 清空堆疊區
                     const stack = this.getEl('BORROW_STACK', i);
                     if(stack) stack.innerHTML = '';
                     
@@ -450,20 +440,17 @@
                 this.clearHighlights();
             }
 
-            // 取得目前最上層可點擊的數字
             getCurrentClickableEl(idx) {
                 const stack = this.getEl('BORROW_STACK', idx);
                 const inputs = stack.querySelectorAll('input');
-                if (inputs.length > 0) return inputs[inputs.length - 1]; // 最上層的退位數字
-                return this.getEl('A', idx); // 原始數字
+                if (inputs.length > 0) return inputs[inputs.length - 1]; 
+                return this.getEl('A', idx); 
             }
 
-            // 在堆疊區產生新的退位輸入框，並將舊的劃掉
             spawnBorrowInput(idx, theme) {
                 const stack = this.getEl('BORROW_STACK', idx);
-                
-                // 處理原本的數字 (加上刪除線，並套用專屬主題的淡色)
                 const existingInputs = stack.querySelectorAll('input');
+                
                 if (existingInputs.length > 0) {
                     const lastInput = existingInputs[existingInputs.length - 1];
                     lastInput.classList.add('crossed-out');
@@ -471,16 +458,11 @@
                 } else {
                     const aEl = this.getEl('A', idx);
                     aEl.classList.add('line-through', 'opacity-60');
-                    if (theme) {
-                        aEl.style.color = theme.light; 
-                    } else {
-                        aEl.classList.add('text-gray-400');
-                    }
-                    aEl.classList.remove('font-bold', 'text-gray-800');
-                    aEl.classList.remove('cursor-pointer', 'ring-4', 'ring-yellow-400', 'bg-yellow-50', 'animate-pulse');
+                    if (theme) aEl.style.color = theme.light; 
+                    else aEl.classList.add('text-gray-400');
+                    aEl.classList.remove('font-bold', 'text-gray-800', 'cursor-pointer', 'ring-4', 'ring-yellow-400', 'bg-yellow-50', 'animate-pulse');
                 }
 
-                // 產生新的輸入框疊在上方
                 const newInput = document.createElement('input');
                 newInput.type = 'text';
                 newInput.readOnly = true;
@@ -496,15 +478,11 @@
                 }
 
                 stack.appendChild(newInput); 
-                
                 newInput.addEventListener('input', this.handleInputBound);
                 newInput.addEventListener('focus', () => {
-                    if (!this.isDisabled && !newInput.classList.contains('is-locked')) {
-                        this.activeInput = newInput;
-                    }
+                    if (!this.isDisabled && !newInput.classList.contains('is-locked')) this.activeInput = newInput;
                 });
                 
-                // 綁定點擊事件，以便未來若又被借位時可點擊
                 this.bindTap(newInput, () => {
                     if (this.isDisabled) return;
                     if (this.expectedEvent === 'CLICK') {
@@ -527,7 +505,34 @@
                 return names[this.digitsCount - 1 - idx] + '位數';
             }
 
+            // 啟動一系列題目 (計分競賽專用)
+            startSequence(questions) {
+                this.questions = questions;
+                this.currentQIdx = 0;
+                this.totalScore = 0;
+                this.loadQuestion();
+            }
+
+            // 載入當前陣列中的題目
+            loadQuestion() {
+                this.mistakes = 0; 
+                const q = this.questions[this.currentQIdx];
+                
+                if (this.mode === 'VERSUS_SCORE') {
+                    this.el.progressText.textContent = `第 ${this.currentQIdx + 1} / ${this.questions.length} 題`;
+                    this.el.scoreText.textContent = `分數: ${this.totalScore}`;
+                }
+
+                this.startRoundLogic(q.A, q.B);
+            }
+
+            // 啟動單一題目 (單人或雙人競速使用)
             startRound(A, B) {
+                this.mistakes = 0;
+                this.startRoundLogic(A, B);
+            }
+
+            startRoundLogic(A, B) {
                 this.digitsA = A.toString().split('').map(Number);
                 this.digitsB_logic = B.toString().padStart(this.digitsCount, '0').split('').map(Number);
                 this.digitsB_display = B.toString().padStart(this.digitsCount, ' ').split('');
@@ -538,14 +543,11 @@
                 
                 for (let i = this.digitsCount - 1; i >= 0; i--) {
                     if (curA[i] < this.digitsB_logic[i]) {
-                        
                         const currentTheme = BORROW_PALETTE[borrowGroupIndex % BORROW_PALETTE.length];
                         borrowGroupIndex++;
 
                         let srcIdx = i - 1;
-                        while(srcIdx >= 0 && curA[srcIdx] === 0) {
-                            srcIdx--;
-                        }
+                        while(srcIdx >= 0 && curA[srcIdx] === 0) srcIdx--;
                         
                         for (let j = srcIdx; j < i; j++) {
                             let dName = this.getDigitName(j+1);
@@ -581,9 +583,33 @@
 
             doNextAction() {
                 if (this.actionIdx >= this.actions.length) {
-                    this.setMessage("🎉 計算完成！", 'bg-green-100', 'text-green-800');
-                    this.activeInput = null;
-                    if (this.onFinish) this.onFinish(this.id, this.mistakes);
+                    
+                    if (this.mode === 'VERSUS_SCORE') {
+                        // 計算本題得分 (基礎20，錯1次扣5)
+                        let qScore = 20 - (this.mistakes * 5);
+                        this.totalScore += qScore;
+                        this.el.scoreText.textContent = `分數: ${this.totalScore}`;
+                        
+                        this.currentQIdx++;
+                        if (this.currentQIdx < this.questions.length) {
+                            this.setMessage(`答對了！本題得分: ${qScore}。準備下一題...`, 'bg-green-100', 'text-green-800');
+                            this.activeInput = null;
+                            this.clearHighlights();
+                            // 延遲 1.2 秒自動進入下一題
+                            setTimeout(() => this.loadQuestion(), 1200); 
+                        } else {
+                            this.setMessage(`完成所有題目！總分: ${this.totalScore}`, 'bg-purple-100', 'text-purple-800');
+                            this.activeInput = null;
+                            this.isDisabled = true;
+                            if (this.onFinish) this.onFinish(this.id, this.totalScore);
+                        }
+                    } else {
+                        // 一般模式
+                        this.setMessage("🎉 計算完成！", 'bg-green-100', 'text-green-800');
+                        this.activeInput = null;
+                        this.isDisabled = true;
+                        if (this.onFinish) this.onFinish(this.id, this.mistakes);
+                    }
                     return;
                 }
 
@@ -607,7 +633,6 @@
                     const el = this.spawnBorrowInput(action.idx, action.theme);
                     this.focusInput(el);
                     
-                    // 加上主題底色與圓角永久保留
                     const aEl = this.getEl('A', action.idx);
                     aEl.classList.add(action.theme.bg, 'rounded-lg');
                     
@@ -631,7 +656,7 @@
             disableAll() {
                 this.isDisabled = true;
                 this.activeInput = null;
-                this.setMessage("🛑 回合結束", 'bg-gray-300', 'text-gray-600');
+                this.setMessage("🛑 結算中，請稍候...", 'bg-gray-300', 'text-gray-600');
                 this.container.querySelector('div.bg-white').classList.add('opacity-75');
             }
         }
@@ -641,16 +666,20 @@
         const globalNextBtn = document.getElementById('global-next-btn');
         const winnerBanner = document.getElementById('winner-banner');
         let players = [];
-        let currentMode = 'SOLO_HINT'; // 'SOLO_HINT', 'SOLO_NOHINT', 'VERSUS'
+        let currentMode = 'SOLO_HINT'; 
 
-        // 全域分數系統
+        // 分數與狀態系統
         let globalScoreTotal = 0;
         let globalScoreCorrect = 0;
+        let p1Finished = false;
+        let p2Finished = false;
+        let p1Score = 0;
+        let p2Score = 0;
 
         function updateScoreDisplay() {
             const scoreEl = document.getElementById('score-display');
-            if (currentMode === 'VERSUS') {
-                scoreEl.classList.add('hidden'); // 對戰模式隱藏分數
+            if (currentMode === 'VERSUS' || currentMode === 'VERSUS_SCORE') {
+                scoreEl.classList.add('hidden'); 
             } else {
                 scoreEl.classList.remove('hidden');
                 document.getElementById('score-correct').textContent = globalScoreCorrect;
@@ -677,20 +706,55 @@
         
         document.getElementById('config-digits').addEventListener('change', () => { resetScore(); initGame(); });
         document.getElementById('config-borrow').addEventListener('change', () => { resetScore(); initGame(); });
+        document.getElementById('config-questions').addEventListener('change', () => { 
+            if (currentMode === 'VERSUS_SCORE') initGame(); 
+        });
         
-        // 「下一題」按鈕只重啟遊戲不重設分數 (無限題數)
         globalNextBtn.addEventListener('click', initGame);
 
-        function handleWin(winnerId, mistakesCount) {
-            if (currentMode === 'VERSUS') {
+        function handleWin(winnerId, val) {
+            if (currentMode === 'VERSUS_SCORE') {
+                if (winnerId === 1) { p1Finished = true; p1Score = val; }
+                if (winnerId === 2) { p2Finished = true; p2Score = val; }
+                
+                // 雙方都完成才結算
+                if (p1Finished && p2Finished) {
+                    let msg, bgClass;
+                    if (p1Score > p2Score) {
+                        msg = `🏆 🤡 玩家 1 獲勝！總分: ${p1Score} vs ${p2Score}`;
+                        bgClass = 'bg-blue-100 text-blue-800 border-blue-400';
+                    } else if (p2Score > p1Score) {
+                        msg = `🏆 🤖 玩家 2 獲勝！總分: ${p2Score} vs ${p1Score}`;
+                        bgClass = 'bg-red-100 text-red-800 border-red-400';
+                    } else {
+                        msg = `🤝 勢均力敵！雙方平手 (皆為 ${p1Score} 分)`;
+                        bgClass = 'bg-purple-100 text-purple-800 border-purple-400';
+                    }
+                    winnerBanner.innerHTML = msg;
+                    winnerBanner.className = `text-2xl font-bold text-center mb-6 py-3 px-6 rounded-xl shadow-lg animate-bounce ${bgClass} border-2 w-full max-w-lg`;
+                    winnerBanner.classList.remove('hidden');
+                    globalNextBtn.classList.remove('hidden');
+                } else {
+                    // 等待另一方
+                    players.forEach(p => {
+                        if (p.id === winnerId) p.disableAll();
+                    });
+                }
+            } 
+            else if (currentMode === 'VERSUS') {
+                // 原本的一題競速模式
                 players.forEach(p => {
                     if (p.id !== winnerId) p.disableAll();
                 });
-                winnerBanner.innerHTML = `🏆 玩家 ${winnerId} 速度最快，獲得勝利！`;
+                winnerBanner.innerHTML = `🏆 ${winnerId === 1 ? '🤡' : '🤖'} 玩家 ${winnerId} 速度最快，獲得勝利！`;
                 winnerBanner.className = `text-2xl font-bold text-center mb-6 py-3 px-6 rounded-xl shadow-lg animate-bounce ${winnerId === 1 ? 'bg-blue-100 text-blue-800 border-2 border-blue-400' : 'bg-red-100 text-red-800 border-2 border-red-400'} w-full max-w-lg`;
-            } else {
+                winnerBanner.classList.remove('hidden');
+                globalNextBtn.classList.remove('hidden');
+            } 
+            else {
+                // 單人模式
+                const mistakesCount = val;
                 globalScoreTotal++;
-                // 只有完全 0 失誤才算答對
                 if (mistakesCount === 0) {
                     globalScoreCorrect++;
                     winnerBanner.innerHTML = `🎉 恭喜你完美答對了！`;
@@ -700,10 +764,9 @@
                     winnerBanner.className = `text-xl font-bold text-center mb-6 py-3 px-6 rounded-xl shadow-lg bg-yellow-100 text-yellow-800 border-2 border-yellow-400 w-full max-w-md`;
                 }
                 updateScoreDisplay();
+                winnerBanner.classList.remove('hidden');
+                globalNextBtn.classList.remove('hidden');
             }
-            
-            winnerBanner.classList.remove('hidden');
-            globalNextBtn.classList.remove('hidden');
         }
 
         function generateProblem(digits, allowBorrow) {
@@ -748,21 +811,33 @@
             return { A, B };
         }
 
+        // 產生多題陣列
+        function generateMultipleProblems(count, digits, allowBorrow) {
+            let arr = [];
+            for (let i = 0; i < count; i++) {
+                arr.push(generateProblem(digits, allowBorrow));
+            }
+            return arr;
+        }
+
         function initGame() {
             const digitsConfig = parseInt(document.getElementById('config-digits').value);
             const borrowConfig = document.getElementById('config-borrow').value;
             const allowBorrow = borrowConfig !== 'NO_BORROW';
-            
-            const { A, B } = generateProblem(digitsConfig, allowBorrow);
+            const qCount = parseInt(document.getElementById('config-questions').value);
 
             winnerBanner.classList.add('hidden');
             globalNextBtn.classList.add('hidden');
             gameArena.innerHTML = '';
             players = [];
             
+            p1Finished = false;
+            p2Finished = false;
             updateScoreDisplay();
 
-            if (currentMode === 'VERSUS') {
+            if (currentMode === 'VERSUS_SCORE') {
+                const problems = generateMultipleProblems(qCount, digitsConfig, allowBorrow);
+                
                 const p1Container = document.createElement('div');
                 const p2Container = document.createElement('div');
                 p1Container.className = 'w-full flex justify-center';
@@ -770,9 +845,30 @@
                 gameArena.appendChild(p1Container);
                 gameArena.appendChild(p2Container);
 
-                players.push(new PlayerBoard(p1Container, 1, '🔵 玩家 1 (左)', 'border-blue-500', 'NOHINT', true, digitsConfig, handleWin));
-                players.push(new PlayerBoard(p2Container, 2, '🔴 玩家 2 (右)', 'border-red-500', 'NOHINT', true, digitsConfig, handleWin));
+                players.push(new PlayerBoard(p1Container, 1, '🤡 玩家 1 (左)', 'border-blue-500', 'VERSUS_SCORE', true, digitsConfig, handleWin));
+                players.push(new PlayerBoard(p2Container, 2, '🤖 玩家 2 (右)', 'border-red-500', 'VERSUS_SCORE', true, digitsConfig, handleWin));
+
+                // 傳遞所有題目進去啟動連續模式
+                players.forEach(p => p.startSequence(problems));
+
+            } else if (currentMode === 'VERSUS') {
+                const prob = generateProblem(digitsConfig, allowBorrow);
+
+                const p1Container = document.createElement('div');
+                const p2Container = document.createElement('div');
+                p1Container.className = 'w-full flex justify-center';
+                p2Container.className = 'w-full flex justify-center';
+                gameArena.appendChild(p1Container);
+                gameArena.appendChild(p2Container);
+
+                players.push(new PlayerBoard(p1Container, 1, '🤡 玩家 1 (左)', 'border-blue-500', 'NOHINT', true, digitsConfig, handleWin));
+                players.push(new PlayerBoard(p2Container, 2, '🤖 玩家 2 (右)', 'border-red-500', 'NOHINT', true, digitsConfig, handleWin));
+
+                players.forEach(p => p.startRound(prob.A, prob.B));
+
             } else {
+                const prob = generateProblem(digitsConfig, allowBorrow);
+
                 const p1Container = document.createElement('div');
                 p1Container.className = 'w-full flex justify-center';
                 gameArena.appendChild(p1Container);
@@ -780,9 +876,9 @@
                 const modeParam = currentMode === 'SOLO_HINT' ? 'HINT' : 'NOHINT';
                 const title = currentMode === 'SOLO_HINT' ? '一般練習模式' : '無提示挑戰模式';
                 players.push(new PlayerBoard(p1Container, 1, title, 'border-indigo-500', modeParam, false, digitsConfig, handleWin));
-            }
 
-            players.forEach(p => p.startRound(A, B));
+                players.forEach(p => p.startRound(prob.A, prob.B));
+            }
         }
 
         // 初始化遊戲
