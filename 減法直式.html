@@ -163,6 +163,18 @@
         </button>
     </div>
 
+    <!-- 結算彈出視窗 (Modal) -->
+    <div id="result-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-sm md:max-w-md w-full mx-4 transform scale-95 transition-transform duration-300 flex flex-col items-center text-center">
+            <div id="modal-icon" class="text-6xl mb-4 animate-bounce">🏆</div>
+            <h2 id="modal-title" class="text-3xl font-bold text-gray-800 mb-2">結算結果</h2>
+            <p id="modal-message" class="text-xl text-gray-600 mb-8 font-medium">...</p>
+            <button id="modal-close-btn" class="bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold py-3 px-10 rounded-full shadow-lg transform transition hover:scale-105 w-full">
+                確定 / 下一局
+            </button>
+        </div>
+    </div>
+
     <script>
         // 定義借位專用的動態調色盤
         const BORROW_PALETTE = [
@@ -665,6 +677,14 @@
         const gameArena = document.getElementById('game-arena');
         const globalNextBtn = document.getElementById('global-next-btn');
         const winnerBanner = document.getElementById('winner-banner');
+        
+        // 新增 Modal 相關 DOM
+        const resultModal = document.getElementById('result-modal');
+        const modalIcon = document.getElementById('modal-icon');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
         let players = [];
         let currentMode = 'SOLO_HINT'; 
 
@@ -712,6 +732,37 @@
         
         globalNextBtn.addEventListener('click', initGame);
 
+        // --- Modal 顯示與隱藏輔助函數 ---
+        function showModal(icon, title, message, titleColor = 'text-gray-800') {
+            modalIcon.textContent = icon;
+            modalTitle.textContent = title;
+            modalTitle.className = `text-3xl font-bold mb-2 ${titleColor}`;
+            modalMessage.innerHTML = message;
+            
+            resultModal.classList.remove('hidden');
+            // 使用 requestAnimationFrame 確保 transition 動畫生效
+            requestAnimationFrame(() => {
+                resultModal.classList.remove('opacity-0');
+                resultModal.querySelector('div').classList.remove('scale-95');
+                resultModal.querySelector('div').classList.add('scale-100');
+            });
+        }
+
+        function hideModal() {
+            resultModal.classList.add('opacity-0');
+            resultModal.querySelector('div').classList.remove('scale-100');
+            resultModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                resultModal.classList.add('hidden');
+            }, 300); // 對應 duration-300
+        }
+
+        modalCloseBtn.addEventListener('click', () => {
+            hideModal();
+            initGame();
+        });
+        // -----------------------------
+
         function handleWin(winnerId, val) {
             if (currentMode === 'VERSUS_SCORE') {
                 if (winnerId === 1) { p1Finished = true; p1Score = val; }
@@ -719,21 +770,25 @@
                 
                 // 雙方都完成才結算
                 if (p1Finished && p2Finished) {
-                    let msg, bgClass;
+                    let resultMsg, icon, colorClass;
                     if (p1Score > p2Score) {
-                        msg = `🏆 🤡 玩家 1 獲勝！總分: ${p1Score} vs ${p2Score}`;
-                        bgClass = 'bg-blue-100 text-blue-800 border-blue-400';
+                        icon = '🤡'; 
+                        resultMsg = '🤡勝出🏆。'; 
+                        colorClass = 'text-blue-600';
                     } else if (p2Score > p1Score) {
-                        msg = `🏆 🤖 玩家 2 獲勝！總分: ${p2Score} vs ${p1Score}`;
-                        bgClass = 'bg-red-100 text-red-800 border-red-400';
+                        icon = '🤖'; 
+                        resultMsg = '🤖勝出🏆。'; 
+                        colorClass = 'text-red-600';
                     } else {
-                        msg = `🤝 勢均力敵！雙方平手 (皆為 ${p1Score} 分)`;
-                        bgClass = 'bg-purple-100 text-purple-800 border-purple-400';
+                        icon = '🤝'; 
+                        resultMsg = '🤝平手。'; 
+                        colorClass = 'text-purple-600';
                     }
-                    winnerBanner.innerHTML = msg;
-                    winnerBanner.className = `text-2xl font-bold text-center mb-6 py-3 px-6 rounded-xl shadow-lg animate-bounce ${bgClass} border-2 w-full max-w-lg`;
-                    winnerBanner.classList.remove('hidden');
-                    globalNextBtn.classList.remove('hidden');
+                    
+                    const title = '結算結果';
+                    const msg = `🤡獲得${p1Score}分，🤖獲得${p2Score}分。<br><br><span class="text-3xl font-bold ${colorClass}">${resultMsg}</span>`;
+                    
+                    showModal(icon, title, msg, 'text-gray-800');
                 } else {
                     // 等待另一方
                     players.forEach(p => {
@@ -746,26 +801,25 @@
                 players.forEach(p => {
                     if (p.id !== winnerId) p.disableAll();
                 });
-                winnerBanner.innerHTML = `🏆 ${winnerId === 1 ? '🤡' : '🤖'} 玩家 ${winnerId} 速度最快，獲得勝利！`;
-                winnerBanner.className = `text-2xl font-bold text-center mb-6 py-3 px-6 rounded-xl shadow-lg animate-bounce ${winnerId === 1 ? 'bg-blue-100 text-blue-800 border-2 border-blue-400' : 'bg-red-100 text-red-800 border-2 border-red-400'} w-full max-w-lg`;
-                winnerBanner.classList.remove('hidden');
-                globalNextBtn.classList.remove('hidden');
+                const icon = winnerId === 1 ? '🤡' : '🤖';
+                const title = `玩家 ${winnerId} 獲勝！`;
+                const msg = '速度最快，獲得勝利！';
+                const colorClass = winnerId === 1 ? 'text-blue-600' : 'text-red-600';
+                showModal(icon, title, msg, colorClass);
             } 
             else {
                 // 單人模式
                 const mistakesCount = val;
                 globalScoreTotal++;
+                let icon, title, msg, colorClass;
                 if (mistakesCount === 0) {
                     globalScoreCorrect++;
-                    winnerBanner.innerHTML = `🎉 恭喜你完美答對了！`;
-                    winnerBanner.className = `text-2xl font-bold text-center mb-6 py-3 px-6 rounded-xl shadow-lg animate-bounce bg-green-100 text-green-800 border-2 border-green-400 w-full max-w-md`;
+                    icon = '🎉'; title = '完美答對了！'; msg = '計算完全正確'; colorClass = 'text-green-600';
                 } else {
-                    winnerBanner.innerHTML = `👍 完成了！(過程有失誤：${mistakesCount}次)`;
-                    winnerBanner.className = `text-xl font-bold text-center mb-6 py-3 px-6 rounded-xl shadow-lg bg-yellow-100 text-yellow-800 border-2 border-yellow-400 w-full max-w-md`;
+                    icon = '👍'; title = '完成了！'; msg = `過程有失誤：${mistakesCount}次`; colorClass = 'text-yellow-600';
                 }
                 updateScoreDisplay();
-                winnerBanner.classList.remove('hidden');
-                globalNextBtn.classList.remove('hidden');
+                showModal(icon, title, msg, colorClass);
             }
         }
 
