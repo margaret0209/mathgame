@@ -134,8 +134,8 @@
             <button class="mode-btn active px-4 py-2 rounded-lg border-2 border-gray-200 font-bold transition-colors" data-mode="SOLO_HINT">
                 📖 一般練習
             </button>
-            <button class="mode-btn px-4 py-2 rounded-lg border-2 border-gray-200 font-bold transition-colors" data-mode="SOLO_NOHINT">
-                🔥 無提示挑戰
+            <button class="mode-btn px-4 py-2 rounded-lg border-2 border-gray-200 font-bold transition-colors" data-mode="SOLO_SCORE">
+                🏆 個人計分賽
             </button>
             <button class="mode-btn px-4 py-2 rounded-lg border-2 border-gray-200 font-bold transition-colors" data-mode="VERSUS">
                 ⚔️ 雙人競速
@@ -190,7 +190,7 @@
             constructor(container, id, title, colorClass, mode, isVersus, digitsCount, onFinishCallback) {
                 this.container = container;
                 this.id = id;
-                this.mode = mode; // 'HINT', 'NOHINT', 'VERSUS', 'VERSUS_SCORE'
+                this.mode = mode; // 'HINT', 'SOLO_SCORE', 'VERSUS', 'VERSUS_SCORE'
                 this.isVersus = isVersus; 
                 this.digitsCount = digitsCount;
                 this.onFinish = onFinishCallback;
@@ -287,7 +287,7 @@
                 let layoutClass = this.isVersus ? 'flex-col' : 'flex-col md:flex-row';
                 
                 // 計分競賽專屬頂部資訊
-                let scoreHeaderHTML = (this.mode === 'VERSUS_SCORE') ? `
+                let scoreHeaderHTML = (this.mode === 'VERSUS_SCORE' || this.mode === 'SOLO_SCORE') ? `
                     <div class="w-full flex justify-between px-4 mb-2 text-sm md:text-base font-bold text-gray-600 bg-gray-100 rounded-lg py-1">
                         <span class="progress-text text-blue-700">準備中</span>
                         <span class="score-text text-green-600">分數: 0</span>
@@ -530,7 +530,7 @@
                 this.mistakes = 0; 
                 const q = this.questions[this.currentQIdx];
                 
-                if (this.mode === 'VERSUS_SCORE') {
+                if (this.mode === 'VERSUS_SCORE' || this.mode === 'SOLO_SCORE') {
                     this.el.progressText.textContent = `第 ${this.currentQIdx + 1} / ${this.questions.length} 題`;
                     this.el.scoreText.textContent = `分數: ${this.totalScore}`;
                 }
@@ -596,7 +596,7 @@
             doNextAction() {
                 if (this.actionIdx >= this.actions.length) {
                     
-                    if (this.mode === 'VERSUS_SCORE') {
+                    if (this.mode === 'VERSUS_SCORE' || this.mode === 'SOLO_SCORE') {
                         // 計算本題得分 (基礎20，錯1次扣5)
                         let qScore = 20 - (this.mistakes * 5);
                         this.totalScore += qScore;
@@ -698,7 +698,7 @@
 
         function updateScoreDisplay() {
             const scoreEl = document.getElementById('score-display');
-            if (currentMode === 'VERSUS' || currentMode === 'VERSUS_SCORE') {
+            if (currentMode === 'VERSUS' || currentMode === 'VERSUS_SCORE' || currentMode === 'SOLO_SCORE') {
                 scoreEl.classList.add('hidden'); 
             } else {
                 scoreEl.classList.remove('hidden');
@@ -795,7 +795,14 @@
                         if (p.id === winnerId) p.disableAll();
                     });
                 }
-            } 
+            }
+            else if (currentMode === 'SOLO_SCORE') {
+                const finalScore = val;
+                const icon = '🏆';
+                const title = '個人計分賽完成！';
+                const msg = `你完成了 10 道題目！<br><br><span class="text-3xl font-bold text-indigo-600">總分: ${finalScore} 分</span>`;
+                showModal(icon, title, msg, 'text-indigo-800');
+            }
             else if (currentMode === 'VERSUS') {
                 // 原本的一題競速模式
                 players.forEach(p => {
@@ -905,6 +912,20 @@
                 // 傳遞所有題目進去啟動連續模式
                 players.forEach(p => p.startSequence(problems));
 
+            } else if (currentMode === 'SOLO_SCORE') {
+                // 固定生成 10 題
+                const problems = generateMultipleProblems(10, digitsConfig, allowBorrow);
+                
+                const p1Container = document.createElement('div');
+                p1Container.className = 'w-full flex justify-center';
+                gameArena.appendChild(p1Container);
+
+                // isVersus 設定為 false，讓畫面呈現左右並排展開
+                players.push(new PlayerBoard(p1Container, 1, '🏆 個人計分賽', 'border-indigo-500', 'SOLO_SCORE', false, digitsConfig, handleWin));
+
+                // 傳遞 10 題進去啟動連續模式
+                players.forEach(p => p.startSequence(problems));
+
             } else if (currentMode === 'VERSUS') {
                 const prob = generateProblem(digitsConfig, allowBorrow);
 
@@ -927,9 +948,7 @@
                 p1Container.className = 'w-full flex justify-center';
                 gameArena.appendChild(p1Container);
                 
-                const modeParam = currentMode === 'SOLO_HINT' ? 'HINT' : 'NOHINT';
-                const title = currentMode === 'SOLO_HINT' ? '一般練習模式' : '無提示挑戰模式';
-                players.push(new PlayerBoard(p1Container, 1, title, 'border-indigo-500', modeParam, false, digitsConfig, handleWin));
+                players.push(new PlayerBoard(p1Container, 1, '📖 一般練習模式', 'border-indigo-500', 'HINT', false, digitsConfig, handleWin));
 
                 players.forEach(p => p.startRound(prob.A, prob.B));
             }
