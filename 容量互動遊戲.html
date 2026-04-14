@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>容量互動遊戲</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50; /* 柔和的綠色 */
+            --bg-color: #f0f8ff; /* 淺藍色背景，減少視覺疲勞 */
+            --water-color: #3498db; /* 明確的藍色水 */
+            --cup-border: #7f8c8d;
+            --text-color: #2c3e50;
+        }
+
+        body {
+            font-family: "Microsoft JhengHei", "PingFang HK", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            user-select: none; /* 防止誤選文字 */
+        }
+
+        h1 {
+            font-size: 36px;
+            color: #2980b9;
+            margin-bottom: 20px;
+        }
+
+        /* ----- 頂部控制面板 ----- */
+        #top-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .controls-row label {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        select {
+            font-size: 22px;
+            padding: 8px 15px;
+            border-radius: 10px;
+            border: 3px solid var(--primary-color);
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .mode-btn {
+            background-color: #bdc3c7; /* 預設為灰色未選中狀態 */
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .mode-btn:hover {
+            transform: scale(1.05);
+            background-color: #95a5a6;
+        }
+
+        /* 選中狀態的高亮 */
+        .mode-btn.active {
+            background-color: var(--primary-color);
+            transform: scale(1.05);
+            border: 2px solid #27ae60;
+        }
+        
+        .mode-btn.active-sort {
+            background-color: #e67e22;
+            transform: scale(1.05);
+            border: 2px solid #d35400;
+        }
+
+        /* ----- 遊戲介面 ----- */
+        #game-screen {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        #welcome-msg {
+            font-size: 32px;
+            color: #7f8c8d;
+            margin: 40px 0;
+            font-weight: bold;
+        }
+
+        #game-content {
+            display: none; /* 選擇模式後才顯示 */
+        }
+
+        #instruction {
+            font-size: 38px;
+            font-weight: bold;
+            color: #d35400;
+            background: #fff3e0;
+            padding: 15px 30px;
+            border-radius: 15px;
+            display: inline-block;
+            margin-bottom: 30px;
+            border: 3px solid #ffcc80;
+        }
+
+        /* 杯子容器 */
+        .cups-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end; /* 新增：讓所有水杯或方格統一靠下對齊 */
+            flex-wrap: wrap;
+            gap: 30px;
+            min-height: 200px; /* 調整高度，保持題目區和答案區視覺統一 */
+            padding: 30px 20px 20px 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        #sorted-container {
+            display: none;
+            background: #e8f8f5;
+            border: 3px dashed #1abc9c;
+            padding-top: 50px; /* 預留空間給最少/最多標籤 */
+            gap: 20px;
+        }
+
+        /* 單個杯子設計 */
+        .cup-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            z-index: 2;
+        }
+
+        .cup-wrapper:hover {
+            transform: translateY(-10px);
+        }
+
+        .cup {
+            /* 移除固定寬高，改由形狀 class 控制 */
+            border: 6px solid var(--cup-border);
+            border-top: none;
+            position: relative;
+            background-color: rgba(255, 255, 255, 0.8);
+            overflow: hidden; /* 確保水不會溢出圓角 */
+            box-shadow: inset 0 -5px 10px rgba(0,0,0,0.1);
+        }
+
+        /* 隨機杯子形狀樣式 */
+        .shape-normal { width: 100px; height: 140px; border-radius: 0 0 20px 20px; }
+        .shape-tall { width: 75px; height: 160px; border-radius: 0 0 15px 15px; }
+        .shape-wide { width: 130px; height: 110px; border-radius: 0 0 30px 30px; }
+        .shape-round { width: 110px; height: 130px; border-radius: 0 0 55px 55px; }
+
+        .water {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--water-color);
+            transition: height 0.5s ease-in-out, background-color 0.5s;
+            border-top: 2px solid rgba(255,255,255,0.4);
+        }
+
+        /* 排列模式的空槽與標籤 */
+        .sort-slot {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            width: 140px;
+            height: 180px;
+            border: 4px dashed #bdc3c7;
+            border-radius: 15px;
+            background-color: #fdfdfd;
+            position: relative;
+            padding-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        .slot-label-badge {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            padding: 5px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 22px;
+            z-index: 10;
+            white-space: nowrap;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .label-least { background-color: #f39c12; } /* 橙黃色 */
+        .label-most { background-color: #e74c3c; }  /* 紅色 */
+
+        /* 動畫與回饋 */
+        #feedback-message {
+            font-size: 40px;
+            font-weight: bold;
+            height: 60px;
+            margin: 20px 0;
+        }
+
+        .correct-text { color: #2ecc71; animation: pop 0.5s; }
+        .wrong-text { color: #e74c3c; }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .shake {
+            animation: shake-animation 0.5s;
+            border-color: #e74c3c !important;
+        }
+
+        @keyframes shake-animation {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+
+        .success-glow .cup {
+            border-color: #2ecc71;
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.6);
+        }
+
+        /* 底部控制按鈕 */
+        .control-panel {
+            margin-top: 30px;
+        }
+
+        .action-btn {
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 20px;
+            cursor: pointer;
+            margin: 0 10px;
+            font-weight: bold;
+        }
+
+        .action-btn.restart { background-color: #3498db; }
+        .action-btn:hover { filter: brightness(1.1); }
+
+    </style>
+</head>
+<body>
+
+    <!-- 頂部控制面板 -->
+    <div id="top-panel">
+        <h1 style="margin: 0; font-size: 30px;">💧 容量認知遊戲 💧</h1>
+        
+        <!-- 數量選擇 -->
+        <div class="controls-row">
+            <label for="cup-count">杯子數量：</label>
+            <select id="cup-count" onchange="handleQuantityChange()">
+                <option value="1">1 個杯 (測試)</option>
+                <option value="2">2 個杯 (入門)</option>
+                <option value="3" selected>3 個杯 (推薦)</option>
+                <option value="4">4 個杯</option>
+                <option value="5">5 個杯</option>
+                <option value="6">6 個杯 (挑戰)</option>
+            </select>
+        </div>
+
+        <!-- 模式選擇 -->
+        <div class="controls-row">
+            <button class="mode-btn" id="btn-mode-1" onclick="startGame(1)">1) 找「滿」</button>
+            <button class="mode-btn" id="btn-mode-2" onclick="startGame(2)">2) 找「空」</button>
+            <button class="mode-btn" id="btn-mode-3" onclick="startGame(3)">3) 找「最多」</button>
+            <button class="mode-btn" id="btn-mode-4" onclick="startGame(4)">4) 找「最少」</button>
+            <button class="mode-btn" id="btn-mode-5" onclick="startGame(5)">5) 由少至多排列</button>
+        </div>
+    </div>
+
+    <!-- 遊戲介面 -->
+    <div id="game-screen">
+        <div id="welcome-msg">👆 請在上方選擇一個遊戲模式開始！</div>
+        
+        <div id="game-content">
+            <div id="instruction">請找出...</div>
+            
+            <!-- 待選區 -->
+            <div class="cups-container" id="source-container"></div>
+
+            <!-- 排序完成區 (僅模式5使用) -->
+            <div class="cups-container" id="sorted-container"></div>
+
+            <div id="feedback-message"></div>
+
+            <div class="control-panel">
+                <button class="action-btn restart" onclick="restartCurrentGame()">🔄 換一題 (再玩一次)</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 遊戲狀態變數
+        let currentMode = 1;
+        let numCups = 3;
+        let cupsData = []; // 儲存當前杯子的資料 { id, level }
+        let sortedOrderList = []; // 模式5使用，記錄還未被選中的杯子(按容量排序)
+        let isGameInteractive = false; // 防止過度點擊
+        let currentShapeClass = 'shape-normal'; // 紀錄當前的杯子形狀
+        let hasStarted = false; // 紀錄是否已經開始遊戲
+
+        // 可用的明確水位百分比 (確保差異夠大)
+        const AVAILABLE_LEVELS = [0, 20, 40, 60, 80, 100];
+        
+        // 隨機顏色與形狀設定庫
+        const WATER_COLORS = ['#3498db', '#e74c3c', '#2ecc71', '#9b59b6', '#f1c40f', '#e67e22', '#ff9ff3'];
+        const CUP_SHAPES = ['shape-normal', 'shape-tall', 'shape-wide', 'shape-round'];
+
+        // 處理數量變更：如果有在玩，就自動刷新當前模式
+        function handleQuantityChange() {
+            if (hasStarted) {
+                startGame(currentMode);
+            }
+        }
+
+        // 啟動遊戲
+        function startGame(mode) {
+            hasStarted = true;
+            currentMode = mode;
+            numCups = parseInt(document.getElementById('cup-count').value);
+            
+            // 更新按鈕外觀 (清除所有 active，加上當前的 active)
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active', 'active-sort');
+            });
+            const activeBtn = document.getElementById(`btn-mode-${mode}`);
+            if (mode === 5) {
+                activeBtn.classList.add('active-sort');
+            } else {
+                activeBtn.classList.add('active');
+            }
+            
+            // 隱藏歡迎訊息，顯示遊戲區
+            document.getElementById('welcome-msg').style.display = 'none';
+            document.getElementById('game-content').style.display = 'block';
+            
+            initGameLevel();
+        }
+
+        // 重新開始當前模式
+        function restartCurrentGame() {
+            initGameLevel();
+        }
+
+        // 初始化遊戲關卡
+        function initGameLevel() {
+            isGameInteractive = true;
+            document.getElementById('feedback-message').innerHTML = '';
+            
+            const sourceContainer = document.getElementById('source-container');
+            const sortedContainer = document.getElementById('sorted-container');
+            
+            sourceContainer.innerHTML = '';
+            sortedContainer.innerHTML = '';
+            sortedContainer.style.display = currentMode === 5 ? 'flex' : 'none';
+
+            // 隨機選取並設定當前題目的 水顏色 與 杯形狀
+            const randomColor = WATER_COLORS[Math.floor(Math.random() * WATER_COLORS.length)];
+            currentShapeClass = CUP_SHAPES[Math.floor(Math.random() * CUP_SHAPES.length)];
+            document.documentElement.style.setProperty('--water-color', randomColor);
+
+            // 設定標題指令
+            const instructions = {
+                1: '👉 請選出「滿」的杯子！',
+                2: '👉 請選出「空」的杯子！',
+                3: '👉 請選出水「最多」的杯子！',
+                4: '👉 請選出水「最少」的杯子！',
+                5: '👉 順序點擊：請從水「最少」的杯子開始選！'
+            };
+            document.getElementById('instruction').innerText = instructions[currentMode];
+
+            // 生成隨機水位邏輯
+            let levelsToUse = [];
+            let shuffledLevels = [...AVAILABLE_LEVELS].sort(() => 0.5 - Math.random());
+            
+            // 根據模式確保有對應的目標答案
+            if (currentMode === 1) {
+                levelsToUse.push(100);
+                shuffledLevels = shuffledLevels.filter(l => l !== 100);
+            } else if (currentMode === 2) {
+                levelsToUse.push(0);
+                shuffledLevels = shuffledLevels.filter(l => l !== 0);
+            }
+
+            // 填滿剩下的杯子數量
+            while (levelsToUse.length < numCups) {
+                levelsToUse.push(shuffledLevels.pop());
+            }
+
+            // 打亂杯子顯示順序
+            levelsToUse.sort(() => 0.5 - Math.random());
+            
+            cupsData = levelsToUse.map((level, index) => ({
+                id: `cup-${index}`,
+                level: level
+            }));
+
+            // 模式5的預先排序解答 與 生成預設空槽
+            if (currentMode === 5) {
+                // 複製並按容量從小到大排序
+                sortedOrderList = [...cupsData].sort((a, b) => a.level - b.level);
+                
+                // 建立空槽與標籤 [最少]、[最多]
+                for (let i = 0; i < numCups; i++) {
+                    const slot = document.createElement('div');
+                    slot.className = 'sort-slot';
+                    slot.id = `slot-${i}`;
+                    
+                    // 第一格加上 [最少] 標籤
+                    if (i === 0) {
+                        const label = document.createElement('div');
+                        label.className = 'slot-label-badge label-least';
+                        label.innerText = '最少';
+                        slot.appendChild(label);
+                    }
+                    // 最後一格加上 [最多] 標籤
+                    if (i === numCups - 1 && numCups > 1) {
+                        const label = document.createElement('div');
+                        label.className = 'slot-label-badge label-most';
+                        label.innerText = '最多';
+                        slot.appendChild(label);
+                    }
+                    sortedContainer.appendChild(slot);
+                }
+            }
+
+            // 渲染杯子
+            cupsData.forEach(cup => {
+                const cupElement = createCupElement(cup);
+                sourceContainer.appendChild(cupElement);
+            });
+        }
+
+        // 建立單個杯子的 HTML 結構
+        function createCupElement(cupData) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'cup-wrapper';
+            wrapper.id = `wrapper-${cupData.id}`;
+            // 綁定點擊事件
+            wrapper.onclick = () => handleCupClick(cupData);
+
+            const cupDiv = document.createElement('div');
+            cupDiv.className = `cup ${currentShapeClass}`;
+            cupDiv.id = cupData.id;
+
+            const waterDiv = document.createElement('div');
+            waterDiv.className = 'water';
+            waterDiv.style.height = `${cupData.level}%`;
+
+            // 如果是空杯(0%)，隱藏水層以防顯示一條藍線
+            if (cupData.level === 0) {
+                waterDiv.style.display = 'none';
+            }
+
+            cupDiv.appendChild(waterDiv);
+            wrapper.appendChild(cupDiv);
+
+            return wrapper;
+        }
+
+        // 處理杯子被點擊的邏輯
+        function handleCupClick(clickedCupData) {
+            if (!isGameInteractive) return;
+
+            const feedback = document.getElementById('feedback-message');
+            const wrapper = document.getElementById(`wrapper-${clickedCupData.id}`);
+            const cupDiv = document.getElementById(clickedCupData.id);
+
+            let isCorrect = false;
+
+            // 檢查答案是否正確
+            switch (currentMode) {
+                case 1: isCorrect = clickedCupData.level === 100; break;
+                case 2: isCorrect = clickedCupData.level === 0; break;
+                case 3: 
+                    const maxLevel = Math.max(...cupsData.map(c => c.level));
+                    isCorrect = clickedCupData.level === maxLevel;
+                    break;
+                case 4:
+                    const minLevel = Math.min(...cupsData.map(c => c.level));
+                    isCorrect = clickedCupData.level === minLevel;
+                    break;
+                case 5:
+                    // 檢查是否是目前剩下的之中最少的
+                    if (sortedOrderList.length > 0 && clickedCupData.id === sortedOrderList[0].id) {
+                        isCorrect = true;
+                    }
+                    break;
+            }
+
+            // 回饋處理
+            if (isCorrect) {
+                if (currentMode !== 5) {
+                    // 模式 1-4 勝利
+                    isGameInteractive = false; // 停止互動
+                    wrapper.classList.add('success-glow');
+                    feedback.innerHTML = '<span class="correct-text">🎉 答對了！好叻呀！😃</span>';
+                    
+                    // 將其他杯子稍微變淡，突顯正確答案
+                    document.querySelectorAll('.cup-wrapper').forEach(el => {
+                        if (el.id !== `wrapper-${clickedCupData.id}`) {
+                            el.style.opacity = '0.5';
+                        }
+                    });
+                } else {
+                    // 模式 5 (排序) 的處理
+                    
+                    // 找出目標槽位 (0 是最少, 接著 1, 2...)
+                    const targetSlotIndex = numCups - sortedOrderList.length; 
+                    const targetSlot = document.getElementById(`slot-${targetSlotIndex}`);
+                    
+                    // 從待選名單移除
+                    sortedOrderList.shift(); 
+
+                    // 將選中的杯子移動到專屬方格內
+                    wrapper.onclick = null; // 取消點擊事件
+                    wrapper.style.cursor = 'default';
+                    // 清除原本 hovering 的影響並縮小一點點以放入方格
+                    wrapper.style.transform = 'scale(0.9)'; 
+                    targetSlot.appendChild(wrapper);
+
+                    // 檢查是否排完
+                    if (sortedOrderList.length === 0) {
+                        isGameInteractive = false;
+                        feedback.innerHTML = '<span class="correct-text">🎉 全部排啱晒！非常棒！🌟</span>';
+                        document.getElementById('instruction').innerText = '✅ 完成任務！';
+                    } else {
+                        feedback.innerHTML = '<span class="correct-text">✔️ 啱喇！請繼續選剩下水「最少」的杯！</span>';
+                    }
+                }
+            } else {
+                // 答錯
+                cupDiv.classList.remove('shake');
+                void cupDiv.offsetWidth; // 觸發瀏覽器重繪
+                cupDiv.classList.add('shake');
+                
+                feedback.innerHTML = '<span class="wrong-text">❌ 唔係呢個，再睇清楚啲啦！🤔</span>';
+                
+                // 動畫結束後移除 shake class
+                setTimeout(() => {
+                    cupDiv.classList.remove('shake');
+                }, 500);
+            }
+        }
+    </script>
+</body>
+</html>
