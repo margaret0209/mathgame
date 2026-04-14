@@ -123,6 +123,57 @@
         let totalItems = 0;
         let placedCount = 0;
 
+        // ================= 音效管理器 (Web Audio API) =================
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        // 初始化音效 (需要使用者互動後才能解鎖瀏覽器音效限制)
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // 產生基礎音頻
+        function playTone(freq, type, duration, vol = 0.1) {
+            if (!audioCtx) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
+        // 定義遊戲內的各種音效
+        const sounds = {
+            pickup: () => { initAudio(); playTone(600, 'sine', 0.1, 0.05); },
+            correct: () => {
+                initAudio();
+                playTone(523.25, 'sine', 0.1, 0.1); // C5
+                setTimeout(() => playTone(659.25, 'sine', 0.2, 0.1), 100); // E5
+            },
+            wrong: () => { initAudio(); playTone(200, 'triangle', 0.3, 0.1); },
+            win: () => {
+                initAudio();
+                playTone(523.25, 'sine', 0.1, 0.1);
+                setTimeout(() => playTone(659.25, 'sine', 0.1, 0.1), 150);
+                setTimeout(() => playTone(783.99, 'sine', 0.1, 0.1), 300);
+                setTimeout(() => playTone(1046.50, 'sine', 0.4, 0.1), 450);
+            }
+        };
+
         // 初始化數量下拉選單
         document.addEventListener('DOMContentLoaded', () => {
             const qtySelect = document.getElementById('qtySelect');
@@ -259,6 +310,9 @@
             const el = e.target.closest('.draggable');
             if (!el || el.dataset.placed === "true") return;
 
+            // 播放拿起卡片的音效
+            sounds.pickup();
+
             // 阻止預設行為，避免觸控時選取文字或滾動
             e.preventDefault(); 
             
@@ -320,6 +374,7 @@
             if (dropzone && !dropzone.classList.contains('filled')) {
                 if (dropzone.dataset.value === element.dataset.value) {
                     // 🎉 答對了！
+                    sounds.correct();
                     
                     // 1. 清除 fixed 與其他行內樣式
                     element.style = ''; 
@@ -343,6 +398,7 @@
                     checkWin();
                 } else {
                     // ❌ 答錯了
+                    sounds.wrong();
                     showError(dropzone);
                     returnToSource(element, placeholder);
                 }
@@ -389,6 +445,7 @@
         // 檢查是否全數完成
         function checkWin() {
             if (placedCount === totalItems) {
+                sounds.win();
                 setTimeout(showModal, 300);
             }
         }
