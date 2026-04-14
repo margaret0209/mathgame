@@ -8,11 +8,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #f0fdf4; /* 柔和的淺綠色背景 */
+            background-color: #f0fdf4;
             font-family: 'PingFang HK', 'Microsoft JhengHei', sans-serif;
         }
         
-        /* 隱藏預設的下拉箭頭，改用較大較明顯的樣式 */
         select {
             appearance: none;
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
@@ -65,109 +64,162 @@
 
                 <!-- 難度選擇 -->
                 <div class="flex-1 border-t-4 xl:border-t-0 xl:border-l-4 border-green-200 pt-6 xl:pt-0 xl:pl-12 overflow-hidden">
-                    <p class="text-xl text-green-700 mb-4 font-bold">請選擇難度：</p>
+                    <p class="text-xl text-green-700 mb-4 font-bold">請選擇模式：</p>
                     <div class="flex flex-nowrap justify-center gap-2 md:gap-4 overflow-x-auto pb-2">
-                        <button onclick="setMode('normal')" id="btn-normal" class="mode-btn text-xl md:text-2xl font-bold py-3 px-6 md:px-8 rounded-full border-4 border-purple-400 bg-purple-600 text-white hover:bg-purple-500 transition-all shadow-md whitespace-nowrap">⭐ 一般模式</button>
-                        <button onclick="setMode('hard')" id="btn-hard" class="mode-btn text-xl md:text-2xl font-bold py-3 px-6 md:px-8 rounded-full border-4 border-purple-400 bg-white text-purple-600 hover:bg-purple-50 transition-all shadow-md whitespace-nowrap">🌟 難度模式</button>
+                        <button onclick="setMode('normal')" id="btn-normal" class="mode-btn text-xl md:text-2xl font-bold py-3 px-6 md:px-8 rounded-full border-4 border-purple-400 bg-purple-600 text-white hover:bg-purple-500 transition-all shadow-md whitespace-nowrap">⭐ 一般</button>
+                        <button onclick="setMode('hard')" id="btn-hard" class="mode-btn text-xl md:text-2xl font-bold py-3 px-6 md:px-8 rounded-full border-4 border-purple-400 bg-white text-purple-600 hover:bg-purple-50 transition-all shadow-md whitespace-nowrap">🌟 難度</button>
+                        <button onclick="setMode('understanding')" id="btn-understanding" class="mode-btn text-xl md:text-2xl font-bold py-3 px-6 md:px-8 rounded-full border-4 border-purple-400 bg-white text-purple-600 hover:bg-purple-50 transition-all shadow-md whitespace-nowrap">🧠 理解</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 遊戲主要區域 -->
-        <div class="p-8 pb-12">
-            <!-- 句子顯示 -->
-            <div class="bg-yellow-50 border-4 border-yellow-300 rounded-2xl p-8 mb-10 text-center shadow-inner">
-                <p class="text-2xl text-gray-600 font-bold mb-2">請仔細閱讀句子：</p>
-                <h2 id="sentenceDisplay" class="text-4xl md:text-5xl font-extrabold text-gray-800 leading-tight">請先在上方選擇類型！</h2>
-            </div>
-
-            <!-- 教學提示 -->
-            <div class="text-center mb-24">
-                <p id="instruction-hint" class="text-2xl font-bold text-gray-500 bg-gray-100 inline-block px-6 py-2 rounded-full shadow-sm">
-                    💡 提示：左邊放<span class="text-blue-600">「比較少」</span>的，右邊放<span class="text-red-600">「比較多」</span>的
-                </p>
-            </div>
-
-            <!-- 橫向數棒區域 -->
-            <div class="relative w-full max-w-4xl mx-auto h-16 mt-8">
+        <!-- 遊戲主要區域 (並排佈局) -->
+        <div class="p-8 pb-12 flex flex-col xl:flex-row gap-8 items-start">
+            
+            <!-- 左側/主體內容區 -->
+            <div class="flex-1 w-full flex flex-col items-center xl:items-stretch">
                 
-                <!-- 兩端標籤 -->
-                <div class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 md:-translate-x-16">
-                    <div class="bg-blue-100 text-blue-700 font-black text-3xl p-3 rounded-xl border-4 border-blue-300 shadow-sm">少</div>
-                </div>
-                <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 md:translate-x-16">
-                    <div class="bg-red-100 text-red-700 font-black text-3xl p-3 rounded-xl border-4 border-red-300 shadow-sm">多</div>
+                <!-- 句子顯示 -->
+                <div class="bg-yellow-50 border-4 border-yellow-300 rounded-2xl p-8 mb-10 text-center shadow-inner w-full">
+                    <p class="text-2xl text-gray-600 font-bold mb-2">請仔細閱讀句子：</p>
+                    <h2 id="sentenceDisplay" class="text-4xl md:text-5xl font-extrabold text-gray-800 leading-tight">請先在上方選擇類型！</h2>
                 </div>
 
-                <!-- 數棒本體 -->
-                <div class="w-full h-8 bg-gradient-to-r from-blue-200 via-gray-200 to-red-200 rounded-full border-2 border-gray-300 shadow-inner relative">
-                    
-                    <!-- 一般模式 -->
-                    <div id="normal-layout" class="w-full h-full absolute top-0 left-0">
-                        <!-- 左邊位置 (比較少) -->
-                        <div class="absolute left-1/4 top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-                            <!-- 答案框 (下拉選單) -->
-                            <select id="leftSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-blue-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all min-w-[140px] text-center disabled:opacity-50">
-                                <option value="">請選擇</option>
-                            </select>
-                            <!-- 垂直線 -->
-                            <div class="w-2 h-16 bg-blue-500 rounded-full"></div>
-                            <!-- 裝飾點 -->
-                            <div class="w-6 h-6 bg-blue-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
-                        </div>
+                <!-- 教學提示 -->
+                <div class="text-center mb-8 w-full">
+                    <p id="instruction-hint" class="text-2xl font-bold text-gray-500 bg-gray-100 inline-block px-6 py-2 rounded-full shadow-sm">
+                        💡 提示：左邊放<span class="text-blue-600">「比較少」</span>的，右邊放<span class="text-red-600">「比較多」</span>的
+                    </p>
+                </div>
 
-                        <!-- 右邊位置 (比較多) -->
-                        <div class="absolute left-3/4 top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-                            <!-- 答案框 (下拉選單) -->
-                            <select id="rightSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-red-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-300 transition-all min-w-[140px] text-center disabled:opacity-50">
-                                <option value="">請選擇</option>
-                            </select>
-                            <!-- 垂直線 -->
-                            <div class="w-2 h-16 bg-red-500 rounded-full"></div>
-                            <!-- 裝飾點 -->
-                            <div class="w-6 h-6 bg-red-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
-                        </div>
+                <!-- 視覺數線區域 (一般與難度模式) -->
+                <div id="visual-mode-section" class="relative w-full max-w-4xl mx-auto h-16 mt-8 mb-16">
+                    <!-- 兩端標籤 -->
+                    <div class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 md:-translate-x-16">
+                        <div class="bg-blue-100 text-blue-700 font-black text-3xl p-3 rounded-xl border-4 border-blue-300 shadow-sm">少</div>
+                    </div>
+                    <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 md:translate-x-16">
+                        <div class="bg-red-100 text-red-700 font-black text-3xl p-3 rounded-xl border-4 border-red-300 shadow-sm">多</div>
                     </div>
 
-                    <!-- 難度模式 -->
-                    <div id="hard-layout" class="hidden w-full h-full absolute top-0 left-0">
-                        <!-- 左邊位置 -->
-                        <div class="absolute left-[20%] top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-                            <select id="hardLeftSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-blue-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all min-w-[140px] text-center">
-                                <option value="">請選擇</option>
-                            </select>
-                            <div class="w-2 h-16 bg-blue-500 rounded-full"></div>
-                            <div class="w-6 h-6 bg-blue-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
-                        </div>
-
-                        <!-- 中間位置 (固定已知) -->
-                        <div class="absolute left-[50%] top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-                            <div id="hardMiddleBox" class="absolute bottom-full mb-8 text-3xl font-bold p-3 border-4 border-gray-400 rounded-2xl bg-gray-100 shadow-sm text-gray-600 min-w-[140px] text-center flex items-center justify-center">
-                                <!-- 已知項目將顯示於此 -->
+                    <!-- 數棒本體 -->
+                    <div class="w-full h-8 bg-gradient-to-r from-blue-200 via-gray-200 to-red-200 rounded-full border-2 border-gray-300 shadow-inner relative">
+                        
+                        <!-- 一般模式 -->
+                        <div id="normal-layout" class="w-full h-full absolute top-0 left-0">
+                            <div class="absolute left-1/4 top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
+                                <select id="leftSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-blue-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all min-w-[140px] text-center">
+                                    <option value="">請選擇</option>
+                                </select>
+                                <div class="w-2 h-16 bg-blue-500 rounded-full"></div>
+                                <div class="w-6 h-6 bg-blue-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
                             </div>
-                            <div class="w-2 h-16 bg-gray-500 rounded-full"></div>
-                            <div class="w-6 h-6 bg-gray-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+
+                            <div class="absolute left-3/4 top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
+                                <select id="rightSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-red-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-300 transition-all min-w-[140px] text-center">
+                                    <option value="">請選擇</option>
+                                </select>
+                                <div class="w-2 h-16 bg-red-500 rounded-full"></div>
+                                <div class="w-6 h-6 bg-red-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                            </div>
                         </div>
 
-                        <!-- 右邊位置 -->
-                        <div class="absolute left-[80%] top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-                            <select id="hardRightSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-red-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-300 transition-all min-w-[140px] text-center">
-                                <option value="">請選擇</option>
-                            </select>
-                            <div class="w-2 h-16 bg-red-500 rounded-full"></div>
-                            <div class="w-6 h-6 bg-red-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                        <!-- 難度模式 -->
+                        <div id="hard-layout" class="hidden w-full h-full absolute top-0 left-0">
+                            <div class="absolute left-[20%] top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
+                                <select id="hardLeftSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-blue-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all min-w-[140px] text-center">
+                                    <option value="">請選擇</option>
+                                </select>
+                                <div class="w-2 h-16 bg-blue-500 rounded-full"></div>
+                                <div class="w-6 h-6 bg-blue-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                            </div>
+
+                            <div class="absolute left-[50%] top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
+                                <div id="hardMiddleBox" class="absolute bottom-full mb-8 text-3xl font-bold p-3 border-4 border-gray-400 rounded-2xl bg-gray-100 shadow-sm text-gray-600 min-w-[140px] text-center flex items-center justify-center">
+                                </div>
+                                <div class="w-2 h-16 bg-gray-500 rounded-full"></div>
+                                <div class="w-6 h-6 bg-gray-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                            </div>
+
+                            <div class="absolute left-[80%] top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
+                                <select id="hardRightSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-red-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-300 transition-all min-w-[140px] text-center">
+                                    <option value="">請選擇</option>
+                                </select>
+                                <div class="w-2 h-16 bg-red-500 rounded-full"></div>
+                                <div class="w-6 h-6 bg-red-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                            </div>
                         </div>
                     </div>
-
                 </div>
-            </div>
 
-            <!-- 確認按鈕 -->
-            <div class="mt-28 text-center">
-                <button onclick="checkAnswer()" id="checkBtn" class="text-3xl font-black py-4 px-12 bg-green-500 text-white rounded-full border-b-8 border-green-700 hover:bg-green-400 hover:translate-y-1 hover:border-b-4 active:border-b-0 active:translate-y-2 transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fa-solid fa-check-circle mr-2"></i> 確定答案
-                </button>
+                <!-- 理解模式專屬區域 -->
+                <div id="understanding-mode-section" class="hidden w-full max-w-4xl mx-auto flex flex-col items-center mt-4">
+                    <div class="w-full bg-indigo-50 p-6 md:p-8 rounded-3xl border-4 border-indigo-200 mb-4 shadow-sm">
+                        
+                        <!-- Entity A 橫列 -->
+                        <div class="flex flex-wrap items-center justify-between mb-8 pb-6 border-b-2 border-indigo-100">
+                            <span id="und-entity1-name" class="text-3xl md:text-4xl font-extrabold text-indigo-900 min-w-[120px]">A</span>
+                            <div class="flex flex-wrap items-center gap-4 mt-4 md:mt-0">
+                                <select id="und-e1-type" class="text-2xl p-3 pr-10 rounded-xl border-4 border-indigo-300 font-bold focus:ring-4 focus:ring-indigo-400 outline-none min-w-[120px] text-center cursor-pointer">
+                                    <option value="">請選擇</option>
+                                    <option value="少">少</option>
+                                    <option value="多">多</option>
+                                </select>
+                                <div id="und-e1-input" onclick="focusUndInput(1)" class="w-40 h-16 bg-white border-4 border-gray-300 rounded-xl flex items-center justify-center text-4xl font-bold text-indigo-700 cursor-pointer hover:border-indigo-400 transition-colors shadow-inner relative">
+                                    <span id="und-e1-val"></span>
+                                    <div id="cursor-1" class="hidden absolute right-3 w-1 h-10 bg-indigo-500 animate-pulse"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Entity B 橫列 -->
+                        <div class="flex flex-wrap items-center justify-between">
+                            <span id="und-entity2-name" class="text-3xl md:text-4xl font-extrabold text-indigo-900 min-w-[120px]">B</span>
+                            <div class="flex flex-wrap items-center gap-4 mt-4 md:mt-0">
+                                <select id="und-e2-type" class="text-2xl p-3 pr-10 rounded-xl border-4 border-indigo-300 font-bold focus:ring-4 focus:ring-indigo-400 outline-none min-w-[120px] text-center cursor-pointer">
+                                    <option value="">請選擇</option>
+                                    <option value="少">少</option>
+                                    <option value="多">多</option>
+                                </select>
+                                <div id="und-e2-input" onclick="focusUndInput(2)" class="w-40 h-16 bg-white border-4 border-gray-300 rounded-xl flex items-center justify-center text-4xl font-bold text-indigo-700 cursor-pointer hover:border-indigo-400 transition-colors shadow-inner relative">
+                                    <span id="und-e2-val"></span>
+                                    <div id="cursor-2" class="hidden absolute right-3 w-1 h-10 bg-indigo-500 animate-pulse"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 確認按鈕 -->
+                <div class="mt-8 xl:mt-16 text-center w-full">
+                    <button onclick="checkAnswer()" class="text-3xl font-black py-4 px-12 bg-green-500 text-white rounded-full border-b-8 border-green-700 hover:bg-green-400 hover:translate-y-1 hover:border-b-4 active:border-b-0 active:translate-y-2 transition-all shadow-xl">
+                        <i class="fa-solid fa-check-circle mr-2"></i> 確定答案
+                    </button>
+                </div>
+
+            </div> <!-- 左側內容區結束 -->
+
+            <!-- 右側數字盤 (理解模式專屬) -->
+            <div id="numpad-section" class="hidden flex-col w-full xl:w-[380px] flex-shrink-0 bg-indigo-50 p-6 md:p-8 rounded-3xl border-4 border-indigo-200 shadow-sm items-center">
+                <h3 class="text-2xl font-bold text-indigo-800 mb-6 w-full text-center border-b-2 border-indigo-200 pb-4">數字輸入盤</h3>
+                <div class="grid grid-cols-3 gap-3 md:gap-4 w-full max-w-sm">
+                    <button onclick="pressNumpad('1')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">1</button>
+                    <button onclick="pressNumpad('2')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">2</button>
+                    <button onclick="pressNumpad('3')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">3</button>
+                    
+                    <button onclick="pressNumpad('4')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">4</button>
+                    <button onclick="pressNumpad('5')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">5</button>
+                    <button onclick="pressNumpad('6')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">6</button>
+                    
+                    <button onclick="pressNumpad('7')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">7</button>
+                    <button onclick="pressNumpad('8')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">8</button>
+                    <button onclick="pressNumpad('9')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">9</button>
+                    
+                    <button onclick="pressNumpad('clear')" class="h-16 md:h-20 bg-red-50 text-2xl font-black text-red-600 rounded-2xl border-b-8 border-2 border-red-300 hover:bg-red-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">清除</button>
+                    <button onclick="pressNumpad('0')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">0</button>
+                    <button onclick="pressNumpad('back')" class="h-16 md:h-20 bg-yellow-50 text-3xl font-black text-yellow-600 rounded-2xl border-b-8 border-2 border-yellow-300 hover:bg-yellow-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm"><i class="fa-solid fa-delete-left"></i></button>
+                </div>
             </div>
 
         </div>
@@ -190,46 +242,42 @@
         const animals = ['🐶 小狗', '🐱 小貓', '🐰 小兔', '🦁 獅子', '🐯 老虎', '🐘 大象', '🐒 猴子', '🐼 熊貓', '🦊 狐狸', '🐻 小熊', '🐨 樹熊', '🐮 乳牛', '🐷 小豬', '🐸 青蛙', '🐧 企鵝', '🐔 小雞', '🦆 鴨子', '🦉 貓頭鷹', '🐴 馬', '🦄 獨角獸', '🐝 蜜蜂', '🐛 毛蟲', '🦋 蝴蝶', '🐌 蝸牛', '🐢 烏龜', '🐍 蛇', '🐙 章魚', '🐬 海豚', '🐳 鯨魚', '🦈 鯊魚'];
 
         let currentCategory = '';
+        let currentMode = 'normal';
+        let currentEntities = [];
+        
+        // 記錄答案用
         let correctLeft = '';
         let correctRight = '';
-        let currentEntities = [];
-
-        let currentMode = 'normal';
+        let currentDifference = 0;
+        let currentPattern = 0;
         let hardTargetEntity = '';
         let hardCorrectPosition = '';
 
-        // 初始化：預設選擇動物
+        // 理解模式變數
+        let activeInputTarget = 1;
+
+        // 初始化
         window.onload = () => {
             setCategory('animal');
         };
 
         function setMode(mode) {
             currentMode = mode;
-            let btnNormal = document.getElementById('btn-normal');
-            let btnHard = document.getElementById('btn-hard');
-            
-            if (mode === 'normal') {
-                btnNormal.classList.replace('bg-white', 'bg-purple-600');
-                btnNormal.classList.replace('text-purple-600', 'text-white');
-                btnHard.classList.replace('bg-purple-600', 'bg-white');
-                btnHard.classList.replace('text-white', 'text-purple-600');
-            } else {
-                btnHard.classList.replace('bg-white', 'bg-purple-600');
-                btnHard.classList.replace('text-purple-600', 'text-white');
-                btnNormal.classList.replace('bg-purple-600', 'bg-white');
-                btnNormal.classList.replace('text-white', 'text-purple-600');
-            }
+            ['normal', 'hard', 'understanding'].forEach(m => {
+                let btn = document.getElementById('btn-' + m);
+                if (m === mode) {
+                    btn.classList.replace('bg-white', 'bg-purple-600');
+                    btn.classList.replace('text-purple-600', 'text-white');
+                } else {
+                    btn.classList.replace('bg-purple-600', 'bg-white');
+                    btn.classList.replace('text-white', 'text-purple-600');
+                }
+            });
             generateQuestion();
-        }
-
-        function getRandomItem(arr) {
-            return arr[Math.floor(Math.random() * arr.length)];
         }
 
         function setCategory(category) {
             currentCategory = category;
-            
-            // 更新按鈕樣式
             document.querySelectorAll('.category-btn').forEach(btn => {
                 btn.classList.remove('bg-blue-600', 'bg-orange-600', 'bg-amber-600', 'text-white');
                 btn.classList.add('bg-white');
@@ -248,8 +296,11 @@
                 btn.classList.remove('bg-white', 'text-amber-700');
                 btn.classList.add('bg-amber-600', 'text-white');
             }
-
             generateQuestion();
+        }
+
+        function getRandomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
         }
 
         function generateQuestion() {
@@ -270,68 +321,91 @@
             }
 
             currentEntities = [e1, e2];
-
-            // 隨機數字 1 - 1000
-            const X = Math.floor(Math.random() * 1000) + 1;
-            
-            // 隨機句型 (0到3)
-            // 0: A比B少X -> A < B -> Left:A, Right:B
-            // 1: A比B多X -> A > B -> Left:B, Right:A
-            // 2: B比A少X -> B < A -> Left:B, Right:A
-            // 3: B比A多X -> B > A -> Left:A, Right:B
-            const pattern = Math.floor(Math.random() * 4);
+            currentDifference = Math.floor(Math.random() * 1000) + 1;
+            currentPattern = Math.floor(Math.random() * 4);
             let sentence = "";
 
-            if (pattern === 0) {
-                sentence = `<span class="text-blue-700">${e1}</span> 比 <span class="text-purple-700">${e2}</span> 少 ${X} ${unit}`;
+            /*
+            Pattern 0: e1 比 e2 少 X
+            Pattern 1: e1 比 e2 多 X
+            Pattern 2: e2 比 e1 少 X
+            Pattern 3: e2 比 e1 多 X
+            */
+            if (currentPattern === 0) {
+                sentence = `<span class="text-blue-700">${e1}</span> 比 <span class="text-purple-700">${e2}</span> 少 ${currentDifference} ${unit}`;
                 correctLeft = e1;
                 correctRight = e2;
-            } else if (pattern === 1) {
-                sentence = `<span class="text-blue-700">${e1}</span> 比 <span class="text-purple-700">${e2}</span> 多 ${X} ${unit}`;
+            } else if (currentPattern === 1) {
+                sentence = `<span class="text-blue-700">${e1}</span> 比 <span class="text-purple-700">${e2}</span> 多 ${currentDifference} ${unit}`;
                 correctLeft = e2;
                 correctRight = e1;
-            } else if (pattern === 2) {
-                sentence = `<span class="text-purple-700">${e2}</span> 比 <span class="text-blue-700">${e1}</span> 少 ${X} ${unit}`;
+            } else if (currentPattern === 2) {
+                sentence = `<span class="text-purple-700">${e2}</span> 比 <span class="text-blue-700">${e1}</span> 少 ${currentDifference} ${unit}`;
                 correctLeft = e2;
                 correctRight = e1;
             } else {
-                sentence = `<span class="text-purple-700">${e2}</span> 比 <span class="text-blue-700">${e1}</span> 多 ${X} ${unit}`;
+                sentence = `<span class="text-purple-700">${e2}</span> 比 <span class="text-blue-700">${e1}</span> 多 ${currentDifference} ${unit}`;
                 correctLeft = e1;
                 correctRight = e2;
             }
 
             document.getElementById('sentenceDisplay').innerHTML = sentence;
             
-            // 根據模式設定介面與邏輯
+            // UI 佈局切換
             if (currentMode === 'normal') {
                 document.getElementById('instruction-hint').innerHTML = '💡 提示：左邊放<span class="text-blue-600">「比較少」</span>的，右邊放<span class="text-red-600">「比較多」</span>的';
+                document.getElementById('visual-mode-section').classList.remove('hidden');
+                document.getElementById('understanding-mode-section').classList.add('hidden');
                 document.getElementById('normal-layout').classList.remove('hidden');
                 document.getElementById('hard-layout').classList.add('hidden');
+                
+                document.getElementById('numpad-section').classList.add('hidden');
+                document.getElementById('numpad-section').classList.remove('flex');
+                
                 updateSelectOptions();
-            } else {
+
+            } else if (currentMode === 'hard') {
                 document.getElementById('instruction-hint').innerHTML = '💡 提示：中間已經固定了，請判斷另一個是<span class="text-blue-600">「比較少」</span>(左邊)還是<span class="text-red-600">「比較多」</span>(右邊)';
+                document.getElementById('visual-mode-section').classList.remove('hidden');
+                document.getElementById('understanding-mode-section').classList.add('hidden');
                 document.getElementById('normal-layout').classList.add('hidden');
                 document.getElementById('hard-layout').classList.remove('hidden');
                 
-                // 隨機決定將左邊還是右邊的實體放在中間
+                document.getElementById('numpad-section').classList.add('hidden');
+                document.getElementById('numpad-section').classList.remove('flex');
+                
                 const isLeftKnown = Math.random() < 0.5;
                 const knownEntity = isLeftKnown ? correctLeft : correctRight;
                 
                 hardTargetEntity = isLeftKnown ? correctRight : correctLeft;
-                hardCorrectPosition = isLeftKnown ? 'right' : 'left'; // 如果已知的是左邊(少)，那要填的目標就是右邊(多)
+                hardCorrectPosition = isLeftKnown ? 'right' : 'left'; 
                 
-                // 顯示中間固定的實體
                 document.getElementById('hardMiddleBox').innerHTML = `<span class="text-gray-800">${knownEntity}</span>`;
                 
-                // 更新左右兩邊的下拉選單，選項只提供未知的實體讓學生選擇位置
                 const hardLeft = document.getElementById('hardLeftSelect');
                 const hardRight = document.getElementById('hardRightSelect');
                 
                 hardLeft.innerHTML = '<option value="">請選擇</option><option value="' + hardTargetEntity + '">' + hardTargetEntity + '</option>';
                 hardRight.innerHTML = '<option value="">請選擇</option><option value="' + hardTargetEntity + '">' + hardTargetEntity + '</option>';
-                
                 hardLeft.value = "";
                 hardRight.value = "";
+
+            } else if (currentMode === 'understanding') {
+                document.getElementById('instruction-hint').innerHTML = '💡 提示：請分別選出他們是「多」還是「少」，並用數字盤輸入相差數量！';
+                document.getElementById('visual-mode-section').classList.add('hidden');
+                document.getElementById('understanding-mode-section').classList.remove('hidden');
+
+                document.getElementById('numpad-section').classList.remove('hidden');
+                document.getElementById('numpad-section').classList.add('flex');
+
+                document.getElementById('und-entity1-name').innerText = e1;
+                document.getElementById('und-entity2-name').innerText = e2;
+                document.getElementById('und-e1-type').value = '';
+                document.getElementById('und-e2-type').value = '';
+                document.getElementById('und-e1-val').innerText = '';
+                document.getElementById('und-e2-val').innerText = '';
+
+                focusUndInput(1);
             }
         }
 
@@ -342,7 +416,6 @@
             leftSelect.innerHTML = '<option value="">請選擇</option>';
             rightSelect.innerHTML = '<option value="">請選擇</option>';
 
-            // 將選項隨機打亂或固定順序，這裡使用固定順序(E1, E2)
             currentEntities.forEach(entity => {
                 leftSelect.innerHTML += `<option value="${entity}">${entity}</option>`;
                 rightSelect.innerHTML += `<option value="${entity}">${entity}</option>`;
@@ -350,8 +423,39 @@
 
             leftSelect.value = "";
             rightSelect.value = "";
-            leftSelect.classList.remove('border-red-500', 'border-green-500');
-            rightSelect.classList.remove('border-red-500', 'border-green-500');
+        }
+
+        // 理解模式：點擊對焦輸入框
+        function focusUndInput(target) {
+            activeInputTarget = target;
+            document.getElementById('und-e1-input').classList.remove('border-indigo-500', 'ring-4', 'ring-indigo-200');
+            document.getElementById('und-e2-input').classList.remove('border-indigo-500', 'ring-4', 'ring-indigo-200');
+            document.getElementById('cursor-1').classList.add('hidden');
+            document.getElementById('cursor-2').classList.add('hidden');
+
+            document.getElementById(`und-e${target}-input`).classList.add('border-indigo-500', 'ring-4', 'ring-indigo-200');
+            document.getElementById(`cursor-${target}`).classList.remove('hidden');
+        }
+
+        // 理解模式：處理數字盤點擊
+        function pressNumpad(val) {
+            const display = document.getElementById(`und-e${activeInputTarget}-val`);
+            let current = display.innerText;
+
+            if (val === 'clear') {
+                display.innerText = '';
+            } else if (val === 'back') {
+                display.innerText = current.slice(0, -1);
+            } else {
+                if (current.length < 5) {
+                    if (current === '0' && val === '0') return;
+                    if (current === '0' && val !== '0') {
+                        display.innerText = val;
+                    } else {
+                        display.innerText = current + val;
+                    }
+                }
+            }
         }
 
         function checkAnswer() {
@@ -363,18 +467,16 @@
                     showFeedback(false, "請先在兩個框框中選好答案喔！");
                     return;
                 }
-
                 if (leftVal === rightVal) {
                     showFeedback(false, "兩邊不能選一樣的喔，請再看清楚句子！");
                     return;
                 }
-
                 if (leftVal === correctLeft && rightVal === correctRight) {
                     showFeedback(true, "你太棒了！完全正確！🎉");
                 } else {
                     showFeedback(false, "哎呀，放反了！再想想看誰比較多？誰比較少？");
                 }
-            } else {
+            } else if (currentMode === 'hard') {
                 const leftVal = document.getElementById('hardLeftSelect').value;
                 const rightVal = document.getElementById('hardRightSelect').value;
 
@@ -382,7 +484,6 @@
                     showFeedback(false, "請選擇一個位置填入答案喔！");
                     return;
                 }
-                
                 if (leftVal && rightVal) {
                     showFeedback(false, "只能選擇一邊放入答案喔！請把另一邊改回「請選擇」。");
                     return;
@@ -395,6 +496,39 @@
                 } else {
                     showFeedback(false, "哎呀，放錯邊了！再讀一次句子，看看它比中間的少還是多？");
                 }
+            } else if (currentMode === 'understanding') {
+                const e1Type = document.getElementById('und-e1-type').value;
+                const e1Val = document.getElementById('und-e1-val').innerText;
+                const e2Type = document.getElementById('und-e2-type').value;
+                const e2Val = document.getElementById('und-e2-val').innerText;
+
+                if (!e1Type || !e2Type || !e1Val || !e2Val) {
+                    showFeedback(false, "請把所有的「多/少」和「數字」都填寫完成喔！");
+                    return;
+                }
+
+                let expectedE1Type = '';
+                let expectedE2Type = '';
+                // Pattern 0 & 3 代表 e1 比較少, e2 比較多
+                if (currentPattern === 0 || currentPattern === 3) {
+                    expectedE1Type = '少';
+                    expectedE2Type = '多';
+                } else {
+                    expectedE1Type = '多';
+                    expectedE2Type = '少';
+                }
+
+                const expectedValStr = currentDifference.toString();
+
+                if (e1Type === expectedE1Type && e2Type === expectedE2Type && e1Val === expectedValStr && e2Val === expectedValStr) {
+                    showFeedback(true, "太棒了！你完全理解了這句話的意思！🎉");
+                } else {
+                    if (e1Type !== expectedE1Type || e2Type !== expectedE2Type) {
+                        showFeedback(false, "「多/少」選錯了喔，再仔細讀一次句子是誰比誰多？");
+                    } else {
+                        showFeedback(false, "選擇正確，但是輸入的數字不對喔！相差多少呢？");
+                    }
+                }
             }
         }
 
@@ -406,19 +540,13 @@
             const message = document.getElementById('feedbackMessage');
 
             modal.classList.remove('hidden');
-            
-            // Trigger animation
-            setTimeout(() => {
-                box.classList.add('bounce-in');
-            }, 10);
+            setTimeout(() => { box.classList.add('bounce-in'); }, 10);
 
             if (isCorrect) {
                 icon.innerHTML = "🌟";
                 title.textContent = "答對了！";
                 title.className = "text-4xl font-black mb-4 text-green-600";
                 message.textContent = msg;
-                
-                // 播放音效的替代方案 (視覺效果)
                 document.body.classList.add('bg-green-100');
                 setTimeout(() => document.body.classList.remove('bg-green-100'), 1000);
             } else {
@@ -435,11 +563,9 @@
         function nextQuestion() {
             const modal = document.getElementById('feedbackModal');
             const box = document.getElementById('feedbackBox');
-            
             box.classList.remove('bounce-in', 'shake');
             modal.classList.add('hidden');
             
-            // 只有答對才換下一題，答錯讓他們繼續改
             if (document.getElementById('feedbackTitle').textContent === "答對了！") {
                 generateQuestion();
             }
