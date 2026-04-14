@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數量比一比：句子理解遊戲</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0fdf4; /* 柔和的淺綠色背景 */
+            font-family: 'PingFang HK', 'Microsoft JhengHei', sans-serif;
+        }
+        
+        /* 隱藏預設的下拉箭頭，改用較大較明顯的樣式 */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.5em;
+        }
+
+        .bounce-in {
+            animation: bounceIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); opacity: 1; }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 px-4">
+
+    <div class="max-w-4xl w-full bg-white rounded-3xl shadow-xl overflow-hidden border-4 border-green-200">
+        
+        <!-- 頂部標題與分類選擇 -->
+        <div class="bg-green-100 p-6 text-center">
+            <h1 class="text-4xl font-extrabold text-green-800 mb-6 drop-shadow-sm">🤔 數量比一比遊戲</h1>
+            
+            <div class="mb-6">
+                <p class="text-xl text-green-700 mb-4 font-bold">請選擇你要玩的類型：</p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <button onclick="setCategory('AB')" id="btn-AB" class="category-btn text-2xl font-bold py-3 px-8 rounded-full border-4 border-blue-400 bg-white text-blue-600 hover:bg-blue-50 transition-all shadow-md">🔠 [AB]</button>
+                    <button onclick="setCategory('fruit')" id="btn-fruit" class="category-btn text-2xl font-bold py-3 px-8 rounded-full border-4 border-orange-400 bg-white text-orange-600 hover:bg-orange-50 transition-all shadow-md">🍎 [水果]</button>
+                    <button onclick="setCategory('animal')" id="btn-animal" class="category-btn text-2xl font-bold py-3 px-8 rounded-full border-4 border-amber-500 bg-white text-amber-700 hover:bg-amber-50 transition-all shadow-md">🐶 [動物]</button>
+                </div>
+            </div>
+
+            <div>
+                <p class="text-xl text-green-700 mb-4 font-bold">請選擇難度：</p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <button onclick="setMode('normal')" id="btn-normal" class="mode-btn text-2xl font-bold py-3 px-8 rounded-full border-4 border-purple-400 bg-purple-600 text-white hover:bg-purple-500 transition-all shadow-md">⭐ 一般模式</button>
+                    <button onclick="setMode('hard')" id="btn-hard" class="mode-btn text-2xl font-bold py-3 px-8 rounded-full border-4 border-purple-400 bg-white text-purple-600 hover:bg-purple-50 transition-all shadow-md">🌟 難度模式</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 遊戲主要區域 -->
+        <div class="p-8 pb-12">
+            <!-- 句子顯示 -->
+            <div class="bg-yellow-50 border-4 border-yellow-300 rounded-2xl p-8 mb-10 text-center shadow-inner">
+                <p class="text-2xl text-gray-600 font-bold mb-2">請仔細閱讀句子：</p>
+                <h2 id="sentenceDisplay" class="text-4xl md:text-5xl font-extrabold text-gray-800 leading-tight">請先在上方選擇類型！</h2>
+            </div>
+
+            <!-- 教學提示 -->
+            <div class="text-center mb-24">
+                <p id="instruction-hint" class="text-2xl font-bold text-gray-500 bg-gray-100 inline-block px-6 py-2 rounded-full shadow-sm">
+                    💡 提示：左邊放<span class="text-blue-600">「比較少」</span>的，右邊放<span class="text-red-600">「比較多」</span>的
+                </p>
+            </div>
+
+            <!-- 橫向數棒區域 -->
+            <div class="relative w-full max-w-2xl mx-auto h-16 mt-8">
+                
+                <!-- 兩端標籤 -->
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 md:-translate-x-16">
+                    <div class="bg-blue-100 text-blue-700 font-black text-3xl p-3 rounded-xl border-4 border-blue-300 shadow-sm">少</div>
+                </div>
+                <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 md:translate-x-16">
+                    <div class="bg-red-100 text-red-700 font-black text-3xl p-3 rounded-xl border-4 border-red-300 shadow-sm">多</div>
+                </div>
+
+                <!-- 數棒本體 -->
+                <div class="w-full h-8 bg-gradient-to-r from-blue-200 via-gray-200 to-red-200 rounded-full border-2 border-gray-300 shadow-inner relative">
+                    
+                    <!-- 一般模式 -->
+                    <div id="normal-layout" class="w-full h-full absolute top-0 left-0">
+                        <!-- 左邊位置 (比較少) -->
+                        <div class="absolute left-1/4 top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
+                            <!-- 答案框 (下拉選單) -->
+                            <select id="leftSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-blue-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all min-w-[140px] text-center disabled:opacity-50">
+                                <option value="">請選擇</option>
+                            </select>
+                            <!-- 垂直線 -->
+                            <div class="w-2 h-16 bg-blue-500 rounded-full"></div>
+                            <!-- 裝飾點 -->
+                            <div class="w-6 h-6 bg-blue-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                        </div>
+
+                        <!-- 右邊位置 (比較多) -->
+                        <div class="absolute left-3/4 top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
+                            <!-- 答案框 (下拉選單) -->
+                            <select id="rightSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-red-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-300 transition-all min-w-[140px] text-center disabled:opacity-50">
+                                <option value="">請選擇</option>
+                            </select>
+                            <!-- 垂直線 -->
+                            <div class="w-2 h-16 bg-red-500 rounded-full"></div>
+                            <!-- 裝飾點 -->
+                            <div class="w-6 h-6 bg-red-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                        </div>
+                    </div>
+
+                    <!-- 難度模式 -->
+                    <div id="hard-layout" class="hidden w-full h-full absolute top-0 left-0">
+                        <!-- 左邊位置 -->
+                        <div class="absolute left-[20%] top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
+                            <select id="hardLeftSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-blue-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all min-w-[140px] text-center">
+                                <option value="">請選擇</option>
+                            </select>
+                            <div class="w-2 h-16 bg-blue-500 rounded-full"></div>
+                            <div class="w-6 h-6 bg-blue-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                        </div>
+
+                        <!-- 中間位置 (固定已知) -->
+                        <div class="absolute left-[50%] top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
+                            <div id="hardMiddleBox" class="absolute bottom-full mb-8 text-3xl font-bold p-3 border-4 border-gray-400 rounded-2xl bg-gray-100 shadow-sm text-gray-600 min-w-[140px] text-center flex items-center justify-center">
+                                <!-- 已知項目將顯示於此 -->
+                            </div>
+                            <div class="w-2 h-16 bg-gray-500 rounded-full"></div>
+                            <div class="w-6 h-6 bg-gray-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                        </div>
+
+                        <!-- 右邊位置 -->
+                        <div class="absolute left-[80%] top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
+                            <select id="hardRightSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-red-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-300 transition-all min-w-[140px] text-center">
+                                <option value="">請選擇</option>
+                            </select>
+                            <div class="w-2 h-16 bg-red-500 rounded-full"></div>
+                            <div class="w-6 h-6 bg-red-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 確認按鈕 -->
+            <div class="mt-28 text-center">
+                <button onclick="checkAnswer()" id="checkBtn" class="text-3xl font-black py-4 px-12 bg-green-500 text-white rounded-full border-b-8 border-green-700 hover:bg-green-400 hover:translate-y-1 hover:border-b-4 active:border-b-0 active:translate-y-2 transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-check-circle mr-2"></i> 確定答案
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 成功/失敗 彈出視窗 -->
+    <div id="feedbackModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50 p-4">
+        <div id="feedbackBox" class="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-lg w-full transform scale-0 opacity-0 transition-all duration-300">
+            <div id="feedbackIcon" class="text-8xl mb-6"></div>
+            <h3 id="feedbackTitle" class="text-4xl font-black mb-4"></h3>
+            <p id="feedbackMessage" class="text-2xl text-gray-600 font-bold mb-8"></p>
+            <button onclick="nextQuestion()" class="text-2xl font-bold py-3 px-10 bg-blue-500 text-white rounded-full border-b-8 border-blue-700 hover:bg-blue-400 hover:translate-y-1 hover:border-b-4 transition-all w-full shadow-lg">
+                下一題 <i class="fa-solid fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const fruits = ['🍎 蘋果', '🍌 香蕉', '🍊 橙子', '🍉 西瓜', '🍓 士多啤梨', '🍇 葡萄', '🥭 芒果', '🍐 雪梨'];
+        const animals = ['🐶 小狗', '🐱 小貓', '🐰 小兔', '🦁 獅子', '🐯 老虎', '🐘 大象', '🐒 猴子', '🐼 熊貓'];
+
+        let currentCategory = '';
+        let correctLeft = '';
+        let correctRight = '';
+        let currentEntities = [];
+
+        let currentMode = 'normal';
+        let hardTargetEntity = '';
+        let hardCorrectPosition = '';
+
+        // 初始化：預設選擇動物
+        window.onload = () => {
+            setCategory('animal');
+        };
+
+        function setMode(mode) {
+            currentMode = mode;
+            let btnNormal = document.getElementById('btn-normal');
+            let btnHard = document.getElementById('btn-hard');
+            
+            if (mode === 'normal') {
+                btnNormal.classList.replace('bg-white', 'bg-purple-600');
+                btnNormal.classList.replace('text-purple-600', 'text-white');
+                btnHard.classList.replace('bg-purple-600', 'bg-white');
+                btnHard.classList.replace('text-white', 'text-purple-600');
+            } else {
+                btnHard.classList.replace('bg-white', 'bg-purple-600');
+                btnHard.classList.replace('text-purple-600', 'text-white');
+                btnNormal.classList.replace('bg-purple-600', 'bg-white');
+                btnNormal.classList.replace('text-white', 'text-purple-600');
+            }
+            generateQuestion();
+        }
+
+        function getRandomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function setCategory(category) {
+            currentCategory = category;
+            
+            // 更新按鈕樣式
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'bg-orange-600', 'bg-amber-600', 'text-white');
+                btn.classList.add('bg-white');
+            });
+
+            if(category === 'AB') {
+                let btn = document.getElementById('btn-AB');
+                btn.classList.remove('bg-white', 'text-blue-600');
+                btn.classList.add('bg-blue-600', 'text-white');
+            } else if(category === 'fruit') {
+                let btn = document.getElementById('btn-fruit');
+                btn.classList.remove('bg-white', 'text-orange-600');
+                btn.classList.add('bg-orange-600', 'text-white');
+            } else if(category === 'animal') {
+                let btn = document.getElementById('btn-animal');
+                btn.classList.remove('bg-white', 'text-amber-700');
+                btn.classList.add('bg-amber-600', 'text-white');
+            }
+
+            generateQuestion();
+        }
+
+        function generateQuestion() {
+            let e1, e2, unit;
+
+            if (currentCategory === 'AB') {
+                e1 = 'A';
+                e2 = 'B';
+                unit = '';
+            } else if (currentCategory === 'fruit') {
+                e1 = getRandomItem(fruits);
+                do { e2 = getRandomItem(fruits); } while (e1 === e2);
+                unit = '個';
+            } else {
+                e1 = getRandomItem(animals);
+                do { e2 = getRandomItem(animals); } while (e1 === e2);
+                unit = '隻';
+            }
+
+            currentEntities = [e1, e2];
+
+            // 隨機數字 1 - 1000
+            const X = Math.floor(Math.random() * 1000) + 1;
+            
+            // 隨機句型 (0到3)
+            // 0: A比B少X -> A < B -> Left:A, Right:B
+            // 1: A比B多X -> A > B -> Left:B, Right:A
+            // 2: B比A少X -> B < A -> Left:B, Right:A
+            // 3: B比A多X -> B > A -> Left:A, Right:B
+            const pattern = Math.floor(Math.random() * 4);
+            let sentence = "";
+
+            if (pattern === 0) {
+                sentence = `<span class="text-blue-700">${e1}</span> 比 <span class="text-purple-700">${e2}</span> 少 ${X} ${unit}`;
+                correctLeft = e1;
+                correctRight = e2;
+            } else if (pattern === 1) {
+                sentence = `<span class="text-blue-700">${e1}</span> 比 <span class="text-purple-700">${e2}</span> 多 ${X} ${unit}`;
+                correctLeft = e2;
+                correctRight = e1;
+            } else if (pattern === 2) {
+                sentence = `<span class="text-purple-700">${e2}</span> 比 <span class="text-blue-700">${e1}</span> 少 ${X} ${unit}`;
+                correctLeft = e2;
+                correctRight = e1;
+            } else {
+                sentence = `<span class="text-purple-700">${e2}</span> 比 <span class="text-blue-700">${e1}</span> 多 ${X} ${unit}`;
+                correctLeft = e1;
+                correctRight = e2;
+            }
+
+            document.getElementById('sentenceDisplay').innerHTML = sentence;
+            
+            // 根據模式設定介面與邏輯
+            if (currentMode === 'normal') {
+                document.getElementById('instruction-hint').innerHTML = '💡 提示：左邊放<span class="text-blue-600">「比較少」</span>的，右邊放<span class="text-red-600">「比較多」</span>的';
+                document.getElementById('normal-layout').classList.remove('hidden');
+                document.getElementById('hard-layout').classList.add('hidden');
+                updateSelectOptions();
+            } else {
+                document.getElementById('instruction-hint').innerHTML = '💡 提示：中間已經固定了，請判斷另一個是<span class="text-blue-600">「比較少」</span>(左邊)還是<span class="text-red-600">「比較多」</span>(右邊)';
+                document.getElementById('normal-layout').classList.add('hidden');
+                document.getElementById('hard-layout').classList.remove('hidden');
+                
+                // 隨機決定將左邊還是右邊的實體放在中間
+                const isLeftKnown = Math.random() < 0.5;
+                const knownEntity = isLeftKnown ? correctLeft : correctRight;
+                
+                hardTargetEntity = isLeftKnown ? correctRight : correctLeft;
+                hardCorrectPosition = isLeftKnown ? 'right' : 'left'; // 如果已知的是左邊(少)，那要填的目標就是右邊(多)
+                
+                // 顯示中間固定的實體
+                document.getElementById('hardMiddleBox').innerHTML = `<span class="text-gray-800">${knownEntity}</span>`;
+                
+                // 更新左右兩邊的下拉選單，選項只提供未知的實體讓學生選擇位置
+                const hardLeft = document.getElementById('hardLeftSelect');
+                const hardRight = document.getElementById('hardRightSelect');
+                
+                hardLeft.innerHTML = '<option value="">請選擇</option><option value="' + hardTargetEntity + '">' + hardTargetEntity + '</option>';
+                hardRight.innerHTML = '<option value="">請選擇</option><option value="' + hardTargetEntity + '">' + hardTargetEntity + '</option>';
+                
+                hardLeft.value = "";
+                hardRight.value = "";
+            }
+        }
+
+        function updateSelectOptions() {
+            const leftSelect = document.getElementById('leftSelect');
+            const rightSelect = document.getElementById('rightSelect');
+            
+            leftSelect.innerHTML = '<option value="">請選擇</option>';
+            rightSelect.innerHTML = '<option value="">請選擇</option>';
+
+            // 將選項隨機打亂或固定順序，這裡使用固定順序(E1, E2)
+            currentEntities.forEach(entity => {
+                leftSelect.innerHTML += `<option value="${entity}">${entity}</option>`;
+                rightSelect.innerHTML += `<option value="${entity}">${entity}</option>`;
+            });
+
+            leftSelect.value = "";
+            rightSelect.value = "";
+            leftSelect.classList.remove('border-red-500', 'border-green-500');
+            rightSelect.classList.remove('border-red-500', 'border-green-500');
+        }
+
+        function checkAnswer() {
+            if (currentMode === 'normal') {
+                const leftVal = document.getElementById('leftSelect').value;
+                const rightVal = document.getElementById('rightSelect').value;
+
+                if (!leftVal || !rightVal) {
+                    showFeedback(false, "請先在兩個框框中選好答案喔！");
+                    return;
+                }
+
+                if (leftVal === rightVal) {
+                    showFeedback(false, "兩邊不能選一樣的喔，請再看清楚句子！");
+                    return;
+                }
+
+                if (leftVal === correctLeft && rightVal === correctRight) {
+                    showFeedback(true, "你太棒了！完全正確！🎉");
+                } else {
+                    showFeedback(false, "哎呀，放反了！再想想看誰比較多？誰比較少？");
+                }
+            } else {
+                const leftVal = document.getElementById('hardLeftSelect').value;
+                const rightVal = document.getElementById('hardRightSelect').value;
+
+                if (!leftVal && !rightVal) {
+                    showFeedback(false, "請選擇一個位置填入答案喔！");
+                    return;
+                }
+                
+                if (leftVal && rightVal) {
+                    showFeedback(false, "只能選擇一邊放入答案喔！請把另一邊改回「請選擇」。");
+                    return;
+                }
+
+                if (hardCorrectPosition === 'left' && leftVal === hardTargetEntity) {
+                    showFeedback(true, "太棒了！判斷完全正確！🎉");
+                } else if (hardCorrectPosition === 'right' && rightVal === hardTargetEntity) {
+                    showFeedback(true, "太棒了！判斷完全正確！🎉");
+                } else {
+                    showFeedback(false, "哎呀，放錯邊了！再讀一次句子，看看它比中間的少還是多？");
+                }
+            }
+        }
+
+        function showFeedback(isCorrect, msg) {
+            const modal = document.getElementById('feedbackModal');
+            const box = document.getElementById('feedbackBox');
+            const icon = document.getElementById('feedbackIcon');
+            const title = document.getElementById('feedbackTitle');
+            const message = document.getElementById('feedbackMessage');
+
+            modal.classList.remove('hidden');
+            
+            // Trigger animation
+            setTimeout(() => {
+                box.classList.add('bounce-in');
+            }, 10);
+
+            if (isCorrect) {
+                icon.innerHTML = "🌟";
+                title.textContent = "答對了！";
+                title.className = "text-4xl font-black mb-4 text-green-600";
+                message.textContent = msg;
+                
+                // 播放音效的替代方案 (視覺效果)
+                document.body.classList.add('bg-green-100');
+                setTimeout(() => document.body.classList.remove('bg-green-100'), 1000);
+            } else {
+                icon.innerHTML = "🤔";
+                title.textContent = "再試一次！";
+                title.className = "text-4xl font-black mb-4 text-red-500";
+                message.textContent = msg;
+                box.classList.remove('bounce-in');
+                box.classList.add('shake');
+                setTimeout(() => box.classList.remove('shake'), 500);
+            }
+        }
+
+        function nextQuestion() {
+            const modal = document.getElementById('feedbackModal');
+            const box = document.getElementById('feedbackBox');
+            
+            box.classList.remove('bounce-in', 'shake');
+            modal.classList.add('hidden');
+            
+            // 只有答對才換下一題，答錯讓他們繼續改
+            if (document.getElementById('feedbackTitle').textContent === "答對了！") {
+                generateQuestion();
+            }
+        }
+    </script>
+</body>
+</html>
