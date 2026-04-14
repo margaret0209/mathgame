@@ -79,22 +79,15 @@
             
             <!-- 左側/主體內容區 -->
             <div class="flex-1 w-full flex flex-col items-center xl:items-stretch">
-                
+
                 <!-- 句子顯示 -->
                 <div class="bg-yellow-50 border-4 border-yellow-300 rounded-2xl p-8 mb-10 text-center shadow-inner w-full">
                     <p class="text-2xl text-gray-600 font-bold mb-2">請仔細閱讀句子：</p>
                     <h2 id="sentenceDisplay" class="text-4xl md:text-5xl font-extrabold text-gray-800 leading-tight">請先在上方選擇類型！</h2>
                 </div>
 
-                <!-- 教學提示 -->
-                <div class="text-center mb-8 w-full">
-                    <p id="instruction-hint" class="text-2xl font-bold text-gray-500 bg-gray-100 inline-block px-6 py-2 rounded-full shadow-sm">
-                        💡 提示：左邊放<span class="text-blue-600">「比較少」</span>的，右邊放<span class="text-red-600">「比較多」</span>的
-                    </p>
-                </div>
-
                 <!-- 視覺數線區域 (一般與難度模式) -->
-                <div id="visual-mode-section" class="relative w-full max-w-4xl mx-auto h-16 mt-8 mb-16">
+                <div id="visual-mode-section" class="relative w-full max-w-4xl mx-auto h-16 mt-32 mb-16">
                     <!-- 兩端標籤 -->
                     <div class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 md:-translate-x-16">
                         <div class="bg-blue-100 text-blue-700 font-black text-3xl p-3 rounded-xl border-4 border-blue-300 shadow-sm">少</div>
@@ -155,37 +148,33 @@
 
                 <!-- 理解模式專屬區域 -->
                 <div id="understanding-mode-section" class="hidden w-full max-w-4xl mx-auto flex flex-col items-center mt-4">
-                    <div class="w-full bg-indigo-50 p-6 md:p-8 rounded-3xl border-4 border-indigo-200 mb-4 shadow-sm">
+                    <div class="w-full bg-indigo-50 p-6 md:p-10 rounded-3xl border-4 border-indigo-200 mb-4 shadow-sm">
                         
                         <!-- Entity A 橫列 -->
-                        <div class="flex flex-wrap items-center justify-between mb-8 pb-6 border-b-2 border-indigo-100">
-                            <span id="und-entity1-name" class="text-3xl md:text-4xl font-extrabold text-indigo-900 min-w-[120px]">A</span>
-                            <div class="flex flex-wrap items-center gap-4 mt-4 md:mt-0">
-                                <select id="und-e1-type" class="text-2xl p-3 pr-10 rounded-xl border-4 border-indigo-300 font-bold focus:ring-4 focus:ring-indigo-400 outline-none min-w-[120px] text-center cursor-pointer">
-                                    <option value="">請選擇</option>
-                                    <option value="少">少</option>
-                                    <option value="多">多</option>
-                                </select>
-                                <div id="und-e1-input" onclick="focusUndInput(1)" class="w-40 h-16 bg-white border-4 border-gray-300 rounded-xl flex items-center justify-center text-4xl font-bold text-indigo-700 cursor-pointer hover:border-indigo-400 transition-colors shadow-inner relative">
-                                    <span id="und-e1-val"></span>
-                                    <div id="cursor-1" class="hidden absolute right-3 w-1 h-10 bg-indigo-500 animate-pulse"></div>
-                                </div>
+                        <div class="flex flex-wrap items-center justify-start gap-4 mb-8">
+                            <span id="und-entity1-name" class="text-5xl md:text-6xl font-extrabold text-indigo-900 min-w-[120px]">A</span>
+                            <select id="und-e1-type" class="text-4xl p-3 pr-12 rounded-2xl border-4 border-indigo-300 font-bold focus:ring-4 focus:ring-indigo-400 outline-none text-center cursor-pointer">
+                                <option value="">請選擇</option>
+                                <option value="少">少</option>
+                                <option value="多">多</option>
+                            </select>
+                            <div id="und-e1-input" onclick="focusUndInput(1)" class="min-w-[160px] h-20 px-6 bg-white border-4 border-gray-300 rounded-2xl flex items-center justify-center text-6xl font-bold text-indigo-700 cursor-pointer hover:border-indigo-400 transition-colors shadow-inner relative">
+                                <span id="und-e1-val"></span>
+                                <div id="cursor-1" class="hidden absolute right-4 w-1.5 h-12 bg-indigo-500 animate-pulse"></div>
                             </div>
                         </div>
 
                         <!-- Entity B 橫列 -->
-                        <div class="flex flex-wrap items-center justify-between">
-                            <span id="und-entity2-name" class="text-3xl md:text-4xl font-extrabold text-indigo-900 min-w-[120px]">B</span>
-                            <div class="flex flex-wrap items-center gap-4 mt-4 md:mt-0">
-                                <select id="und-e2-type" class="text-2xl p-3 pr-10 rounded-xl border-4 border-indigo-300 font-bold focus:ring-4 focus:ring-indigo-400 outline-none min-w-[120px] text-center cursor-pointer">
-                                    <option value="">請選擇</option>
-                                    <option value="少">少</option>
-                                    <option value="多">多</option>
-                                </select>
-                                <div id="und-e2-input" onclick="focusUndInput(2)" class="w-40 h-16 bg-white border-4 border-gray-300 rounded-xl flex items-center justify-center text-4xl font-bold text-indigo-700 cursor-pointer hover:border-indigo-400 transition-colors shadow-inner relative">
-                                    <span id="und-e2-val"></span>
-                                    <div id="cursor-2" class="hidden absolute right-3 w-1 h-10 bg-indigo-500 animate-pulse"></div>
-                                </div>
+                        <div class="flex flex-wrap items-center justify-start gap-4">
+                            <span id="und-entity2-name" class="text-5xl md:text-6xl font-extrabold text-indigo-900 min-w-[120px]">B</span>
+                            <select id="und-e2-type" class="text-4xl p-3 pr-12 rounded-2xl border-4 border-indigo-300 font-bold focus:ring-4 focus:ring-indigo-400 outline-none text-center cursor-pointer">
+                                <option value="">請選擇</option>
+                                <option value="少">少</option>
+                                <option value="多">多</option>
+                            </select>
+                            <div id="und-e2-input" onclick="focusUndInput(2)" class="min-w-[160px] h-20 px-6 bg-white border-4 border-gray-300 rounded-2xl flex items-center justify-center text-6xl font-bold text-indigo-700 cursor-pointer hover:border-indigo-400 transition-colors shadow-inner relative">
+                                <span id="und-e2-val"></span>
+                                <div id="cursor-2" class="hidden absolute right-4 w-1.5 h-12 bg-indigo-500 animate-pulse"></div>
                             </div>
                         </div>
                     </div>
@@ -238,6 +227,70 @@
     </div>
 
     <script>
+        // --- 音效系統 (使用 Web Audio API，無需外部檔案) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playClickSound() {
+            initAudio();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function playCorrectSound() {
+            initAudio();
+            const t = audioCtx.currentTime;
+            const playNote = (freq, startTime, duration) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.2, startTime);
+                gain.gain.linearRampToValueAtTime(0, startTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            };
+            playNote(523.25, t, 0.2); // Do
+            playNote(659.25, t + 0.15, 0.2); // Mi
+            playNote(783.99, t + 0.3, 0.4); // Sol
+        }
+
+        function playWrongSound() {
+            initAudio();
+            const t = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(250, t);
+            osc.frequency.linearRampToValueAtTime(150, t + 0.4);
+            gain.gain.setValueAtTime(0.2, t);
+            gain.gain.linearRampToValueAtTime(0, t + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(t);
+            osc.stop(t + 0.4);
+        }
+
         const fruits = ['🍎 蘋果', '🍌 香蕉', '🍊 橙子', '🍉 西瓜', '🍓 士多啤梨', '🍇 葡萄', '🥭 芒果', '🍐 雪梨', '🍒 車厘子', '🍍 菠蘿', '🍑 水蜜桃', '🥝 奇異果', '🍈 蜜瓜', '🍋 檸檬', '🥑 牛油果', '🥥 椰子', '🫐 藍莓', '🍅 番茄', '🍈 哈密瓜', '🍏 青蘋果'];
         const animals = ['🐶 小狗', '🐱 小貓', '🐰 小兔', '🦁 獅子', '🐯 老虎', '🐘 大象', '🐒 猴子', '🐼 熊貓', '🦊 狐狸', '🐻 小熊', '🐨 樹熊', '🐮 乳牛', '🐷 小豬', '🐸 青蛙', '🐧 企鵝', '🐔 小雞', '🦆 鴨子', '🦉 貓頭鷹', '🐴 馬', '🦄 獨角獸', '🐝 蜜蜂', '🐛 毛蟲', '🦋 蝴蝶', '🐌 蝸牛', '🐢 烏龜', '🐍 蛇', '🐙 章魚', '🐬 海豚', '🐳 鯨魚', '🦈 鯊魚'];
 
@@ -258,10 +311,15 @@
 
         // 初始化
         window.onload = () => {
+            // 為所有下拉選單加入點擊音效
+            document.querySelectorAll('select').forEach(select => {
+                select.addEventListener('change', playClickSound);
+            });
             setCategory('animal');
         };
 
         function setMode(mode) {
+            playClickSound();
             currentMode = mode;
             ['normal', 'hard', 'understanding'].forEach(m => {
                 let btn = document.getElementById('btn-' + m);
@@ -277,6 +335,7 @@
         }
 
         function setCategory(category) {
+            playClickSound();
             currentCategory = category;
             document.querySelectorAll('.category-btn').forEach(btn => {
                 btn.classList.remove('bg-blue-600', 'bg-orange-600', 'bg-amber-600', 'text-white');
@@ -353,7 +412,6 @@
             
             // UI 佈局切換
             if (currentMode === 'normal') {
-                document.getElementById('instruction-hint').innerHTML = '💡 提示：左邊放<span class="text-blue-600">「比較少」</span>的，右邊放<span class="text-red-600">「比較多」</span>的';
                 document.getElementById('visual-mode-section').classList.remove('hidden');
                 document.getElementById('understanding-mode-section').classList.add('hidden');
                 document.getElementById('normal-layout').classList.remove('hidden');
@@ -365,7 +423,6 @@
                 updateSelectOptions();
 
             } else if (currentMode === 'hard') {
-                document.getElementById('instruction-hint').innerHTML = '💡 提示：中間已經固定了，請判斷另一個是<span class="text-blue-600">「比較少」</span>(左邊)還是<span class="text-red-600">「比較多」</span>(右邊)';
                 document.getElementById('visual-mode-section').classList.remove('hidden');
                 document.getElementById('understanding-mode-section').classList.add('hidden');
                 document.getElementById('normal-layout').classList.add('hidden');
@@ -391,7 +448,6 @@
                 hardRight.value = "";
 
             } else if (currentMode === 'understanding') {
-                document.getElementById('instruction-hint').innerHTML = '💡 提示：請分別選出他們是「多」還是「少」，並用數字盤輸入相差數量！';
                 document.getElementById('visual-mode-section').classList.add('hidden');
                 document.getElementById('understanding-mode-section').classList.remove('hidden');
 
@@ -427,6 +483,7 @@
 
         // 理解模式：點擊對焦輸入框
         function focusUndInput(target) {
+            playClickSound();
             activeInputTarget = target;
             document.getElementById('und-e1-input').classList.remove('border-indigo-500', 'ring-4', 'ring-indigo-200');
             document.getElementById('und-e2-input').classList.remove('border-indigo-500', 'ring-4', 'ring-indigo-200');
@@ -439,6 +496,7 @@
 
         // 理解模式：處理數字盤點擊
         function pressNumpad(val) {
+            playClickSound();
             const display = document.getElementById(`und-e${activeInputTarget}-val`);
             let current = display.innerText;
 
@@ -543,6 +601,7 @@
             setTimeout(() => { box.classList.add('bounce-in'); }, 10);
 
             if (isCorrect) {
+                playCorrectSound();
                 icon.innerHTML = "🌟";
                 title.textContent = "答對了！";
                 title.className = "text-4xl font-black mb-4 text-green-600";
@@ -550,6 +609,7 @@
                 document.body.classList.add('bg-green-100');
                 setTimeout(() => document.body.classList.remove('bg-green-100'), 1000);
             } else {
+                playWrongSound();
                 icon.innerHTML = "🤔";
                 title.textContent = "再試一次！";
                 title.className = "text-4xl font-black mb-4 text-red-500";
@@ -561,6 +621,7 @@
         }
 
         function nextQuestion() {
+            playClickSound();
             const modal = document.getElementById('feedbackModal');
             const box = document.getElementById('feedbackBox');
             box.classList.remove('bounce-in', 'shake');
