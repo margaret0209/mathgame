@@ -337,7 +337,10 @@
                 zones.push(zone); 
             }
 
-            const colors = Array.from({length: numObjects}, (_, i) => `hsla(${(i * 137.5) % 360}, 75%, 55%, 0.9)`);
+            // 預設一組鮮明、容易區分的顏色供長條使用
+            const palette = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+            const colors = [...palette].sort(() => Math.random() - 0.5).slice(0, numObjects);
+            
             const emojis = ['🍔', '🥞', '📚', '🧱', '📦', '🍩', '🎁', '🚂', '🍎', '🍄'];
             const roundEmoji = emojis[Math.floor(Math.random() * emojis.length)];
 
@@ -379,7 +382,7 @@
                     el.style.filter = 'drop-shadow(0 4px 6px rgba(0,0,0,0.2))';
                     
                     const left = 10 + Math.random() * (pWidth - 70);
-                    const top = pHeight - obj.height - (Math.random() * 20) - 10;
+                    const top = pHeight - obj.height - 10;
                     el.style.left = left + 'px';
                     el.style.top = top + 'px';
 
@@ -466,7 +469,7 @@
                     const pRect = playArea.getBoundingClientRect();
                     el.style.transition = 'all 0.4s ease';
                     el.style.left = (10 + Math.random() * (pRect.width - 70)) + 'px';
-                    el.style.top = (pRect.height - rect.height - 20) + 'px';
+                    el.style.top = (pRect.height - rect.height - 10) + 'px';
                     setTimeout(() => el.style.transition = '', 400);
                 }
             } else {
