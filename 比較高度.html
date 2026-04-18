@@ -35,37 +35,59 @@
         .ground-line {
             border-bottom: 6px solid #94a3b8;
         }
+        /* 提示剪影樣式 */
+        .hint-silhouette {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 55px;
+            background-color: rgba(0, 0, 0, 0.05);
+            border: 2px dashed rgba(0, 0, 0, 0.1);
+            border-radius: 8px 8px 0 0;
+            pointer-events: none;
+            z-index: 0;
+        }
     </style>
 </head>
 <body class="bg-gray-200 h-screen w-screen overflow-hidden flex items-center justify-center p-2 md:p-4 font-sans">
 
     <div class="flex flex-col w-full max-w-5xl max-h-[98vh] bg-white shadow-2xl rounded-2xl overflow-hidden relative pb-2 md:pb-4">
         
-        <header class="bg-emerald-600 text-white p-3 md:p-4 text-center z-10 relative flex-shrink-0">
-            <h1 class="text-2xl md:text-3xl font-bold tracking-wider">📏 高矮比一比 🦒</h1>
+        <header class="bg-emerald-600 text-white p-3 md:p-4 text-center z-20 relative flex-shrink-0">
+            <h1 class="text-xl md:text-3xl font-bold tracking-wider">📏 高矮比一比 🦒</h1>
             
             <div class="mt-3 flex flex-wrap justify-center items-center gap-2 md:gap-3">
                 <!-- 遊戲挑戰模式 -->
                 <div class="flex items-center bg-emerald-500 rounded-full px-3 py-1 shadow-inner">
-                    <label for="game-mode" class="text-sm font-medium mr-2 text-white">任務：</label>
-                    <select id="game-mode" onchange="initGame()" class="bg-white text-emerald-700 text-sm rounded px-2 py-1 outline-none font-bold cursor-pointer">
+                    <label for="game-mode" class="text-xs md:text-sm font-medium mr-1 text-white">任務：</label>
+                    <select id="game-mode" onchange="initGame()" class="bg-white text-emerald-700 text-xs md:text-sm rounded px-1 md:px-2 py-1 outline-none font-bold cursor-pointer">
                         <option value="sort" selected>由高到矮排序</option>
                         <option value="findMax">找出最高</option>
                         <option value="findMin">找出最矮</option>
                     </select>
                 </div>
 
+                <!-- 提示開關 -->
                 <div class="flex items-center bg-emerald-500 rounded-full px-3 py-1 shadow-inner">
-                    <label for="type-select" class="text-sm font-medium mr-2 text-white">圖案：</label>
-                    <select id="type-select" onchange="changeType()" class="bg-white text-emerald-700 text-sm rounded px-2 py-1 outline-none font-bold cursor-pointer">
+                    <label class="text-xs md:text-sm font-medium mr-2 text-white">提示：</label>
+                    <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" name="hint-toggle" id="hint-toggle" onchange="toggleHints()" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer outline-none right-5 checked:right-0 checked:border-emerald-400"/>
+                        <label for="hint-toggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                    </div>
+                </div>
+
+                <div class="flex items-center bg-emerald-500 rounded-full px-3 py-1 shadow-inner">
+                    <label for="type-select" class="text-xs md:text-sm font-medium mr-1 text-white">圖案：</label>
+                    <select id="type-select" onchange="changeType()" class="bg-white text-emerald-700 text-xs md:text-sm rounded px-1 md:px-2 py-1 outline-none font-bold cursor-pointer">
                         <option value="geometric" selected>長條</option>
                         <option value="object">堆疊物品</option>
                     </select>
                 </div>
 
                 <div class="flex items-center bg-emerald-500 rounded-full px-3 py-1 shadow-inner">
-                    <label for="count-select" class="text-sm font-medium mr-2 text-white">數量：</label>
-                    <select id="count-select" onchange="initGame()" class="bg-white text-emerald-700 text-sm rounded px-2 py-1 outline-none font-bold cursor-pointer">
+                    <label for="count-select" class="text-xs md:text-sm font-medium mr-1 text-white">數量：</label>
+                    <select id="count-select" onchange="initGame()" class="bg-white text-emerald-700 text-xs md:text-sm rounded px-1 md:px-2 py-1 outline-none font-bold cursor-pointer">
                         <option value="2">2 個</option>
                         <option value="3" selected>3 個</option>
                         <option value="4">4 個</option>
@@ -73,7 +95,7 @@
                     </select>
                 </div>
                 
-                <button onclick="initGame()" class="bg-white text-emerald-600 px-5 py-1.5 rounded-full text-sm font-bold shadow hover:bg-emerald-50 active:scale-95 transition">
+                <button onclick="initGame()" class="bg-white text-emerald-600 px-4 py-1.5 rounded-full text-xs md:text-sm font-bold shadow hover:bg-emerald-50 active:scale-95 transition">
                     重新產生
                 </button>
             </div>
@@ -95,24 +117,40 @@
         </div>
     </div>
 
+    <style>
+        /* 切換開關的小美化樣式 */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #34d399;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #34d399;
+        }
+        .toggle-checkbox {
+            transition: right 0.2s ease-in-out;
+        }
+    </style>
+
     <script>
         const playArea = document.getElementById('play-area');
         const dropZonesContainer = document.getElementById('drop-zones');
         const messageEl = document.getElementById('message');
         const gameContainer = document.getElementById('game-container');
+        const hintToggle = document.getElementById('hint-toggle');
         
         let numObjects = 3;
         let currentPatternType = 'geometric'; 
         let zones = []; 
         let baseHeights = []; 
         let currentChallenge = 'sort'; // sort, findMax, findMin
+        let hintEnabled = false;
         
         let highestZ = 10;
         let draggedEl = null;
         let startX = 0, startY = 0;
         let currentHoverZone = null;
 
-        // 音效
+        // 音效相關
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx;
         function initAudio() {
@@ -167,9 +205,20 @@
             initGame();
         }
 
+        function toggleHints() {
+            hintEnabled = hintToggle.checked;
+            updateHints();
+        }
+
+        function updateHints() {
+            const silhouettes = document.querySelectorAll('.hint-silhouette');
+            silhouettes.forEach(s => s.style.display = hintEnabled ? 'block' : 'none');
+        }
+
         function initGame() {
             numObjects = parseInt(document.getElementById('count-select').value);
             currentChallenge = document.getElementById('game-mode').value;
+            hintEnabled = hintToggle.checked;
             
             playArea.innerHTML = '';
             dropZonesContainer.innerHTML = '';
@@ -201,26 +250,34 @@
                 zone.className = "zone drop-zone flex-1 min-w-[50px] max-w-[100px] border-4 border-dashed border-gray-300 flex flex-col items-center justify-start text-gray-400 font-bold text-xs md:text-sm relative bg-gray-50 mx-1";
                 zone.style.height = (maxHeight + 50) + 'px';
                 
-                // 期望的 rank (rank 0 是最矮, rank num-1 是最高)
+                let expectedRank;
                 if (currentChallenge === 'sort') {
-                    zone.dataset.expected = numObjects - 1 - i;
-                    const labels = ["最高", "第二高", "第三高", "第四高", "最矮"];
+                    expectedRank = numObjects - 1 - i;
                     let label = (i === 0) ? "最高" : (i === numObjects - 1 ? "最矮" : `第${i+1}高`);
-                    zone.innerHTML = `<span class="absolute top-2 pointer-events-none select-none bg-white/80 px-1 rounded">${label}</span>`;
+                    zone.innerHTML = `<span class="absolute top-2 pointer-events-none select-none bg-white/80 px-1 rounded z-10">${label}</span>`;
                 } else if (currentChallenge === 'findMax') {
-                    zone.dataset.expected = numObjects - 1;
-                    zone.innerHTML = `<span class="absolute top-2 pointer-events-none select-none bg-white/80 px-1 rounded">放入最高的</span>`;
+                    expectedRank = numObjects - 1;
+                    zone.innerHTML = `<span class="absolute top-2 pointer-events-none select-none bg-white/80 px-1 rounded z-10">放入最高</span>`;
                 } else {
-                    zone.dataset.expected = 0;
-                    zone.innerHTML = `<span class="absolute top-2 pointer-events-none select-none bg-white/80 px-1 rounded">放入最矮的</span>`;
+                    expectedRank = 0;
+                    zone.innerHTML = `<span class="absolute top-2 pointer-events-none select-none bg-white/80 px-1 rounded z-10">放入最矮</span>`;
                 }
                 
+                zone.dataset.expected = expectedRank;
                 zone.dataset.currentRank = "";
+
+                // 新增提示剪影
+                const hint = document.createElement('div');
+                hint.className = 'hint-silhouette';
+                hint.style.height = baseHeights[expectedRank] + 'px';
+                hint.style.display = hintEnabled ? 'block' : 'none';
+                zone.appendChild(hint);
+
                 dropZonesContainer.appendChild(zone);
                 zones.push(zone); 
             }
 
-            // 產生隨機顏色與表情
+            // 產生物件
             const colors = Array.from({length: numObjects}, (_, i) => `hsla(${(i * 137.5) % 360}, 75%, 55%, 0.9)`);
             const emojis = ['🍔', '🥞', '📚', '🧱', '📦', '🍩', '🎁', '🚂', '🍎', '🍄'];
             const roundEmoji = emojis[Math.floor(Math.random() * emojis.length)];
@@ -327,7 +384,6 @@
                 if (cx >= zr.left && cx <= zr.right && cy >= (zr.top-50) && cy <= (zr.bottom+50)) targetZone = z;
             });
 
-            // 先清除該物件原本在其他框框的紀錄
             zones.forEach(z => { if(z.dataset.currentRank === el.dataset.rank) z.dataset.currentRank = ""; });
 
             if (targetZone) {
@@ -345,7 +401,6 @@
                     setTimeout(() => targetZone.classList.remove('error-flash'), 500);
                     messageEl.innerText = "❌ 哎呀，這個高度不對喔！再觀察一下！";
                     messageEl.className = "text-sm md:text-lg text-red-500 font-bold px-2";
-                    // 彈回左側隨機位置
                     const pRect = playArea.getBoundingClientRect();
                     el.style.transition = 'all 0.4s ease';
                     el.style.left = (10 + Math.random() * (pRect.width - 70)) + 'px';
@@ -353,7 +408,6 @@
                     setTimeout(() => el.style.transition = '', 400);
                 }
             } else {
-                // 沒進框框，掉到地板上
                 const pRect = playArea.getBoundingClientRect();
                 if (parseFloat(el.style.left) > pRect.width - 20) {
                     el.style.left = (pRect.width - 70) + 'px';
