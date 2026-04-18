@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>容量互動遊戲</title>
+    <title>容量認知互動遊戲</title>
     <style>
         :root {
             --primary-color: #4CAF50; /* 柔和的綠色 */
@@ -281,7 +281,7 @@
 
     <!-- 頂部控制面板 -->
     <div id="top-panel">
-        <h1 style="margin: 0; font-size: 30px;">💧 容量遊戲 💧</h1>
+        <h1 style="margin: 0; font-size: 30px;">💧 容量認知遊戲 💧</h1>
         
         <!-- 數量選擇 -->
         <div class="controls-row">
@@ -344,15 +344,72 @@
         const WATER_COLORS = ['#3498db', '#e74c3c', '#2ecc71', '#9b59b6', '#f1c40f', '#e67e22', '#ff9ff3'];
         const CUP_SHAPES = ['shape-normal', 'shape-tall', 'shape-wide', 'shape-round'];
 
+        // 音效系統 (使用 Web Audio API，無需外部檔案)
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTone(freq, type, duration, endFreq = null) {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            if (endFreq) {
+                oscillator.frequency.exponentialRampToValueAtTime(endFreq, audioCtx.currentTime + duration);
+            }
+            
+            // 聲音淡入淡出，避免爆音，音量設定較為柔和
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
+        function playSound(type) {
+            initAudio(); // 確保音效引擎已啟動
+            if (type === 'correct') {
+                // 清脆的叮咚聲
+                playTone(659.25, 'sine', 0.1); // E5
+                setTimeout(() => playTone(880.00, 'sine', 0.3), 100); // A5
+            } else if (type === 'wrong') {
+                // 柔和的錯誤低音 (Boop)
+                playTone(300, 'triangle', 0.3, 150); 
+            } else if (type === 'finish') {
+                // 任務完成的歡樂琶音
+                playTone(523.25, 'sine', 0.1); // C5
+                setTimeout(() => playTone(659.25, 'sine', 0.1), 100); // E5
+                setTimeout(() => playTone(783.99, 'sine', 0.1), 200); // G5
+                setTimeout(() => playTone(1046.50, 'sine', 0.4), 300); // C6
+            } else if (type === 'click') {
+                // 普通按鈕點擊聲
+                playTone(400, 'sine', 0.1);
+            }
+        }
+
         // 處理數量變更：如果有在玩，就自動刷新當前模式
         function handleQuantityChange() {
+            playSound('click');
             if (hasStarted) {
                 startGame(currentMode);
             }
         }
 
-        // 啟動遊戲
+        // 啟 কথ遊戲
         function startGame(mode) {
+            playSound('click');
             hasStarted = true;
             currentMode = mode;
             numCups = parseInt(document.getElementById('cup-count').value);
@@ -377,6 +434,7 @@
 
         // 重新開始當前模式
         function restartCurrentGame() {
+            playSound('click');
             initGameLevel();
         }
 
@@ -530,6 +588,7 @@
             if (isCorrect) {
                 if (currentMode !== 5) {
                     // 模式 1-4 勝利
+                    playSound('correct');
                     isGameInteractive = false; // 停止互動
                     wrapper.classList.add('success-glow');
                     feedback.innerHTML = '<span class="correct-text">🎉 答對了！好叻呀！😃</span>';
@@ -559,15 +618,18 @@
 
                     // 檢查是否排完
                     if (sortedOrderList.length === 0) {
+                        playSound('finish');
                         isGameInteractive = false;
                         feedback.innerHTML = '<span class="correct-text">🎉 全部排啱晒！非常棒！🌟</span>';
                         document.getElementById('instruction').innerText = '✅ 完成任務！';
                     } else {
+                        playSound('correct');
                         feedback.innerHTML = '<span class="correct-text">✔️ 啱喇！請繼續選剩下水「最少」的杯！</span>';
                     }
                 }
             } else {
                 // 答錯
+                playSound('wrong');
                 cupDiv.classList.remove('shake');
                 void cupDiv.offsetWidth; // 觸發瀏覽器重繪
                 cupDiv.classList.add('shake');
