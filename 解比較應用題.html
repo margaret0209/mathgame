@@ -82,9 +82,9 @@
                 <div class="bg-gray-100 px-3 py-2 rounded-xl flex items-center gap-2 font-bold text-lg text-gray-600">
                     <label for="subjectSelect">類型：</label>
                     <select id="subjectSelect" onchange="initGame()" class="bg-white border-2 border-gray-300 rounded-lg p-1 cursor-pointer outline-none">
-                        <option value="AB">[AB]</option>
-                        <option value="fruit">[水果]</option>
-                        <option value="animal">[動物]</option>
+                        <option value="AB">AB</option>
+                        <option value="fruit">水果</option>
+                        <option value="animal">動物</option>
                     </select>
                 </div>
 
@@ -361,12 +361,11 @@
             if (selectVal === 'fruit') {
                 const fruits = [
                     {n: '青蘋果', i: '🍏'}, {n: '蘋果', i: '🍎'}, {n: '梨子', i: '🍐'}, 
-                    {n: '橙', i: '🍊'}, {n: '檸檬', i: '🍋'}, {n: '香蕉', i: '🍌'}, 
-                    {n: '西瓜', i: '🍉'}, {n: '葡萄', i: '🍇'}, {n: '草莓', i: '🍓'}, 
-                    {n: '藍莓', i: '🫐'}, {n: '蜜瓜', i: '🍈'}, {n: '櫻桃', i: '🍒'}, 
+                    {n: '橙', i: '🍊'}, {n: '檸檬', i: '🍋'},  {n: '西瓜', i: '🍉'}
+                    {n: '蜜瓜', i: '🍈'}, {n: '櫻桃', i: '🍒'}, 
                     {n: '水蜜桃', i: '🍑'}, {n: '芒果', i: '🥭'}, {n: '菠蘿', i: '🍍'}, 
                     {n: '椰子', i: '🥥'}, {n: '奇異果', i: '🥝'}, {n: '番茄', i: '🍅'}, 
-                    {n: '橄欖', i: '🫒'}, {n: '牛油果', i: '🥑'}
+                    {n: '牛油果', i: '🥑'}
                 ];
                 let pair = getRandomPair(fruits);
                 subjA = pair[0].n + " " + pair[0].i; subjB = pair[1].n + " " + pair[1].i;
