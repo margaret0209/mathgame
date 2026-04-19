@@ -43,171 +43,173 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center py-10 px-4">
+<body class="min-h-screen flex flex-col items-center py-6 md:py-10 px-2 md:px-4">
 
-    <div class="max-w-7xl w-[98%] bg-white rounded-3xl shadow-xl overflow-hidden border-4 border-green-200">
+    <!-- 調整 max-w 為 6xl，更貼合平板比例 -->
+    <div class="max-w-6xl w-full md:w-[98%] bg-white rounded-3xl shadow-xl overflow-hidden border-4 border-green-200">
         
         <!-- 頂部標題與分類選擇 -->
-        <div class="bg-green-100 p-8 text-center">
-            <h1 class="text-4xl font-extrabold text-green-800 mb-8 drop-shadow-sm">🤔 數量比一比遊戲</h1>
+        <div class="bg-green-100 p-6 md:p-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-green-800 mb-6 md:mb-8 drop-shadow-sm">🤔 數量比一比遊戲</h1>
             
-            <div class="flex flex-col xl:flex-row justify-center items-center xl:items-start gap-8 xl:gap-12">
+            <!-- 將 xl 斷點改為 lg 以支援 iPad 橫向並排 -->
+            <div class="flex flex-col lg:flex-row justify-center items-center lg:items-start gap-6 lg:gap-10">
                 <!-- 類型選擇 -->
-                <div class="flex-1 overflow-hidden">
-                    <p class="text-xl text-green-700 mb-4 font-bold">請選擇你要玩的類型：</p>
-                    <div class="flex flex-nowrap justify-center gap-2 md:gap-4 overflow-x-auto pb-2">
-                        <button onclick="setCategory('AB')" id="btn-AB" class="category-btn text-xl md:text-2xl font-bold py-3 px-6 md:px-8 rounded-full border-4 border-blue-400 bg-white text-blue-600 hover:bg-blue-50 transition-all shadow-md whitespace-nowrap">🔠 AB</button>
-                        <button onclick="setCategory('fruit')" id="btn-fruit" class="category-btn text-xl md:text-2xl font-bold py-3 px-6 md:px-8 rounded-full border-4 border-orange-400 bg-white text-orange-600 hover:bg-orange-50 transition-all shadow-md whitespace-nowrap">🍎 水果</button>
-                        <button onclick="setCategory('animal')" id="btn-animal" class="category-btn text-xl md:text-2xl font-bold py-3 px-6 md:px-8 rounded-full border-4 border-amber-500 bg-white text-amber-700 hover:bg-amber-50 transition-all shadow-md whitespace-nowrap">🐶 動物</button>
+                <div class="flex-1 w-full overflow-hidden">
+                    <p class="text-lg md:text-xl text-green-700 mb-3 md:mb-4 font-bold">請選擇你要玩的類型：</p>
+                    <div class="flex flex-nowrap justify-center gap-2 md:gap-3 overflow-x-auto pb-2 px-2">
+                        <button onclick="setCategory('AB')" id="btn-AB" class="category-btn text-lg md:text-xl lg:text-2xl font-bold py-2 md:py-3 px-4 md:px-6 rounded-full border-4 border-blue-400 bg-white text-blue-600 hover:bg-blue-50 transition-all shadow-md whitespace-nowrap">🔠 AB</button>
+                        <button onclick="setCategory('fruit')" id="btn-fruit" class="category-btn text-lg md:text-xl lg:text-2xl font-bold py-2 md:py-3 px-4 md:px-6 rounded-full border-4 border-orange-400 bg-white text-orange-600 hover:bg-orange-50 transition-all shadow-md whitespace-nowrap">🍎 水果</button>
+                        <button onclick="setCategory('animal')" id="btn-animal" class="category-btn text-lg md:text-xl lg:text-2xl font-bold py-2 md:py-3 px-4 md:px-6 rounded-full border-4 border-amber-500 bg-white text-amber-700 hover:bg-amber-50 transition-all shadow-md whitespace-nowrap">🐶 動物</button>
                     </div>
                 </div>
 
                 <!-- 難度選擇 -->
-                <div class="flex-1 border-t-4 xl:border-t-0 xl:border-l-4 border-green-200 pt-6 xl:pt-0 xl:pl-12 overflow-hidden">
-                    <p class="text-xl text-green-700 mb-4 font-bold">請選擇模式：</p>
-                    <div class="flex flex-nowrap justify-center gap-2 md:gap-4 overflow-x-auto pb-2">
-                        <button onclick="setMode('normal')" id="btn-normal" class="mode-btn text-xl md:text-2xl font-bold py-3 px-6 md:px-8 rounded-full border-4 border-purple-400 bg-purple-600 text-white hover:bg-purple-500 transition-all shadow-md whitespace-nowrap">⭐ 一般</button>
-                        <button onclick="setMode('hard')" id="btn-hard" class="mode-btn text-xl md:text-2xl font-bold py-3 px-6 md:px-8 rounded-full border-4 border-purple-400 bg-white text-purple-600 hover:bg-purple-50 transition-all shadow-md whitespace-nowrap">🌟 難度</button>
-                        <button onclick="setMode('understanding')" id="btn-understanding" class="mode-btn text-xl md:text-2xl font-bold py-3 px-6 md:px-8 rounded-full border-4 border-purple-400 bg-white text-purple-600 hover:bg-purple-50 transition-all shadow-md whitespace-nowrap">🧠 理解</button>
+                <div class="flex-1 w-full border-t-4 lg:border-t-0 lg:border-l-4 border-green-200 pt-5 lg:pt-0 lg:pl-10 overflow-hidden">
+                    <p class="text-lg md:text-xl text-green-700 mb-3 md:mb-4 font-bold">請選擇模式：</p>
+                    <div class="flex flex-nowrap justify-center gap-2 md:gap-3 overflow-x-auto pb-2 px-2">
+                        <button onclick="setMode('normal')" id="btn-normal" class="mode-btn text-lg md:text-xl lg:text-2xl font-bold py-2 md:py-3 px-4 md:px-6 rounded-full border-4 border-purple-400 bg-purple-600 text-white hover:bg-purple-500 transition-all shadow-md whitespace-nowrap">⭐ 一般</button>
+                        <button onclick="setMode('hard')" id="btn-hard" class="mode-btn text-lg md:text-xl lg:text-2xl font-bold py-2 md:py-3 px-4 md:px-6 rounded-full border-4 border-purple-400 bg-white text-purple-600 hover:bg-purple-50 transition-all shadow-md whitespace-nowrap">🌟 難度</button>
+                        <button onclick="setMode('understanding')" id="btn-understanding" class="mode-btn text-lg md:text-xl lg:text-2xl font-bold py-2 md:py-3 px-4 md:px-6 rounded-full border-4 border-purple-400 bg-white text-purple-600 hover:bg-purple-50 transition-all shadow-md whitespace-nowrap">🧠 理解</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 遊戲主要區域 (並排佈局) -->
-        <div class="p-8 pb-12 flex flex-col xl:flex-row gap-8 items-start">
+        <!-- 遊戲主要區域 (改為 lg 並排佈局) -->
+        <div class="p-4 md:p-8 pb-10 md:pb-12 flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
             
             <!-- 左側/主體內容區 -->
-            <div class="flex-1 w-full flex flex-col items-center xl:items-stretch">
+            <div class="flex-1 w-full flex flex-col items-center lg:items-stretch">
 
                 <!-- 句子顯示 -->
-                <div class="bg-yellow-50 border-4 border-yellow-300 rounded-2xl p-8 mb-10 text-center shadow-inner w-full">
-                    <p class="text-2xl text-gray-600 font-bold mb-2">請仔細閱讀句子：</p>
-                    <h2 id="sentenceDisplay" class="text-4xl md:text-5xl font-extrabold text-gray-800 leading-tight">請先在上方選擇類型！</h2>
+                <div class="bg-yellow-50 border-4 border-yellow-300 rounded-2xl p-6 md:p-8 mb-8 text-center shadow-inner w-full">
+                    <p class="text-xl md:text-2xl text-gray-600 font-bold mb-2">請仔細閱讀句子：</p>
+                    <h2 id="sentenceDisplay" class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-800 leading-tight">請先在上方選擇類型！</h2>
                 </div>
 
                 <!-- 視覺數線區域 (一般與難度模式) -->
-                <div id="visual-mode-section" class="relative w-full max-w-4xl mx-auto h-16 mt-32 mb-16">
+                <div id="visual-mode-section" class="relative w-full max-w-4xl mx-auto h-16 mt-24 md:mt-32 mb-16">
                     <!-- 兩端標籤 -->
-                    <div class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 md:-translate-x-16">
-                        <div class="bg-yellow-100 text-yellow-700 font-black text-3xl p-3 rounded-xl border-4 border-yellow-400 shadow-sm">少</div>
+                    <div class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 md:-translate-x-12">
+                        <div class="bg-yellow-100 text-yellow-700 font-black text-xl md:text-3xl p-2 md:p-3 rounded-xl border-4 border-yellow-400 shadow-sm">少</div>
                     </div>
-                    <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 md:translate-x-16">
-                        <div class="bg-orange-100 text-orange-700 font-black text-3xl p-3 rounded-xl border-4 border-orange-400 shadow-sm">多</div>
+                    <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 md:translate-x-12">
+                        <div class="bg-orange-100 text-orange-700 font-black text-xl md:text-3xl p-2 md:p-3 rounded-xl border-4 border-orange-400 shadow-sm">多</div>
                     </div>
 
                     <!-- 數棒本體 -->
-                    <div class="w-full h-8 bg-gradient-to-r from-yellow-300 via-amber-200 to-orange-400 rounded-full border-2 border-gray-300 shadow-inner relative">
+                    <div class="w-full h-6 md:h-8 bg-gradient-to-r from-yellow-300 via-amber-200 to-orange-400 rounded-full border-2 border-gray-300 shadow-inner relative">
                         
                         <!-- 一般模式 -->
                         <div id="normal-layout" class="w-full h-full absolute top-0 left-0">
                             <div class="absolute left-1/4 top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-                                <select id="leftSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-yellow-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-yellow-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 transition-all min-w-[140px] text-center">
+                                <select id="leftSelect" class="absolute bottom-full mb-6 md:mb-8 text-2xl md:text-3xl font-bold p-2 md:p-3 pr-10 border-4 border-yellow-400 rounded-xl md:rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-yellow-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 transition-all min-w-[120px] md:min-w-[140px] text-center">
                                     <option value="">請選擇</option>
                                 </select>
-                                <div class="w-2 h-16 bg-yellow-400 rounded-full"></div>
-                                <div class="w-6 h-6 bg-yellow-500 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                                <div class="w-1.5 md:w-2 h-12 md:h-16 bg-yellow-400 rounded-full"></div>
+                                <div class="w-5 h-5 md:w-6 md:h-6 bg-yellow-500 rounded-full absolute top-1/2 -translate-y-1/2 border-2 md:border-4 border-white shadow-sm"></div>
                             </div>
 
                             <div class="absolute left-3/4 top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-                                <select id="rightSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-orange-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-orange-50 focus:outline-none focus:ring-4 focus:ring-orange-300 transition-all min-w-[140px] text-center">
+                                <select id="rightSelect" class="absolute bottom-full mb-6 md:mb-8 text-2xl md:text-3xl font-bold p-2 md:p-3 pr-10 border-4 border-orange-400 rounded-xl md:rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-orange-50 focus:outline-none focus:ring-4 focus:ring-orange-300 transition-all min-w-[120px] md:min-w-[140px] text-center">
                                     <option value="">請選擇</option>
                                 </select>
-                                <div class="w-2 h-16 bg-orange-400 rounded-full"></div>
-                                <div class="w-6 h-6 bg-orange-500 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                                <div class="w-1.5 md:w-2 h-12 md:h-16 bg-orange-400 rounded-full"></div>
+                                <div class="w-5 h-5 md:w-6 md:h-6 bg-orange-500 rounded-full absolute top-1/2 -translate-y-1/2 border-2 md:border-4 border-white shadow-sm"></div>
                             </div>
                         </div>
 
                         <!-- 難度模式 -->
                         <div id="hard-layout" class="hidden w-full h-full absolute top-0 left-0">
                             <div class="absolute left-[20%] top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-                                <select id="hardLeftSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-yellow-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-yellow-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 transition-all min-w-[140px] text-center">
+                                <select id="hardLeftSelect" class="absolute bottom-full mb-6 md:mb-8 text-2xl md:text-3xl font-bold p-2 md:p-3 pr-10 border-4 border-yellow-400 rounded-xl md:rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-yellow-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 transition-all min-w-[120px] md:min-w-[140px] text-center">
                                     <option value="">請選擇</option>
                                 </select>
-                                <div class="w-2 h-16 bg-yellow-400 rounded-full"></div>
-                                <div class="w-6 h-6 bg-yellow-500 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                                <div class="w-1.5 md:w-2 h-12 md:h-16 bg-yellow-400 rounded-full"></div>
+                                <div class="w-5 h-5 md:w-6 md:h-6 bg-yellow-500 rounded-full absolute top-1/2 -translate-y-1/2 border-2 md:border-4 border-white shadow-sm"></div>
                             </div>
 
                             <div class="absolute left-[50%] top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-                                <div id="hardMiddleBox" class="absolute bottom-full mb-8 text-3xl font-bold p-3 border-4 border-gray-400 rounded-2xl bg-gray-100 shadow-sm text-gray-600 min-w-[140px] text-center flex items-center justify-center">
+                                <div id="hardMiddleBox" class="absolute bottom-full mb-6 md:mb-8 text-2xl md:text-3xl font-bold p-2 md:p-3 border-4 border-gray-400 rounded-xl md:rounded-2xl bg-gray-100 shadow-sm text-gray-600 min-w-[120px] md:min-w-[140px] text-center flex items-center justify-center">
                                 </div>
-                                <div class="w-2 h-16 bg-gray-500 rounded-full"></div>
-                                <div class="w-6 h-6 bg-gray-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                                <div class="w-1.5 md:w-2 h-12 md:h-16 bg-gray-500 rounded-full"></div>
+                                <div class="w-5 h-5 md:w-6 md:h-6 bg-gray-600 rounded-full absolute top-1/2 -translate-y-1/2 border-2 md:border-4 border-white shadow-sm"></div>
                             </div>
 
                             <div class="absolute left-[80%] top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-                                <select id="hardRightSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-orange-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-orange-50 focus:outline-none focus:ring-4 focus:ring-orange-300 transition-all min-w-[140px] text-center">
+                                <select id="hardRightSelect" class="absolute bottom-full mb-6 md:mb-8 text-2xl md:text-3xl font-bold p-2 md:p-3 pr-10 border-4 border-orange-400 rounded-xl md:rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-orange-50 focus:outline-none focus:ring-4 focus:ring-orange-300 transition-all min-w-[120px] md:min-w-[140px] text-center">
                                     <option value="">請選擇</option>
                                 </select>
-                                <div class="w-2 h-16 bg-orange-400 rounded-full"></div>
-                                <div class="w-6 h-6 bg-orange-500 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                                <div class="w-1.5 md:w-2 h-12 md:h-16 bg-orange-400 rounded-full"></div>
+                                <div class="w-5 h-5 md:w-6 md:h-6 bg-orange-500 rounded-full absolute top-1/2 -translate-y-1/2 border-2 md:border-4 border-white shadow-sm"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 理解模式專屬區域 -->
-                <div id="understanding-mode-section" class="hidden w-full max-w-4xl mx-auto flex flex-col items-center mt-4">
-                    <div class="w-full bg-indigo-50 p-6 md:p-10 rounded-3xl border-4 border-indigo-200 mb-4 shadow-sm">
+                <div id="understanding-mode-section" class="hidden w-full max-w-4xl mx-auto flex flex-col items-center mt-2 md:mt-4">
+                    <div class="w-full bg-indigo-50 p-4 md:p-8 rounded-3xl border-4 border-indigo-200 mb-4 shadow-sm">
                         
                         <!-- Entity A 橫列 -->
-                        <div class="flex flex-wrap items-center justify-start gap-4 mb-8">
-                            <span id="und-entity1-name" class="text-5xl md:text-6xl font-extrabold text-red-600 min-w-[120px]">A</span>
-                            <select id="und-e1-type" class="text-4xl p-3 pr-12 rounded-2xl border-4 border-indigo-300 font-bold focus:ring-4 focus:ring-indigo-400 outline-none text-center cursor-pointer">
+                        <div class="flex flex-wrap items-center justify-start gap-2 md:gap-4 mb-6 md:mb-8">
+                            <span id="und-entity1-name" class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-red-600 min-w-[80px] md:min-w-[120px]">A</span>
+                            <select id="und-e1-type" class="text-3xl md:text-4xl p-2 md:p-3 pr-10 md:pr-12 rounded-xl md:rounded-2xl border-4 border-indigo-300 font-bold focus:ring-4 focus:ring-indigo-400 outline-none text-center cursor-pointer">
                                 <option value="">請選擇</option>
                                 <option value="少">少</option>
                                 <option value="多">多</option>
                             </select>
-                            <div id="und-e1-input" onclick="focusUndInput(1)" class="min-w-[160px] h-20 px-6 bg-white border-4 border-gray-300 rounded-2xl flex items-center justify-center text-6xl font-bold text-red-600 cursor-pointer hover:border-indigo-400 transition-colors shadow-inner relative">
+                            <div id="und-e1-input" onclick="focusUndInput(1)" class="min-w-[120px] md:min-w-[160px] h-14 md:h-20 px-4 md:px-6 bg-white border-4 border-gray-300 rounded-xl md:rounded-2xl flex items-center justify-center text-4xl md:text-6xl font-bold text-red-600 cursor-pointer hover:border-indigo-400 transition-colors shadow-inner relative">
                                 <span id="und-e1-val"></span>
-                                <div id="cursor-1" class="hidden absolute right-4 w-1.5 h-12 bg-indigo-500 animate-pulse"></div>
+                                <div id="cursor-1" class="hidden absolute right-3 md:right-4 w-1 md:w-1.5 h-8 md:h-12 bg-indigo-500 animate-pulse"></div>
                             </div>
                         </div>
 
                         <!-- Entity B 橫列 -->
-                        <div class="flex flex-wrap items-center justify-start gap-4">
-                            <span id="und-entity2-name" class="text-5xl md:text-6xl font-extrabold text-blue-600 min-w-[120px]">B</span>
-                            <select id="und-e2-type" class="text-4xl p-3 pr-12 rounded-2xl border-4 border-indigo-300 font-bold focus:ring-4 focus:ring-indigo-400 outline-none text-center cursor-pointer">
+                        <div class="flex flex-wrap items-center justify-start gap-2 md:gap-4">
+                            <span id="und-entity2-name" class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-blue-600 min-w-[80px] md:min-w-[120px]">B</span>
+                            <select id="und-e2-type" class="text-3xl md:text-4xl p-2 md:p-3 pr-10 md:pr-12 rounded-xl md:rounded-2xl border-4 border-indigo-300 font-bold focus:ring-4 focus:ring-indigo-400 outline-none text-center cursor-pointer">
                                 <option value="">請選擇</option>
                                 <option value="少">少</option>
                                 <option value="多">多</option>
                             </select>
-                            <div id="und-e2-input" onclick="focusUndInput(2)" class="min-w-[160px] h-20 px-6 bg-white border-4 border-gray-300 rounded-2xl flex items-center justify-center text-6xl font-bold text-blue-600 cursor-pointer hover:border-indigo-400 transition-colors shadow-inner relative">
+                            <div id="und-e2-input" onclick="focusUndInput(2)" class="min-w-[120px] md:min-w-[160px] h-14 md:h-20 px-4 md:px-6 bg-white border-4 border-gray-300 rounded-xl md:rounded-2xl flex items-center justify-center text-4xl md:text-6xl font-bold text-blue-600 cursor-pointer hover:border-indigo-400 transition-colors shadow-inner relative">
                                 <span id="und-e2-val"></span>
-                                <div id="cursor-2" class="hidden absolute right-4 w-1.5 h-12 bg-indigo-500 animate-pulse"></div>
+                                <div id="cursor-2" class="hidden absolute right-3 md:right-4 w-1 md:w-1.5 h-8 md:h-12 bg-indigo-500 animate-pulse"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 確認按鈕 -->
-                <div class="mt-8 xl:mt-16 text-center w-full">
-                    <button onclick="checkAnswer()" class="text-3xl font-black py-4 px-12 bg-green-500 text-white rounded-full border-b-8 border-green-700 hover:bg-green-400 hover:translate-y-1 hover:border-b-4 active:border-b-0 active:translate-y-2 transition-all shadow-xl">
+                <div class="mt-8 lg:mt-12 text-center w-full">
+                    <button onclick="checkAnswer()" class="text-2xl md:text-3xl font-black py-3 md:py-4 px-8 md:px-12 bg-green-500 text-white rounded-full border-b-8 border-green-700 hover:bg-green-400 hover:translate-y-1 hover:border-b-4 active:border-b-0 active:translate-y-2 transition-all shadow-xl">
                         <i class="fa-solid fa-check-circle mr-2"></i> 確定答案
                     </button>
                 </div>
 
             </div> <!-- 左側內容區結束 -->
 
-            <!-- 右側數字盤 (理解模式專屬) -->
-            <div id="numpad-section" class="hidden flex-col w-full xl:w-[380px] flex-shrink-0 bg-indigo-50 p-6 md:p-8 rounded-3xl border-4 border-indigo-200 shadow-sm items-center">
-                <h3 class="text-2xl font-bold text-indigo-800 mb-6 w-full text-center border-b-2 border-indigo-200 pb-4">數字輸入盤</h3>
-                <div class="grid grid-cols-3 gap-3 md:gap-4 w-full max-w-sm">
-                    <button onclick="pressNumpad('1')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">1</button>
-                    <button onclick="pressNumpad('2')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">2</button>
-                    <button onclick="pressNumpad('3')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">3</button>
+            <!-- 右側數字盤 (理解模式專屬) - lg 斷點時調整寬度 -->
+            <div id="numpad-section" class="hidden flex-col w-full lg:w-[300px] xl:w-[380px] flex-shrink-0 bg-indigo-50 p-4 md:p-6 lg:p-8 rounded-3xl border-4 border-indigo-200 shadow-sm items-center mt-6 lg:mt-0">
+                <h3 class="text-xl md:text-2xl font-bold text-indigo-800 mb-4 md:mb-6 w-full text-center border-b-2 border-indigo-200 pb-3 md:pb-4">數字輸入盤</h3>
+                <div class="grid grid-cols-3 gap-2 md:gap-3 lg:gap-4 w-full max-w-sm">
+                    <button onclick="pressNumpad('1')" class="h-14 md:h-16 lg:h-20 bg-white text-2xl lg:text-3xl font-black text-gray-700 rounded-xl lg:rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">1</button>
+                    <button onclick="pressNumpad('2')" class="h-14 md:h-16 lg:h-20 bg-white text-2xl lg:text-3xl font-black text-gray-700 rounded-xl lg:rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">2</button>
+                    <button onclick="pressNumpad('3')" class="h-14 md:h-16 lg:h-20 bg-white text-2xl lg:text-3xl font-black text-gray-700 rounded-xl lg:rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">3</button>
                     
-                    <button onclick="pressNumpad('4')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">4</button>
-                    <button onclick="pressNumpad('5')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">5</button>
-                    <button onclick="pressNumpad('6')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">6</button>
+                    <button onclick="pressNumpad('4')" class="h-14 md:h-16 lg:h-20 bg-white text-2xl lg:text-3xl font-black text-gray-700 rounded-xl lg:rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">4</button>
+                    <button onclick="pressNumpad('5')" class="h-14 md:h-16 lg:h-20 bg-white text-2xl lg:text-3xl font-black text-gray-700 rounded-xl lg:rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">5</button>
+                    <button onclick="pressNumpad('6')" class="h-14 md:h-16 lg:h-20 bg-white text-2xl lg:text-3xl font-black text-gray-700 rounded-xl lg:rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">6</button>
                     
-                    <button onclick="pressNumpad('7')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">7</button>
-                    <button onclick="pressNumpad('8')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">8</button>
-                    <button onclick="pressNumpad('9')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">9</button>
+                    <button onclick="pressNumpad('7')" class="h-14 md:h-16 lg:h-20 bg-white text-2xl lg:text-3xl font-black text-gray-700 rounded-xl lg:rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">7</button>
+                    <button onclick="pressNumpad('8')" class="h-14 md:h-16 lg:h-20 bg-white text-2xl lg:text-3xl font-black text-gray-700 rounded-xl lg:rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">8</button>
+                    <button onclick="pressNumpad('9')" class="h-14 md:h-16 lg:h-20 bg-white text-2xl lg:text-3xl font-black text-gray-700 rounded-xl lg:rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">9</button>
                     
-                    <button onclick="pressNumpad('clear')" class="h-16 md:h-20 bg-red-50 text-2xl font-black text-red-600 rounded-2xl border-b-8 border-2 border-red-300 hover:bg-red-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">清除</button>
-                    <button onclick="pressNumpad('0')" class="h-16 md:h-20 bg-white text-3xl font-black text-gray-700 rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">0</button>
-                    <button onclick="pressNumpad('back')" class="h-16 md:h-20 bg-yellow-50 text-3xl font-black text-yellow-600 rounded-2xl border-b-8 border-2 border-yellow-300 hover:bg-yellow-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm"><i class="fa-solid fa-delete-left"></i></button>
+                    <button onclick="pressNumpad('clear')" class="h-14 md:h-16 lg:h-20 bg-red-50 text-xl lg:text-2xl font-black text-red-600 rounded-xl lg:rounded-2xl border-b-8 border-2 border-red-300 hover:bg-red-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">清除</button>
+                    <button onclick="pressNumpad('0')" class="h-14 md:h-16 lg:h-20 bg-white text-2xl lg:text-3xl font-black text-gray-700 rounded-xl lg:rounded-2xl border-b-8 border-2 border-gray-300 hover:bg-gray-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm">0</button>
+                    <button onclick="pressNumpad('back')" class="h-14 md:h-16 lg:h-20 bg-yellow-50 text-2xl lg:text-3xl font-black text-yellow-600 rounded-xl lg:rounded-2xl border-b-8 border-2 border-yellow-300 hover:bg-yellow-100 active:border-b-2 active:translate-y-2 transition-all shadow-sm"><i class="fa-solid fa-delete-left"></i></button>
                 </div>
             </div>
 
@@ -216,11 +218,11 @@
 
     <!-- 成功/失敗 彈出視窗 -->
     <div id="feedbackModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50 p-4">
-        <div id="feedbackBox" class="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-lg w-full transform scale-0 opacity-0 transition-all duration-300">
-            <div id="feedbackIcon" class="text-8xl mb-6"></div>
-            <h3 id="feedbackTitle" class="text-4xl font-black mb-4"></h3>
-            <p id="feedbackMessage" class="text-2xl text-gray-600 font-bold mb-8"></p>
-            <button onclick="nextQuestion()" class="text-2xl font-bold py-3 px-10 bg-blue-500 text-white rounded-full border-b-8 border-blue-700 hover:bg-blue-400 hover:translate-y-1 hover:border-b-4 transition-all w-full shadow-lg">
+        <div id="feedbackBox" class="bg-white p-6 md:p-10 rounded-3xl shadow-2xl text-center max-w-lg w-full transform scale-0 opacity-0 transition-all duration-300">
+            <div id="feedbackIcon" class="text-6xl md:text-8xl mb-4 md:mb-6"></div>
+            <h3 id="feedbackTitle" class="text-3xl md:text-4xl font-black mb-4"></h3>
+            <p id="feedbackMessage" class="text-xl md:text-2xl text-gray-600 font-bold mb-6 md:mb-8"></p>
+            <button onclick="nextQuestion()" class="text-xl md:text-2xl font-bold py-3 px-8 md:px-10 bg-blue-500 text-white rounded-full border-b-8 border-blue-700 hover:bg-blue-400 hover:translate-y-1 hover:border-b-4 transition-all w-full shadow-lg">
                 下一題 <i class="fa-solid fa-arrow-right ml-2"></i>
             </button>
         </div>
@@ -610,7 +612,7 @@
                 playCorrectSound();
                 icon.innerHTML = "🌟";
                 title.textContent = "答對了！";
-                title.className = "text-4xl font-black mb-4 text-green-600";
+                title.className = "text-3xl md:text-4xl font-black mb-4 text-green-600";
                 message.textContent = msg;
                 document.body.classList.add('bg-green-100');
                 setTimeout(() => document.body.classList.remove('bg-green-100'), 1000);
@@ -618,7 +620,7 @@
                 playWrongSound();
                 icon.innerHTML = "🤔";
                 title.textContent = "再試一次！";
-                title.className = "text-4xl font-black mb-4 text-red-500";
+                title.className = "text-3xl md:text-4xl font-black mb-4 text-red-500";
                 message.textContent = msg;
                 box.classList.remove('bounce-in');
                 box.classList.add('shake');
