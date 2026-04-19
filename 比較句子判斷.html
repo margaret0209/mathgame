@@ -90,42 +90,42 @@
                 <div id="visual-mode-section" class="relative w-full max-w-4xl mx-auto h-16 mt-32 mb-16">
                     <!-- 兩端標籤 -->
                     <div class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 md:-translate-x-16">
-                        <div class="bg-blue-100 text-blue-700 font-black text-3xl p-3 rounded-xl border-4 border-blue-300 shadow-sm">少</div>
+                        <div class="bg-yellow-100 text-yellow-700 font-black text-3xl p-3 rounded-xl border-4 border-yellow-400 shadow-sm">少</div>
                     </div>
                     <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 md:translate-x-16">
-                        <div class="bg-red-100 text-red-700 font-black text-3xl p-3 rounded-xl border-4 border-red-300 shadow-sm">多</div>
+                        <div class="bg-orange-100 text-orange-700 font-black text-3xl p-3 rounded-xl border-4 border-orange-400 shadow-sm">多</div>
                     </div>
 
                     <!-- 數棒本體 -->
-                    <div class="w-full h-8 bg-gradient-to-r from-blue-200 via-gray-200 to-red-200 rounded-full border-2 border-gray-300 shadow-inner relative">
+                    <div class="w-full h-8 bg-gradient-to-r from-yellow-300 via-amber-200 to-orange-400 rounded-full border-2 border-gray-300 shadow-inner relative">
                         
                         <!-- 一般模式 -->
                         <div id="normal-layout" class="w-full h-full absolute top-0 left-0">
                             <div class="absolute left-1/4 top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-                                <select id="leftSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-blue-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all min-w-[140px] text-center">
+                                <select id="leftSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-yellow-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-yellow-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 transition-all min-w-[140px] text-center">
                                     <option value="">請選擇</option>
                                 </select>
-                                <div class="w-2 h-16 bg-blue-500 rounded-full"></div>
-                                <div class="w-6 h-6 bg-blue-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                                <div class="w-2 h-16 bg-yellow-400 rounded-full"></div>
+                                <div class="w-6 h-6 bg-yellow-500 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
                             </div>
 
                             <div class="absolute left-3/4 top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-                                <select id="rightSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-red-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-300 transition-all min-w-[140px] text-center">
+                                <select id="rightSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-orange-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-orange-50 focus:outline-none focus:ring-4 focus:ring-orange-300 transition-all min-w-[140px] text-center">
                                     <option value="">請選擇</option>
                                 </select>
-                                <div class="w-2 h-16 bg-red-500 rounded-full"></div>
-                                <div class="w-6 h-6 bg-red-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                                <div class="w-2 h-16 bg-orange-400 rounded-full"></div>
+                                <div class="w-6 h-6 bg-orange-500 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
                             </div>
                         </div>
 
                         <!-- 難度模式 -->
                         <div id="hard-layout" class="hidden w-full h-full absolute top-0 left-0">
                             <div class="absolute left-[20%] top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-                                <select id="hardLeftSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-blue-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all min-w-[140px] text-center">
+                                <select id="hardLeftSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-yellow-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-yellow-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 transition-all min-w-[140px] text-center">
                                     <option value="">請選擇</option>
                                 </select>
-                                <div class="w-2 h-16 bg-blue-500 rounded-full"></div>
-                                <div class="w-6 h-6 bg-blue-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                                <div class="w-2 h-16 bg-yellow-400 rounded-full"></div>
+                                <div class="w-6 h-6 bg-yellow-500 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
                             </div>
 
                             <div class="absolute left-[50%] top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
@@ -136,11 +136,11 @@
                             </div>
 
                             <div class="absolute left-[80%] top-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-                                <select id="hardRightSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-red-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-300 transition-all min-w-[140px] text-center">
+                                <select id="hardRightSelect" class="absolute bottom-full mb-8 text-3xl font-bold p-3 pr-12 border-4 border-orange-400 rounded-2xl bg-white shadow-lg text-gray-800 cursor-pointer hover:bg-orange-50 focus:outline-none focus:ring-4 focus:ring-orange-300 transition-all min-w-[140px] text-center">
                                     <option value="">請選擇</option>
                                 </select>
-                                <div class="w-2 h-16 bg-red-500 rounded-full"></div>
-                                <div class="w-6 h-6 bg-red-600 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
+                                <div class="w-2 h-16 bg-orange-400 rounded-full"></div>
+                                <div class="w-6 h-6 bg-orange-500 rounded-full absolute top-1/2 -translate-y-1/2 border-4 border-white shadow-sm"></div>
                             </div>
                         </div>
                     </div>
@@ -152,13 +152,13 @@
                         
                         <!-- Entity A 橫列 -->
                         <div class="flex flex-wrap items-center justify-start gap-4 mb-8">
-                            <span id="und-entity1-name" class="text-5xl md:text-6xl font-extrabold text-indigo-900 min-w-[120px]">A</span>
+                            <span id="und-entity1-name" class="text-5xl md:text-6xl font-extrabold text-red-600 min-w-[120px]">A</span>
                             <select id="und-e1-type" class="text-4xl p-3 pr-12 rounded-2xl border-4 border-indigo-300 font-bold focus:ring-4 focus:ring-indigo-400 outline-none text-center cursor-pointer">
                                 <option value="">請選擇</option>
                                 <option value="少">少</option>
                                 <option value="多">多</option>
                             </select>
-                            <div id="und-e1-input" onclick="focusUndInput(1)" class="min-w-[160px] h-20 px-6 bg-white border-4 border-gray-300 rounded-2xl flex items-center justify-center text-6xl font-bold text-indigo-700 cursor-pointer hover:border-indigo-400 transition-colors shadow-inner relative">
+                            <div id="und-e1-input" onclick="focusUndInput(1)" class="min-w-[160px] h-20 px-6 bg-white border-4 border-gray-300 rounded-2xl flex items-center justify-center text-6xl font-bold text-red-600 cursor-pointer hover:border-indigo-400 transition-colors shadow-inner relative">
                                 <span id="und-e1-val"></span>
                                 <div id="cursor-1" class="hidden absolute right-4 w-1.5 h-12 bg-indigo-500 animate-pulse"></div>
                             </div>
@@ -166,13 +166,13 @@
 
                         <!-- Entity B 橫列 -->
                         <div class="flex flex-wrap items-center justify-start gap-4">
-                            <span id="und-entity2-name" class="text-5xl md:text-6xl font-extrabold text-indigo-900 min-w-[120px]">B</span>
+                            <span id="und-entity2-name" class="text-5xl md:text-6xl font-extrabold text-blue-600 min-w-[120px]">B</span>
                             <select id="und-e2-type" class="text-4xl p-3 pr-12 rounded-2xl border-4 border-indigo-300 font-bold focus:ring-4 focus:ring-indigo-400 outline-none text-center cursor-pointer">
                                 <option value="">請選擇</option>
                                 <option value="少">少</option>
                                 <option value="多">多</option>
                             </select>
-                            <div id="und-e2-input" onclick="focusUndInput(2)" class="min-w-[160px] h-20 px-6 bg-white border-4 border-gray-300 rounded-2xl flex items-center justify-center text-6xl font-bold text-indigo-700 cursor-pointer hover:border-indigo-400 transition-colors shadow-inner relative">
+                            <div id="und-e2-input" onclick="focusUndInput(2)" class="min-w-[160px] h-20 px-6 bg-white border-4 border-gray-300 rounded-2xl flex items-center justify-center text-6xl font-bold text-blue-600 cursor-pointer hover:border-indigo-400 transition-colors shadow-inner relative">
                                 <span id="und-e2-val"></span>
                                 <div id="cursor-2" class="hidden absolute right-4 w-1.5 h-12 bg-indigo-500 animate-pulse"></div>
                             </div>
@@ -384,6 +384,10 @@
             currentPattern = Math.floor(Math.random() * 4);
             let sentence = "";
 
+            // A 以紅色表示，B 以藍色表示
+            let styledE1 = `<span class="text-red-600 font-extrabold">${e1}</span>`;
+            let styledE2 = `<span class="text-blue-600 font-extrabold">${e2}</span>`;
+
             /*
             Pattern 0: e1 比 e2 少 X
             Pattern 1: e1 比 e2 多 X
@@ -391,19 +395,19 @@
             Pattern 3: e2 比 e1 多 X
             */
             if (currentPattern === 0) {
-                sentence = `<span class="text-blue-700">${e1}</span> 比 <span class="text-purple-700">${e2}</span> 少 ${currentDifference} ${unit}`;
+                sentence = `${styledE1} 比 ${styledE2} 少 ${currentDifference} ${unit}`;
                 correctLeft = e1;
                 correctRight = e2;
             } else if (currentPattern === 1) {
-                sentence = `<span class="text-blue-700">${e1}</span> 比 <span class="text-purple-700">${e2}</span> 多 ${currentDifference} ${unit}`;
+                sentence = `${styledE1} 比 ${styledE2} 多 ${currentDifference} ${unit}`;
                 correctLeft = e2;
                 correctRight = e1;
             } else if (currentPattern === 2) {
-                sentence = `<span class="text-purple-700">${e2}</span> 比 <span class="text-blue-700">${e1}</span> 少 ${currentDifference} ${unit}`;
+                sentence = `${styledE2} 比 ${styledE1} 少 ${currentDifference} ${unit}`;
                 correctLeft = e2;
                 correctRight = e1;
             } else {
-                sentence = `<span class="text-purple-700">${e2}</span> 比 <span class="text-blue-700">${e1}</span> 多 ${currentDifference} ${unit}`;
+                sentence = `${styledE2} 比 ${styledE1} 多 ${currentDifference} ${unit}`;
                 correctLeft = e1;
                 correctRight = e2;
             }
@@ -437,7 +441,9 @@
                 hardTargetEntity = isLeftKnown ? correctRight : correctLeft;
                 hardCorrectPosition = isLeftKnown ? 'right' : 'left'; 
                 
-                document.getElementById('hardMiddleBox').innerHTML = `<span class="text-gray-800">${knownEntity}</span>`;
+                // 固定選項依據它是 A 還是 B 套用對應的顏色
+                const middleColorClass = (knownEntity === e1) ? "text-red-600" : "text-blue-600";
+                document.getElementById('hardMiddleBox').innerHTML = `<span class="${middleColorClass} font-extrabold">${knownEntity}</span>`;
                 
                 const hardLeft = document.getElementById('hardLeftSelect');
                 const hardRight = document.getElementById('hardRightSelect');
