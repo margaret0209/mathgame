@@ -303,6 +303,7 @@
             <button class="mode-btn" id="btn-mode-3" onclick="startGame(3)">3) 找「最多」</button>
             <button class="mode-btn" id="btn-mode-4" onclick="startGame(4)">4) 找「最少」</button>
             <button class="mode-btn" id="btn-mode-5" onclick="startGame(5)">5) 由少至多排列</button>
+            <button class="mode-btn" id="btn-mode-6" onclick="startGame(6)">6) 由多至少排列</button>
         </div>
     </div>
 
@@ -419,7 +420,7 @@
                 btn.classList.remove('active', 'active-sort');
             });
             const activeBtn = document.getElementById(`btn-mode-${mode}`);
-            if (mode === 5) {
+            if (mode === 5 || mode === 6) {
                 activeBtn.classList.add('active-sort');
             } else {
                 activeBtn.classList.add('active');
@@ -448,7 +449,7 @@
             
             sourceContainer.innerHTML = '';
             sortedContainer.innerHTML = '';
-            sortedContainer.style.display = currentMode === 5 ? 'flex' : 'none';
+            sortedContainer.style.display = (currentMode === 5 || currentMode === 6) ? 'flex' : 'none';
 
             // 隨機選取並設定當前題目的 水顏色 與 杯形狀
             const randomColor = WATER_COLORS[Math.floor(Math.random() * WATER_COLORS.length)];
@@ -461,7 +462,8 @@
                 2: '👉 請選出「空」的杯子！',
                 3: '👉 請選出水「最多」的杯子！',
                 4: '👉 請選出水「最少」的杯子！',
-                5: '👉 順序點擊：請從水「最少」的杯子開始選！'
+                5: '👉 順序點擊：請從水「最少」的杯子開始選！',
+                6: '👉 順序點擊：請從水「最多」的杯子開始選！'
             };
             document.getElementById('instruction').innerText = instructions[currentMode];
 
@@ -491,30 +493,49 @@
                 level: level
             }));
 
-            // 模式5的預先排序解答 與 生成預設空槽
-            if (currentMode === 5) {
-                // 複製並按容量從小到大排序
-                sortedOrderList = [...cupsData].sort((a, b) => a.level - b.level);
+            // 模式5和6的預先排序解答 與 生成預設空槽
+            if (currentMode === 5 || currentMode === 6) {
+                // 根據模式排序解答 (5: 由少到多, 6: 由多到少)
+                if (currentMode === 5) {
+                    sortedOrderList = [...cupsData].sort((a, b) => a.level - b.level);
+                } else {
+                    sortedOrderList = [...cupsData].sort((a, b) => b.level - a.level);
+                }
                 
-                // 建立空槽與標籤 [最少]、[最多]
+                // 建立空槽與標籤
                 for (let i = 0; i < numCups; i++) {
                     const slot = document.createElement('div');
                     slot.className = 'sort-slot';
                     slot.id = `slot-${i}`;
                     
-                    // 第一格加上 [最少] 標籤
-                    if (i === 0) {
-                        const label = document.createElement('div');
-                        label.className = 'slot-label-badge label-least';
-                        label.innerText = '最少';
-                        slot.appendChild(label);
-                    }
-                    // 最後一格加上 [最多] 標籤
-                    if (i === numCups - 1 && numCups > 1) {
-                        const label = document.createElement('div');
-                        label.className = 'slot-label-badge label-most';
-                        label.innerText = '最多';
-                        slot.appendChild(label);
+                    if (currentMode === 5) {
+                        // 模式 5：第一格[最少]，最後一格[最多]
+                        if (i === 0) {
+                            const label = document.createElement('div');
+                            label.className = 'slot-label-badge label-least';
+                            label.innerText = '最少';
+                            slot.appendChild(label);
+                        }
+                        if (i === numCups - 1 && numCups > 1) {
+                            const label = document.createElement('div');
+                            label.className = 'slot-label-badge label-most';
+                            label.innerText = '最多';
+                            slot.appendChild(label);
+                        }
+                    } else if (currentMode === 6) {
+                        // 模式 6：第一格[最多]，最後一格[最少]
+                        if (i === 0) {
+                            const label = document.createElement('div');
+                            label.className = 'slot-label-badge label-most';
+                            label.innerText = '最多';
+                            slot.appendChild(label);
+                        }
+                        if (i === numCups - 1 && numCups > 1) {
+                            const label = document.createElement('div');
+                            label.className = 'slot-label-badge label-least';
+                            label.innerText = '最少';
+                            slot.appendChild(label);
+                        }
                     }
                     sortedContainer.appendChild(slot);
                 }
@@ -577,7 +598,8 @@
                     isCorrect = clickedCupData.level === minLevel;
                     break;
                 case 5:
-                    // 檢查是否是目前剩下的之中最少的
+                case 6:
+                    // 檢查是否是目前剩下的之中最少的(模式5)或最多的(模式6)
                     if (sortedOrderList.length > 0 && clickedCupData.id === sortedOrderList[0].id) {
                         isCorrect = true;
                     }
@@ -586,7 +608,7 @@
 
             // 回饋處理
             if (isCorrect) {
-                if (currentMode !== 5) {
+                if (currentMode !== 5 && currentMode !== 6) {
                     // 模式 1-4 勝利
                     playSound('correct');
                     isGameInteractive = false; // 停止互動
@@ -600,9 +622,9 @@
                         }
                     });
                 } else {
-                    // 模式 5 (排序) 的處理
+                    // 模式 5 & 6 (排序) 的處理
                     
-                    // 找出目標槽位 (0 是最少, 接著 1, 2...)
+                    // 找出目標槽位 (0 是第一個, 接著 1, 2...)
                     const targetSlotIndex = numCups - sortedOrderList.length; 
                     const targetSlot = document.getElementById(`slot-${targetSlotIndex}`);
                     
@@ -624,7 +646,8 @@
                         document.getElementById('instruction').innerText = '✅ 完成任務！';
                     } else {
                         playSound('correct');
-                        feedback.innerHTML = '<span class="correct-text">✔️ 啱喇！請繼續選剩下水「最少」的杯！</span>';
+                        const nextTarget = currentMode === 5 ? '最少' : '最多';
+                        feedback.innerHTML = `<span class="correct-text">✔️ 啱喇！請繼續選剩下水「${nextTarget}」的杯！</span>`;
                     }
                 }
             } else {
