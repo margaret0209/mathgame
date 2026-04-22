@@ -36,12 +36,12 @@
             background-color: #dbeafe !important;
             border-color: #2563eb !important;
             border-style: solid !important;
-            transform: scale(1.2);
+            transform: scale(1.1);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
         .box-selected .inner-text {
             color: #1d4ed8 !important;
-            font-size: 1.875rem !important;
+            font-size: 1.5rem !important;
         }
         
         select {
@@ -50,123 +50,123 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center py-6 px-4">
+<body class="min-h-screen flex flex-col items-center py-4 px-2 md:px-4">
 
-    <!-- 加寬容器：max-w-7xl -->
-    <div class="max-w-7xl w-full bg-white rounded-3xl shadow-xl overflow-hidden p-6 md:p-8 flex flex-col gap-8 border-4 border-green-100">
+    <!-- 調整容器寬度和內邊距以適應 iPad -->
+    <div class="max-w-7xl w-full bg-white rounded-3xl shadow-xl overflow-hidden p-4 md:p-6 flex flex-col gap-6 border-4 border-green-100">
         
         <!-- 頂部標題與控制列 -->
-        <div class="flex flex-col border-b-4 border-gray-100 pb-4 gap-4 relative">
+        <div class="flex flex-col border-b-2 border-gray-100 pb-4 gap-4 relative">
             
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <h1 class="text-3xl md:text-4xl font-black text-gray-700 flex items-center gap-3 justify-center md:justify-start">
-                    <span class="text-5xl">📏</span> 比較應用題小挑戰
+                <h1 class="text-2xl md:text-3xl font-black text-gray-700 flex items-center gap-2 justify-center md:justify-start">
+                    <span class="text-4xl">📏</span> 比較應用題小挑戰
                 </h1>
                 
                 <!-- 計分板 (右上角) -->
-                <div class="bg-yellow-50 border-4 border-yellow-300 rounded-2xl px-6 py-2 flex gap-6 text-xl font-black text-yellow-700 shadow-sm items-center">
+                <div class="bg-yellow-50 border-2 border-yellow-300 rounded-2xl px-4 py-2 flex gap-4 text-lg font-black text-yellow-700 shadow-sm items-center">
                     <div class="flex flex-col items-center leading-tight">
-                        <span class="text-sm text-yellow-600 font-bold">答題數量</span>
-                        <span id="statsTotal" class="text-3xl text-yellow-700">0</span>
+                        <span class="text-xs text-yellow-600 font-bold">答題數量</span>
+                        <span id="statsTotal" class="text-2xl text-yellow-700">0</span>
                     </div>
-                    <div class="w-1 h-10 bg-yellow-300 rounded-full"></div>
+                    <div class="w-px h-8 bg-yellow-300"></div>
                     <div class="flex flex-col items-center leading-tight">
-                        <span class="text-sm text-yellow-600 font-bold">正確率</span>
-                        <span id="statsRate" class="text-3xl text-yellow-700">0%</span>
+                        <span class="text-xs text-yellow-600 font-bold">正確率</span>
+                        <span id="statsRate" class="text-2xl text-yellow-700">0%</span>
                     </div>
                 </div>
             </div>
             
             <!-- 控制選項 -->
-            <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-2">
-                <div class="bg-gray-100 px-3 py-2 rounded-xl flex items-center gap-2 font-bold text-lg text-gray-600">
+            <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-1">
+                <div class="bg-gray-100 px-2 py-1 rounded-xl flex items-center gap-1 font-bold text-base text-gray-600">
                     <label for="subjectSelect">類型：</label>
-                    <select id="subjectSelect" onchange="initGame()" class="bg-white border-2 border-gray-300 rounded-lg p-1 cursor-pointer outline-none">
-                        <option value="AB">AB</option>
-                        <option value="fruit">水果</option>
-                        <option value="animal">動物</option>
+                    <select id="subjectSelect" onchange="initGame()" class="bg-white border border-gray-300 rounded-lg p-1 cursor-pointer outline-none">
+                        <option value="AB">[AB]</option>
+                        <option value="fruit">[水果]</option>
+                        <option value="animal">[動物]</option>
                     </select>
                 </div>
 
-                <div class="bg-gray-100 px-3 py-2 rounded-xl flex items-center gap-2 font-bold text-lg text-gray-600">
+                <div class="bg-gray-100 px-2 py-1 rounded-xl flex items-center gap-1 font-bold text-base text-gray-600">
                     <label for="rangeSelect">數量：</label>
-                    <select id="rangeSelect" onchange="initGame()" class="bg-white border-2 border-gray-300 rounded-lg p-1 cursor-pointer outline-none">
+                    <select id="rangeSelect" onchange="initGame()" class="bg-white border border-gray-300 rounded-lg p-1 cursor-pointer outline-none">
                         <option value="1-100">1 - 100</option>
                         <option value="100-1000">100 - 1000</option>
                     </select>
                 </div>
 
-                <div class="bg-gray-100 px-3 py-2 rounded-xl flex items-center gap-2 font-bold text-lg text-gray-600">
+                <div class="bg-gray-100 px-2 py-1 rounded-xl flex items-center gap-1 font-bold text-base text-gray-600">
                     <label for="difficultySelect">難度：</label>
-                    <select id="difficultySelect" onchange="initGame()" class="bg-white border-2 border-gray-300 rounded-lg p-1 cursor-pointer outline-none">
-                        <option value="easy">Level 1</option>
-                        <option value="medium">Level 2</option>
-                        <option value="hard">Level 3</option>
+                    <select id="difficultySelect" onchange="initGame()" class="bg-white border border-gray-300 rounded-lg p-1 cursor-pointer outline-none">
+                        <option value="easy">易 (圖形提示)</option>
+                        <option value="medium">中 (引導算式)</option>
+                        <option value="hard">難 (完整算式)</option>
                     </select>
                 </div>
 
-                <button onclick="initGame()" class="ml-auto bg-green-500 hover:bg-green-600 text-white text-xl font-bold py-2 px-6 rounded-full transition transform hover:scale-105 shadow-md active:scale-95">
+                <button onclick="initGame()" class="ml-auto bg-green-500 hover:bg-green-600 text-white text-base md:text-lg font-bold py-1 px-4 md:px-6 rounded-full transition transform hover:scale-105 shadow-md active:scale-95">
                     換一題 🎲
                 </button>
             </div>
         </div>
 
         <!-- 題目顯示區 -->
-        <div id="questionDisplay" class="bg-yellow-50 border-4 border-yellow-300 rounded-2xl p-6 md:p-8 text-left text-3xl md:text-4xl leading-tight font-black tracking-wide shadow-inner text-gray-800">
+        <div id="questionDisplay" class="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 md:p-6 text-left text-2xl md:text-3xl leading-tight font-black tracking-wide shadow-inner text-gray-800">
             <!-- 題目由 JS 動態生成 -->
         </div>
 
         <!-- 互動區：左側大區塊 (句式 + 數棒/算式) | 右側：數字盤 -->
-        <div class="flex flex-col lg:flex-row gap-8 items-start">
+        <div class="flex flex-col lg:flex-row gap-6 items-start">
             
             <!-- 左側大區塊：包含句式和算式 -->
-            <div class="flex-1 flex flex-col gap-6 w-full">
+            <div class="flex-1 flex flex-col gap-4 w-full">
                 
                 <!-- 句式完成區 -->
-                <div class="flex flex-col gap-3 w-full text-2xl font-bold bg-blue-50 p-4 md:p-6 rounded-3xl border-4 border-blue-200 shadow-sm justify-center items-start">
-                    <h2 class="text-2xl text-blue-800 font-black flex items-center gap-2">
+                <div class="flex flex-col gap-3 w-full text-xl font-bold bg-blue-50 p-4 rounded-3xl border-2 border-blue-200 shadow-sm justify-center items-start">
+                    <h2 class="text-xl md:text-2xl text-blue-800 font-black flex items-center gap-2">
                         <span>✏️</span> 請完成下方句子：
                     </h2>
 
                     <!-- 易 難度句式 (只在 Easy 顯示) -->
                     <div id="normalSentences" class="flex flex-col gap-3 w-full items-start">
                         <!-- 句式 1 -->
-                        <div class="flex items-center flex-wrap gap-3 bg-white p-3 md:px-4 rounded-2xl shadow-sm border-2 border-blue-100">
-                            <span id="labelA1" class="text-red-600 text-4xl drop-shadow-sm whitespace-nowrap">A</span>
-                            <div class="flex items-center text-gray-400 text-xl font-normal gap-1 opacity-80 whitespace-nowrap">
+                        <div class="flex items-center flex-wrap gap-2 bg-white p-2 md:px-4 rounded-2xl shadow-sm border border-blue-100">
+                            <span id="labelA1" class="text-red-600 text-2xl md:text-3xl drop-shadow-sm whitespace-nowrap">A</span>
+                            <div class="flex items-center text-gray-400 text-lg font-normal gap-1 opacity-80 whitespace-nowrap">
                                 <span>比</span>
                                 <span id="labelB1">B</span>
                             </div>
                             
-                            <select id="dd1" class="border-4 border-gray-300 rounded-xl py-1 px-2 text-3xl bg-gray-50 focus:border-blue-500 outline-none cursor-pointer text-blue-700">
-                                <option value="?">請選擇 ▼</option>
+                            <select id="dd1" class="border-2 border-gray-300 rounded-xl py-1 px-1 text-xl md:text-2xl bg-gray-50 focus:border-blue-500 outline-none cursor-pointer text-blue-700">
+                                <option value="?">選擇 ▼</option>
                                 <option value="多">多</option>
                                 <option value="少">少</option>
                             </select>
                             
                             <div class="flex items-center gap-2 relative">
-                                <input type="text" id="input1" readonly class="w-32 text-center border-4 border-gray-300 rounded-xl py-1 px-1 text-4xl font-black bg-white cursor-text transition-all active-input text-gray-800" placeholder="?" onclick="setActiveInput('input1')">
-                                <span id="pointer1" class="absolute -right-10 text-3xl animate-bounce text-blue-500">👈</span>
+                                <input type="text" id="input1" readonly class="w-16 md:w-24 text-center border-2 border-gray-300 rounded-xl py-1 px-1 text-2xl md:text-3xl font-black bg-white cursor-text transition-all active-input text-gray-800" placeholder="?" onclick="setActiveInput('input1')">
+                                <span id="pointer1" class="absolute -right-8 md:-right-10 text-2xl md:text-3xl animate-bounce text-blue-500">👈</span>
                             </div>
                         </div>
 
                         <!-- 句式 2 -->
-                        <div class="flex items-center flex-wrap gap-3 bg-white p-3 md:px-4 rounded-2xl shadow-sm border-2 border-blue-100">
-                            <span id="labelB2" class="text-blue-600 text-4xl drop-shadow-sm whitespace-nowrap">B</span>
-                            <div class="flex items-center text-gray-400 text-xl font-normal gap-1 opacity-80 whitespace-nowrap">
+                        <div class="flex items-center flex-wrap gap-2 bg-white p-2 md:px-4 rounded-2xl shadow-sm border border-blue-100">
+                            <span id="labelB2" class="text-blue-600 text-2xl md:text-3xl drop-shadow-sm whitespace-nowrap">B</span>
+                            <div class="flex items-center text-gray-400 text-lg font-normal gap-1 opacity-80 whitespace-nowrap">
                                 <span>比</span>
                                 <span id="labelA2">A</span>
                             </div>
                             
-                            <select id="dd2" class="border-4 border-gray-300 rounded-xl py-1 px-2 text-3xl bg-gray-50 focus:border-blue-500 outline-none cursor-pointer text-blue-700">
-                                <option value="?">請選擇 ▼</option>
+                            <select id="dd2" class="border-2 border-gray-300 rounded-xl py-1 px-1 text-xl md:text-2xl bg-gray-50 focus:border-blue-500 outline-none cursor-pointer text-blue-700">
+                                <option value="?">選擇 ▼</option>
                                 <option value="多">多</option>
                                 <option value="少">少</option>
                             </select>
                             
                             <div class="flex items-center gap-2 relative">
-                                <input type="text" id="input2" readonly class="w-32 text-center border-4 border-gray-300 rounded-xl py-1 px-1 text-4xl font-black bg-white cursor-text transition-all text-gray-800" placeholder="?" onclick="setActiveInput('input2')">
-                                <span id="pointer2" class="absolute -right-10 text-3xl animate-bounce text-blue-500 hidden">👈</span>
+                                <input type="text" id="input2" readonly class="w-16 md:w-24 text-center border-2 border-gray-300 rounded-xl py-1 px-1 text-2xl md:text-3xl font-black bg-white cursor-text transition-all text-gray-800" placeholder="?" onclick="setActiveInput('input2')">
+                                <span id="pointer2" class="absolute -right-8 md:-right-10 text-2xl md:text-3xl animate-bounce text-blue-500 hidden">👈</span>
                             </div>
                         </div>
                     </div>
@@ -174,130 +174,127 @@
                     <!-- 中/難 難度句式 -->
                     <div id="hardSentences" class="flex flex-col gap-3 w-full items-start hidden">
                         <!-- 句式 1 (A有...) -->
-                        <div class="flex items-center flex-wrap gap-3 bg-white p-3 md:px-4 rounded-2xl shadow-sm border-2 border-blue-100">
-                            <span id="labelA1_hard" class="text-red-600 text-4xl drop-shadow-sm whitespace-nowrap">A</span>
-                            <span class="text-gray-600 text-3xl font-bold whitespace-nowrap mx-2">有</span>
+                        <div class="flex items-center flex-wrap gap-2 bg-white p-2 md:px-4 rounded-2xl shadow-sm border border-blue-100">
+                            <span id="labelA1_hard" class="text-red-600 text-2xl md:text-3xl drop-shadow-sm whitespace-nowrap">A</span>
+                            <span class="text-gray-600 text-xl md:text-2xl font-bold whitespace-nowrap mx-1">有</span>
                             <div class="flex items-center gap-2 relative">
-                                <input type="text" id="input1_hard" readonly class="w-32 text-center border-4 border-gray-300 rounded-xl py-1 px-1 text-4xl font-black bg-white cursor-text transition-all text-gray-800" placeholder="?" onclick="setActiveInput('input1_hard')">
-                                <span id="pointer1_hard" class="absolute -right-10 text-3xl animate-bounce text-blue-500 hidden">👈</span>
+                                <input type="text" id="input1_hard" readonly class="w-20 md:w-24 text-center border-2 border-gray-300 rounded-xl py-1 px-1 text-2xl md:text-3xl font-black bg-white cursor-text transition-all text-gray-800" placeholder="?" onclick="setActiveInput('input1_hard')">
+                                <span id="pointer1_hard" class="absolute -right-8 md:-right-10 text-2xl md:text-3xl animate-bounce text-blue-500 hidden">👈</span>
                             </div>
                         </div>
 
                         <!-- 句式 2 (B比A...) -->
-                        <div class="flex items-center flex-wrap gap-3 bg-white p-3 md:px-4 rounded-2xl shadow-sm border-2 border-blue-100">
-                            <span id="labelB2_hard" class="text-blue-600 text-4xl drop-shadow-sm whitespace-nowrap">B</span>
-                            <div class="flex items-center text-gray-400 text-xl font-normal gap-1 opacity-80 whitespace-nowrap">
+                        <div class="flex items-center flex-wrap gap-2 bg-white p-2 md:px-4 rounded-2xl shadow-sm border border-blue-100">
+                            <span id="labelB2_hard" class="text-blue-600 text-2xl md:text-3xl drop-shadow-sm whitespace-nowrap">B</span>
+                            <div class="flex items-center text-gray-400 text-lg font-normal gap-1 opacity-80 whitespace-nowrap">
                                 <span>比</span>
                                 <span id="labelA2_hard">A</span>
                             </div>
                             
-                            <select id="dd1_hard" onchange="checkStepProgress()" class="border-4 border-gray-300 rounded-xl py-1 px-2 text-3xl bg-gray-50 focus:border-blue-500 outline-none cursor-pointer text-blue-700 transition-all">
-                                <option value="?">請選擇 ▼</option>
+                            <select id="dd1_hard" onchange="checkStepProgress()" class="border-2 border-gray-300 rounded-xl py-1 px-1 text-xl md:text-2xl bg-gray-50 focus:border-blue-500 outline-none cursor-pointer text-blue-700 transition-all">
+                                <option value="?">選擇 ▼</option>
                                 <option value="多">多</option>
                                 <option value="少">少</option>
                             </select>
                             
                             <div class="flex items-center gap-2 relative">
-                                <input type="text" id="input2_hard" readonly class="w-32 text-center border-4 border-gray-300 rounded-xl py-1 px-1 text-4xl font-black bg-white cursor-text transition-all text-gray-800" placeholder="?" onclick="setActiveInput('input2_hard')">
-                                <span id="pointer2_hard" class="absolute -right-10 text-3xl animate-bounce text-blue-500 hidden">👈</span>
+                                <input type="text" id="input2_hard" readonly class="w-20 md:w-24 text-center border-2 border-gray-300 rounded-xl py-1 px-1 text-2xl md:text-3xl font-black bg-white cursor-text transition-all text-gray-800" placeholder="?" onclick="setActiveInput('input2_hard')">
+                                <span id="pointer2_hard" class="absolute -right-8 md:-right-10 text-2xl md:text-3xl animate-bounce text-blue-500 hidden">👈</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 底部區塊 A：數棒/數線區 (難度：易) -->
-                <div id="numberLineSection" class="bg-white p-4 md:p-6 rounded-3xl border-4 border-dashed border-gray-300 flex flex-col items-center shadow-sm relative overflow-hidden">
-                    <h2 class="text-xl md:text-2xl font-black text-gray-700 mb-6 relative z-10 flex items-center gap-2 bg-white px-5 py-2 rounded-full border-2 border-gray-200">
-                        <span>🤔</span> 請問 <span id="questionTargetB" class="text-blue-600 text-2xl md:text-3xl mx-1 whitespace-nowrap">B</span> 在哪裡？ <span class="text-base md:text-lg text-gray-500 font-normal ml-2">(點擊選擇)</span>
+                <div id="numberLineSection" class="bg-white p-4 rounded-3xl border-2 border-dashed border-gray-300 flex flex-col items-center shadow-sm relative overflow-hidden">
+                    <h2 class="text-lg md:text-xl font-black text-gray-700 mb-4 relative z-10 flex items-center gap-2 bg-white px-4 py-1 rounded-full border border-gray-200">
+                        <span>🤔</span> 請問 <span id="questionTargetB" class="text-blue-600 text-xl md:text-2xl mx-1 whitespace-nowrap">B</span> 在哪裡？ <span class="text-sm md:text-base text-gray-500 font-normal ml-1">(點擊選擇)</span>
                     </h2>
                     
-                    <div class="relative w-full h-36 md:h-40 bg-gray-50 rounded-[2rem] border-4 border-gray-200 shadow-inner mt-2">
-                        <div class="text-3xl md:text-4xl font-black text-gray-400 absolute left-2 md:left-6 bottom-3 bg-white w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center border-4 border-gray-100 z-10">少</div>
-                        <div class="text-3xl md:text-4xl font-black text-gray-400 absolute right-2 md:right-6 bottom-3 bg-white w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center border-4 border-gray-100 z-10">多</div>
+                    <div class="relative w-full h-28 md:h-32 bg-gray-50 rounded-2xl border-2 border-gray-200 shadow-inner mt-1">
+                        <div class="text-2xl md:text-3xl font-black text-gray-400 absolute left-2 bottom-2 bg-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border-2 border-gray-100 z-10">少</div>
+                        <div class="text-2xl md:text-3xl font-black text-gray-400 absolute right-2 bottom-2 bg-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border-2 border-gray-100 z-10">多</div>
 
-                        <!-- 將數棒往左右延伸加寬 -->
-                        <div class="absolute left-10 right-10 md:left-16 md:right-16 h-4 bg-gray-300 bottom-[2rem] rounded-full border-b-2 border-white z-0"></div>
+                        <div class="absolute left-10 right-10 md:left-14 md:right-14 h-3 bg-gray-300 bottom-[1.5rem] rounded-full border-b border-white z-0"></div>
 
-                        <!-- 左側選項 -->
-                        <div id="boxLeft" class="box-option absolute left-[18%] bottom-[3rem] -translate-x-1/2 flex flex-col items-center cursor-pointer group z-20" onclick="selectBox('left')">
-                            <div class="inner-box w-auto px-4 min-w-[4rem] h-16 bg-white border-4 border-dashed border-blue-400 rounded-2xl flex items-center justify-center group-hover:border-blue-500 group-hover:bg-blue-50 shadow-sm relative whitespace-nowrap">
-                                <span class="inner-text text-blue-300 text-3xl font-black">?</span>
+                        <div id="boxLeft" class="box-option absolute left-[20%] bottom-[2.5rem] -translate-x-1/2 flex flex-col items-center cursor-pointer group z-20" onclick="selectBox('left')">
+                            <div class="inner-box w-auto px-3 min-w-[3rem] h-12 bg-white border-2 border-dashed border-blue-400 rounded-xl flex items-center justify-center group-hover:border-blue-500 group-hover:bg-blue-50 shadow-sm relative whitespace-nowrap">
+                                <span class="inner-text text-blue-300 text-2xl font-black">?</span>
                             </div>
-                            <div class="h-8 w-2 bg-gray-400 mt-1 rounded-sm group-hover:bg-blue-400 transition-colors"></div>
+                            <div class="h-6 w-1.5 bg-gray-400 mt-1 rounded-sm group-hover:bg-blue-400 transition-colors"></div>
                         </div>
 
-                        <div class="absolute left-[50%] bottom-[3rem] -translate-x-1/2 flex flex-col items-center z-30">
-                            <div class="w-auto px-6 min-w-[5rem] h-20 bg-red-100 border-4 border-red-500 rounded-2xl flex items-center justify-center shadow-md relative overflow-hidden whitespace-nowrap">
-                                <div class="absolute top-0 left-0 right-0 h-2 bg-red-500 opacity-20"></div>
-                                <span id="boxLabelA" class="text-red-600 text-4xl font-black">A</span>
+                        <div class="absolute left-[50%] bottom-[2.5rem] -translate-x-1/2 flex flex-col items-center z-30">
+                            <div class="w-auto px-4 min-w-[4rem] h-14 bg-red-100 border-2 border-red-500 rounded-xl flex items-center justify-center shadow-md relative overflow-hidden whitespace-nowrap">
+                                <div class="absolute top-0 left-0 right-0 h-1 bg-red-500 opacity-20"></div>
+                                <span id="boxLabelA" class="text-red-600 text-3xl font-black">A</span>
                             </div>
-                            <div class="h-8 w-2 bg-gray-700 mt-1 rounded-sm"></div>
+                            <div class="h-6 w-1.5 bg-gray-700 mt-1 rounded-sm"></div>
                         </div>
 
-                        <!-- 右側選項 -->
-                        <div id="boxRight" class="box-option absolute left-[82%] bottom-[3rem] -translate-x-1/2 flex flex-col items-center cursor-pointer group z-20" onclick="selectBox('right')">
-                            <div class="inner-box w-auto px-4 min-w-[4rem] h-16 bg-white border-4 border-dashed border-blue-400 rounded-2xl flex items-center justify-center group-hover:border-blue-500 group-hover:bg-blue-50 shadow-sm relative whitespace-nowrap">
-                                <span class="inner-text text-blue-300 text-3xl font-black">?</span>
+                        <div id="boxRight" class="box-option absolute left-[80%] bottom-[2.5rem] -translate-x-1/2 flex flex-col items-center cursor-pointer group z-20" onclick="selectBox('right')">
+                            <div class="inner-box w-auto px-3 min-w-[3rem] h-12 bg-white border-2 border-dashed border-blue-400 rounded-xl flex items-center justify-center group-hover:border-blue-500 group-hover:bg-blue-50 shadow-sm relative whitespace-nowrap">
+                                <span class="inner-text text-blue-300 text-2xl font-black">?</span>
                             </div>
-                            <div class="h-8 w-2 bg-gray-400 mt-1 rounded-sm group-hover:bg-blue-400 transition-colors"></div>
+                            <div class="h-6 w-1.5 bg-gray-400 mt-1 rounded-sm group-hover:bg-blue-400 transition-colors"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 底部區塊 B：算式區 (難度：中、難) -->
-                <div id="equationSection" class="bg-white p-4 md:p-6 rounded-3xl border-4 border-dashed border-gray-300 flex flex-col items-center shadow-sm relative overflow-hidden hidden">
-                    <h2 class="text-xl md:text-2xl font-black text-gray-700 mb-4 relative z-10 flex items-center gap-2 bg-white px-5 py-2 rounded-full border-2 border-gray-200">
-                        <span>🧮</span> 計算 <span id="eqTargetB" class="text-blue-600 text-2xl md:text-3xl mx-1 whitespace-nowrap">B</span> 的數量：
+                <div id="equationSection" class="bg-white p-4 rounded-3xl border-2 border-dashed border-gray-300 flex flex-col items-center shadow-sm relative overflow-hidden hidden">
+                    <h2 class="text-lg md:text-xl font-black text-gray-700 mb-3 relative z-10 flex items-center gap-2 bg-white px-4 py-1 rounded-full border border-gray-200">
+                        <span>🧮</span> 計算 <span id="eqTargetB" class="text-blue-600 text-xl md:text-2xl mx-1 whitespace-nowrap">B</span> 的數量：
                     </h2>
                     
-                    <div class="flex items-center justify-center flex-nowrap gap-2 md:gap-4 text-4xl font-black bg-blue-50 p-4 md:p-6 rounded-3xl border-4 border-blue-200 w-full overflow-x-auto overflow-y-hidden transition-all" id="equationContainer">
-                        <span id="eqLabelB2" class="text-blue-600 text-3xl md:text-5xl whitespace-nowrap">B</span>
-                        <span class="text-gray-400 text-2xl md:text-4xl">=</span>
+                    <div class="flex items-center justify-center flex-nowrap gap-2 md:gap-3 text-2xl font-black bg-blue-50 p-3 md:p-4 rounded-2xl border-2 border-blue-200 w-full overflow-x-auto overflow-y-hidden transition-all" id="equationContainer">
+                        <span id="eqLabelB2" class="text-blue-600 text-2xl md:text-3xl whitespace-nowrap">B</span>
+                        <span class="text-gray-400 text-xl md:text-2xl">=</span>
                         
-                        <input type="text" id="inputEq1" readonly class="w-20 md:w-32 text-center border-4 border-gray-300 rounded-xl py-1 md:py-2 px-1 text-2xl md:text-4xl font-black bg-white cursor-text transition-all text-gray-800 flex-shrink-0" placeholder="?" onclick="setActiveInput('inputEq1')">
+                        <input type="text" id="inputEq1" readonly class="w-16 md:w-20 text-center border-2 border-gray-300 rounded-lg py-1 px-1 text-xl md:text-2xl font-black bg-white cursor-text transition-all text-gray-800 flex-shrink-0" placeholder="?" onclick="setActiveInput('inputEq1')">
                         
-                        <select id="eqOp" onchange="checkStepProgress()" class="border-4 border-gray-300 rounded-xl p-1 md:p-2 text-2xl md:text-4xl bg-gray-50 focus:border-blue-500 outline-none cursor-pointer text-blue-700 text-center font-black flex-shrink-0 transition-all">
+                        <select id="eqOp" onchange="checkStepProgress()" class="border-2 border-gray-300 rounded-lg p-1 md:p-1 text-xl md:text-2xl bg-gray-50 focus:border-blue-500 outline-none cursor-pointer text-blue-700 text-center font-black flex-shrink-0 transition-all">
                             <option value="?">?</option>
                             <option value="+">+</option>
                             <option value="-">-</option>
                         </select>
                         
-                        <input type="text" id="inputEq2" readonly class="w-20 md:w-32 text-center border-4 border-gray-300 rounded-xl py-1 md:py-2 px-1 text-2xl md:text-4xl font-black bg-white cursor-text transition-all text-gray-800 flex-shrink-0" placeholder="?" onclick="setActiveInput('inputEq2')">
+                        <input type="text" id="inputEq2" readonly class="w-16 md:w-20 text-center border-2 border-gray-300 rounded-lg py-1 px-1 text-xl md:text-2xl font-black bg-white cursor-text transition-all text-gray-800 flex-shrink-0" placeholder="?" onclick="setActiveInput('inputEq2')">
                         
-                        <span class="text-gray-400 text-2xl md:text-4xl">=</span>
+                        <span class="text-gray-400 text-xl md:text-2xl">=</span>
                         
-                        <input type="text" id="inputEq3" readonly class="w-24 md:w-36 text-center border-4 border-gray-300 rounded-xl py-1 md:py-2 px-1 text-2xl md:text-4xl font-black transition-all text-gray-800 flex-shrink-0" placeholder="?" onclick="setActiveInput('inputEq3')">
+                        <input type="text" id="inputEq3" readonly class="w-20 md:w-24 text-center border-2 border-gray-300 rounded-lg py-1 px-1 text-xl md:text-2xl font-black transition-all text-gray-800 flex-shrink-0" placeholder="?" onclick="setActiveInput('inputEq3')">
                     </div>
                 </div>
 
             </div> <!-- 左側大區塊結尾 -->
 
-            <!-- 右側：九宮數字盤 (改為 sticky 隨時可見) -->
-            <div class="w-full lg:w-80 bg-gray-200 p-4 rounded-3xl shadow-inner border-4 border-gray-300 flex-shrink-0 flex flex-col justify-center sticky top-8">
-                <h3 class="text-center font-bold text-gray-500 mb-2 text-lg">數字鍵盤</h3>
+            <!-- 右側：九宮數字盤 -->
+            <div class="w-full lg:w-64 xl:w-72 bg-gray-200 p-3 rounded-2xl shadow-inner border-2 border-gray-300 flex-shrink-0 flex flex-col justify-center lg:sticky lg:top-8">
+                <h3 class="text-center font-bold text-gray-500 mb-2 text-base md:text-lg">數字鍵盤</h3>
                 <div class="grid grid-cols-3 gap-2">
-                    <button class="numpad-btn bg-white text-3xl font-black py-4 rounded-xl shadow-sm border-b-4 border-gray-300 text-gray-800" onclick="typeNum('7')">7</button>
-                    <button class="numpad-btn bg-white text-3xl font-black py-4 rounded-xl shadow-sm border-b-4 border-gray-300 text-gray-800" onclick="typeNum('8')">8</button>
-                    <button class="numpad-btn bg-white text-3xl font-black py-4 rounded-xl shadow-sm border-b-4 border-gray-300 text-gray-800" onclick="typeNum('9')">9</button>
+                    <button class="numpad-btn bg-white text-2xl md:text-3xl font-black py-2 md:py-3 rounded-lg shadow-sm border-b-2 md:border-b-4 border-gray-300 text-gray-800" onclick="typeNum('7')">7</button>
+                    <button class="numpad-btn bg-white text-2xl md:text-3xl font-black py-2 md:py-3 rounded-lg shadow-sm border-b-2 md:border-b-4 border-gray-300 text-gray-800" onclick="typeNum('8')">8</button>
+                    <button class="numpad-btn bg-white text-2xl md:text-3xl font-black py-2 md:py-3 rounded-lg shadow-sm border-b-2 md:border-b-4 border-gray-300 text-gray-800" onclick="typeNum('9')">9</button>
                     
-                    <button class="numpad-btn bg-white text-3xl font-black py-4 rounded-xl shadow-sm border-b-4 border-gray-300 text-gray-800" onclick="typeNum('4')">4</button>
-                    <button class="numpad-btn bg-white text-3xl font-black py-4 rounded-xl shadow-sm border-b-4 border-gray-300 text-gray-800" onclick="typeNum('5')">5</button>
-                    <button class="numpad-btn bg-white text-3xl font-black py-4 rounded-xl shadow-sm border-b-4 border-gray-300 text-gray-800" onclick="typeNum('6')">6</button>
+                    <button class="numpad-btn bg-white text-2xl md:text-3xl font-black py-2 md:py-3 rounded-lg shadow-sm border-b-2 md:border-b-4 border-gray-300 text-gray-800" onclick="typeNum('4')">4</button>
+                    <button class="numpad-btn bg-white text-2xl md:text-3xl font-black py-2 md:py-3 rounded-lg shadow-sm border-b-2 md:border-b-4 border-gray-300 text-gray-800" onclick="typeNum('5')">5</button>
+                    <button class="numpad-btn bg-white text-2xl md:text-3xl font-black py-2 md:py-3 rounded-lg shadow-sm border-b-2 md:border-b-4 border-gray-300 text-gray-800" onclick="typeNum('6')">6</button>
                     
-                    <button class="numpad-btn bg-white text-3xl font-black py-4 rounded-xl shadow-sm border-b-4 border-gray-300 text-gray-800" onclick="typeNum('1')">1</button>
-                    <button class="numpad-btn bg-white text-3xl font-black py-4 rounded-xl shadow-sm border-b-4 border-gray-300 text-gray-800" onclick="typeNum('2')">2</button>
-                    <button class="numpad-btn bg-white text-3xl font-black py-4 rounded-xl shadow-sm border-b-4 border-gray-300 text-gray-800" onclick="typeNum('3')">3</button>
+                    <button class="numpad-btn bg-white text-2xl md:text-3xl font-black py-2 md:py-3 rounded-lg shadow-sm border-b-2 md:border-b-4 border-gray-300 text-gray-800" onclick="typeNum('1')">1</button>
+                    <button class="numpad-btn bg-white text-2xl md:text-3xl font-black py-2 md:py-3 rounded-lg shadow-sm border-b-2 md:border-b-4 border-gray-300 text-gray-800" onclick="typeNum('2')">2</button>
+                    <button class="numpad-btn bg-white text-2xl md:text-3xl font-black py-2 md:py-3 rounded-lg shadow-sm border-b-2 md:border-b-4 border-gray-300 text-gray-800" onclick="typeNum('3')">3</button>
                     
-                    <button class="numpad-btn text-red-600 bg-red-100 text-lg font-black py-4 rounded-xl shadow-sm border-b-4 border-red-300" onclick="clearInput()">清除</button>
-                    <button class="numpad-btn bg-white text-3xl font-black py-4 rounded-xl shadow-sm border-b-4 border-gray-300 text-gray-800" onclick="typeNum('0')">0</button>
-                    <button class="numpad-btn text-blue-600 bg-blue-100 text-lg font-black py-4 rounded-xl shadow-sm border-b-4 border-blue-300" onclick="backspaceInput()">刪除</button>
+                    <button class="numpad-btn text-red-600 bg-red-100 text-base md:text-lg font-black py-2 md:py-3 rounded-lg shadow-sm border-b-2 md:border-b-4 border-red-300" onclick="clearInput()">清除</button>
+                    <button class="numpad-btn bg-white text-2xl md:text-3xl font-black py-2 md:py-3 rounded-lg shadow-sm border-b-2 md:border-b-4 border-gray-300 text-gray-800" onclick="typeNum('0')">0</button>
+                    <button class="numpad-btn text-blue-600 bg-blue-100 text-base md:text-lg font-black py-2 md:py-3 rounded-lg shadow-sm border-b-2 md:border-b-4 border-blue-300" onclick="backspaceInput()">刪除</button>
                 </div>
             </div>
         </div> <!-- 互動區結尾 -->
 
         <!-- 提交按鈕 -->
-        <div class="flex justify-center mt-2">
-            <button onclick="checkAnswers()" class="bg-blue-500 hover:bg-blue-600 text-white text-3xl md:text-4xl font-black py-3 md:py-4 px-16 md:px-20 rounded-full shadow-[0_6px_0_#1e3a8a] active:shadow-[0_0px_0_#1e3a8a] active:translate-y-1 transition-all">
+        <div class="flex justify-center mt-2 md:mt-4">
+            <button onclick="checkAnswers()" class="bg-blue-500 hover:bg-blue-600 text-white text-2xl md:text-3xl font-black py-3 px-12 md:px-16 rounded-full shadow-[0_6px_0_#1e3a8a] active:shadow-[0_0px_0_#1e3a8a] active:translate-y-1 transition-all">
                 檢查答案 ✔️
             </button>
         </div>
@@ -305,10 +302,10 @@
 
     <!-- 彈出回饋視窗 -->
     <div id="feedbackModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 backdrop-blur-sm">
-        <div class="bg-white rounded-[2rem] p-10 max-w-md w-full text-center shadow-2xl transform scale-90 transition-transform duration-300 border-8 border-white" id="modalContent">
-            <div id="modalIcon" class="text-9xl mb-6 drop-shadow-md"></div>
-            <h2 id="modalTitle" class="text-4xl font-black mb-8 text-gray-800"></h2>
-            <button onclick="closeModal()" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-black py-4 px-10 rounded-full text-2xl w-full shadow-[0_6px_0_#b45309] active:shadow-[0_0px_0_#b45309] active:translate-y-1 transition-all">
+        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full text-center shadow-2xl transform scale-90 transition-transform duration-300 border-4 border-white" id="modalContent">
+            <div id="modalIcon" class="text-7xl md:text-8xl mb-4 drop-shadow-md"></div>
+            <h2 id="modalTitle" class="text-2xl md:text-3xl font-black mb-6 text-gray-800"></h2>
+            <button onclick="closeModal()" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-black py-3 px-8 rounded-full text-xl md:text-2xl w-full shadow-[0_4px_0_#b45309] active:shadow-none active:translate-y-1 transition-all">
                 繼續
             </button>
         </div>
@@ -361,12 +358,12 @@
             if (selectVal === 'fruit') {
                 const fruits = [
                     {n: '青蘋果', i: '🍏'}, {n: '蘋果', i: '🍎'}, {n: '梨子', i: '🍐'}, 
-                    {n: '橙', i: '🍊'}, {n: '檸檬', i: '🍋'}, 
+                    {n: '橙', i: '🍊'}, {n: '檸檬', i: '🍋'}, {n: '香蕉', i: '🍌'}, 
                     {n: '西瓜', i: '🍉'}, {n: '葡萄', i: '🍇'}, {n: '草莓', i: '🍓'}, 
-                     {n: '蜜瓜', i: '🍈'}, {n: '櫻桃', i: '🍒'}, 
+                    {n: '藍莓', i: '🫐'}, {n: '蜜瓜', i: '🍈'}, {n: '櫻桃', i: '🍒'}, 
                     {n: '水蜜桃', i: '🍑'}, {n: '芒果', i: '🥭'}, {n: '菠蘿', i: '🍍'}, 
                     {n: '椰子', i: '🥥'}, {n: '奇異果', i: '🥝'}, {n: '番茄', i: '🍅'}, 
-                    {n: '牛油果', i: '🥑'}
+                    {n: '橄欖', i: '🫒'}, {n: '牛油果', i: '🥑'}
                 ];
                 let pair = getRandomPair(fruits);
                 subjA = pair[0].n + " " + pair[0].i; subjB = pair[1].n + " " + pair[1].i;
@@ -795,8 +792,8 @@
             
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalIcon').innerText = icon;
-            document.getElementById('modalIcon').className = `text-9xl mb-6 drop-shadow-md ${colorClass}`;
-            content.className = `bg-white rounded-[2rem] p-10 max-w-md w-full text-center shadow-2xl transform scale-100 transition-transform duration-300 border-8 ${borderColorClass}`;
+            document.getElementById('modalIcon').className = `text-8xl md:text-9xl mb-4 md:mb-6 drop-shadow-md ${colorClass}`;
+            content.className = `bg-white rounded-[2rem] p-6 md:p-10 max-w-sm md:max-w-md w-full text-center shadow-2xl transform scale-100 transition-transform duration-300 border-8 ${borderColorClass}`;
             
             modal.classList.remove('hidden');
             modal.classList.add('flex');
