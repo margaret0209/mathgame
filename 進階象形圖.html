@@ -11,6 +11,8 @@
         body {
             font-family: 'Noto Sans TC', sans-serif;
             background-color: #f0fdf4; /* Light green background */
+            /* 防止移動設備在拖曳輔助線時誤觸捲動 */
+            overscroll-behavior-y: contain; 
         }
         
         @keyframes popIn {
@@ -88,14 +90,23 @@
             <div class="bg-white rounded-2xl shadow-lg p-6 md:p-10 border border-gray-100">
                 
                 <!-- Chart Header -->
-                <div class="mb-6">
-                    <h2 id="chartTitle" class="text-3xl font-black text-center text-gray-800 tracking-wide mb-2">最喜愛的項目</h2>
-                    <p class="text-right text-gray-600 font-bold text-lg">一個 <span class="text-2xl inline-block align-middle">🙂</span> 代表 1</p>
+                <div class="mb-6 flex flex-col md:flex-row justify-between items-center md:items-end gap-4 border-b-2 border-dashed border-gray-200 pb-4">
+                    <h2 id="chartTitle" class="text-3xl font-black text-center md:text-left text-gray-800 tracking-wide">最喜愛的項目</h2>
+                    <div class="flex flex-col items-center md:items-end gap-2">
+                        <p class="text-gray-600 font-bold text-lg">一個 <span class="text-2xl inline-block align-middle">🙂</span> 代表 1</p>
+                        <div class="bg-indigo-50 border border-indigo-200 text-indigo-700 text-sm font-bold p-2 md:p-3 rounded-lg shadow-sm">
+                            <p class="mb-1">💡 實用小工具：</p>
+                            <ul class="list-disc pl-5 space-y-1 text-xs md:text-sm">
+                                <li>點擊圖表旁的「名稱」可以 <span class="bg-indigo-200 px-1 rounded text-indigo-900">Highlight 標記</span> 該項目！</li>
+                                <li>拖曳紅色的「對齊線」可以方便比較數量！</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Interactive Grid Container -->
                 <div class="chart-scroll-container overflow-x-auto flex justify-center py-4">
-                    <div id="chartGrid" class="select-none">
+                    <div id="chartGrid" class="select-none relative">
                         <!-- Grid will be generated here -->
                     </div>
                 </div>
@@ -110,22 +121,50 @@
                 <!-- Follow-up Questions Area -->
                 <div id="followUpQuestionsArea" class="hidden mt-10 bg-purple-50 rounded-2xl p-6 md:p-8 border-4 border-purple-200">
                     <h3 class="text-2xl md:text-3xl font-bold text-purple-800 mb-6 flex items-center gap-2">
-                        <span>🧠</span> 進階挑戰：根據象形圖回答問題
+                        <span>🧠</span> 進階挑戰：闖關解題
                     </h3>
                     
                     <!-- 使用 Flexbox 讓題目與數字盤左右並排 -->
                     <div class="flex flex-col md:flex-row gap-8">
-                        <!-- 左側：問題列表 -->
-                        <div class="flex-1 space-y-5 text-lg md:text-xl font-semibold text-gray-700 leading-relaxed">
-                            <div>1. 最喜歡 <span id="q1-item" class="text-purple-700 font-black px-1 border-b-2 border-purple-400"></span> 的有 <input type="text" readonly id="ans-q1" class="keypad-input w-20 border-2 border-gray-400 rounded-lg p-1 text-center text-purple-700 font-bold focus:outline-none bg-white shadow-inner cursor-pointer transition-all hover:bg-indigo-50" onclick="openKeypad('ans-q1')" placeholder="?"> 人。</div>
+                        <!-- 左側：問題列表 (循序漸進) -->
+                        <div class="flex-1 space-y-6 text-lg md:text-xl font-semibold text-gray-700 leading-relaxed">
                             
-                            <div>2. 最喜歡 <span id="q2-itemA" class="text-purple-700 font-black px-1 border-b-2 border-purple-400"></span> 的比 <span id="q2-itemB" class="text-purple-700 font-black px-1 border-b-2 border-purple-400"></span> 的多 <input type="text" readonly id="ans-q2" class="keypad-input w-20 border-2 border-gray-400 rounded-lg p-1 text-center text-purple-700 font-bold focus:outline-none bg-white shadow-inner cursor-pointer transition-all hover:bg-indigo-50" onclick="openKeypad('ans-q2')" placeholder="?"> 人。</div>
+                            <!-- 第一題 -->
+                            <div id="q-step-1" class="flex flex-wrap items-center gap-y-2 p-3 rounded-xl transition-colors duration-300">
+                                <div>1. 最喜歡 <span id="q1-item" class="text-purple-700 font-black px-1 border-b-2 border-purple-400"></span> 的有 <input type="text" readonly id="ans-q1" class="keypad-input w-20 border-2 border-gray-400 rounded-lg p-1 text-center text-purple-700 font-bold focus:outline-none bg-white shadow-inner cursor-pointer transition-all hover:bg-indigo-50" onclick="openKeypad('ans-q1')" placeholder="?"> 人。</div>
+                                <button id="btn-check-q1" onclick="checkQuestion(1)" class="bg-green-500 hover:bg-green-600 text-white text-base md:text-lg px-4 py-1.5 rounded-lg shadow-md ml-3 transform active:scale-95 transition-all font-bold">檢查</button>
+                                <span id="check-mark-1" class="hidden ml-2 text-green-500 font-black text-2xl">✅ 答對了！</span>
+                            </div>
                             
-                            <div>3. 最喜歡 <span id="q3-itemC" class="text-purple-700 font-black px-1 border-b-2 border-purple-400"></span> 的比 <span id="q3-itemD" class="text-purple-700 font-black px-1 border-b-2 border-purple-400"></span> 的少 <input type="text" readonly id="ans-q3" class="keypad-input w-20 border-2 border-gray-400 rounded-lg p-1 text-center text-purple-700 font-bold focus:outline-none bg-white shadow-inner cursor-pointer transition-all hover:bg-indigo-50" onclick="openKeypad('ans-q3')" placeholder="?"> 人。</div>
+                            <!-- 第二題 -->
+                            <div id="q-step-2" class="hidden flex flex-wrap items-center gap-y-2 p-3 rounded-xl transition-colors duration-300 border-l-4 border-purple-400 bg-purple-100/50">
+                                <div>2. 最喜歡 <span id="q2-itemA" class="text-purple-700 font-black px-1 border-b-2 border-purple-400"></span> 的比 <span id="q2-itemB" class="text-purple-700 font-black px-1 border-b-2 border-purple-400"></span> 的多 <input type="text" readonly id="ans-q2" class="keypad-input w-20 border-2 border-gray-400 rounded-lg p-1 text-center text-purple-700 font-bold focus:outline-none bg-white shadow-inner cursor-pointer transition-all hover:bg-indigo-50" onclick="openKeypad('ans-q2')" placeholder="?"> 人。</div>
+                                <button id="btn-check-q2" onclick="checkQuestion(2)" class="bg-green-500 hover:bg-green-600 text-white text-base md:text-lg px-4 py-1.5 rounded-lg shadow-md ml-3 transform active:scale-95 transition-all font-bold">檢查</button>
+                                <span id="check-mark-2" class="hidden ml-2 text-green-500 font-black text-2xl">✅ 答對了！</span>
+                            </div>
                             
-                            <div>4. 最多人喜歡的是 <select id="ans-q4" class="border-2 border-gray-400 rounded-lg p-1 px-2 text-purple-700 font-bold focus:border-purple-500 focus:outline-none bg-white shadow-inner cursor-pointer"><option value="">請選擇</option></select>。</div>
+                            <!-- 第三題 (動態生成) -->
+                            <div id="q-step-3" class="hidden flex flex-wrap items-center gap-y-2 p-3 rounded-xl transition-colors duration-300 border-l-4 border-purple-400 bg-purple-100/50">
+                                <div id="q3-type1" class="hidden">3. 最多人喜歡的是 <select id="ans-q3-max" class="q-select border-2 border-gray-400 rounded-lg p-1 px-2 text-purple-700 font-bold focus:border-purple-500 focus:outline-none bg-white shadow-inner cursor-pointer"><option value="">請選擇</option></select>。</div>
+                                <div id="q3-type2" class="hidden">3. 最少人喜歡的是 <select id="ans-q3-min" class="q-select border-2 border-gray-400 rounded-lg p-1 px-2 text-purple-700 font-bold focus:border-purple-500 focus:outline-none bg-white shadow-inner cursor-pointer"><option value="">請選擇</option></select>。</div>
+                                <div id="q3-type3" class="hidden">3. 喜歡 <select id="ans-q3-eq1" class="q-select border-2 border-gray-400 rounded-lg p-1 px-2 text-purple-700 font-bold focus:border-purple-500 focus:outline-none bg-white shadow-inner cursor-pointer"><option value="">請選擇</option></select> 的人數和喜歡 <select id="ans-q3-eq2" class="q-select border-2 border-gray-400 rounded-lg p-1 px-2 text-purple-700 font-bold focus:border-purple-500 focus:outline-none bg-white shadow-inner cursor-pointer"><option value="">請選擇</option></select> 的人數相同。</div>
+                                <button id="btn-check-q3" onclick="checkQuestion(3)" class="bg-green-500 hover:bg-green-600 text-white text-base md:text-lg px-4 py-1.5 rounded-lg shadow-md ml-3 transform active:scale-95 transition-all font-bold">檢查</button>
+                                <span id="check-mark-3" class="hidden ml-2 text-green-500 font-black text-2xl">✅ 答對了！</span>
+                            </div>
                             
-                            <div>5. 共有 <input type="text" readonly id="ans-q5" class="keypad-input w-24 border-2 border-gray-400 rounded-lg p-1 text-center text-purple-700 font-bold focus:outline-none bg-white shadow-inner cursor-pointer transition-all hover:bg-indigo-50" onclick="openKeypad('ans-q5')" placeholder="?"> 人接受訪問。</div>
+                            <!-- 第四題 -->
+                            <div id="q-step-4" class="hidden flex flex-wrap items-center gap-y-2 p-3 rounded-xl transition-colors duration-300 border-l-4 border-purple-400 bg-purple-100/50">
+                                <div>4. 最喜歡 <span id="q4-itemC" class="text-purple-700 font-black px-1 border-b-2 border-purple-400"></span> 的比 <span id="q4-itemD" class="text-purple-700 font-black px-1 border-b-2 border-purple-400"></span> 的少 <input type="text" readonly id="ans-q4" class="keypad-input w-20 border-2 border-gray-400 rounded-lg p-1 text-center text-purple-700 font-bold focus:outline-none bg-white shadow-inner cursor-pointer transition-all hover:bg-indigo-50" onclick="openKeypad('ans-q4')" placeholder="?"> 人。</div>
+                                <button id="btn-check-q4" onclick="checkQuestion(4)" class="bg-green-500 hover:bg-green-600 text-white text-base md:text-lg px-4 py-1.5 rounded-lg shadow-md ml-3 transform active:scale-95 transition-all font-bold">檢查</button>
+                                <span id="check-mark-4" class="hidden ml-2 text-green-500 font-black text-2xl">✅ 答對了！</span>
+                            </div>
+                            
+                            <!-- 第五題 -->
+                            <div id="q-step-5" class="hidden flex flex-wrap items-center gap-y-2 p-3 rounded-xl transition-colors duration-300 border-l-4 border-purple-400 bg-purple-100/50">
+                                <div>5. 共有 <input type="text" readonly id="ans-q5" class="keypad-input w-24 border-2 border-gray-400 rounded-lg p-1 text-center text-purple-700 font-bold focus:outline-none bg-white shadow-inner cursor-pointer transition-all hover:bg-indigo-50" onclick="openKeypad('ans-q5')" placeholder="?"> 人接受訪問。</div>
+                                <button id="btn-check-q5" onclick="checkQuestion(5)" class="bg-green-500 hover:bg-green-600 text-white text-base md:text-lg px-4 py-1.5 rounded-lg shadow-md ml-3 transform active:scale-95 transition-all font-bold">檢查完成</button>
+                                <span id="check-mark-5" class="hidden ml-2 text-green-500 font-black text-2xl">✅</span>
+                            </div>
                         </div>
 
                         <!-- 右側：九宮格數字盤 -->
@@ -153,11 +192,6 @@
                         </div>
                     </div>
 
-                    <div class="mt-8 flex justify-center">
-                         <button id="submitFollowUpBtn" class="bg-purple-600 hover:bg-purple-700 text-white text-xl md:text-2xl font-bold py-3 px-10 rounded-full shadow-[0_5px_0_#581c87] hover:shadow-[0_3px_0_#581c87] hover:translate-y-1 transform transition-all">
-                             🚀 提交進階挑戰
-                         </button>
-                    </div>
                 </div>
             </div>
             
@@ -179,9 +213,9 @@
     <script>
         // Data Dictionary
         const itemsDict = {
-            '水果': ['蘋果', '香蕉', '橙', '葡萄', '西瓜', '草莓', '芒果', '梨', '蜜瓜', '菠蘿', '櫻桃', '桃', '奇異果', '木瓜', '檸檬', '藍莓', '柚子', '哈密瓜', '石榴', '柿子'],
-            '玩具': ['汽車', '積木', '洋娃娃', '皮球', '機械人', '拼圖', '恐龍', '飛機', '火車', '熊仔', '陀螺', '風箏', '黏土', '水槍', '撲克牌', '樂高', '變形金剛', '魔術方塊', '遙控車'],
-            '卡通人物': ['多啦A夢', '米奇老鼠', '皮卡超', '小熊維尼', '吉蒂貓', '海綿寶寶', '蠟筆小新', '龍貓', '可羅米', '櫻桃小丸子', '麵包超人', '史努比', 'Melody', '布甸狗', '巴斯光年', '史迪仔', '胡迪', 'Elsa', '巧虎', '角落小夥伴']
+            '水果': ['蘋果', '香蕉', '橙子', '葡萄', '西瓜', '草莓', '芒果', '梨子', '蜜瓜', '菠蘿', '櫻桃', '桃子', '奇異果', '木瓜', '檸檬', '藍莓', '柚子', '哈密瓜', '石榴', '柿子'],
+            '玩具': ['汽車', '積木', '洋娃娃', '皮球', '機械人', '拼圖', '恐龍', '飛機', '火車', '熊仔', '陀螺', '溜溜球', '風箏', '黏土', '水槍', '撲克牌', '樂高', '變形金剛', '魔術方塊', '遙控車'],
+            '卡通人物': ['多啦A夢', '米奇老鼠', '皮卡丘', '小熊維尼', '吉蒂貓', '海綿寶寶', '蠟筆小新', '龍貓', '名偵探柯南', '櫻桃小丸子', '麵包超人', '史努比', '佩佩豬', '兔巴哥', '湯姆貓', '傑利鼠', '胖虎', '灰原哀', '巧虎', '角落小夥伴']
         };
 
         let currentData = {
@@ -190,23 +224,60 @@
             items: [],
             quantities: [],
             gridState: [],
-            isChartLocked: false // 用於在進入問題環節時鎖定圖表
+            highlightState: [],
+            isChartLocked: false
         };
 
         let followUpAnswers = {};
         let modalState = '';
+        let currentDragInfo = null;
 
         // Initialize event listeners
         document.getElementById('generateBtn').addEventListener('click', startGame);
-        document.getElementById('submitBtn').addEventListener('click', checkAnswer);
-        document.getElementById('submitFollowUpBtn').addEventListener('click', checkFollowUpAnswers);
-
-        // Start game initially
-        window.onload = () => {
+        document.getElementById('submitBtn').addEventListener('click', checkChartAnswer);
+        
+        // 全局拖曳事件監聽 (供「對齊輔助線」使用)
+        window.addEventListener('load', () => {
+            document.addEventListener('mousemove', handleDragMove);
+            document.addEventListener('touchmove', handleDragMove, {passive: false});
+            document.addEventListener('mouseup', handleDragEnd);
+            document.addEventListener('touchend', handleDragEnd);
             startGame();
-        };
+        });
+
+        function resetFollowUpUI() {
+            // 重置全部五個關卡的 UI 狀態
+            for (let i = 1; i <= 5; i++) {
+                const stepDiv = document.getElementById(`q-step-${i}`);
+                if (i > 1) {
+                    stepDiv.classList.add('hidden'); // 隱藏 2~5
+                }
+                stepDiv.classList.remove('bg-green-50', 'border-green-400');
+                stepDiv.classList.add('bg-purple-100/50', 'border-purple-400');
+                
+                // 恢復按鈕顯示與隱藏打勾
+                document.getElementById(`btn-check-q${i}`).classList.remove('hidden');
+                document.getElementById(`check-mark-${i}`).classList.add('hidden');
+                
+                // 啟用輸入框
+                const inputs = stepDiv.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    input.disabled = false;
+                    input.classList.remove('bg-gray-100', 'text-gray-500', 'border-gray-300', 'pointer-events-none');
+                    if (input.tagName === 'INPUT') {
+                        input.classList.add('cursor-pointer', 'hover:bg-indigo-50');
+                        input.value = '';
+                    }
+                    if (input.tagName === 'SELECT') {
+                        input.value = '';
+                    }
+                });
+            }
+        }
 
         function startGame() {
+            if(typeof closeKeypad === 'function') closeKeypad(); 
+
             const typeSelect = document.getElementById('chartType').value;
             const catSelect = document.getElementById('chartCategory').value;
 
@@ -218,25 +289,25 @@
             let shuffled = [...itemsDict[catSelect]].sort(() => 0.5 - Math.random());
             currentData.items = shuffled.slice(0, 5);
 
-            // Pick 5 random quantities (1 to 12)
-            currentData.quantities = Array.from({length: 5}, () => Math.floor(Math.random() * 12) + 1);
+            // Generate quantities ensuring exactly 1 max, 1 min, and 1 identical pair for question 3 variety
+            let pool = [1,2,3,4,5,6,7,8,9,10,11,12].sort(() => 0.5 - Math.random());
+            let selected = pool.slice(0, 4).sort((a, b) => a - b);
+            let dupIdx = Math.random() < 0.5 ? 1 : 2; 
+            let finalQuantities = [...selected, selected[dupIdx]];
+            finalQuantities.sort(() => 0.5 - Math.random());
+            currentData.quantities = finalQuantities;
 
             // Reset grid state (5 groups, 12 cells each)
             currentData.gridState = Array.from({length: 5}, () => Array(12).fill(false));
+            currentData.highlightState = Array(5).fill(false); // Reset highlight states
 
+            resetFollowUpUI();
             renderTable();
             renderChart();
             
             document.getElementById('gameArea').classList.remove('hidden');
             document.getElementById('submitBtnContainer').classList.remove('hidden');
             document.getElementById('followUpQuestionsArea').classList.add('hidden');
-            
-            // Clear follow-up inputs
-            document.getElementById('ans-q1').value = '';
-            document.getElementById('ans-q2').value = '';
-            document.getElementById('ans-q3').value = '';
-            document.getElementById('ans-q4').value = '';
-            document.getElementById('ans-q5').value = '';
         }
 
         function renderTable() {
@@ -253,134 +324,232 @@
                 theadRow.appendChild(th);
                 
                 const td = document.createElement('td');
-            td.className = 'border-2 border-gray-800 bg-white p-3 md:p-4 font-black text-gray-800 text-2xl text-blue-600';
-            td.textContent = currentData.quantities[i];
-            tbodyRow.appendChild(td);
+                td.className = 'border-2 border-gray-800 bg-white p-3 md:p-4 font-black text-gray-800 text-2xl text-blue-600';
+                td.textContent = currentData.quantities[i];
+                tbodyRow.appendChild(td);
+            }
         }
-    }
 
-    function renderChart() {
-        // Update Title
-        document.getElementById('chartTitle').textContent = `最喜愛的${currentData.category}`;
+        function renderChart() {
+            document.getElementById('chartTitle').textContent = `最喜愛的${currentData.category}`;
 
-        const chartContainer = document.getElementById('chartGrid');
-        chartContainer.innerHTML = '';
-        
-        if (currentData.type === 'horizontal') {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'inline-flex flex-row bg-white relative pb-8 pr-4';
+            const chartContainer = document.getElementById('chartGrid');
+            chartContainer.innerHTML = '';
+            
+            if (currentData.type === 'horizontal') {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'inline-flex flex-row bg-white relative pb-8 pr-4';
 
-            const labelsCol = document.createElement('div');
-            labelsCol.className = 'flex flex-col justify-start pt-4 pr-4';
-
-            const gridCol = document.createElement('div');
-            gridCol.className = 'border-l-4 border-gray-800 pt-4 pl-4 pr-2 pb-4 relative';
-
-            currentData.items.forEach((item, itemIdx) => {
-                const rowHeightClass = 'h-10 md:h-12';
-                const marginClass = itemIdx < currentData.items.length - 1 ? 'mb-4 md:mb-5' : '';
-
-                const label = document.createElement('div');
-                label.className = `w-24 md:w-32 text-right flex items-center justify-end font-bold text-lg md:text-xl text-gray-800 ${rowHeightClass} ${marginClass}`;
-                label.textContent = item;
-                labelsCol.appendChild(label);
-
-                const cellsContainer = document.createElement('div');
-                cellsContainer.className = `flex flex-row gap-1 md:gap-2 ${rowHeightClass} ${marginClass}`;
-                
-                for (let cellIdx = 0; cellIdx < 12; cellIdx++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'w-10 h-10 md:w-12 md:h-12 border-2 border-gray-300 bg-gray-50 flex items-center justify-center cursor-pointer hover:bg-yellow-50 transition-colors rounded shadow-sm flex-shrink-0';
-                    cell.onclick = () => toggleCell(itemIdx, cellIdx, cell);
-                    
-                    if (currentData.gridState[itemIdx][cellIdx]) {
-                        cell.innerHTML = '<span class="text-3xl emoji-pop">🙂</span>';
-                        cell.classList.replace('border-gray-300', 'border-yellow-400');
-                        cell.classList.replace('bg-gray-50', 'bg-yellow-100');
-                    }
-                    cellsContainer.appendChild(cell);
-                }
-                gridCol.appendChild(cellsContainer);
-            });
-
-            wrapper.appendChild(labelsCol);
-            wrapper.appendChild(gridCol);
-            chartContainer.appendChild(wrapper);
-
-        } else {
-            // Vertical
-            const wrapper = document.createElement('div');
-            wrapper.className = 'inline-flex flex-col bg-white relative pl-8 mt-6 pb-6';
-
-            const gridRow = document.createElement('div');
-            gridRow.className = 'border-b-4 border-gray-800 flex flex-row items-end pb-4 pl-4 pr-4 pt-4 relative';
-
-            const labelsRow = document.createElement('div');
-            // 透過精確的 padding 讓標籤列與方格完美對齊
-            labelsRow.className = 'flex flex-row pt-4 pl-4'; 
-
-            currentData.items.forEach((item, itemIdx) => {
-                const marginClass = itemIdx < currentData.items.length - 1 ? 'mr-4 md:mr-6' : '';
+                const labelsCol = document.createElement('div');
+                labelsCol.className = 'flex flex-col justify-start pt-4 pr-4';
 
                 const gridCol = document.createElement('div');
-                gridCol.className = `flex flex-col-reverse gap-1 md:gap-2 w-10 md:w-12 ${marginClass}`;
-                
-                for (let cellIdx = 0; cellIdx < 12; cellIdx++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'w-10 h-10 md:w-12 md:h-12 border-2 border-gray-300 bg-gray-50 flex items-center justify-center cursor-pointer hover:bg-yellow-50 transition-colors rounded shadow-sm flex-shrink-0';
-                    cell.onclick = () => toggleCell(itemIdx, cellIdx, cell);
+                gridCol.className = 'border-l-4 border-gray-800 pt-4 pl-4 pr-2 pb-4 relative'; // Relative for positioning line
+
+                currentData.items.forEach((item, itemIdx) => {
+                    const rowHeightClass = 'h-10 md:h-12';
+                    const marginClass = itemIdx < currentData.items.length - 1 ? 'mb-4 md:mb-5' : '';
+
+                    const label = document.createElement('div');
+                    label.id = `chart-label-${itemIdx}`;
+                    label.className = `w-24 md:w-32 text-right flex items-center justify-end font-bold text-lg md:text-xl text-gray-800 ${rowHeightClass} ${marginClass} cursor-pointer hover:bg-gray-100 rounded px-2 select-none transition-colors`;
+                    label.textContent = item;
+                    label.onclick = () => toggleHighlight(itemIdx);
+                    labelsCol.appendChild(label);
+
+                    const cellsContainer = document.createElement('div');
+                    cellsContainer.id = `chart-cells-${itemIdx}`;
+                    cellsContainer.className = `flex flex-row gap-1 md:gap-2 ${rowHeightClass} ${marginClass} rounded transition-all`;
                     
-                    if (currentData.gridState[itemIdx][cellIdx]) {
-                        cell.innerHTML = '<span class="text-3xl emoji-pop">🙂</span>';
-                        cell.classList.replace('border-gray-300', 'border-yellow-400');
-                        cell.classList.replace('bg-gray-50', 'bg-yellow-100');
+                    for (let cellIdx = 0; cellIdx < 12; cellIdx++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'w-10 h-10 md:w-12 md:h-12 border-2 border-gray-300 bg-gray-50 flex items-center justify-center cursor-pointer hover:bg-yellow-50 transition-colors rounded shadow-sm flex-shrink-0 relative z-0';
+                        cell.onclick = () => toggleCell(itemIdx, cellIdx, cell);
+                        
+                        if (currentData.gridState[itemIdx][cellIdx]) {
+                            cell.innerHTML = '<span class="text-3xl emoji-pop">🙂</span>';
+                            cell.classList.replace('border-gray-300', 'border-yellow-400');
+                            cell.classList.replace('bg-gray-50', 'bg-yellow-100');
+                        }
+                        cellsContainer.appendChild(cell);
                     }
-                    gridCol.appendChild(cell);
-                }
-                gridRow.appendChild(gridCol);
-                
-                const labelContainer = document.createElement('div');
-                labelContainer.className = `flex justify-center w-10 md:w-12 ${marginClass}`;
-                
-                const label = document.createElement('div');
-                label.className = 'text-center font-bold text-lg md:text-xl text-gray-800 writing-vertical';
-                label.style.writingMode = 'vertical-rl';
-                label.style.textOrientation = 'upright';
-                label.textContent = item;
-                
-                labelContainer.appendChild(label);
-                labelsRow.appendChild(labelContainer);
-            });
+                    
+                    // Restore highlight state
+                    if (currentData.highlightState[itemIdx]) {
+                        label.classList.add('bg-indigo-100', 'text-indigo-800');
+                        label.classList.remove('text-gray-800', 'hover:bg-gray-100');
+                        cellsContainer.classList.add('bg-indigo-50', 'ring-4', 'ring-indigo-200');
+                    }
+                    
+                    gridCol.appendChild(cellsContainer);
+                });
 
-            wrapper.appendChild(gridRow);
-            wrapper.appendChild(labelsRow);
-            chartContainer.appendChild(wrapper);
+                // Add Horizontal Movable Comparison Line
+                addComparisonLine('horizontal', gridCol);
+
+                wrapper.appendChild(labelsCol);
+                wrapper.appendChild(gridCol);
+                chartContainer.appendChild(wrapper);
+
+            } else {
+                // Vertical
+                const wrapper = document.createElement('div');
+                wrapper.className = 'inline-flex flex-col bg-white relative pl-8 mt-10 pb-6';
+
+                const gridRow = document.createElement('div');
+                gridRow.className = 'border-b-4 border-gray-800 flex flex-row items-end pb-4 pl-4 pr-4 pt-4 relative'; // Relative for line
+
+                const labelsRow = document.createElement('div');
+                labelsRow.className = 'flex flex-row pt-4 pl-4'; 
+
+                currentData.items.forEach((item, itemIdx) => {
+                    const marginClass = itemIdx < currentData.items.length - 1 ? 'mr-4 md:mr-6' : '';
+
+                    const gridCol = document.createElement('div');
+                    gridCol.id = `chart-cells-${itemIdx}`;
+                    gridCol.className = `flex flex-col-reverse gap-1 md:gap-2 w-10 md:w-12 ${marginClass} rounded transition-all`;
+                    
+                    for (let cellIdx = 0; cellIdx < 12; cellIdx++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'w-10 h-10 md:w-12 md:h-12 border-2 border-gray-300 bg-gray-50 flex items-center justify-center cursor-pointer hover:bg-yellow-50 transition-colors rounded shadow-sm flex-shrink-0 relative z-0';
+                        cell.onclick = () => toggleCell(itemIdx, cellIdx, cell);
+                        
+                        if (currentData.gridState[itemIdx][cellIdx]) {
+                            cell.innerHTML = '<span class="text-3xl emoji-pop">🙂</span>';
+                            cell.classList.replace('border-gray-300', 'border-yellow-400');
+                            cell.classList.replace('bg-gray-50', 'bg-yellow-100');
+                        }
+                        gridCol.appendChild(cell);
+                    }
+                    gridRow.appendChild(gridCol);
+                    
+                    const labelContainer = document.createElement('div');
+                    labelContainer.id = `chart-label-${itemIdx}`;
+                    labelContainer.className = `flex justify-center w-10 md:w-12 ${marginClass} text-gray-800 cursor-pointer hover:bg-gray-100 rounded py-2 select-none transition-colors`;
+                    labelContainer.onclick = () => toggleHighlight(itemIdx);
+                    
+                    const label = document.createElement('div');
+                    label.className = 'text-center font-bold text-lg md:text-xl writing-vertical';
+                    label.style.writingMode = 'vertical-rl';
+                    label.style.textOrientation = 'upright';
+                    label.textContent = item;
+                    
+                    labelContainer.appendChild(label);
+                    labelsRow.appendChild(labelContainer);
+                    
+                    // Restore highlight state
+                    if (currentData.highlightState[itemIdx]) {
+                        labelContainer.classList.add('bg-indigo-100', 'text-indigo-800');
+                        labelContainer.classList.remove('text-gray-800', 'hover:bg-gray-100');
+                        gridCol.classList.add('bg-indigo-50', 'ring-4', 'ring-indigo-200');
+                    }
+                });
+
+                // Add Vertical Movable Comparison Line
+                addComparisonLine('vertical', gridRow);
+
+                wrapper.appendChild(gridRow);
+                wrapper.appendChild(labelsRow);
+                chartContainer.appendChild(wrapper);
+            }
         }
-    }
 
-    function toggleCell(itemIdx, cellIdx, cellElement) {
-            // 如果圖表已被鎖定，禁止修改
+        // --- Draggable Comparison Line Logic ---
+        function addComparisonLine(type, container) {
+            const lineWrapper = document.createElement('div');
+            // Z-index higher than cells to ensure drag works
+            lineWrapper.className = type === 'horizontal' 
+                ? 'absolute top-0 bottom-0 w-1.5 bg-red-400 hover:bg-red-500 cursor-ew-resize z-40 flex justify-center shadow-[0_0_8px_rgba(239,68,68,0.5)] group transition-colors'
+                : 'absolute left-0 right-0 h-1.5 bg-red-400 hover:bg-red-500 cursor-ns-resize z-40 flex items-center shadow-[0_0_8px_rgba(239,68,68,0.5)] group transition-colors';
+            
+            // Initial Positions
+            if (type === 'horizontal') {
+                lineWrapper.style.left = '4px'; 
+            } else {
+                lineWrapper.style.bottom = '4px'; 
+            }
+
+            const handle = document.createElement('div');
+            handle.className = type === 'horizontal'
+                ? 'w-8 h-8 bg-red-500 rounded-full absolute -top-4 shadow-lg flex items-center justify-center text-white text-lg font-black transform scale-90 group-hover:scale-110 transition-transform select-none'
+                : 'w-8 h-8 bg-red-500 rounded-full absolute -left-4 shadow-lg flex items-center justify-center text-white text-lg font-black transform scale-90 group-hover:scale-110 transition-transform select-none';
+            handle.innerHTML = type === 'horizontal' ? '↔' : '↕';
+            
+            lineWrapper.appendChild(handle);
+            container.appendChild(lineWrapper);
+
+            const startDrag = (e) => {
+                currentDragInfo = { line: lineWrapper, container: container, type: type };
+                if (e.cancelable) e.preventDefault();
+            };
+
+            lineWrapper.addEventListener('mousedown', startDrag);
+            lineWrapper.addEventListener('touchstart', startDrag, {passive: false});
+        }
+
+        function handleDragMove(e) {
+            if (!currentDragInfo) return;
+            if (e.cancelable) e.preventDefault(); // 防止滾動螢幕
+
+            const { line, container, type } = currentDragInfo;
+            const rect = container.getBoundingClientRect();
+            
+            if (type === 'horizontal') {
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                let newLeft = clientX - rect.left;
+                newLeft = Math.max(0, Math.min(newLeft, rect.width));
+                line.style.left = `${newLeft}px`;
+            } else {
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                let newBottom = rect.bottom - clientY;
+                newBottom = Math.max(0, Math.min(newBottom, rect.height));
+                line.style.bottom = `${newBottom}px`;
+            }
+        }
+
+        function handleDragEnd() {
+            currentDragInfo = null;
+        }
+
+        function toggleCell(itemIdx, cellIdx, cellElement) {
             if (currentData.isChartLocked) return;
 
             const isCurrentlyActive = currentData.gridState[itemIdx][cellIdx];
             currentData.gridState[itemIdx][cellIdx] = !isCurrentlyActive;
             
             if (!isCurrentlyActive) {
-                // Activating
                 cellElement.innerHTML = '<span class="text-3xl emoji-pop">🙂</span>';
                 cellElement.classList.remove('border-gray-300', 'bg-gray-50');
                 cellElement.classList.add('border-yellow-400', 'bg-yellow-100');
             } else {
-                // Deactivating
                 cellElement.innerHTML = '';
                 cellElement.classList.remove('border-yellow-400', 'bg-yellow-100');
                 cellElement.classList.add('border-gray-300', 'bg-gray-50');
             }
         }
 
-        function checkAnswer() {
+        // --- Highlight Logic ---
+        function toggleHighlight(idx) {
+            currentData.highlightState[idx] = !currentData.highlightState[idx];
+            const isHighlighted = currentData.highlightState[idx];
+
+            const label = document.getElementById(`chart-label-${idx}`);
+            const cells = document.getElementById(`chart-cells-${idx}`);
+
+            if (isHighlighted) {
+                label.classList.add('bg-indigo-100', 'text-indigo-800');
+                label.classList.remove('text-gray-800', 'hover:bg-gray-100');
+                cells.classList.add('bg-indigo-50', 'ring-4', 'ring-indigo-200');
+            } else {
+                label.classList.remove('bg-indigo-100', 'text-indigo-800');
+                label.classList.add('text-gray-800', 'hover:bg-gray-100');
+                cells.classList.remove('bg-indigo-50', 'ring-4', 'ring-indigo-200');
+            }
+        }
+
+        function checkChartAnswer() {
             let isCountCorrect = true;
-            let isStructureCorrect = true; // Checks for gaps (empty spaces before filled spaces)
+            let isStructureCorrect = true; 
             
             for (let i = 0; i < 5; i++) {
                 let currentItemCount = currentData.gridState[i].filter(v => v).length;
@@ -390,7 +559,6 @@
                     isCountCorrect = false;
                 }
                 
-                // Check if they skipped cells (e.g. filled cell 3 but cell 1 is empty)
                 for (let j = 0; j < 12; j++) {
                     if (j < currentItemCount && !currentData.gridState[i][j]) {
                         isStructureCorrect = false;
@@ -399,7 +567,7 @@
             }
             
             if (isCountCorrect && isStructureCorrect) {
-                showModal('chart_success', '🎉 完美解答！ 🎉', '你成功且標準地製作了正確的象形圖，做得非常好！接下來請回答下方的進階問題吧！', '🏆', '挑戰進階問題');
+                showModal('chart_success', '🎉 完美解答！ 🎉', '你成功且標準地製作了正確的象形圖，做得非常好！接下來請挑戰下方的闖關問題吧！', '🏆', '挑戰進階問題');
             } else if (isCountCorrect && !isStructureCorrect) {
                 showModal('chart_warning', '數量正確，但是...', '畫象形圖時，要記得從頭（左邊或最下面）開始連續畫，中間不可以留空位喔！請修改一下。', '💡', '返回修改');
             } else {
@@ -432,7 +600,6 @@
             document.getElementById('resultModal').classList.add('hidden');
             
             if (modalState === 'chart_success') {
-                // 隱藏圖表提交按鈕，鎖定圖表，並顯示問答區
                 document.getElementById('submitBtnContainer').classList.add('hidden');
                 currentData.isChartLocked = true;
                 generateFollowUpQuestions();
@@ -440,24 +607,22 @@
                 const followUpArea = document.getElementById('followUpQuestionsArea');
                 followUpArea.classList.remove('hidden');
                 
-                // 平滑滾動到問題區
                 setTimeout(() => {
                     followUpArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 100);
             } else if (modalState === 'followup_success') {
-                // 通關後點擊重來
                 startGame();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
 
         function generateFollowUpQuestions() {
-            // 第一題：隨機物件數量
+            // Q1
             const q1Idx = Math.floor(Math.random() * 5);
             document.getElementById('q1-item').textContent = currentData.items[q1Idx];
             followUpAnswers.q1 = currentData.quantities[q1Idx];
 
-            // 尋找第二題(多)與第三題(少)的配對，並盡量確保物件不重複
+            // 尋找不重複對組合
             let greaterPairs = [];
             let lessPairs = [];
             for (let i = 0; i < 5; i++) {
@@ -466,16 +631,12 @@
                     if (currentData.quantities[i] < currentData.quantities[j]) lessPairs.push([i, j]);
                 }
             }
-            
-            // 將配對打亂增加隨機性
             greaterPairs.sort(() => 0.5 - Math.random());
             lessPairs.sort(() => 0.5 - Math.random());
             
-            let selectedGreater = null;
-            let selectedLess = null;
+            let selectedGreater = null, selectedLess = null;
             let foundDistinct = false;
             
-            // 尋找兩題四個物件完全不重複的組合
             for (let gPair of greaterPairs) {
                 for (let lPair of lessPairs) {
                     if (gPair[0] !== lPair[0] && gPair[0] !== lPair[1] &&
@@ -489,76 +650,128 @@
                 if (foundDistinct) break;
             }
             
-            // 如果因為隨機數據極端導致無法找到完全不重複的組合，則降級使用任意組合
             if (!foundDistinct) {
                 selectedGreater = greaterPairs.length > 0 ? greaterPairs[0] : [0, 1];
                 selectedLess = lessPairs.length > 0 ? lessPairs[0] : [1, 0];
             }
 
-            // 第二題：A 比 B 多
+            // Q2
             const [aIdx, bIdx] = selectedGreater;
             document.getElementById('q2-itemA').textContent = currentData.items[aIdx];
             document.getElementById('q2-itemB').textContent = currentData.items[bIdx];
             followUpAnswers.q2 = currentData.quantities[aIdx] - currentData.quantities[bIdx];
 
-            // 第三題：C 比 D 少
+            // Q3: Type selection
+            const q3Type = Math.floor(Math.random() * 3) + 1;
+            followUpAnswers.q3_type = q3Type;
+
+            document.getElementById('q3-type1').classList.add('hidden');
+            document.getElementById('q3-type2').classList.add('hidden');
+            document.getElementById('q3-type3').classList.add('hidden');
+
+            const optionsHtml = '<option value="">請選擇</option>' + currentData.items.map(item => `<option value="${item}">${item}</option>`).join('');
+
+            if (q3Type === 1) {
+                document.getElementById('q3-type1').classList.remove('hidden');
+                document.getElementById('ans-q3-max').innerHTML = optionsHtml;
+                const maxQty = Math.max(...currentData.quantities);
+                followUpAnswers.q3_ans = currentData.items[currentData.quantities.indexOf(maxQty)];
+            } else if (q3Type === 2) {
+                document.getElementById('q3-type2').classList.remove('hidden');
+                document.getElementById('ans-q3-min').innerHTML = optionsHtml;
+                const minQty = Math.min(...currentData.quantities);
+                followUpAnswers.q3_ans = currentData.items[currentData.quantities.indexOf(minQty)];
+            } else if (q3Type === 3) {
+                document.getElementById('q3-type3').classList.remove('hidden');
+                document.getElementById('ans-q3-eq1').innerHTML = optionsHtml;
+                document.getElementById('ans-q3-eq2').innerHTML = optionsHtml;
+
+                let eqItems = [];
+                for (let i = 0; i < 5; i++) {
+                    for (let j = i + 1; j < 5; j++) {
+                        if (currentData.quantities[i] === currentData.quantities[j]) {
+                            eqItems.push(currentData.items[i], currentData.items[j]);
+                        }
+                    }
+                }
+                followUpAnswers.q3_ans = eqItems;
+            }
+
+            // Q4
             const [cIdx, dIdx] = selectedLess;
-            document.getElementById('q3-itemC').textContent = currentData.items[cIdx];
-            document.getElementById('q3-itemD').textContent = currentData.items[dIdx];
-            followUpAnswers.q3 = currentData.quantities[dIdx] - currentData.quantities[cIdx];
+            document.getElementById('q4-itemC').textContent = currentData.items[cIdx];
+            document.getElementById('q4-itemD').textContent = currentData.items[dIdx];
+            followUpAnswers.q4 = currentData.quantities[dIdx] - currentData.quantities[cIdx];
 
-            // 第四題：最多人喜歡的是 (可能有並列第一)
-            const maxQty = Math.max(...currentData.quantities);
-            followUpAnswers.q4_max = maxQty;
-            
-            const q4Select = document.getElementById('ans-q4');
-            q4Select.innerHTML = '<option value="">請選擇</option>';
-            currentData.items.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = item;
-                opt.textContent = item;
-                q4Select.appendChild(opt);
-            });
-
-            // 第五題：總人數
+            // Q5
             followUpAnswers.q5 = currentData.quantities.reduce((a, b) => a + b, 0);
         }
 
-        function checkFollowUpAnswers() {
-            if(typeof closeKeypad === 'function') closeKeypad(); // 提交時自動關閉小鍵盤
+        function checkQuestion(step) {
+            if(typeof closeKeypad === 'function') closeKeypad(); 
 
-            const a1 = parseInt(document.getElementById('ans-q1').value);
-            const a2 = parseInt(document.getElementById('ans-q2').value);
-            const a3 = parseInt(document.getElementById('ans-q3').value);
-            const a4Val = document.getElementById('ans-q4').value;
-            const a5 = parseInt(document.getElementById('ans-q5').value);
+            let isCorrect = false;
+            let errorMsg = '答案不太對喔！';
 
-            let allCorrect = true;
-            let errorMsg = [];
-
-            // 驗證答案 (加入 isNaN 防呆，防止空白提交)
-            if (isNaN(a1) || a1 !== followUpAnswers.q1) { allCorrect = false; errorMsg.push('第一題'); }
-            if (isNaN(a2) || a2 !== followUpAnswers.q2) { allCorrect = false; errorMsg.push('第二題'); }
-            if (isNaN(a3) || a3 !== followUpAnswers.q3) { allCorrect = false; errorMsg.push('第三題'); }
-            
-            // 驗證第四題下拉選單
-            if (!a4Val) { 
-                allCorrect = false; 
-                if (!errorMsg.includes('第四題')) errorMsg.push('第四題');
-            } else {
-                const selectedIdx = currentData.items.indexOf(a4Val);
-                if (currentData.quantities[selectedIdx] !== followUpAnswers.q4_max) {
-                    allCorrect = false;
-                    errorMsg.push('第四題');
+            if (step === 1) {
+                const val = parseInt(document.getElementById('ans-q1').value);
+                if (!isNaN(val) && val === followUpAnswers.q1) isCorrect = true;
+            } else if (step === 2) {
+                const val = parseInt(document.getElementById('ans-q2').value);
+                if (!isNaN(val) && val === followUpAnswers.q2) isCorrect = true;
+            } else if (step === 3) {
+                let q3Correct = false;
+                if (followUpAnswers.q3_type === 1 && document.getElementById('ans-q3-max').value === followUpAnswers.q3_ans) {
+                    q3Correct = true;
+                } else if (followUpAnswers.q3_type === 2 && document.getElementById('ans-q3-min').value === followUpAnswers.q3_ans) {
+                    q3Correct = true;
+                } else if (followUpAnswers.q3_type === 3) {
+                    const a3_1 = document.getElementById('ans-q3-eq1').value;
+                    const a3_2 = document.getElementById('ans-q3-eq2').value;
+                    if (a3_1 && a3_2 && a3_1 !== a3_2) {
+                        const isMatch = (a3_1 === followUpAnswers.q3_ans[0] && a3_2 === followUpAnswers.q3_ans[1]) ||
+                                        (a3_1 === followUpAnswers.q3_ans[1] && a3_2 === followUpAnswers.q3_ans[0]);
+                        if (isMatch) q3Correct = true;
+                    }
                 }
+                if (q3Correct) isCorrect = true;
+            } else if (step === 4) {
+                const val = parseInt(document.getElementById('ans-q4').value);
+                if (!isNaN(val) && val === followUpAnswers.q4) isCorrect = true;
+            } else if (step === 5) {
+                const val = parseInt(document.getElementById('ans-q5').value);
+                if (!isNaN(val) && val === followUpAnswers.q5) isCorrect = true;
             }
 
-            if (isNaN(a5) || a5 !== followUpAnswers.q5) { allCorrect = false; errorMsg.push('第五題'); }
+            if (isCorrect) {
+                // 鎖定當前輸入
+                const stepDiv = document.getElementById(`q-step-${step}`);
+                const inputs = stepDiv.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    input.disabled = true;
+                    input.classList.remove('cursor-pointer', 'hover:bg-indigo-50');
+                    input.classList.add('bg-gray-100', 'text-gray-500', 'border-gray-300', 'pointer-events-none');
+                });
 
-            if (allCorrect) {
-                showModal('followup_success', '🌟 完美通關！ 🌟', '你不但做出了正確的象形圖，還全部答對了進階問題！你是統計小大師！', '🎓', '再玩一次');
+                // 外觀改為過關的綠色
+                stepDiv.classList.remove('bg-purple-100/50', 'border-purple-400');
+                stepDiv.classList.add('bg-green-50', 'border-green-400');
+
+                // 隱藏檢查按鈕、顯示打勾
+                document.getElementById(`btn-check-q${step}`).classList.add('hidden');
+                document.getElementById(`check-mark-${step}`).classList.remove('hidden');
+
+                if (step < 5) {
+                    // 顯示下一關
+                    const nextStepDiv = document.getElementById(`q-step-${step + 1}`);
+                    nextStepDiv.classList.remove('hidden');
+                    nextStepDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    // 通關
+                    showModal('followup_success', '🌟 完美通關！ 🌟', '你不但做出了正確的象形圖，還全部答對了進階問題！你是統計小大師！', '🎓', '再玩一次');
+                }
             } else {
-                showModal('followup_error', '有些小錯誤喔', `下列題目的答案不太對喔：${errorMsg.join('、')}。請再仔細看看象形圖算算看！`, '🔍', '返回修改');
+                showModal('followup_error', '再想一下喔 🤔', `第 ${step} 題的${errorMsg}請利用輔助線比對圖表算算看！`, '🔍', '返回修改');
             }
         }
 
@@ -566,22 +779,18 @@
         let activeInputId = null;
 
         function openKeypad(inputId) {
-            // 重置所有輸入框的外框高亮效果
             document.querySelectorAll('.keypad-input').forEach(el => {
                 el.classList.remove('border-indigo-500', 'ring-4', 'ring-indigo-200');
             });
             
-            // 標記目前啟用的輸入框，並給予高亮顯示
             activeInputId = inputId;
             const inputEl = document.getElementById(inputId);
             inputEl.classList.add('border-indigo-500', 'ring-4', 'ring-indigo-200');
             
-            // 顯示九宮格數字盤（移除 hidden class）
             const keypad = document.getElementById('virtualKeypad');
             keypad.classList.remove('hidden');
-            keypad.classList.add('flex'); // 確保使用 flexbox
+            keypad.classList.add('flex');
             
-            // 如果在手機版（視窗小於768px），畫面稍微滾動確保數字盤可見
             if(window.innerWidth < 768) {
                 setTimeout(() => {
                     keypad.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -590,7 +799,6 @@
         }
 
         function closeKeypad() {
-            // 移除輸入框的高亮效果
             if(activeInputId) {
                 const inputEl = document.getElementById(activeInputId);
                 if(inputEl) {
@@ -599,7 +807,6 @@
             }
             activeInputId = null;
             
-            // 隱藏九宮格數字盤
             const keypad = document.getElementById('virtualKeypad');
             if(keypad) {
                 keypad.classList.add('hidden');
@@ -610,7 +817,6 @@
         function keypadPress(num) {
             if(!activeInputId) return;
             const input = document.getElementById(activeInputId);
-            // 限制最多只能輸入3位數 (防止亂按)
             if(input.value.length < 3) {
                 input.value += num;
             }
