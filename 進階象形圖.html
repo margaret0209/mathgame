@@ -90,24 +90,26 @@
             <div class="bg-white rounded-2xl shadow-lg p-6 md:p-10 border border-gray-100">
                 
                 <!-- Chart Header -->
-                <div class="mb-6 flex flex-col md:flex-row justify-between items-center md:items-end gap-4 border-b-2 border-dashed border-gray-200 pb-4">
-                    <h2 id="chartTitle" class="text-3xl font-black text-center md:text-left text-gray-800 tracking-wide">最喜愛的項目</h2>
-                    <div class="flex flex-col items-center md:items-end gap-2">
-                        <p class="text-gray-600 font-bold text-lg">一個 <span class="text-2xl inline-block align-middle">🙂</span> 代表 1</p>
-                        <div class="bg-indigo-50 border border-indigo-200 text-indigo-700 text-sm font-bold p-2 md:p-3 rounded-lg shadow-sm">
-                            <p class="mb-1">💡 實用小工具：</p>
-                            <ul class="list-disc pl-5 space-y-1 text-xs md:text-sm">
-                                <li>點擊圖表旁的「名稱」可以 <span class="bg-indigo-200 px-1 rounded text-indigo-900">Highlight 標記</span> 該項目！</li>
-                                <li>拖曳紅色的「對齊線」可以方便比較數量！</li>
-                            </ul>
-                        </div>
-                    </div>
+                <div class="mb-4 border-b-2 border-dashed border-gray-200 pb-4">
+                    <h2 id="chartTitle" class="text-3xl md:text-4xl font-black text-center text-gray-800 tracking-wide mb-4">最喜愛的項目</h2>
+                    <p class="text-right text-gray-600 font-bold text-lg md:text-xl">一個 <span class="text-2xl inline-block align-middle">🙂</span> 代表 1</p>
                 </div>
 
                 <!-- Interactive Grid Container -->
                 <div class="chart-scroll-container overflow-x-auto flex justify-center py-4">
                     <div id="chartGrid" class="select-none relative">
                         <!-- Grid will be generated here -->
+                    </div>
+                </div>
+
+                <!-- Practical Tools Tip Box -->
+                <div class="mt-4 mb-8 flex justify-center">
+                    <div class="bg-indigo-50 border border-indigo-200 text-indigo-700 text-sm font-bold p-4 md:p-5 rounded-xl shadow-sm w-full max-w-2xl">
+                        <p class="mb-2 text-base md:text-lg">💡 實用小工具：</p>
+                        <ul class="list-disc pl-6 space-y-1.5 text-sm md:text-base">
+                            <li>點擊圖表旁的「名稱」可以 <span class="bg-indigo-200 px-1.5 py-0.5 rounded text-indigo-900">Highlight 標記</span> 該項目！</li>
+                            <li>拖曳紅色的「對齊線」可以方便比較數量！</li>
+                        </ul>
                     </div>
                 </div>
 
