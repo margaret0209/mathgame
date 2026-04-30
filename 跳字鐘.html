@@ -68,7 +68,7 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-3xl w-full border border-green-100">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-5xl w-full border border-green-100">
         <h1 class="text-4xl font-bold text-center text-green-700 mb-8 tracking-wide">⏱️ 跳字鐘互動遊戲</h1>
 
         <!-- 控制面板 -->
@@ -299,30 +299,30 @@
             if (state.qType === 'select') {
                 if (!state.isHourAnswered) {
                     const rowDiv = document.createElement('div');
-                    rowDiv.className = "flex items-center gap-4 flex-wrap justify-center";
-                    rowDiv.innerHTML = `<span class="text-xl font-bold text-gray-700 w-24 text-right">選擇「時」:</span>`;
+                    rowDiv.className = "flex items-center gap-6 flex-wrap justify-center";
+                    rowDiv.innerHTML = `<span class="text-3xl font-bold text-gray-700 w-40 text-right">選擇「時」:</span>`;
                     state.hourOptions.forEach(opt => {
-                        rowDiv.innerHTML += `<button class="bg-white border-2 border-blue-400 text-blue-600 hover:bg-blue-50 font-bold py-2 px-6 rounded-lg shadow-sm transition transform hover:-translate-y-1 text-2xl" onclick="selectAnswer('hour', ${opt})">${opt}</button>`;
+                        rowDiv.innerHTML += `<button class="bg-white border-4 border-blue-400 text-blue-600 hover:bg-blue-50 font-bold py-4 px-8 rounded-2xl shadow-md transition transform hover:-translate-y-1 text-5xl" onclick="selectAnswer('hour', ${opt})">${opt}</button>`;
                     });
                     els.optsArea.appendChild(rowDiv);
                 }
 
                 if (!state.isMinuteAnswered) {
                     const rowDiv = document.createElement('div');
-                    rowDiv.className = "flex items-center gap-4 flex-wrap justify-center";
-                    rowDiv.innerHTML = `<span class="text-xl font-bold text-gray-700 w-24 text-right">選擇「分」:</span>`;
+                    rowDiv.className = "flex items-center gap-6 flex-wrap justify-center";
+                    rowDiv.innerHTML = `<span class="text-3xl font-bold text-gray-700 w-40 text-right">選擇「分」:</span>`;
                     state.minuteOptions.forEach(opt => {
-                        rowDiv.innerHTML += `<button class="bg-white border-2 border-green-400 text-green-600 hover:bg-green-50 font-bold py-2 px-6 rounded-lg shadow-sm transition transform hover:-translate-y-1 text-2xl" onclick="selectAnswer('minute', ${opt})">${opt}</button>`;
+                        rowDiv.innerHTML += `<button class="bg-white border-4 border-green-400 text-green-600 hover:bg-green-50 font-bold py-4 px-8 rounded-2xl shadow-md transition transform hover:-translate-y-1 text-5xl" onclick="selectAnswer('minute', ${opt})">${opt}</button>`;
                     });
                     els.optsArea.appendChild(rowDiv);
                 }
 
                 if (!state.isAmpmAnswered) {
                     const rowDiv = document.createElement('div');
-                    rowDiv.className = "flex items-center gap-4 flex-wrap justify-center";
-                    rowDiv.innerHTML = `<span class="text-xl font-bold text-gray-700 w-24 text-right">選擇:</span>`;
+                    rowDiv.className = "flex items-center gap-6 flex-wrap justify-center";
+                    rowDiv.innerHTML = `<span class="text-3xl font-bold text-gray-700 w-40 text-right">選擇:</span>`;
                     ['上午', '下午'].forEach(opt => {
-                        rowDiv.innerHTML += `<button class="bg-white border-2 border-orange-400 text-orange-600 hover:bg-orange-50 font-bold py-2 px-6 rounded-lg shadow-sm transition transform hover:-translate-y-1 text-2xl" onclick="selectAnswer('ampm', '${opt}')">${opt}</button>`;
+                        rowDiv.innerHTML += `<button class="bg-white border-4 border-orange-400 text-orange-600 hover:bg-orange-50 font-bold py-4 px-8 rounded-2xl shadow-md transition transform hover:-translate-y-1 text-5xl" onclick="selectAnswer('ampm', '${opt}')">${opt}</button>`;
                     });
                     els.optsArea.appendChild(rowDiv);
                 }
