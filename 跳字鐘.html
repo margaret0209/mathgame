@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跳字鐘互動遊戲</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0fdf4;
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+        }
+        .font-digital {
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 4px;
+        }
+        .clock-panel {
+            background: #111827;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 10px 25px rgba(0,0,0,0.2);
+            border: 4px solid #374151;
+        }
+        .digit-box {
+            position: relative;
+            display: inline-block;
+            transition: all 0.2s ease-in-out;
+            border: 2px solid transparent;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+        }
+        
+        /* 提示模式的動畫效果 */
+        @keyframes pulse-hint {
+            0%, 100% { border-color: #fbbf24; box-shadow: 0 0 15px rgba(251, 191, 36, 0.5); }
+            50% { border-color: transparent; box-shadow: none; }
+        }
+        .hint-active {
+            animation: pulse-hint 1.5s infinite;
+        }
+        
+        /* 點擊模式下的懸停效果 */
+        .clickable-digit:hover {
+            background-color: #1f2937;
+            cursor: pointer;
+            border-color: #60a5fa;
+        }
+
+        .colon {
+            animation: blink 2s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        .answer-slot {
+            display: inline-block;
+            width: 3.5rem;
+            height: 3.5rem;
+            background-color: #f3f4f6;
+            border: 3px dashed #9ca3af;
+            border-radius: 0.5rem;
+            vertical-align: middle;
+            margin: 0 0.25rem;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-3xl w-full border border-green-100">
+        <h1 class="text-4xl font-bold text-center text-green-700 mb-8 tracking-wide">⏱️ 跳字鐘互動遊戲</h1>
+
+        <!-- 控制面板 -->
+        <div class="flex flex-wrap gap-4 justify-center mb-10 bg-green-50 p-4 rounded-xl">
+            <div class="flex items-center gap-2">
+                <label for="modeSelect" class="font-bold text-gray-700">模式：</label>
+                <select id="modeSelect" class="border-2 border-green-300 rounded-lg p-2 bg-white focus:outline-none focus:border-green-500">
+                    <option value="hour">時</option>
+                    <option value="minute">分</option>
+                    <option value="both">時與分</option>
+                    <option value="ampm">上午/下午</option>
+                </select>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <label for="qTypeSelect" class="font-bold text-gray-700">問題種類：</label>
+                <select id="qTypeSelect" class="border-2 border-green-300 rounded-lg p-2 bg-white focus:outline-none focus:border-green-500">
+                    <option value="select">選出時間</option>
+                    <option value="click">點擊時鐘</option>
+                </select>
+            </div>
+
+            <div class="flex items-center gap-2 ml-4">
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="hintToggle" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-400"></div>
+                    <span class="ml-3 font-bold text-gray-700">開啟提示</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- 跳字鐘顯示 -->
+        <div class="flex justify-center mb-8">
+            <div class="clock-panel text-7xl sm:text-8xl text-green-400 font-digital rounded-xl p-6 sm:p-8 select-none flex items-center">
+                <span id="clock-hour" class="digit-box" onclick="handleClockClick('hour')">00</span>
+                <span class="colon text-green-500 pb-4 mx-2">:</span>
+                <span id="clock-minute" class="digit-box" onclick="handleClockClick('minute')">00</span>
+                <span id="clock-ampm" class="digit-box text-3xl sm:text-4xl text-green-300 ml-4" onclick="handleClockClick('ampm')">AM</span>
+            </div>
+        </div>
+
+        <!-- 提示文字區域 -->
+        <div id="hintText" class="text-center text-yellow-600 font-bold mb-6 h-6 text-lg transition-opacity"></div>
+
+        <!-- 題目句子 -->
+        <div class="text-center text-2xl sm:text-3xl text-gray-800 mb-10 leading-relaxed font-medium" id="questionText">
+            <!-- 題目內容將由 JS 動態生成 -->
+        </div>
+
+        <!-- 回答選項區域 (僅在"選出時間"模式顯示) -->
+        <div id="optionsArea" class="flex flex-col items-center gap-6 mb-8 min-h-[100px]">
+            <!-- 選項將由 JS 動態生成 -->
+        </div>
+
+        <!-- 遊戲回饋與下一步 -->
+        <div class="flex flex-col items-center gap-4">
+            <div id="feedbackMsg" class="text-2xl font-bold h-8 transition-colors"></div>
+            <button id="nextBtn" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-10 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 text-xl mt-4 hidden" onclick="sfx.click(); generateNewQuestion()">
+                下一題 ➔
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 遊戲音效系統 (使用 Web Audio API)
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playTone(freq, type, duration, vol) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        const sfx = {
+            click: () => playTone(600, 'sine', 0.1, 0.05),
+            correct: () => {
+                playTone(523.25, 'sine', 0.1, 0.1);
+                setTimeout(() => playTone(659.25, 'sine', 0.15, 0.1), 100);
+            },
+            wrong: () => playTone(200, 'sawtooth', 0.3, 0.1),
+            win: () => {
+                playTone(523.25, 'sine', 0.1, 0.1);
+                setTimeout(() => playTone(659.25, 'sine', 0.1, 0.1), 100);
+                setTimeout(() => playTone(783.99, 'sine', 0.1, 0.1), 200);
+                setTimeout(() => playTone(1046.50, 'sine', 0.3, 0.1), 300);
+            }
+        };
+
+        // 遊戲狀態
+        const state = {
+            mode: 'hour', // 'hour', 'minute', 'both'
+            qType: 'select', // 'select', 'click'
+            hintOn: false,
+            
+            targetHour: 0,
+            displayHour: 12,
+            targetMinute: 0,
+            ampm: 'AM',
+            ampmZh: '上午',
+            
+            hourOptions: [],
+            minuteOptions: [],
+            
+            isHourAnswered: false,
+            isMinuteAnswered: false,
+            isAmpmAnswered: false,
+        };
+
+        // DOM 元素
+        const els = {
+            mode: document.getElementById('modeSelect'),
+            qType: document.getElementById('qTypeSelect'),
+            hint: document.getElementById('hintToggle'),
+            clockHour: document.getElementById('clock-hour'),
+            clockMinute: document.getElementById('clock-minute'),
+            clockAmpm: document.getElementById('clock-ampm'),
+            qText: document.getElementById('questionText'),
+            optsArea: document.getElementById('optionsArea'),
+            feedback: document.getElementById('feedbackMsg'),
+            nextBtn: document.getElementById('nextBtn'),
+            hintText: document.getElementById('hintText')
+        };
+
+        // 初始化
+        function init() {
+            els.mode.addEventListener('change', (e) => { sfx.click(); state.mode = e.target.value; generateNewQuestion(); });
+            els.qType.addEventListener('change', (e) => { sfx.click(); state.qType = e.target.value; generateNewQuestion(); });
+            els.hint.addEventListener('change', (e) => { sfx.click(); state.hintOn = e.target.checked; render(); });
+            
+            generateNewQuestion();
+        }
+
+        // 產生選項陣列 (確保包含正確答案，且共3個不重複的選項)
+        function generateOptions(correctAnswer, min, max) {
+            let options = new Set([correctAnswer]);
+            while (options.size < 3) {
+                let randomVal = Math.floor(Math.random() * (max - min + 1)) + min;
+                options.add(randomVal);
+            }
+            // 轉成陣列並隨機排序
+            return Array.from(options).sort(() => Math.random() - 0.5);
+        }
+
+        // 產生新題目
+        function generateNewQuestion() {
+            // 隨機產生時間 (時: 0-23, 分: 0-59)
+            state.targetHour = Math.floor(Math.random() * 24);
+            state.displayHour = state.targetHour % 12 || 12;
+            state.targetMinute = Math.floor(Math.random() * 60);
+            state.ampm = state.targetHour < 12 ? 'AM' : 'PM';
+            state.ampmZh = state.targetHour < 12 ? '上午' : '下午';
+
+            // 產生選項
+            state.hourOptions = generateOptions(state.displayHour, 1, 12);
+            state.minuteOptions = generateOptions(state.targetMinute, 0, 59);
+
+            // 根據模式設定哪些部分已經「作答」
+            state.isHourAnswered = state.mode !== 'hour' && state.mode !== 'both';
+            state.isMinuteAnswered = state.mode !== 'minute' && state.mode !== 'both';
+            state.isAmpmAnswered = state.mode !== 'ampm';
+
+            // 重置介面狀態
+            els.feedback.innerText = "";
+            els.nextBtn.classList.add('hidden');
+            
+            render();
+        }
+
+        // 格式化數字為兩位數
+        function padZero(num) {
+            return num.toString().padStart(2, '0');
+        }
+
+        // 渲染畫面
+        function render() {
+            // 1. 更新時鐘顯示
+            els.clockHour.innerText = padZero(state.displayHour);
+            els.clockMinute.innerText = padZero(state.targetMinute);
+            els.clockAmpm.innerText = state.ampm;
+
+            // 處理時鐘點擊樣式和提示動畫
+            if (state.qType === 'click') {
+                els.clockHour.className = `digit-box ${!state.isHourAnswered ? 'clickable-digit' : ''} ${(!state.isHourAnswered && state.hintOn) ? 'hint-active' : ''}`;
+                els.clockMinute.className = `digit-box ${!state.isMinuteAnswered ? 'clickable-digit' : ''} ${(!state.isMinuteAnswered && state.hintOn) ? 'hint-active' : ''}`;
+                els.clockAmpm.className = `digit-box text-3xl sm:text-4xl text-green-300 ml-4 ${!state.isAmpmAnswered ? 'clickable-digit' : ''} ${(!state.isAmpmAnswered && state.hintOn) ? 'hint-active' : ''}`;
+            } else {
+                els.clockHour.className = `digit-box ${(!state.isHourAnswered && state.hintOn) ? 'hint-active' : ''}`;
+                els.clockMinute.className = `digit-box ${(!state.isMinuteAnswered && state.hintOn) ? 'hint-active' : ''}`;
+                els.clockAmpm.className = `digit-box text-3xl sm:text-4xl text-green-300 ml-4 ${(!state.isAmpmAnswered && state.hintOn) ? 'hint-active' : ''}`;
+            }
+
+            // 2. 更新提示文字
+            if (state.hintOn && !(state.isHourAnswered && state.isMinuteAnswered && state.isAmpmAnswered)) {
+                if (state.qType === 'click') {
+                    els.hintText.innerText = "💡 提示：點擊上方時鐘閃爍的數字部分來回答！";
+                } else {
+                    els.hintText.innerText = `💡 提示：注意看時鐘！時間是 ${state.ampmZh} ${state.displayHour} 時 ${state.targetMinute} 分。`;
+                }
+            } else {
+                els.hintText.innerText = "";
+            }
+
+            // 3. 組合題目句子
+            let emptyBox = `<span class="answer-slot" title="請作答"></span>`;
+            
+            let ampmStr = state.isAmpmAnswered ? 
+                `<span class="text-orange-600 font-bold">${state.ampmZh}</span>` : emptyBox;
+
+            let hourStr = state.isHourAnswered ? 
+                `<span class="text-blue-700 font-bold px-1 text-3xl sm:text-4xl">${state.displayHour}</span>` : emptyBox;
+                
+            let minuteStr = state.isMinuteAnswered ? 
+                `<span class="text-blue-700 font-bold px-1 text-3xl sm:text-4xl">${state.targetMinute}</span>` : emptyBox;
+
+            els.qText.innerHTML = `時鐘顯示的時間是 ${ampmStr} ${hourStr} 時 ${minuteStr} 分。`;
+
+            // 4. 更新選項按鈕 (僅選出時間模式)
+            els.optsArea.innerHTML = "";
+            if (state.qType === 'select') {
+                if (!state.isHourAnswered) {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = "flex items-center gap-4 flex-wrap justify-center";
+                    rowDiv.innerHTML = `<span class="text-xl font-bold text-gray-700 w-24 text-right">選擇「時」:</span>`;
+                    state.hourOptions.forEach(opt => {
+                        rowDiv.innerHTML += `<button class="bg-white border-2 border-blue-400 text-blue-600 hover:bg-blue-50 font-bold py-2 px-6 rounded-lg shadow-sm transition transform hover:-translate-y-1 text-2xl" onclick="selectAnswer('hour', ${opt})">${opt}</button>`;
+                    });
+                    els.optsArea.appendChild(rowDiv);
+                }
+
+                if (!state.isMinuteAnswered) {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = "flex items-center gap-4 flex-wrap justify-center";
+                    rowDiv.innerHTML = `<span class="text-xl font-bold text-gray-700 w-24 text-right">選擇「分」:</span>`;
+                    state.minuteOptions.forEach(opt => {
+                        rowDiv.innerHTML += `<button class="bg-white border-2 border-green-400 text-green-600 hover:bg-green-50 font-bold py-2 px-6 rounded-lg shadow-sm transition transform hover:-translate-y-1 text-2xl" onclick="selectAnswer('minute', ${opt})">${opt}</button>`;
+                    });
+                    els.optsArea.appendChild(rowDiv);
+                }
+
+                if (!state.isAmpmAnswered) {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = "flex items-center gap-4 flex-wrap justify-center";
+                    rowDiv.innerHTML = `<span class="text-xl font-bold text-gray-700 w-24 text-right">選擇:</span>`;
+                    ['上午', '下午'].forEach(opt => {
+                        rowDiv.innerHTML += `<button class="bg-white border-2 border-orange-400 text-orange-600 hover:bg-orange-50 font-bold py-2 px-6 rounded-lg shadow-sm transition transform hover:-translate-y-1 text-2xl" onclick="selectAnswer('ampm', '${opt}')">${opt}</button>`;
+                    });
+                    els.optsArea.appendChild(rowDiv);
+                }
+            }
+        }
+
+        // 處理時鐘點擊事件 (點擊時鐘問題)
+        function handleClockClick(part) {
+            if (state.qType !== 'click') return;
+
+            let correctHit = false;
+            if (part === 'hour' && !state.isHourAnswered) {
+                state.isHourAnswered = true;
+                showFeedback("選對了「時」！", true);
+                correctHit = true;
+            } else if (part === 'minute' && !state.isMinuteAnswered) {
+                state.isMinuteAnswered = true;
+                showFeedback("選對了「分」！", true);
+                correctHit = true;
+            } else if (part === 'ampm' && !state.isAmpmAnswered) {
+                state.isAmpmAnswered = true;
+                showFeedback("選對了「上午/下午」！", true);
+                correctHit = true;
+            }
+            
+            render();
+            checkWinCondition(correctHit);
+        }
+
+        // 處理選項點擊事件 (選出時間問題)
+        function selectAnswer(part, value) {
+            let correctHit = false;
+            if (part === 'hour') {
+                if (value === state.displayHour) {
+                    state.isHourAnswered = true;
+                    showFeedback("「時」答對了！", true);
+                    correctHit = true;
+                } else {
+                    showFeedback("「時」不對喔，請再試一次！", false);
+                    sfx.wrong();
+                }
+            } else if (part === 'minute') {
+                if (value === state.targetMinute) {
+                    state.isMinuteAnswered = true;
+                    showFeedback("「分」答對了！", true);
+                    correctHit = true;
+                } else {
+                    showFeedback("「分」不對喔，請再試一次！", false);
+                    sfx.wrong();
+                }
+            } else if (part === 'ampm') {
+                if (value === state.ampmZh) {
+                    state.isAmpmAnswered = true;
+                    showFeedback("「上午/下午」答對了！", true);
+                    correctHit = true;
+                } else {
+                    showFeedback("「上午/下午」不對喔，請再試一次！", false);
+                    sfx.wrong();
+                }
+            }
+            
+            render();
+            checkWinCondition(correctHit);
+        }
+
+        // 顯示回饋訊息
+        function showFeedback(msg, isSuccess) {
+            els.feedback.innerText = msg;
+            els.feedback.className = `text-2xl font-bold h-8 transition-colors ${isSuccess ? 'text-green-600' : 'text-red-500'}`;
+        }
+
+        // 檢查是否完全過關
+        function checkWinCondition(isCorrectHit) {
+            if (state.isHourAnswered && state.isMinuteAnswered && state.isAmpmAnswered) {
+                showFeedback("🎉 太棒了！你答對了目前時間！", true);
+                els.nextBtn.classList.remove('hidden'); // 顯示下一題按鈕
+                els.optsArea.innerHTML = ""; // 隱藏選項區域
+                if (isCorrectHit) sfx.win();
+            } else {
+                if (isCorrectHit) sfx.correct();
+            }
+        }
+
+        // 啟動遊戲
+        window.onload = init;
+    </script>
+</body>
+</html>
