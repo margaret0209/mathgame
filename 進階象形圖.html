@@ -150,7 +150,7 @@
                             <div class="w-full">
                                 <div class="flex justify-between items-center mb-3 px-1">
                                     <span class="text-indigo-800 font-bold text-base md:text-lg">🔢 數字鍵盤</span>
-                                    <button onclick="closeKeypad()" class="text-gray-500 hover:text-gray-700 font-bold text-xs bg-gray-200 hover:bg-gray-300 py-1 px-2.5 rounded-full transition-colors">✕ 關閉</button>
+                                    <button onclick="sounds.click(); closeKeypad()" class="text-gray-500 hover:text-gray-700 font-bold text-xs bg-gray-200 hover:bg-gray-300 py-1 px-2.5 rounded-full transition-colors">✕ 關閉</button>
                                 </div>
                                 <div class="grid grid-cols-3 gap-1.5 text-xl font-black">
                                     <button onclick="keypadPress('1')" class="bg-white py-2 rounded-lg shadow border-b-4 border-gray-200 active:border-b-0 active:translate-y-1 text-gray-800">1</button>
@@ -192,13 +192,38 @@
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioContext();
         
-        function playTone(freq, type, duration, vol=0.1) {
+        // 確保在首次使用者互動時解鎖音效 (針對手機及平板瀏覽器限制)
+        let audioUnlocked = false;
+        function unlockAudio() {
+            if (!audioUnlocked) {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                gain.gain.value = 0;
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.001);
+                audioUnlocked = true;
+                window.removeEventListener('click', unlockAudio);
+                window.removeEventListener('touchstart', unlockAudio);
+            }
+        }
+        window.addEventListener('click', unlockAudio);
+        window.addEventListener('touchstart', unlockAudio);
+        
+        function playTone(freq, type, duration, vol=0.1, sweep=false) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             
             oscillator.type = type;
             oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            // 加入頻率滑音效果 (Sweep) 讓音效更生動 (例如 Pop 泡泡聲)
+            if (sweep) {
+                oscillator.frequency.exponentialRampToValueAtTime(freq * 1.5, audioCtx.currentTime + duration);
+            }
             
             gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
@@ -211,21 +236,20 @@
         }
         
         const sounds = {
-            pop: () => playTone(600, 'sine', 0.1, 0.2), 
-            click: () => playTone(400, 'square', 0.05, 0.02), 
-            correct: () => { 
-                playTone(523.25, 'sine', 0.1, 0.1); 
-                setTimeout(() => playTone(659.25, 'sine', 0.2, 0.1), 100); 
+            pop: () => playTone(400, 'sine', 0.15, 0.2, true), // 泡泡聲 (頻率上揚)
+            click: () => playTone(800, 'triangle', 0.05, 0.08), // 清脆按鍵聲 (音量微調放大)
+            correct: () => { // 答對：清脆的叮咚聲 (Mi -> La)
+                playTone(659.25, 'sine', 0.1, 0.1); 
+                setTimeout(() => playTone(880.00, 'sine', 0.2, 0.1), 100); 
             },
-            wrong: () => { 
-                playTone(300, 'sawtooth', 0.2, 0.05);
-                setTimeout(() => playTone(250, 'sawtooth', 0.3, 0.05), 150);
+            wrong: () => { // 答錯：低沉的嘟嘟聲
+                playTone(300, 'square', 0.2, 0.05);
+                setTimeout(() => playTone(250, 'square', 0.3, 0.05), 150);
             },
-            win: () => { 
-                playTone(523.25, 'sine', 0.1, 0.1);
-                setTimeout(() => playTone(659.25, 'sine', 0.1, 0.1), 100);
-                setTimeout(() => playTone(783.99, 'sine', 0.1, 0.1), 200);
-                setTimeout(() => playTone(1046.50, 'sine', 0.4, 0.1), 300);
+            win: () => { // 通關：歡樂的琶音 (Do-Mi-So-Do)
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                    setTimeout(() => playTone(freq, 'sine', i === 3 ? 0.4 : 0.15, 0.1), i * 120);
+                });
             }
         };
 
