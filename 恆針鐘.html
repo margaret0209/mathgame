@@ -286,16 +286,16 @@
             };
 
             return (
-                <div className="max-w-4xl mx-auto p-4 md:p-8 min-h-screen flex flex-col items-center">
+                <div className="max-w-7xl mx-auto p-4 md:p-8 min-h-screen flex flex-col items-center">
                     
                     {/* Header & Controls */}
                     <div className="w-full bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-teal-100 mb-8 flex flex-col items-center gap-6">
                         <h1 className="text-3xl font-black text-teal-800 tracking-wide">⏰ 恆針鐘互動遊戲</h1>
                         
-                        <div className="flex flex-wrap justify-center gap-6 w-full">
+                        <div className="flex flex-col xl:flex-row justify-center items-center xl:items-stretch gap-4 xl:gap-8 w-full">
                             <div className="flex flex-col items-center gap-2">
                                 <span className="text-sm font-bold text-gray-500">模式選擇</span>
-                                <div className="flex gap-2 bg-gray-50 p-1.5 rounded-full border border-gray-200 flex-wrap justify-center">
+                                <div className="flex gap-2 bg-gray-50 p-1.5 rounded-full border border-gray-200 flex-wrap justify-center h-full items-center">
                                     <TabButton theme="blue" active={mode === 'oclock'} onClick={() => { sounds.click(); setMode('oclock'); }}>時正</TabButton>
                                     <TabButton theme="blue" active={mode === 'halfpast'} onClick={() => { sounds.click(); setMode('halfpast'); }}>時半</TabButton>
                                     <TabButton theme="blue" active={mode === 'hourmin'} onClick={() => { sounds.click(); setMode('hourmin'); }}>時與分</TabButton>
@@ -307,26 +307,33 @@
                             {!['findhour', 'findminute'].includes(mode) && (
                                 <div className="flex flex-col items-center gap-2">
                                     <span className="text-sm font-bold text-gray-500">問題種類</span>
-                                    <div className="flex gap-2 bg-gray-50 p-1.5 rounded-full border border-gray-200">
+                                    <div className="flex gap-2 bg-gray-50 p-1.5 rounded-full border border-gray-200 h-full items-center">
                                         <TabButton theme="green" active={qType === 'select'} onClick={() => { sounds.click(); setQType('select'); }}>選出時間</TabButton>
                                         <TabButton theme="green" active={qType === 'click'} onClick={() => { sounds.click(); setQType('click'); }}>點擊時鐘</TabButton>
                                     </div>
                                 </div>
                             )}
 
-                            <div className="flex flex-col items-center gap-2 justify-end pb-1.5">
-                                <button 
-                                    onClick={() => { sounds.click(); setHint(!hint); }} 
-                                    className={`px-5 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all border-b-4 active:border-b-0 active:translate-y-1 ${hint ? 'bg-amber-400 text-amber-900 border-amber-500 shadow-inner' : 'bg-white text-amber-500 border-amber-200 hover:bg-amber-50'}`}
-                                >
-                                    💡 提示 {hint ? 'ON' : 'OFF'}
-                                </button>
+                            <div className="flex flex-col items-center gap-2">
+                                <span className="text-sm font-bold text-gray-500">提示功能</span>
+                                <div className="flex items-center justify-center bg-gray-50 p-1.5 rounded-full border border-gray-200 h-full px-6">
+                                    <label className="flex items-center cursor-pointer gap-3">
+                                        <div className="relative">
+                                            <input type="checkbox" className="sr-only" checked={hint} onChange={() => { sounds.click(); setHint(!hint); }} />
+                                            <div className={`block w-14 h-8 rounded-full shadow-inner transition-colors duration-300 ${hint ? 'bg-amber-400' : 'bg-gray-300'}`}></div>
+                                            <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full shadow-sm transition-transform duration-300 ${hint ? 'transform translate-x-6' : ''}`}></div>
+                                        </div>
+                                        <span className={`font-bold text-lg select-none w-12 text-left ${hint ? 'text-amber-600' : 'text-gray-400'}`}>
+                                            {hint ? 'ON' : 'OFF'}
+                                        </span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Game Area */}
-                    <div className="w-full max-w-3xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 relative">
+                    <div className="w-full max-w-5xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 relative">
                         
                         {/* Clock SVG */}
                         <div className="relative w-full max-w-[340px] aspect-square select-none">
@@ -472,9 +479,9 @@
                         <div className="flex-1 w-full bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-teal-100 flex flex-col justify-center min-h-[260px] text-center relative">
                             
                             {['findhour', 'findminute'].includes(mode) ? (
-                                <div className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-700 leading-loose flex flex-col items-center justify-center gap-y-4">
-                                    <span>請找出並點擊時鐘上的</span>
-                                    <span className={`inline-block px-6 py-2 border-b-4 rounded-xl ${mode === 'findhour' ? 'border-red-500 bg-red-50 text-red-600' : 'border-blue-500 bg-blue-50 text-blue-600'} text-3xl md:text-4xl lg:text-5xl transition-colors`}>
+                                <div className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-700 leading-loose flex flex-wrap items-center justify-center gap-x-4 gap-y-4">
+                                    <span className="whitespace-nowrap">請找出並點擊時鐘上的</span>
+                                    <span className={`whitespace-nowrap inline-block px-6 py-2 border-b-4 rounded-xl ${mode === 'findhour' ? 'border-red-500 bg-red-50 text-red-600' : 'border-blue-500 bg-blue-50 text-blue-600'} text-3xl md:text-4xl lg:text-5xl transition-colors`}>
                                         {mode === 'findhour' ? '時針 (短針)' : '分針 (長針)'}
                                     </span>
                                 </div>
@@ -493,40 +500,39 @@
 
                                     {/* Question Text */}
                                     {qType === 'select' ? (
-                                        <div className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-700 leading-loose flex flex-wrap items-center justify-center gap-y-4">
-                                            <span>時鐘顯示的時間是</span>
-                                            {renderSelectButtons('h')}
-                                            <span>時</span>
+                                        <div className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-700 leading-loose flex flex-wrap items-center justify-center gap-x-2 gap-y-4">
+                                            <span className="whitespace-nowrap">時鐘顯示的時間是</span>
                                             
-                                            {mode === 'halfpast' && <span className="ml-2">半。</span>}
-                                            {mode === 'oclock' && <span className="ml-2">正。</span>}
+                                            <span className="whitespace-nowrap inline-flex items-center">
+                                                {renderSelectButtons('h')}
+                                                <span>時{mode === 'halfpast' ? '半。' : (mode === 'oclock' ? '正。' : '')}</span>
+                                            </span>
                                             
                                             {mode === 'hourmin' && (
-                                                <>
+                                                <span className="whitespace-nowrap inline-flex items-center">
                                                     {renderSelectButtons('m')}
                                                     <span>分。</span>
-                                                </>
+                                                </span>
                                             )}
                                         </div>
                                     ) : (
-                                        <div className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-700 leading-loose flex flex-wrap items-center justify-center gap-y-4">
-                                            <span>時鐘顯示的時間是</span>
+                                        <div className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-700 leading-loose flex flex-wrap items-center justify-center gap-x-2 gap-y-4">
+                                            <span className="whitespace-nowrap">時鐘顯示的時間是</span>
                                             
-                                            <span className={`inline-block min-w-[3rem] px-2 pb-1 mx-3 border-b-4 ${answered.h === null ? 'border-red-500 bg-red-50' : 'border-gray-400'} text-center text-red-600 transition-colors rounded-t-lg`}>
-                                                {answered.h !== null ? answered.h : '?'}
+                                            <span className="whitespace-nowrap inline-flex items-center">
+                                                <span className={`inline-block min-w-[3rem] px-2 pb-1 mx-3 border-b-4 ${answered.h === null ? 'border-red-500 bg-red-50' : 'border-gray-400'} text-center text-red-600 transition-colors rounded-t-lg`}>
+                                                    {answered.h !== null ? answered.h : '?'}
+                                                </span>
+                                                <span>時{mode === 'halfpast' ? '半。' : (mode === 'oclock' ? '正。' : '')}</span>
                                             </span>
-                                            <span>時</span>
-                                            
-                                            {mode === 'halfpast' && <span className="ml-2">半。</span>}
-                                            {mode === 'oclock' && <span className="ml-2">正。</span>}
 
                                             {mode === 'hourmin' && (
-                                                <>
+                                                <span className="whitespace-nowrap inline-flex items-center">
                                                     <span className={`inline-block min-w-[3rem] px-2 pb-1 mx-3 border-b-4 ${answered.h !== null && answered.m === null ? 'border-blue-500 bg-blue-50' : 'border-gray-400'} text-center text-blue-600 transition-colors rounded-t-lg`}>
                                                         {answered.m !== null ? answered.m : '?'}
                                                     </span>
                                                     <span>分。</span>
-                                                </>
+                                                </span>
                                             )}
                                         </div>
                                     )}
