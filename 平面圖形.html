@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>互動平面圖形遊戲</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            touch-action: none;
+            background-color: #f0fdf4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        
+        .shape-container {
+            transition: transform 0.2s;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .dragging {
+            position: fixed !important;
+            z-index: 1000 !important;
+            pointer-events: none;
+            transform: scale(1.1) !important;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2));
+        }
+
+        .drop-zone {
+            border: 3px dashed #cbd5e1;
+            transition: all 0.3s;
+        }
+
+        .drop-zone.active {
+            background-color: #e2e8f0;
+            border-color: #3b82f6;
+        }
+
+        .drop-zone.matched {
+            border: 3px solid #22c55e;
+            background-color: #dcfce7;
+        }
+
+        .drop-zone svg {
+            opacity: 0.3;
+            filter: grayscale(100%);
+        }
+
+        .drop-zone.matched svg {
+            opacity: 1;
+            filter: none;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .animate-pop {
+            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-5deg); }
+            75% { transform: translateX(5px) rotate(5deg); }
+        }
+
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        #scene-container {
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 100%);
+            border-radius: 1rem;
+            position: relative;
+            overflow: hidden;
+            border: 4px solid #cbd5e1;
+        }
+
+        .scene-shape {
+            position: absolute;
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+        
+        /* 自定義選單按鈕樣式 */
+        .nav-btn {
+            @apply flex flex-col items-center justify-center transition-all duration-200 border-2 rounded-xl p-2 text-center;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col text-slate-800">
+
+    <!-- 頂部設定選單區 -->
+    <header id="main-menu" class="w-full bg-white shadow-md p-4 z-20">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-6">
+            <h1 class="text-2xl font-bold text-emerald-600 shrink-0">🏆 幾何大挑戰</h1>
+            
+            <div class="flex-1 flex flex-col md:flex-row gap-4 w-full">
+                <!-- 步驟 1：模式 -->
+                <div class="flex-1">
+                    <p class="text-xs font-bold text-slate-400 mb-1 ml-1">步驟 1：選擇模式</p>
+                    <div class="grid grid-cols-4 gap-2" id="mode-selectors">
+                        <button class="mode-btn nav-btn bg-emerald-50 border-transparent text-emerald-800 hover:bg-emerald-100" data-mode="1" title="拖拉配對">
+                            <span class="text-xl">🧩</span>
+                            <span class="text-[10px] font-bold">配對</span>
+                        </button>
+                        <button class="mode-btn nav-btn bg-emerald-50 border-transparent text-emerald-800 hover:bg-emerald-100" data-mode="2" title="圖形分類">
+                            <span class="text-xl">🗂️</span>
+                            <span class="text-[10px] font-bold">分類</span>
+                        </button>
+                        <button class="mode-btn nav-btn bg-emerald-50 border-transparent text-emerald-800 hover:bg-emerald-100" data-mode="3" title="選擇指定形狀">
+                            <span class="text-xl">🎯</span>
+                            <span class="text-[10px] font-bold">選擇</span>
+                        </button>
+                        <button class="mode-btn nav-btn bg-emerald-50 border-transparent text-emerald-800 hover:bg-emerald-100" data-mode="4" title="圖片尋寶">
+                            <span class="text-xl">🔍</span>
+                            <span class="text-[10px] font-bold">尋寶</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 步驟 2：難度 -->
+                <div class="flex-1">
+                    <p class="text-xs font-bold text-slate-400 mb-1 ml-1">步驟 2：選擇難度</p>
+                    <div class="grid grid-cols-3 gap-2" id="diff-selectors">
+                        <button class="diff-btn nav-btn bg-amber-50 border-transparent text-amber-800 hover:bg-amber-100" data-diff="1">
+                            <span class="text-sm font-bold">⭐ 簡單</span>
+                        </button>
+                        <button class="diff-btn nav-btn bg-amber-50 border-transparent text-amber-800 hover:bg-amber-100" data-diff="2">
+                            <span class="text-sm font-bold">⭐⭐ 中等</span>
+                        </button>
+                        <button class="diff-btn nav-btn bg-amber-50 border-transparent text-amber-800 hover:bg-amber-100" data-diff="3">
+                            <span class="text-sm font-bold">⭐⭐⭐ 困難</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 開始按鈕 -->
+            <button id="start-btn" class="shrink-0 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all disabled:opacity-30 disabled:grayscale hover:scale-105 active:scale-95" disabled>
+                開始遊戲
+            </button>
+        </div>
+    </header>
+
+    <!-- 遊戲畫面區域 -->
+    <main id="game-screen" class="flex-1 hidden flex-col overflow-hidden">
+        <!-- 進行中資訊列 -->
+        <div class="bg-emerald-50 border-b border-emerald-100 p-3 flex justify-between items-center px-6">
+            <button id="back-btn" class="text-slate-500 hover:text-slate-700 font-bold text-sm flex items-center gap-1">
+                <span>↺</span> 重設遊戲
+            </button>
+            <div class="flex-1 text-center">
+                <h2 id="game-instruction" class="text-lg md:text-xl font-bold text-emerald-700 italic">請在上方選好模式後按開始</h2>
+            </div>
+            <div class="text-emerald-600 font-bold bg-white px-4 py-1 rounded-full shadow-sm border border-emerald-200">
+                得分: <span id="score-display">0</span>
+            </div>
+        </div>
+
+        <div id="game-area" class="flex-1 relative flex items-center justify-center p-4">
+            <!-- 遊戲內容動態生成於此 -->
+            <div id="empty-state" class="text-slate-300 flex flex-col items-center opacity-50">
+                <span class="text-8xl mb-4">🎮</span>
+                <p class="text-xl font-bold">請選擇模式與難度，然後按「開始遊戲」</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- 回饋視窗 -->
+    <div id="feedback-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+        <div id="feedback-content" class="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center transform scale-0 transition-transform duration-300">
+            <div id="feedback-icon" class="text-6xl mb-4">✨</div>
+            <h2 id="feedback-text" class="text-3xl font-bold mb-6 text-emerald-600">答對了！</h2>
+            <button id="next-round-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-8 rounded-xl shadow-md text-xl transition-transform hover:scale-105">
+                下一關 ➔
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const SHAPES = {
+            circle: { id: 'circle', name: '圓形', category: '圓形', type: 'circle' },
+            square: { id: 'square', name: '正方形', category: '方形', type: 'square' },
+            triangle: { id: 'triangle', name: '三角形', category: '三角形', type: 'polygon', sides: 3 },
+            rectangle: { id: 'rectangle', name: '長方形', category: '方形', type: 'rect' },
+            quadrilateral: { id: 'quadrilateral', name: '四邊形', category: '四邊形', type: 'polygon', sides: 4, irregular: true },
+            pentagon: { id: 'pentagon', name: '五邊形', category: '五邊形', type: 'polygon', sides: 5 },
+            hexagon: { id: 'hexagon', name: '六邊形', category: '六邊形', type: 'polygon', sides: 6 },
+            heptagon: { id: 'heptagon', name: '七邊形', category: '七邊形', type: 'polygon', sides: 7 },
+            octagon: { id: 'octagon', name: '八邊形', category: '八邊形', type: 'polygon', sides: 8 },
+            nonagon: { id: 'nonagon', name: '九邊形', category: '九邊形', type: 'polygon', sides: 9 },
+            decagon: { id: 'decagon', name: '十邊形', category: '十邊形', type: 'polygon', sides: 10 }
+        };
+
+        const DIFFICULTY_LEVELS = {
+            1: ['circle', 'square', 'triangle'],
+            2: ['circle', 'square', 'rectangle', 'triangle'],
+            3: ['circle', 'triangle', 'quadrilateral', 'pentagon', 'hexagon', 'heptagon', 'octagon', 'nonagon', 'decagon']
+        };
+
+        const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e'];
+
+        let selectedMode = null;
+        let selectedDifficulty = null;
+        let currentScore = 0;
+        let activeShapes = [];
+        let targetShapeId = null;
+
+        let dragState = { element: null, originalParent: null, startX: 0, startY: 0, initialLeft: 0, initialTop: 0 };
+        let itemsToMatch = 0;
+        let itemsMatched = 0;
+        let mode1RemainingShapes = [];
+        let nextShapeBtn = null;
+
+        const ui = {
+            mainMenu: document.getElementById('main-menu'),
+            gameScreen: document.getElementById('game-screen'),
+            modeBtns: document.querySelectorAll('.mode-btn'),
+            diffBtns: document.querySelectorAll('.diff-btn'),
+            startBtn: document.getElementById('start-btn'),
+            backBtn: document.getElementById('back-btn'),
+            gameArea: document.getElementById('game-area'),
+            gameInstruction: document.getElementById('game-instruction'),
+            scoreDisplay: document.getElementById('score-display'),
+            feedbackModal: document.getElementById('feedback-modal'),
+            feedbackContent: document.getElementById('feedback-content'),
+            feedbackIcon: document.getElementById('feedback-icon'),
+            feedbackText: document.getElementById('feedback-text'),
+            nextRoundBtn: document.getElementById('next-round-btn')
+        };
+
+        function init() {
+            ui.modeBtns.forEach(btn => btn.addEventListener('click', () => selectOption('mode', btn)));
+            ui.diffBtns.forEach(btn => btn.addEventListener('click', () => selectOption('diff', btn)));
+            ui.startBtn.addEventListener('click', startGame);
+            ui.backBtn.addEventListener('click', () => {
+                ui.gameArea.innerHTML = '<div id="empty-state" class="text-slate-300 flex flex-col items-center opacity-50"><span class="text-8xl mb-4">🎮</span><p class="text-xl font-bold">請選擇模式與難度，然後按「開始遊戲」</p></div>';
+                ui.gameInstruction.textContent = '請在上方選好模式後按開始';
+            });
+            ui.nextRoundBtn.addEventListener('click', () => {
+                hideFeedback();
+                startRound();
+            });
+
+            document.addEventListener('mousedown', onDragStart, {passive: false});
+            document.addEventListener('mousemove', onDragMove, {passive: false});
+            document.addEventListener('mouseup', onDragEnd, {passive: false});
+            document.addEventListener('touchstart', onDragStart, {passive: false});
+            document.addEventListener('touchmove', onDragMove, {passive: false});
+            document.addEventListener('touchend', onDragEnd, {passive: false});
+
+            // 預設展開畫面
+            ui.gameScreen.classList.remove('hidden');
+            ui.gameScreen.classList.add('flex');
+        }
+
+        function selectOption(type, button) {
+            const btns = type === 'mode' ? ui.modeBtns : ui.diffBtns;
+            const activeClass = type === 'mode' ? 'bg-emerald-500 border-emerald-600 text-white shadow-inner' : 'bg-amber-500 border-amber-600 text-white shadow-inner';
+            const inactiveClass = type === 'mode' ? 'bg-emerald-50 border-transparent text-emerald-800' : 'bg-amber-50 border-transparent text-amber-800';
+
+            btns.forEach(btn => {
+                btn.className = 'nav-btn ' + inactiveClass;
+            });
+
+            button.className = 'nav-btn ' + activeClass;
+
+            if (type === 'mode') selectedMode = button.dataset.mode;
+            if (type === 'diff') selectedDifficulty = button.dataset.diff;
+
+            if (selectedMode && selectedDifficulty) {
+                ui.startBtn.disabled = false;
+            }
+        }
+
+        function startGame() {
+            if (!selectedMode || !selectedDifficulty) return;
+            activeShapes = DIFFICULTY_LEVELS[selectedDifficulty];
+            startRound();
+        }
+
+        function startRound() {
+            ui.gameArea.innerHTML = '';
+            const mode = parseInt(selectedMode);
+            if (mode === 1) renderMode1();
+            else if (mode === 2) renderMode2();
+            else if (mode === 3) renderMode3();
+            else if (mode === 4) renderMode4();
+        }
+
+        function getShapeSVG(shapeId, color, size = 100) {
+            const s = SHAPES[shapeId];
+            const half = size / 2;
+            let svgContent = '';
+            if (s.type === 'circle') svgContent = `<circle cx="${half}" cy="${half}" r="${half - 4}" fill="${color}" stroke="#334155" stroke-width="4"/>`;
+            else if (s.type === 'square') svgContent = `<rect x="4" y="4" width="${size - 8}" height="${size - 8}" rx="4" fill="${color}" stroke="#334155" stroke-width="4"/>`;
+            else if (s.type === 'rect') svgContent = `<rect x="4" y="${(size - size * 0.6) / 2}" width="${size - 8}" height="${size * 0.6}" rx="4" fill="${color}" stroke="#334155" stroke-width="4"/>`;
+            else {
+                let points = [];
+                for (let i = 0; i < s.sides; i++) {
+                    let angle = (i * 2 * Math.PI / s.sides) - Math.PI / 2;
+                    let r = half - 4;
+                    if (s.irregular && i % 2 === 0) r *= 0.7;
+                    let yOffset = (s.sides === 3) ? (r * 0.25) : 0;
+                    points.push(`${half + r * Math.cos(angle)},${half + r * Math.sin(angle) + yOffset}`);
+                }
+                svgContent = `<polygon points="${points.join(' ')}" fill="${color}" stroke="#334155" stroke-width="4" stroke-linejoin="round"/>`;
+            }
+            return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="drop-shadow-sm overflow-visible">${svgContent}</svg>`;
+        }
+
+        function getRandomColor() { return COLORS[Math.floor(Math.random() * COLORS.length)]; }
+        function shuffleArray(arr) { return arr.sort(() => Math.random() - 0.5); }
+
+        function renderMode1() {
+            ui.gameInstruction.textContent = '🧩 拖拉上方隨機出現的圖形到對應框中';
+            let roundShapes = shuffleArray([...activeShapes]).slice(0, Math.min(3, activeShapes.length));
+            itemsToMatch = roundShapes.length;
+            itemsMatched = 0;
+            mode1RemainingShapes = shuffleArray([...roundShapes]);
+
+            const container = document.createElement('div');
+            container.className = 'w-full h-full flex flex-col justify-around items-center max-w-4xl mx-auto';
+
+            const topArea = document.createElement('div');
+            topArea.id = 'mode1-top-area';
+            topArea.className = 'w-full flex justify-center min-h-[120px]';
+
+            const bottomArea = document.createElement('div');
+            bottomArea.className = 'w-full flex justify-center gap-8 flex-wrap';
+
+            roundShapes.forEach(shapeId => {
+                const zone = document.createElement('div');
+                zone.className = 'drop-zone w-32 h-40 rounded-2xl flex flex-col items-center justify-center gap-2 bg-white';
+                zone.dataset.targetId = shapeId;
+                zone.innerHTML = `<div class="pointer-events-none">${getShapeSVG(shapeId, '#e2e8f0', 80)}</div><span class="text-xs font-bold text-slate-400">${SHAPES[shapeId].name}</span>`;
+                bottomArea.appendChild(zone);
+            });
+
+            const btnArea = document.createElement('div');
+            btnArea.className = 'h-16 flex items-center justify-center w-full';
+            nextShapeBtn = document.createElement('button');
+            nextShapeBtn.className = 'hidden bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-8 rounded-xl shadow-md animate-pop';
+            nextShapeBtn.textContent = '全部完成！下一關 ➔';
+            nextShapeBtn.onclick = handleWin;
+            btnArea.appendChild(nextShapeBtn);
+
+            container.appendChild(topArea);
+            container.appendChild(bottomArea);
+            container.appendChild(btnArea);
+            ui.gameArea.appendChild(container);
+            showNextDraggable();
+        }
+
+        function showNextDraggable() {
+            const topArea = document.getElementById('mode1-top-area');
+            if (!topArea || mode1RemainingShapes.length === 0) return;
+            topArea.innerHTML = '';
+            const shapeId = mode1RemainingShapes.pop();
+            const item = document.createElement('div');
+            item.className = 'shape-container draggable animate-pop';
+            item.dataset.shapeId = shapeId;
+            item.innerHTML = getShapeSVG(shapeId, getRandomColor(), 100);
+            topArea.appendChild(item);
+        }
+
+        function getClientCoords(e) {
+            if (e.changedTouches) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+            if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            return { x: e.clientX, y: e.clientY };
+        }
+
+        function onDragStart(e) {
+            const target = e.target.closest('.draggable');
+            if (!target) return;
+            e.preventDefault();
+            const coords = getClientCoords(e);
+            dragState.element = target;
+            dragState.originalParent = target.parentElement;
+            const rect = target.getBoundingClientRect();
+            dragState.initialLeft = rect.left;
+            dragState.initialTop = rect.top;
+            dragState.startX = coords.x;
+            dragState.startY = coords.y;
+            target.classList.add('dragging');
+            target.style.left = `${rect.left}px`;
+            target.style.top = `${rect.top}px`;
+            document.body.appendChild(target);
+        }
+
+        function onDragMove(e) {
+            if (!dragState.element) return;
+            e.preventDefault();
+            const coords = getClientCoords(e);
+            dragState.element.style.left = `${dragState.initialLeft + coords.x - dragState.startX}px`;
+            dragState.element.style.top = `${dragState.initialTop + coords.y - dragState.startY}px`;
+            const elemBelow = document.elementFromPoint(coords.x, coords.y);
+            document.querySelectorAll('.drop-zone').forEach(z => z.classList.remove('active'));
+            if (elemBelow) {
+                const zone = elemBelow.closest('.drop-zone');
+                if (zone && !zone.classList.contains('matched')) zone.classList.add('active');
+            }
+        }
+
+        function onDragEnd(e) {
+            if (!dragState.element) return;
+            const el = dragState.element;
+            const id = el.dataset.shapeId;
+            let dropped = false;
+            el.style.display = 'none';
+            const coords = getClientCoords(e);
+            const elemBelow = document.elementFromPoint(coords.x, coords.y);
+            el.style.display = 'block';
+
+            if (elemBelow) {
+                const zone = elemBelow.closest('.drop-zone');
+                if (parseInt(selectedMode) === 1 && zone && !zone.classList.contains('matched') && zone.dataset.targetId === id) {
+                    dropped = true;
+                    zone.classList.add('matched', 'animate-pop');
+                    zone.querySelector('div').innerHTML = el.innerHTML;
+                    el.remove();
+                    itemsMatched++;
+                    if (itemsMatched >= itemsToMatch) {
+                        setTimeout(() => nextShapeBtn.classList.remove('hidden'), 400);
+                    } else {
+                        setTimeout(showNextDraggable, 400);
+                    }
+                } else if (parseInt(selectedMode) === 2 && zone && zone.dataset.targetCategory === SHAPES[id].category) {
+                    dropped = true;
+                    el.style.position = 'static';
+                    el.classList.remove('dragging', 'draggable');
+                    el.style.transform = 'scale(0.5)';
+                    zone.querySelector('.collection-area').appendChild(el);
+                    itemsMatched++;
+                    if (itemsMatched >= itemsToMatch) setTimeout(handleWin, 400);
+                }
+            }
+            if (!dropped) {
+                el.classList.remove('dragging');
+                if(dragState.originalParent) dragState.originalParent.appendChild(el);
+            }
+            dragState.element = null;
+        }
+
+        function renderMode2() {
+            ui.gameInstruction.textContent = '🗂️ 將圖形拖拉到正確的分類箱中';
+            let availableCategories = [...new Set(activeShapes.map(id => SHAPES[id].category))];
+            let roundCategories = shuffleArray(availableCategories).slice(0, Math.min(3, availableCategories.length));
+            let items = [];
+            roundCategories.forEach(cat => {
+                let ids = activeShapes.filter(id => SHAPES[id].category === cat);
+                for(let i=0; i<2; i++) items.push(ids[Math.floor(Math.random() * ids.length)]);
+            });
+            itemsToMatch = items.length; itemsMatched = 0; items = shuffleArray(items);
+            const container = document.createElement('div');
+            container.className = 'w-full h-full flex flex-col justify-between items-center max-w-5xl mx-auto pb-4';
+            const topArea = document.createElement('div'); topArea.className = 'w-full flex justify-center gap-4 flex-wrap min-h-[160px] p-4';
+            items.forEach(id => {
+                const item = document.createElement('div');
+                item.className = 'shape-container draggable animate-pop';
+                item.dataset.shapeId = id;
+                item.innerHTML = getShapeSVG(id, getRandomColor(), 70);
+                topArea.appendChild(item);
+            });
+            const bottomArea = document.createElement('div'); bottomArea.className = 'w-full flex justify-center gap-6 px-4';
+            roundCategories.forEach(cat => {
+                const zone = document.createElement('div');
+                zone.className = 'drop-zone flex-1 min-h-[180px] rounded-2xl flex flex-col items-center p-3 bg-white';
+                zone.dataset.targetCategory = cat;
+                zone.innerHTML = `<div class="text-sm font-bold text-slate-500 mb-2 border-b w-full text-center pb-1">${cat}</div><div class="collection-area flex flex-wrap justify-center gap-1"></div>`;
+                bottomArea.appendChild(zone);
+            });
+            container.appendChild(topArea); container.appendChild(bottomArea); ui.gameArea.appendChild(container);
+        }
+
+        function renderMode3() {
+            targetShapeId = activeShapes[Math.floor(Math.random() * activeShapes.length)];
+            ui.gameInstruction.innerHTML = `🎯 請找出：<span class="text-2xl text-emerald-600 font-black">${SHAPES[targetShapeId].name}</span>`;
+            let options = [targetShapeId];
+            let pool = activeShapes.filter(id => SHAPES[id].category !== SHAPES[targetShapeId].category);
+            while(options.length < 6) {
+                options.push(pool.length > 0 ? pool.pop() : Object.keys(SHAPES).find(id => SHAPES[id].category !== SHAPES[targetShapeId].category));
+            }
+            options = shuffleArray(options);
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-3 gap-8 p-4';
+            options.forEach(id => {
+                const btn = document.createElement('button');
+                btn.className = 'shape-container bg-white p-8 rounded-3xl shadow-md border-4 border-transparent hover:border-emerald-300 animate-pop';
+                btn.innerHTML = getShapeSVG(id, getRandomColor(), 100);
+                btn.onclick = () => {
+                    if (SHAPES[id].category === SHAPES[targetShapeId].category) handleWin();
+                    else { btn.classList.add('animate-shake'); setTimeout(() => btn.classList.remove('animate-shake'), 400); }
+                };
+                grid.appendChild(btn);
+            });
+            ui.gameArea.appendChild(grid);
+        }
+
+        function renderMode4() {
+            targetShapeId = activeShapes[Math.floor(Math.random() * activeShapes.length)];
+            ui.gameInstruction.innerHTML = `🔍 尋找圖中的：<span class="text-2xl text-red-600 font-black">${SHAPES[targetShapeId].name}</span>`;
+            const scene = document.createElement('div');
+            scene.id = 'scene-container';
+            scene.className = 'w-full max-w-4xl h-[60vh] rounded-3xl relative overflow-hidden';
+            for(let i=0; i<25; i++) {
+                const randomId = Object.keys(SHAPES)[Math.floor(Math.random() * Object.keys(SHAPES).length)];
+                if (SHAPES[randomId].category !== SHAPES[targetShapeId].category) createSceneShape(scene, randomId, false);
+            }
+            createSceneShape(scene, targetShapeId, true);
+            ui.gameArea.appendChild(scene);
+        }
+
+        function createSceneShape(container, id, isTarget) {
+            const div = document.createElement('div');
+            div.className = 'scene-shape animate-pop';
+            const size = 50 + Math.random() * 30;
+            div.style.left = `${Math.random() * 90}%`;
+            div.style.top = `${Math.random() * 90}%`;
+            div.style.transform = `rotate(${Math.random() * 360}deg)`;
+            div.innerHTML = getShapeSVG(id, getRandomColor(), size);
+            div.onclick = (e) => {
+                e.stopPropagation();
+                if (SHAPES[id].category === SHAPES[targetShapeId].category) handleWin();
+                else { div.classList.add('animate-shake'); setTimeout(() => div.classList.remove('animate-shake'), 400); }
+            };
+            container.appendChild(div);
+        }
+
+        function handleWin() {
+            currentScore += parseInt(selectedDifficulty) * 10;
+            ui.scoreDisplay.textContent = currentScore;
+            showFeedback(true);
+        }
+
+        function showFeedback(isWin) {
+            ui.feedbackModal.classList.remove('hidden');
+            ui.feedbackModal.classList.add('flex');
+            setTimeout(() => {
+                ui.feedbackContent.classList.remove('scale-0');
+                ui.feedbackContent.classList.add('scale-100');
+            }, 50);
+        }
+
+        function hideFeedback() {
+            ui.feedbackContent.classList.remove('scale-100');
+            ui.feedbackContent.classList.add('scale-0');
+            setTimeout(() => ui.feedbackModal.classList.add('hidden'), 300);
+        }
+
+        init();
+    </script>
+</body>
+</html>
