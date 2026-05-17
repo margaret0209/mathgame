@@ -339,6 +339,63 @@
     </div>
 
     <script>
+        // --- 音效管理器 (Web Audio API) ---
+        const SoundManager = {
+            ctx: null,
+            init: function() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+            playTone: function(freq, type, duration, startTimeOffset = 0, vol = 0.1) {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime + startTimeOffset);
+                
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime + startTimeOffset);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + startTimeOffset + duration);
+                
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                
+                osc.start(this.ctx.currentTime + startTimeOffset);
+                osc.stop(this.ctx.currentTime + startTimeOffset + duration);
+            },
+            click: function() {
+                this.init();
+                this.playTone(600, 'sine', 0.1, 0, 0.05);
+            },
+            correct: function() {
+                this.init();
+                this.playTone(523.25, 'sine', 0.1, 0, 0.1);    // C5
+                this.playTone(659.25, 'sine', 0.1, 0.1, 0.1);  // E5
+                this.playTone(783.99, 'sine', 0.3, 0.2, 0.15); // G5
+            },
+            wrong: function() {
+                this.init();
+                this.playTone(150, 'sawtooth', 0.2, 0, 0.1);
+                this.playTone(100, 'sawtooth', 0.2, 0.15, 0.1);
+            },
+            clear: function() {
+                this.init();
+                this.playTone(440, 'square', 0.1, 0, 0.05);
+                this.playTone(554.37, 'square', 0.1, 0.15, 0.05);
+                this.playTone(659.25, 'square', 0.4, 0.3, 0.05);
+            },
+            champion: function() {
+                this.init();
+                [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+                    this.playTone(f, 'sine', 0.2, i * 0.15, 0.1);
+                });
+                this.playTone(1046.50, 'sine', 0.8, 0.6, 0.15);
+            }
+        };
+
         const themesData = {
             "Sanrio": { 
                 chars: ["Hello Kitty", "My Melody", "Kuromi", "布甸狗", "玉桂狗", "PC狗", "蛋黃哥", "大口仔"], 
@@ -555,6 +612,7 @@
 
         // 更新提示文字狀態
         function updateHintLabel() {
+            SoundManager.click();
             const toggle = document.getElementById('hintToggle');
             const labelText = document.getElementById('hintStatusText');
             if (toggle.checked) {
@@ -568,6 +626,7 @@
 
         // 切換遊戲模式
         function switchMode(mode) {
+            SoundManager.click();
             currentMode = mode;
             const freeBtn = document.getElementById("modeFreeBtn");
             const storyBtn = document.getElementById("modeStoryBtn");
@@ -592,6 +651,7 @@
 
         // 下拉選單更變時觸發重新開始
         function onSettingChange() {
+            SoundManager.click();
             if (currentMode === 'story') {
                 currentLevel = 1;
                 storyProgress = Array(10).fill(false);
@@ -617,6 +677,9 @@
 
         // 開始新一局遊戲/關卡
         function startGame() {
+            // 嘗試初始化音效（確保按鈕點擊後能發聲）
+            SoundManager.init();
+
             const themeKey = document.getElementById("themeSelect").value;
             difficulty = document.getElementById("diffSelect").value;
             const theme = themesData[themeKey];
@@ -765,6 +828,7 @@
         function inputNum(n) {
             let step = sequence[currentStepIndex];
             if (!step || step.type !== 'num') return;
+            SoundManager.click();
             if (currentInputVal.length < 4) {
                 currentInputVal += n;
                 document.getElementById(step.id).innerText = currentInputVal;
@@ -774,6 +838,7 @@
         function clearNum() {
             let step = sequence[currentStepIndex];
             if (!step || step.type !== 'num') return;
+            SoundManager.click();
             currentInputVal = "";
             document.getElementById(step.id).innerText = "";
         }
@@ -786,6 +851,7 @@
             let inputNumVal = parseInt(currentInputVal, 10);
 
             if (inputNumVal === step.target) {
+                SoundManager.correct();
                 box.classList.remove("active");
                 box.classList.add("correct");
                 // 檢查是否標記 ✅
@@ -794,6 +860,7 @@
                 if (step.id === 'box_ans') document.getElementById('mark_ans').classList.remove('hidden');
                 nextStep(step);
             } else {
+                SoundManager.wrong();
                 box.classList.add("error-shake");
                 setTimeout(() => box.classList.remove("error-shake"), 400);
                 clearNum();
@@ -807,6 +874,7 @@
             let buttons = Array.from(container.querySelectorAll('button'));
 
             if (val === step.target) {
+                SoundManager.correct();
                 container.classList.remove("active-choice");
                 buttons.forEach(btn => {
                     if (btn.innerText.includes(val) || btn.innerText === val) {
@@ -818,6 +886,7 @@
                 });
                 nextStep(step);
             } else {
+                SoundManager.wrong();
                 let wrongBtn = buttons.find(b => b.innerText.includes(val) || b.innerText === val);
                 if (wrongBtn) {
                     wrongBtn.classList.add("error-shake");
@@ -858,6 +927,7 @@
 
         // 顯示過關 Modal 鼓勵
         function showClearModal() {
+            SoundManager.clear();
             const modal = document.getElementById("levelClearModal");
             const txt = document.getElementById("modalEncourageText");
             
@@ -877,6 +947,7 @@
         }
 
         function closeClearModal() {
+            SoundManager.click();
             document.getElementById("levelClearModal").classList.add("hidden");
             
             if (currentLevel < 10) {
@@ -890,6 +961,7 @@
 
         // 點擊前往下一關
         function goToNextLevel() {
+            SoundManager.click();
             document.getElementById("nextLevelContainer").classList.add("hidden");
             currentLevel++;
             startGame();
@@ -897,6 +969,7 @@
 
         // 終極大通關！
         function showUltimateChampion() {
+            SoundManager.champion();
             document.getElementById("ultimateChampionCard").classList.remove("hidden");
             // 大量滿屏彩帶特效！
             triggerConfettiEffect(150);
