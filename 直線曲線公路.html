@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🚗 奇妙的線條冒險！直線與曲線學習遊戲</title>
+    <!-- 引入 Tailwind CSS 提供現代化、美觀的 UI 設計 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+TC:wght@500;800&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f0fdf4; /* 柔和的草綠色背景 */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* 慶祝彩色碎紙動畫效果 */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0.8;
+            border-radius: 50%;
+            animation: fall 3s linear infinite;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-50px) rotate(0deg); }
+            100% { transform: translateY(100vh) rotate(360deg); }
+        }
+
+        /* 夢幻漂浮動畫 */
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .floating-element {
+            animation: bounce-slow 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- 頂部導航/標題區 -->
+    <header class="bg-white shadow-md py-4 px-6 flex flex-wrap justify-between items-center rounded-b-3xl border-b-4 border-green-200">
+        <div class="flex items-center space-x-3">
+            <span class="text-4xl floating-element">🚓</span>
+            <div>
+                <h1 class="text-2xl md:text-3xl font-extrabold text-green-700 tracking-wider">奇妙的線條冒險！</h1>
+                <p class="text-xs md:text-sm text-gray-500 font-bold">一起用不同的車車探索多變的「直線」與「曲線」吧！</p>
+            </div>
+        </div>
+        <!-- 星星計分板 -->
+        <div class="flex items-center bg-yellow-100 px-4 py-2 rounded-full border-2 border-yellow-400 mt-2 md:mt-0">
+            <span class="text-2xl mr-2">🌟</span>
+            <span class="text-lg font-black text-yellow-700" id="star-count">星星: 0</span>
+        </div>
+    </header>
+
+    <!-- 核心遊戲區域 -->
+    <main class="flex-grow flex flex-col items-center justify-center p-4">
+        
+        <!-- 模式選擇按鈕群 -->
+        <div class="grid grid-cols-3 gap-2 md:gap-4 w-full max-w-2xl mb-4">
+            <button onclick="switchMode('straight')" id="btn-straight" class="mode-btn bg-white hover:bg-blue-50 border-4 border-blue-400 rounded-2xl py-3 px-2 flex flex-col items-center justify-center transition-all duration-300 transform hover:scale-105 shadow-md">
+                <span class="text-3xl md:text-4xl mb-1">📏</span>
+                <span class="text-sm md:text-base font-black text-blue-700">模式一：直線</span>
+            </button>
+            <button onclick="switchMode('curve')" id="btn-curve" class="mode-btn bg-white hover:bg-purple-50 border-4 border-purple-400 rounded-2xl py-3 px-2 flex flex-col items-center justify-center transition-all duration-300 transform hover:scale-105 shadow-md">
+                <span class="text-3xl md:text-4xl mb-1">〰️</span>
+                <span class="text-sm md:text-base font-black text-purple-700">模式二：曲線</span>
+            </button>
+            <button onclick="switchMode('mixed')" id="btn-mixed" class="mode-btn bg-white hover:bg-orange-50 border-4 border-orange-400 rounded-2xl py-3 px-2 flex flex-col items-center justify-center transition-all duration-300 transform hover:scale-105 shadow-md">
+                <span class="text-3xl md:text-4xl mb-1">🎲</span>
+                <span class="text-sm md:text-base font-black text-orange-700">模式三：混合</span>
+            </button>
+        </div>
+
+        <!-- 遊戲操作提示與路面狀態 -->
+        <div class="text-center mb-2">
+            <p id="instruction" class="text-lg md:text-xl font-bold text-gray-700 bg-white px-6 py-2 rounded-full shadow-sm inline-block border-2 border-green-100">
+                按住小車車，沿著馬路拖拉到終點 🏆 吧！
+            </p>
+        </div>
+
+        <!-- 畫布容器（自動響應式調整大小） -->
+        <div class="relative w-full max-w-4xl aspect-[2/1] bg-emerald-50 rounded-3xl border-8 border-white shadow-2xl overflow-hidden mb-4">
+            <canvas id="gameCanvas" class="absolute top-0 left-0 w-full h-full cursor-pointer"></canvas>
+            
+            <!-- 提示引導動畫手勢 -->
+            <div id="drag-guide" class="absolute pointer-events-none text-4xl hidden" style="transition: all 1s ease-in-out; z-index: 40;">👆</div>
+        </div>
+
+    </main>
+
+    <!-- 混合模式：問答互動視窗 (Modal) -->
+    <div id="quiz-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4 animate-fade-in">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center border-8 border-yellow-300 shadow-2xl transform scale-95 transition-all duration-300">
+            <span class="text-6xl mb-4 block floating-element" id="quiz-vehicle">🚗</span>
+            <h2 class="text-2xl md:text-3xl font-extrabold text-gray-800 mb-2">好厲害！車子到達終點了！</h2>
+            <p class="text-lg text-gray-600 mb-6 font-bold">請問你剛才開車經過的路是：</p>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="submitAnswer('straight')" class="bg-blue-500 hover:bg-blue-600 text-white font-black py-4 px-6 rounded-2xl text-xl shadow-lg transform active:scale-95 transition-all flex flex-col items-center justify-center border-b-4 border-blue-700">
+                    <span class="text-3xl mb-1">📏</span>
+                    <span>直線</span>
+                </button>
+                <button onclick="submitAnswer('curve')" class="bg-purple-500 hover:bg-purple-600 text-white font-black py-4 px-6 rounded-2xl text-xl shadow-lg transform active:scale-95 transition-all flex flex-col items-center justify-center border-b-4 border-purple-700">
+                    <span class="text-3xl mb-1">〰️</span>
+                    <span>曲線</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 答對/答錯反饋小視窗 -->
+    <div id="feedback-toast" class="fixed top-24 left-1/2 transform -translate-x-1/2 bg-white border-4 border-green-400 px-8 py-4 rounded-2xl shadow-2xl text-center z-50 hidden">
+        <span id="feedback-emoji" class="text-4xl block mb-1">🎉</span>
+        <span id="feedback-text" class="text-lg font-black text-gray-800">回答正確！太棒了！</span>
+    </div>
+
+    <!-- 頁尾宣告與玩法說明 -->
+    <footer class="bg-green-800 text-green-100 text-center py-4 text-xs md:text-sm font-bold">
+        <p>💡 學習提示：直線是直直沒有轉彎的線（不管是平的、上坡還是斜斜的）；曲線是彎彎、圓弧狀的線。用手指跟著滑動能幫助大腦記憶喔！</p>
+    </footer>
+
+    <!-- 遊戲主要邏輯 JavaScript -->
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 核心遊戲狀態
+        let currentMode = 'straight'; // 'straight', 'curve', 'mixed'
+        let actualPathType = 'straight'; // mixed 模式中當前隨機出來的真實路徑 ('straight' 或 'curve')
+        let starCount = 0;
+        let isDragging = false;
+        let carProgress = 0; // 車子在道路上的進度 (0 到 1)
+        let particles = [];
+        
+        // 車輛池，每次隨機產生
+        const VEHICLES = ['🚗', '🚓', '🚑', '🚒', '🚕', '🏎️', '🚌', '🚚', '🚜', '🛵', '🚇'];
+        let currentVehicle = '🚗';
+
+        // 道路隨機生成設定
+        let currentPathConfig = {
+            type: 'straight',
+            subType: 'flat', // flat, up, down, sine, hill, valley
+            yStart: 200,
+            yEnd: 200,
+            amp: 100,
+            freq: 1
+        };
+
+        // 畫布基礎邏輯分辨率
+        const BASE_WIDTH = 800;
+        const BASE_HEIGHT = 400;
+
+        // 起點與終點位置 (Y座標將會根據隨機路徑動態改變)
+        const startPoint = { x: 100, y: 200 };
+        const endPoint = { x: 700, y: 200 };
+
+        // Web Audio API 合成音效（免加載音頻文件）
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioCtx();
+            }
+        }
+
+        function playSound(type) {
+            initAudio();
+            if (!audioCtx) return;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'success') {
+                const now = audioCtx.currentTime;
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(261.63, now); // C4
+                osc.frequency.setValueAtTime(329.63, now + 0.1); // E4
+                osc.frequency.setValueAtTime(392.00, now + 0.2); // G4
+                osc.frequency.setValueAtTime(523.25, now + 0.3); // C5
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+            } else if (type === 'fail') {
+                const now = audioCtx.currentTime;
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(80, now + 0.3);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'drag') {
+                const now = audioCtx.currentTime;
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(250 + carProgress * 300, now);
+                gain.gain.setValueAtTime(0.04, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            }
+        }
+
+        // 隨機生成新的馬路路徑與車輛
+        function generateRandomPath(type) {
+            // 隨機選一台新車車！
+            currentVehicle = VEHICLES[Math.floor(Math.random() * VEHICLES.length)];
+            
+            const config = { type: type };
+            
+            if (type === 'straight') {
+                const subTypes = ['flat', 'up', 'down'];
+                config.subType = subTypes[Math.floor(Math.random() * subTypes.length)];
+                
+                if (config.subType === 'flat') {
+                    config.yStart = 200;
+                    config.yEnd = 200;
+                } else if (config.subType === 'up') {
+                    // 左下往右上
+                    config.yStart = 290;
+                    config.yEnd = 110;
+                } else { // 'down'
+                    // 左上往右下
+                    config.yStart = 110;
+                    config.yEnd = 290;
+                }
+            } else { // 'curve'
+                const subTypes = ['sine', 'hill', 'valley'];
+                config.subType = subTypes[Math.floor(Math.random() * subTypes.length)];
+                
+                // 起終點微幅擺動，讓馬路更自然
+                config.yStart = 200 + (Math.random() - 0.5) * 60; // 170 ~ 230
+                config.yEnd = 200 + (Math.random() - 0.5) * 60;   // 170 ~ 230
+                
+                if (config.subType === 'sine') {
+                    config.amp = 65 + Math.random() * 35; // 振幅 65 ~ 100
+                    config.freq = Math.random() < 0.5 ? 1 : 1.5; // 波數 1 或 1.5
+                } else { // hill (拱橋型) 或 valley (山谷型)
+                    config.amp = 80 + Math.random() * 40; // 振幅 80 ~ 120
+                }
+            }
+            
+            currentPathConfig = config;
+
+            // 即時同步起始點與終點的物理位置，方便碰撞與圖案繪製
+            startPoint.y = config.yStart;
+            endPoint.y = config.yEnd;
+        }
+
+        // 道路幾何公式：依據進度 t (0~1) 獲取當前對應的 (x, y) 座標與前進角度
+        function getPathPoint(t, type) {
+            const config = currentPathConfig;
+            const x = startPoint.x + t * (endPoint.x - startPoint.x);
+            let y = 200;
+            let angle = 0;
+
+            if (config.type === 'straight') {
+                y = config.yStart + t * (config.yEnd - config.yStart);
+                const dy = config.yEnd - config.yStart;
+                const dx = endPoint.x - startPoint.x;
+                angle = Math.atan2(dy, dx);
+            } else { // 'curve'
+                const dxTotal = endPoint.x - startPoint.x;
+                const baseLineY = config.yStart + t * (config.yEnd - config.yStart);
+                
+                if (config.subType === 'sine') {
+                    // S型正弦波浪
+                    y = baseLineY + Math.sin(t * Math.PI * 2 * config.freq) * config.amp;
+                    // 以微小差值法求出當前切線角度
+                    const dt = 0.001;
+                    const yNext = (config.yStart + (t + dt) * (config.yEnd - config.yStart)) + Math.sin((t + dt) * Math.PI * 2 * config.freq) * config.amp;
+                    angle = Math.atan2(yNext - y, dxTotal * dt);
+                } else if (config.subType === 'hill') {
+                    // 拱橋型（半波正弦減去高度）
+                    y = baseLineY - Math.sin(t * Math.PI) * config.amp;
+                    const dt = 0.001;
+                    const yNext = (config.yStart + (t + dt) * (config.yEnd - config.yStart)) - Math.sin((t + dt) * Math.PI) * config.amp;
+                    angle = Math.atan2(yNext - y, dxTotal * dt);
+                } else if (config.subType === 'valley') {
+                    // 山谷型（半波正弦加上高度）
+                    y = baseLineY + Math.sin(t * Math.PI) * config.amp;
+                    const dt = 0.001;
+                    const yNext = (config.yStart + (t + dt) * (config.yEnd - config.yStart)) + Math.sin((t + dt) * Math.PI) * config.amp;
+                    angle = Math.atan2(yNext - y, dxTotal * dt);
+                }
+            }
+            return { x, y, angle };
+        }
+
+        // 初始化畫布尺寸
+        function resizeCanvas() {
+            canvas.width = BASE_WIDTH;
+            canvas.height = BASE_HEIGHT;
+            drawGame();
+        }
+
+        // 畫面渲染主循環（小車保證渲染在最上層，不透明）
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. 繪製草地裝飾（背景層）
+            drawEnvironment();
+
+            const roadType = (currentMode === 'mixed') ? actualPathType : currentMode;
+
+            // 2. 繪製馬路與車路雙黃線
+            drawRoad(roadType);
+
+            // 3. 繪製起點與終點站牌 (會根據馬路隨機Y軸高度精準移動)
+            drawSign(startPoint.x, startPoint.y, '🏁 起點', '#22c55e');
+            drawSign(endPoint.x, endPoint.y, '🏆 終點', '#eab308');
+
+            // 4. 繪製拖拉時的亮黃色軌跡
+            drawTrail(roadType);
+
+            // 5. 【置頂繪製】完全不透明的主角車車與超醒目的專屬圓底座 🚗
+            drawCar(roadType);
+
+            // 6. 繪製過場特效（碎紙）
+            updateAndDrawParticles();
+        }
+
+        // 繪製背景裝飾
+        function drawEnvironment() {
+            ctx.fillStyle = '#65a30d'; // 樹叢綠色
+            ctx.font = '24px serif';
+            ctx.fillText('🌲', 80, 60);
+            ctx.fillText('🌸', 250, 50);
+            ctx.fillText('🌲', 450, 45);
+            ctx.fillText('🌼', 680, 60);
+            ctx.fillText('🌻', 150, 350);
+            ctx.fillText('🌲', 350, 360);
+            ctx.fillText('🌸', 550, 350);
+            ctx.fillText('🌲', 720, 340);
+        }
+
+        // 繪製馬路
+        function drawRoad(type) {
+            // 繪製外側黑邊
+            ctx.beginPath();
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = 66;
+            ctx.strokeStyle = '#334155'; // 深灰色
+
+            for (let t = 0; t <= 1; t += 0.01) {
+                const pt = getPathPoint(t, type);
+                if (t === 0) ctx.moveTo(pt.x, pt.y);
+                else ctx.lineTo(pt.x, pt.y);
+            }
+            ctx.stroke();
+
+            // 繪製內側淺灰路面
+            ctx.beginPath();
+            ctx.lineWidth = 56;
+            ctx.strokeStyle = '#475569';
+            for (let t = 0; t <= 1; t += 0.01) {
+                const pt = getPathPoint(t, type);
+                if (t === 0) ctx.moveTo(pt.x, pt.y);
+                else ctx.lineTo(pt.x, pt.y);
+            }
+            ctx.stroke();
+
+            // 繪製中間黃色雙黃虛線
+            ctx.beginPath();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#facc15'; // 黃色
+            ctx.setLineDash([12, 12]); // 虛線效果
+            for (let t = 0; t <= 1; t += 0.01) {
+                const pt = getPathPoint(t, type);
+                if (t === 0) ctx.moveTo(pt.x, pt.y);
+                else ctx.lineTo(pt.x, pt.y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]); // 重設虛線
+        }
+
+        // 繪製路牌
+        function drawSign(x, y, text, color) {
+            // 繪製木棍
+            ctx.fillStyle = '#a16207';
+            ctx.fillRect(x - 4, y + 15, 8, 45);
+
+            // 繪製公告板
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.roundRect(x - 45, y - 55, 90, 32, 8);
+            ctx.fill();
+
+            // 繪製邊框
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 繪製文字
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 15px Noto Sans TC';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, x, y - 39);
+        }
+
+        // 繪製拖拉痕跡
+        function drawTrail(type) {
+            if (carProgress <= 0) return;
+            ctx.fillStyle = '#fde047'; // 亮黃色星星軌跡
+            for (let t = 0; t < carProgress; t += 0.05) {
+                const pt = getPathPoint(t, type);
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y + 12, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // 繪製小車（車輛置頂且完全不透明）
+        function drawCar(type) {
+            const pt = getPathPoint(carProgress, type);
+            
+            ctx.save();
+            // 強制設定為 100% 完全不透明
+            ctx.globalAlpha = 1.0; 
+            ctx.translate(pt.x, pt.y);
+
+            // 1. 繪製底部卡套投影（柔和陰影）
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetY = 6;
+
+            // 2. 繪製完全不透明的「高對比白底圓盤」底座
+            ctx.beginPath();
+            ctx.arc(0, -6, 32, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff'; // 白色純色背景
+            ctx.fill();
+
+            // 3. 清理陰影防止干擾後續繪製，然後繪製鮮豔外框
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.strokeStyle = '#ff4757'; // 亮麗的珊瑚紅外框
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // 4. 旋轉車輛，使車頭對準前進方向
+            ctx.rotate(pt.angle);
+
+            // 【反轉車子方向】
+            // 由於多數車子 Emoji 預設朝左，我們透過水平翻轉 scale(-1, 1)，
+            // 讓車子在不上下顛倒的情況下，車頭自然朝右（朝向終點前進）。
+            ctx.scale(-1, 1);
+
+            // 5. 繪製交通工具 Emoji
+            ctx.font = '54px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(currentVehicle, 0, -6); // 繪製隨機車輛於白色盾牌中心
+
+            ctx.restore();
+        }
+
+        // 獲取觸控/滑鼠對應在畫布內的分辨率座標
+        function getEventPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            const x = (clientX - rect.left) * (BASE_WIDTH / rect.width);
+            const y = (clientY - rect.top) * (BASE_HEIGHT / rect.height);
+            return { x, y };
+        }
+
+        // 檢查是否點擊在車子周圍
+        function isNearCar(pos, roadType) {
+            const carPos = getPathPoint(carProgress, roadType);
+            const dx = pos.x - carPos.x;
+            const dy = pos.y - carPos.y;
+            return Math.sqrt(dx * dx + dy * dy) < 65; // 配合新底盤外觀，擴大抓取判定（對幼兒更友善）
+        }
+
+        // 開始拖拉
+        function handleStart(e) {
+            initAudio();
+            const pos = getEventPos(e);
+            const roadType = (currentMode === 'mixed') ? actualPathType : currentMode;
+
+            if (isNearCar(pos, roadType)) {
+                isDragging = true;
+                e.preventDefault(); // 防止行動端滑動衝突
+            }
+        }
+
+        // 拖拉移動中
+        function handleMove(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+
+            const pos = getEventPos(e);
+            const roadType = (currentMode === 'mixed') ? actualPathType : currentMode;
+
+            // 計算最接近滑鼠的水平進度 t
+            let targetT = (pos.x - startPoint.x) / (endPoint.x - startPoint.x);
+            targetT = Math.max(0, Math.min(1, targetT));
+
+            // 安全護欄一：不能一步登天 (防止直接跳躍到終點)
+            if (targetT > carProgress + 0.16) {
+                return;
+            }
+
+            // 安全護欄二：檢查拖曳點距離當前道路曲線的物理距離
+            const expectedPt = getPathPoint(targetT, roadType);
+            const dist = Math.sqrt(Math.pow(pos.x - expectedPt.x, 2) + Math.pow(pos.y - expectedPt.y, 2));
+
+            if (dist > 80) {
+                // 偏離馬路太遠，退回原點
+                isDragging = false;
+                carProgress = 0;
+                playSound('fail');
+                showToast('🚨 哎呀！車車不小心開出馬路了，再試一次吧！', '❌');
+                drawGame();
+                return;
+            }
+
+            // 更新行車進度
+            if (targetT > carProgress) {
+                carProgress = targetT;
+                if (Math.random() < 0.25) playSound('drag');
+            } else if (targetT < carProgress && targetT >= carProgress - 0.06) {
+                carProgress = targetT; // 允許微幅倒退
+            }
+
+            drawGame();
+
+            // 抵達終點
+            if (carProgress >= 0.96) {
+                isDragging = false;
+                carProgress = 1;
+                drawGame();
+                handleWin();
+            }
+        }
+
+        // 結束拖拉
+        function handleEnd() {
+            isDragging = false;
+        }
+
+        // 順利抵達終點的邏輯
+        function handleWin() {
+            playSound('success');
+            createConfetti();
+
+            if (currentMode === 'mixed') {
+                // 混合模式：顯示彈出問答視窗，並把當前車子塞入問題卡片
+                document.getElementById('quiz-vehicle').innerText = currentVehicle;
+                setTimeout(() => {
+                    document.getElementById('quiz-modal').classList.remove('hidden');
+                }, 400);
+            } else {
+                starCount++;
+                document.getElementById('star-count').innerText = `星星: ${starCount}`;
+                showToast('🌟 太棒了！順利把車車開到終點囉！', '🎉');
+                
+                // 2 秒後重置關卡，同時隨機下一種直線/曲線與新車
+                setTimeout(() => {
+                    carProgress = 0;
+                    generateRandomPath(currentMode);
+                    drawGame();
+                }, 2000);
+            }
+        }
+
+        // 混合模式提交答案
+        function submitAnswer(chosenType) {
+            document.getElementById('quiz-modal').classList.add('hidden');
+            
+            if (chosenType === actualPathType) {
+                starCount += 2; // 答對得兩顆星！
+                document.getElementById('star-count').innerText = `星星: ${starCount}`;
+                showToast('🎉 答對了！這條真的是「' + (chosenType === 'straight' ? '直線' : '曲線') + '」馬路！', '🌈');
+                createConfetti();
+            } else {
+                showToast('💡 沒關係，再觀察看看！這條路是「' + (actualPathType === 'straight' ? '直線' : '曲線') + '」喔。', '✊');
+                playSound('fail');
+            }
+
+            // 重新準備下一波隨機挑戰
+            setTimeout(() => {
+                carProgress = 0;
+                setupMixedMode();
+                drawGame();
+            }, 2500);
+        }
+
+        // 設置混合模式的隨機路徑
+        function setupMixedMode() {
+            actualPathType = Math.random() < 0.5 ? 'straight' : 'curve';
+            generateRandomPath(actualPathType);
+            document.getElementById('instruction').innerHTML = '🎲 混合挑戰：先開車到終點，再猜猜是直線還是曲線！';
+        }
+
+        // 切換遊戲模式
+        function switchMode(mode) {
+            currentMode = mode;
+            carProgress = 0;
+            
+            // 變更按鈕高亮外觀
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-100', 'border-blue-500', 'scale-105', 'bg-purple-100', 'border-purple-500', 'bg-orange-100', 'border-orange-500');
+                btn.classList.add('bg-white');
+            });
+
+            if (mode === 'straight') {
+                document.getElementById('btn-straight').classList.add('bg-blue-100', 'scale-105');
+                generateRandomPath('straight');
+                document.getElementById('instruction').innerHTML = '📏 模式一：請沿著<b>直直沒有彎曲</b>的道路拖拉小車';
+            } else if (mode === 'curve') {
+                document.getElementById('btn-curve').classList.add('bg-purple-100', 'scale-105');
+                generateRandomPath('curve');
+                document.getElementById('instruction').innerHTML = '〰️ 模式二：請沿著<b>彎彎曲曲</b>的道路拖拉小車';
+            } else if (mode === 'mixed') {
+                document.getElementById('btn-mixed').classList.add('bg-orange-100', 'scale-105');
+                setupMixedMode();
+            }
+
+            drawGame();
+            showGuideHand();
+        }
+
+        // 彈出式小反饋
+        function showToast(text, emoji) {
+            const toast = document.getElementById('feedback-toast');
+            document.getElementById('feedback-emoji').innerText = emoji;
+            document.getElementById('feedback-text').innerText = text;
+            
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 2300);
+        }
+
+        // 建立慶祝五彩碎紙
+        function createConfetti() {
+            for (let i = 0; i < 40; i++) {
+                const p = {
+                    x: Math.random() * BASE_WIDTH,
+                    y: -10,
+                    size: Math.random() * 8 + 4,
+                    color: `hsl(${Math.random() * 360}, 100%, 60%)`,
+                    speedY: Math.random() * 4 + 2,
+                    speedX: (Math.random() - 0.5) * 3,
+                    rotation: Math.random() * 360,
+                    rotSpeed: (Math.random() - 0.5) * 10
+                };
+                particles.push(p);
+            }
+        }
+
+        // 更新與渲染粒子效果
+        function updateAndDrawParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.y += p.speedY;
+                p.x += p.speedX;
+                p.rotation += p.rotSpeed;
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation * Math.PI / 180);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                ctx.restore();
+
+                if (p.y > BASE_HEIGHT) {
+                    particles.splice(i, 1);
+                }
+            }
+            if (particles.length > 0) {
+                requestAnimationFrame(drawGame);
+            }
+        }
+
+        // 引導手勢定位
+        function showGuideHand() {
+            const guide = document.getElementById('drag-guide');
+            const startPt = getPathPoint(0, (currentMode === 'mixed' ? actualPathType : currentMode));
+            
+            const rect = canvas.getBoundingClientRect();
+            const actualX = (startPt.x / BASE_WIDTH) * rect.width;
+            const actualY = (startPt.y / BASE_HEIGHT) * rect.height;
+
+            guide.style.left = `${actualX}px`;
+            guide.style.top = `${actualY + 20}px`;
+            guide.classList.remove('hidden');
+
+            setTimeout(() => {
+                guide.classList.add('hidden');
+            }, 3000);
+        }
+
+        // 綁定事件監聽器
+        window.addEventListener('resize', resizeCanvas);
+
+        // 滑鼠事件
+        canvas.addEventListener('mousedown', handleStart);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd);
+
+        // 行動端觸控事件
+        canvas.addEventListener('touchstart', handleStart, { passive: false });
+        canvas.addEventListener('touchmove', handleMove, { passive: false });
+        canvas.addEventListener('touchend', handleEnd, { passive: false });
+
+        // 初始化
+        window.onload = () => {
+            resizeCanvas();
+            switchMode('straight'); // 預設進入直線模式
+        };
+    </script>
+</body>
+</html>
