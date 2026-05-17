@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>比較應用題遊戲</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght=400;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans HK', sans-serif;
+            background-color: #f0fdf4;
+            user-select: none;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-10px); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
+        }
+        .error-shake {
+            animation: shake 0.4s ease-in-out;
+            border-color: #ef4444 !important;
+            background-color: #fee2e2 !important;
+        }
+
+        /* 慶祝彩色碎紙飄落動畫 */
+        @keyframes confetti-fall {
+            0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        .confetti {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            pointer-events: none;
+            z-index: 999;
+            animation: confetti-fall 4s linear infinite;
+        }
+
+        .num-box {
+            display: inline-block;
+            min-width: 80px;
+            height: 60px;
+            border: 4px solid #cbd5e1;
+            border-radius: 12px;
+            background-color: white;
+            text-align: center;
+            line-height: 52px;
+            font-size: 2rem;
+            font-weight: bold;
+            vertical-align: middle;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .num-box.active {
+            border-color: #eab308;
+            background-color: #fefce8;
+            box-shadow: 0 0 0 4px #fef08a;
+        }
+        .num-box.correct {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+            color: #166534;
+        }
+
+        .choice-btn {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 20px;
+            border: 4px solid #cbd5e1;
+            border-radius: 12px;
+            background-color: white;
+            font-size: 1.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 100px;
+        }
+        .choice-btn .sub-text {
+            font-size: 0.9rem;
+            font-weight: normal;
+            color: #64748b;
+            text-transform: lowercase;
+            line-height: 1;
+            margin-bottom: 2px;
+        }
+        .choice-btn:active {
+            transform: scale(0.95);
+        }
+        .choice-btn.active-choice {
+            border-color: #eab308;
+            background-color: #fefce8;
+            box-shadow: 0 0 0 4px #fef08a;
+        }
+        .choice-btn.correct {
+            border-color: #22c55e;
+            background-color: #22c55e;
+            color: white;
+        }
+        .choice-btn.correct .sub-text {
+            color: white;
+        }
+
+        ruby rt {
+            font-size: 0.45em;
+            font-weight: normal;
+            color: #64748b;
+            text-transform: lowercase;
+        }
+
+        /* 縮小九宮格按鈕與鍵盤樣式 */
+        .numpad-btn {
+            background-color: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #334155;
+            padding: 8px 0;
+            box-shadow: 0 3px 4px -1px rgba(0, 0, 0, 0.08);
+            transition: all 0.1s;
+        }
+        .numpad-btn:active {
+            background-color: #f1f5f9;
+            transform: translateY(2px);
+        }
+        .numpad-action {
+            font-size: 1.3rem;
+            background-color: #f8fafc;
+        }
+        .numpad-submit {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #2563eb;
+        }
+        .numpad-submit:active {
+            background-color: #1d4ed8;
+        }
+    </style>
+</head>
+<body class="min-h-screen py-6 px-4 bg-green-50 relative overflow-x-hidden">
+
+    <!-- 用於飄落特效的容器 -->
+    <div id="celebrationContainer" class="absolute inset-0 pointer-events-none z-50"></div>
+
+    <div class="max-w-7xl mx-auto">
+        <!-- 頂部面板：模式切換與參數設定 -->
+        <div class="w-full bg-white rounded-3xl shadow-lg border-4 border-green-200 p-6 mb-6">
+            <div class="flex flex-col md:flex-row gap-6 items-center justify-between">
+                
+                <!-- 模式切換器 -->
+                <div class="flex bg-slate-100 p-1.5 rounded-2xl border-2 border-slate-200">
+                    <button id="modeFreeBtn" onclick="switchMode('free')" class="text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 bg-white text-green-700 shadow-md">
+                        🎯 自由練習
+                    </button>
+                    <button id="modeStoryBtn" onclick="switchMode('story')" class="text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 text-slate-500 hover:text-slate-800">
+                        ⭐ 故事闖關 (10關)
+                    </button>
+                </div>
+
+                <!-- 設定下拉選單 -->
+                <div class="flex flex-wrap gap-4 items-center justify-center">
+                    <div class="flex items-center gap-2">
+                        <label class="text-xl font-bold text-gray-700">主題：</label>
+                        <select id="themeSelect" onchange="onSettingChange()" class="text-xl p-2.5 rounded-xl border-2 border-green-400 focus:outline-none bg-white font-bold text-gray-800 shadow-sm">
+                            <option value="Sanrio">Sanrio</option>
+                            <option value="吉卡力">吉卡力</option>
+                            <option value="Disney">Disney</option>
+                            <option value="Marvel">Marvel</option>
+                            <option value="Pixar">Pixar</option>
+                            <option value="日本動漫">日本動漫</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xl font-bold text-gray-700">難度：</label>
+                        <select id="diffSelect" onchange="onSettingChange()" class="text-xl p-2.5 rounded-xl border-2 border-green-400 focus:outline-none bg-white font-bold text-gray-800 shadow-sm">
+                            <option value="易">易</option>
+                            <option value="難">難</option>
+                        </select>
+                    </div>
+                    <button onclick="startGame()" class="bg-gradient-to-r from-orange-400 to-amber-500 hover:from-orange-500 hover:to-amber-600 text-white text-xl font-black py-2.5 px-8 rounded-xl shadow-md transform active:scale-95 transition">
+                        重新開始 🚀
+                    </button>
+                </div>
+            </div>
+
+            <!-- 故事模式進度顯示條 -->
+            <div id="storyProgressContainer" class="mt-6 pt-4 border-t-2 border-green-100 hidden">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="text-2xl font-black text-amber-600 flex items-center gap-2">
+                        <span>🏆 闖關大挑戰</span>
+                        <span id="progressText" class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-lg">第 1 / 10 關</span>
+                    </div>
+                    <!-- 星星進度條 -->
+                    <div id="starsProgress" class="flex gap-2 text-3xl">
+                        <!-- 由 JS 動態繪製 10 顆星星 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要作答區域：左右佈局 -->
+        <div class="flex flex-col lg:flex-row gap-6 items-start">
+            
+            <!-- 左側：故事背景、題目與步驟 (設定為 flex-1 自動擴展，使文字句子排在同一行) -->
+            <div class="w-full lg:flex-1 bg-white rounded-3xl shadow-xl border-4 border-white p-6 md:p-8 min-h-[500px] relative">
+                
+                <!-- 1. 溫馨故事導讀卡片 (僅故事模式顯示) -->
+                <div id="storyCard" class="bg-gradient-to-r from-amber-50 to-orange-50 border-4 border-amber-200 rounded-2xl p-5 mb-6 text-xl md:text-2xl font-bold text-amber-900 shadow-inner flex items-start gap-3 hidden">
+                    <span class="text-3xl leading-none">📖</span>
+                    <div>
+                        <div class="text-sm text-amber-600 font-extrabold tracking-widest uppercase mb-1">故事背景故事</div>
+                        <div id="storyText">故事加載中...</div>
+                    </div>
+                </div>
+
+                <!-- 2. 題目顯示區域 -->
+                <div id="questionArea" class="bg-blue-50 border-4 border-blue-200 rounded-2xl p-6 mb-8 text-2xl md:text-3xl leading-loose font-bold text-gray-800 shadow-inner hidden">
+                    <div id="qText"></div>
+                </div>
+
+                <!-- 3. 下方步驟作答區域 -->
+                <div id="interactionArea" class="space-y-8 hidden">
+                    <!-- 步驟 1: A 的數量 -->
+                    <div id="step1" class="flex flex-wrap items-center gap-4 text-2xl md:text-3xl font-bold hidden whitespace-nowrap">
+                        <span id="iCharA_Step1" class="text-red-600"></span>有
+                        <div id="box_valA_S1" class="num-box"></div>
+                        <span>個<span class="iObjName"></span>，</span>
+                        <span id="mark_s1" class="text-green-500 text-4xl hidden">✅</span>
+                    </div>
+
+                    <!-- 步驟 2: B 比 A 的關係 -->
+                    <div id="step2" class="flex flex-wrap items-center gap-4 text-2xl md:text-3xl font-bold hidden whitespace-nowrap">
+                        <span id="iCharB_Step2" class="text-blue-600"></span>比 
+                        <span id="iCharA_Step2" class="text-red-600"></span>
+                        <div id="btnGroup_moreless" class="flex gap-3">
+                            <button class="choice-btn" onclick="handleChoice('多')"><span class="sub-text">more</span>多</button>
+                            <button class="choice-btn" onclick="handleChoice('少')"><span class="sub-text">less</span>少</button>
+                        </div>
+                        <div id="box_diff_S2_container" class="hidden flex items-center gap-4">
+                            <div id="box_diff_S2" class="num-box"></div>
+                            <span>個<span class="iObjName"></span>。</span>
+                            <span id="mark_s2" class="text-green-500 text-4xl hidden">✅</span>
+                        </div>
+                    </div>
+
+                    <!-- 步驟 3: 計算 B 的算式 -->
+                    <div id="step3" class="flex flex-wrap items-center gap-4 text-2xl md:text-3xl font-bold hidden whitespace-nowrap">
+                        <span id="iCharB_Step3" class="text-blue-600 font-black"></span>：
+                        <div id="box_valA_S3" class="num-box"></div>
+                        <div id="btnGroup_op" class="flex gap-3">
+                            <button class="choice-btn text-2xl h-16" onclick="handleChoice('+')">+</button>
+                            <button class="choice-btn text-2xl h-16" onclick="handleChoice('-')">-</button>
+                        </div>
+                        <div id="box_valDiff_S3" class="num-box"></div>
+                        <span>=</span>
+                        <span id="text_ans" class="text-4xl text-green-600 hidden"></span>
+                        <div id="box_ans" class="num-box hidden"></div>
+                        <span id="mark_ans" class="text-green-500 text-4xl hidden">✅</span>
+                    </div>
+
+                    <!-- 單關完成：下一步按鈕 (自由模式不顯示，故事模式顯示) -->
+                    <div id="nextLevelContainer" class="text-center pt-4 hidden">
+                        <button onclick="goToNextLevel()" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-3xl font-black py-4 px-12 rounded-2xl shadow-lg transform hover:scale-105 active:scale-95 transition">
+                            進入下一關 ✨ 👉
+                        </button>
+                    </div>
+
+                    <!-- 自由模式完成訊息 -->
+                    <div id="successMessage" class="text-center text-4xl font-bold text-orange-500 mt-8 hidden animate-bounce">
+                        🎉 好叻呀！答對全部喇！ 🎉
+                    </div>
+                </div>
+
+                <!-- 終極大關卡成就結算卡 (當通關10關時顯示) -->
+                <div id="ultimateChampionCard" class="hidden absolute inset-0 bg-white rounded-3xl p-8 flex flex-col items-center justify-center text-center z-20">
+                    <span class="text-8xl mb-4">🏆</span>
+                    <h2 class="text-4xl font-black text-amber-600 mb-2">恭喜完成 10 關大挑戰！</h2>
+                    <p class="text-2xl font-bold text-gray-600 mb-8">你成功幫助了所有卡通世界的夥伴！你是超級數學小勇士！</p>
+                    <div class="flex gap-4">
+                        <button onclick="switchMode('story')" class="bg-amber-500 hover:bg-amber-600 text-white text-2xl font-black py-4 px-8 rounded-2xl shadow-md transition transform hover:scale-105">
+                            再挑戰一次 👑
+                        </button>
+                        <button onclick="switchMode('free')" class="bg-blue-500 hover:bg-blue-600 text-white text-2xl font-black py-4 px-8 rounded-2xl shadow-md transition transform hover:scale-105">
+                            去自由練習 🎯
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：縮小版九宮格鍵盤 (寬度改為 w-full lg:w-72 固定寬度，按鈕間距改為 gap-2) -->
+            <div id="numpad" class="w-full lg:w-72 bg-slate-100 rounded-3xl p-4 border-4 border-slate-200 sticky top-6 hidden shrink-0">
+                <div class="text-center mb-3 text-gray-500 font-bold uppercase tracking-widest text-xs">數字輸入</div>
+                <div class="grid grid-cols-3 gap-2">
+                    <button class="numpad-btn" onclick="inputNum('1')">1</button>
+                    <button class="numpad-btn" onclick="inputNum('2')">2</button>
+                    <button class="numpad-btn" onclick="inputNum('3')">3</button>
+                    <button class="numpad-btn" onclick="inputNum('4')">4</button>
+                    <button class="numpad-btn" onclick="inputNum('5')">5</button>
+                    <button class="numpad-btn" onclick="inputNum('6')">6</button>
+                    <button class="numpad-btn" onclick="inputNum('7')">7</button>
+                    <button class="numpad-btn" onclick="inputNum('8')">8</button>
+                    <button class="numpad-btn" onclick="inputNum('9')">9</button>
+                    <button class="numpad-btn numpad-action text-red-500" onclick="clearNum()">清除</button>
+                    <button class="numpad-btn" onclick="inputNum('0')">0</button>
+                    <button class="numpad-btn numpad-submit" onclick="submitNum()">確定</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 自定義答對關卡鼓勵視窗 (Modal) -->
+    <div id="levelClearModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 hidden">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full border-8 border-green-300 shadow-2xl text-center transform scale-95 transition-all">
+            <span class="text-7xl block mb-4">⭐</span>
+            <h3 class="text-3xl font-black text-green-600 mb-2">答對了！好棒！</h3>
+            <p id="modalEncourageText" class="text-xl font-bold text-gray-600 mb-6">你獲得了一顆星星！</p>
+            <button onclick="closeClearModal()" class="w-full bg-green-500 hover:bg-green-600 text-white text-2xl font-black py-4 rounded-2xl shadow-md active:scale-95 transition">
+                太棒了！ 🥳
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const themesData = {
+            "Sanrio": { chars: ["Hello Kitty", "My Melody", "Kuromi", "布甸狗", "玉桂狗", "PC狗"], objs: ["蘋果", "蝴蝶結", "糖果", "蛋糕"] },
+            "吉卡力": { chars: ["龍貓", "千尋", "波妞", "哈爾", "無臉男", "貓巴士"], objs: ["橡果", "煤炭屎鬼", "金幣", "星星"] },
+            "Disney": { chars: ["米奇", "米妮", "唐老鴨", "高飛", "維尼", "勞蘇"], objs: ["氣球", "蜂蜜", "星星", "魔法棒"] },
+            "Marvel": { chars: ["蜘蛛俠", "鐵甲奇俠", "美國隊長", "雷神", "黑寡婦"], objs: ["盾牌", "飛彈", "雷神鎚", "蜘蛛絲"] },
+            "Pixar": { chars: ["胡迪", "巴斯光年", "三眼仔", "毛毛", "大眼仔"], objs: ["玩具", "電池", "能量瓶", "門"] },
+            "日本動漫": { chars: ["多啦A夢", "路飛", "鳴人", "炭治郎", "悟空", "比卡超"], objs: ["銅鑼燒", "精靈球", "飛鏢", "肉"] }
+        };
+
+        // 故事文字範本庫
+        const storyTemplates = {
+            "Sanrio": [
+                "🌸 櫻花盛開的季節，{charA} 邀請大家來草地野餐！他準備了美味的 {obj} 想分享給朋友們。",
+                "🎀 禮物籌備中！{charA} 打算手作一些精美的 {obj} 送給好朋友 {charB} 當作驚喜生日禮物！",
+                "🧁 點心時間到了！下午茶派對需要分配好吃的 {obj}，{charA} 正在努力分裝中。",
+                "🌟 星光燦爛的夜晚，{charA} 和 {charB} 在草地上露營，一邊數著星空下的 {obj} 一邊聊天。"
+            ],
+            "吉卡力": [
+                "🌳 充滿魔力的橡子森林深處，龍貓的朋友 {charA} 正在收集森林裡的 {obj}。",
+                "🪙 尋找神祕金幣！{charA} 帶領著無臉男和小煤炭，在溫泉屋裡幫忙點算 {obj} 的數量。",
+                "🚲 陽光明媚的午後，{charA} 和 {charB} 騎著腳踏車去海邊，一路上撿了好多亮晶晶的 {obj}！",
+                "✨ 奇幻大冒險！{charA} 乘著貓巴士出發，這次的任務是要載運珍寬的物資 {obj} 給好朋友。"
+            ],
+            "Disney": [
+                "✨ 奇妙星空下，米奇妙妙屋的夥伴 {charA} 正在準備驚喜嘉年華所需要的 {obj}！",
+                "🎈 歡樂的下午，{charA} 和 {charB} 決定在神奇城堡前，給小夥伴們派發色彩繽紛的 {obj}。",
+                "🍯 百畝森林裡，{charA} 忙碌了一整天，正與好朋友們一起快樂地數著收集到的 {obj}！",
+                "👑 皇家宴會即將開始，{charA} 需要你的聰明智慧，幫忙清點宴會桌上亮麗的 {obj} 數量。"
+            ],
+            "Marvel": [
+                "🛡️ 守護和平！復仇者聯盟成員 {charA} 正在整頓裝備，準備出動維護正義。他正在整理 {obj}。",
+                "🕸️ 蜘蛛絲大作戰！{charA} 與好拍檔 {charB} 為了今晚的巡邏任務，正在快速準備足夠的 {obj}！",
+                "⚡ 雷神之力！{charA} 剛從阿斯嘉特回到地球，帶回了充滿神奇能量的 {obj} 要分給盟友們。",
+                "🚀 宇宙守護戰！{charA} 正在神盾局的基地中，幫忙隊長點算防禦用的 {obj} 庫存。"
+            ],
+            "Pixar": [
+                "🎈 玩具箱大冒險！牛仔 {charA} 邀請太空戰士 {charB} 一起玩整理 {obj} 的計時遊戲。",
+                "🚪 怪獸電力公司今天非常忙碌，{charA} 和大眼仔需要把收集好能量的 {obj} 搬到儲藏室。",
+                "🏎️ 賽車跑道上，{charA} 正在與隊友清點賽車維修區需要用到的全新 {obj}，加油！",
+                "🧁 美食總動員！小鼠大廚 {charA} 研發了全新菜單，正在細心地裝飾每一盤美味的 {obj}。"
+            ],
+            "日本動漫": [
+                "🔥 友情與熱血的冒險開始了！{charA} 和隊友們在森林深處發現了一批珍貴的 {obj}！",
+                "⚽ 充滿朝氣的訓練場上，{charA} 為了即將到來的決賽，正熱情地跟夥伴們一起數著 {obj}。",
+                "🌌 穿越時空的探險！{charA} 與 {charB} 解開了古代遺跡的謎題，遺跡中出現了奇妙的 {obj}！",
+                "🐱 多啦A夢的法寶箱又裝滿了！{charA} 正在幫忙清理百寶袋裡各種神奇好玩的 {obj}。"
+            ]
+        };
+
+        let charA, charB, obj, valX, valY, valAns, difficulty;
+        let correctMoreLess, correctOp;
+        let sequence = [], currentStepIndex = 0, currentInputVal = "";
+
+        // 闖關模式相關變數
+        let currentMode = 'free'; // 'free' 自由練習, 'story' 故事闖關
+        let currentLevel = 1;     // 目前關卡 1-10
+        let storyProgress = [];   // 用於儲存 10 關的星星狀態 [true, false, ...]
+
+        const moreLabel = '<ruby>多<rt>more</rt></ruby>';
+        const lessLabel = '<ruby>少<rt>less</rt></ruby>';
+
+        function getRandom(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        // 切換遊戲模式
+        function switchMode(mode) {
+            currentMode = mode;
+            const freeBtn = document.getElementById("modeFreeBtn");
+            const storyBtn = document.getElementById("modeStoryBtn");
+            const progressContainer = document.getElementById("storyProgressContainer");
+
+            if (mode === 'free') {
+                freeBtn.className = "text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 bg-white text-green-700 shadow-md";
+                storyBtn.className = "text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 text-slate-500 hover:text-slate-800";
+                progressContainer.classList.add("hidden");
+                document.getElementById("storyCard").classList.add("hidden");
+            } else {
+                storyBtn.className = "text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 bg-white text-green-700 shadow-md";
+                freeBtn.className = "text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 text-slate-500 hover:text-slate-800";
+                progressContainer.classList.remove("hidden");
+                // 初始化 10 關
+                currentLevel = 1;
+                storyProgress = Array(10).fill(false);
+                updateStoryProgressUI();
+            }
+            startGame();
+        }
+
+        // 下拉選單更變時觸發重新開始
+        function onSettingChange() {
+            if (currentMode === 'story') {
+                currentLevel = 1;
+                storyProgress = Array(10).fill(false);
+                updateStoryProgressUI();
+            }
+            startGame();
+        }
+
+        // 產生溫馨背景故事文字
+        function generateStoryText(themeKey, charA, charB, obj) {
+            const templates = storyTemplates[themeKey];
+            let rawTemplate = "";
+            if (Array.isArray(templates)) {
+                rawTemplate = getRandom(templates);
+            } else {
+                rawTemplate = "🌟 {charA} 和 {charB} 正在高興地數著手中的 {obj}，大家一起來幫忙算算看吧！";
+            }
+            return rawTemplate
+                .replace(/{charA}/g, `<span class='text-red-600 font-extrabold'>${charA}</span>`)
+                .replace(/{charB}/g, `<span class='text-blue-600 font-extrabold'>${charB}</span>`)
+                .replace(/{obj}/g, `<span class='text-orange-600 font-extrabold'>${obj}</span>`);
+        }
+
+        // 開始新一局遊戲/關卡
+        function startGame() {
+            const themeKey = document.getElementById("themeSelect").value;
+            difficulty = document.getElementById("diffSelect").value;
+            const theme = themesData[themeKey];
+
+            // 確保角色與物品不重複
+            let chars = [...theme.chars];
+            charA = getRandom(chars);
+            chars = chars.filter(c => c !== charA);
+            charB = getRandom(chars);
+            obj = getRandom(theme.objs);
+
+            // 隨機題型
+            let qType = Math.floor(Math.random() * 4);
+            valY = Math.floor(Math.random() * 500) + 1; // 相差值
+            valX = Math.floor(Math.random() * 500) + 501; // 基數 A
+
+            let questionHTML = "";
+            
+            // 重要：無論題目敘述順序，作答區引導永遠是 B 比 A
+            switch(qType) {
+                case 0: // A有X, A比B多Y -> B比A少Y, B=X-Y
+                    questionHTML = `<span class="text-red-600">${charA}</span>有 ${valX} 個 ${obj}，<br><span class="text-red-600">${charA}</span>比 <span class="text-blue-600">${charB}</span>${moreLabel} ${valY} 個，<br><span class="text-blue-600">${charB}</span>有多少個 ${obj}？`;
+                    valAns = valX - valY;
+                    correctMoreLess = "少"; correctOp = "-";
+                    break;
+                case 1: // A有X, A比B少Y -> B比A多Y, B=X+Y
+                    questionHTML = `<span class="text-red-600">${charA}</span>有 ${valX} 個 ${obj}，<br><span class="text-red-600">${charA}</span>比 <span class="text-blue-600">${charB}</span>${lessLabel} ${valY} 個，<br><span class="text-blue-600">${charB}</span>有多少個 ${obj}？`;
+                    valAns = valX + valY;
+                    correctMoreLess = "多"; correctOp = "+";
+                    break;
+                case 2: // A有X, B比A多Y -> B比A多Y, B=X+Y
+                    questionHTML = `<span class="text-red-600">${charA}</span>有 ${valX} 個 ${obj}，<br><span class="text-blue-600">${charB}</span>比 <span class="text-red-600">${charA}</span>${moreLabel} ${valY} 個，<br><span class="text-blue-600">${charB}</span>有多少個 ${obj}？`;
+                    valAns = valX + valY;
+                    correctMoreLess = "多"; correctOp = "+";
+                    break;
+                case 3: // A有X, B比A少Y -> B比A少Y, B=X-Y
+                    questionHTML = `<span class="text-red-600">${charA}</span>有 ${valX} 個 ${obj}，<br><span class="text-blue-600">${charB}</span>比 <span class="text-red-600">${charA}</span>${lessLabel} ${valY} 個，<br><span class="text-blue-600">${charB}</span>有多少個 ${obj}？`;
+                    valAns = valX - valY;
+                    correctMoreLess = "少"; correctOp = "-";
+                    break;
+            }
+
+            document.getElementById("qText").innerHTML = questionHTML;
+            
+            // 處理故事內容顯示
+            if (currentMode === 'story') {
+                document.getElementById("storyText").innerHTML = generateStoryText(themeKey, charA, charB, obj);
+                document.getElementById("storyCard").classList.remove("hidden");
+                updateStoryProgressUI();
+            } else {
+                document.getElementById("storyCard").classList.add("hidden");
+            }
+
+            // 設定步驟文字（固定的對比邏輯）
+            document.getElementById("iCharA_Step1").innerText = charA;
+            document.getElementById("iCharB_Step2").innerText = charB;
+            document.getElementById("iCharA_Step2").innerText = charA;
+            document.getElementById("iCharB_Step3").innerText = charB;
+            
+            document.querySelectorAll(".iObjName").forEach(el => el.innerText = obj);
+
+            resetUI();
+            buildSequence();
+            activateStep();
+            
+            document.getElementById("questionArea").classList.remove("hidden");
+            document.getElementById("interactionArea").classList.remove("hidden");
+            document.getElementById("numpad").classList.remove("hidden");
+        }
+
+        // 更新故事模式的星星進度 UI
+        function updateStoryProgressUI() {
+            document.getElementById("progressText").innerText = `第 ${currentLevel} / 10 關`;
+            const starsContainer = document.getElementById("starsProgress");
+            starsContainer.innerHTML = "";
+            for (let i = 0; i < 10; i++) {
+                const star = document.createElement("span");
+                star.className = "transition-all duration-300 transform";
+                if (i < currentLevel - 1 || storyProgress[i]) {
+                    star.innerText = "⭐";
+                    star.style.filter = "drop-shadow(0 2px 4px rgba(245,158,11,0.5))";
+                    star.classList.add("scale-110", "inline-block");
+                } else {
+                    star.innerText = "⭐";
+                    star.style.opacity = "0.2";
+                    star.style.filter = "grayscale(100%)";
+                }
+                starsContainer.appendChild(star);
+            }
+        }
+
+        function buildSequence() {
+            // 嚴格按照要求的固定步驟
+            sequence = [
+                // 1. A有 [輸入數量]
+                { id: 'box_valA_S1', type: 'num', target: valX, showId: 'step1' },
+                // 2. B 比 A [選多/少] [輸入數量]
+                { id: 'btnGroup_moreless', type: 'choice', target: correctMoreLess, showId: 'step2' },
+                { id: 'box_diff_S2', type: 'num', target: valY, showId: 'box_diff_S2_container' },
+                // 3. B : [輸入A量] [選+/-] [輸入相差量] = [輸入答案]
+                { id: 'box_valA_S3', type: 'num', target: valX, showId: 'step3' },
+                { id: 'btnGroup_op', type: 'choice', target: correctOp, showId: 'step3' },
+                { id: 'box_valDiff_S3', type: 'num', target: valY, showId: 'step3' }
+            ];
+
+            if (difficulty === '難') {
+                sequence.push({ id: 'box_ans', type: 'num', target: valAns, showId: 'step3', isLast: true });
+            } else {
+                sequence[sequence.length - 1].isLast = true;
+            }
+        }
+
+        function activateStep() {
+            if (currentStepIndex >= sequence.length) return;
+            let step = sequence[currentStepIndex];
+            let container = document.getElementById(step.showId);
+            if (container) container.classList.remove("hidden");
+
+            const numpad = document.getElementById("numpad");
+            if (step.type === 'num') {
+                numpad.style.opacity = "1";
+                numpad.style.pointerEvents = "auto";
+                let box = document.getElementById(step.id);
+                document.querySelectorAll('.num-box').forEach(b => b.classList.remove('active'));
+                box.classList.remove("hidden");
+                box.classList.add("active");
+                currentInputVal = "";
+            } else {
+                numpad.style.opacity = "0.5";
+                numpad.style.pointerEvents = "none";
+                if (step.id === 'btnGroup_moreless' || step.id === 'btnGroup_op') {
+                    document.getElementById(step.id).classList.add("active-choice");
+                }
+            }
+        }
+
+        function inputNum(n) {
+            let step = sequence[currentStepIndex];
+            if (!step || step.type !== 'num') return;
+            if (currentInputVal.length < 4) {
+                currentInputVal += n;
+                document.getElementById(step.id).innerText = currentInputVal;
+            }
+        }
+
+        function clearNum() {
+            let step = sequence[currentStepIndex];
+            if (!step || step.type !== 'num') return;
+            currentInputVal = "";
+            document.getElementById(step.id).innerText = "";
+        }
+
+        function submitNum() {
+            let step = sequence[currentStepIndex];
+            if (!step || step.type !== 'num') return;
+
+            let box = document.getElementById(step.id);
+            let inputNumVal = parseInt(currentInputVal, 10);
+
+            if (inputNumVal === step.target) {
+                box.classList.remove("active");
+                box.classList.add("correct");
+                // 檢查是否標記 ✅
+                if (step.id === 'box_valA_S1') document.getElementById('mark_s1').classList.remove('hidden');
+                if (step.id === 'box_diff_S2') document.getElementById('mark_s2').classList.remove('hidden');
+                if (step.id === 'box_ans') document.getElementById('mark_ans').classList.remove('hidden');
+                nextStep(step);
+            } else {
+                box.classList.add("error-shake");
+                setTimeout(() => box.classList.remove("error-shake"), 400);
+                clearNum();
+            }
+        }
+
+        function handleChoice(val) {
+            let step = sequence[currentStepIndex];
+            if (!step || step.type !== 'choice') return;
+            let container = document.getElementById(step.id);
+            let buttons = Array.from(container.querySelectorAll('button'));
+
+            if (val === step.target) {
+                container.classList.remove("active-choice");
+                buttons.forEach(btn => {
+                    if (btn.innerText.includes(val) || btn.innerText === val) {
+                        btn.classList.add("correct");
+                    } else {
+                        btn.classList.add("hidden");
+                    }
+                    btn.disabled = true;
+                });
+                nextStep(step);
+            } else {
+                let wrongBtn = buttons.find(b => b.innerText.includes(val) || b.innerText === val);
+                if (wrongBtn) {
+                    wrongBtn.classList.add("error-shake");
+                    setTimeout(() => wrongBtn.classList.remove("error-shake"), 400);
+                }
+            }
+        }
+
+        function nextStep(currentStep) {
+            currentStepIndex++;
+            if (currentStep.isLast) {
+                // 關卡答對處理
+                document.getElementById("numpad").style.opacity = "0.5";
+                document.getElementById("numpad").style.pointerEvents = "none";
+                
+                if (difficulty === '易') {
+                    let ansText = document.getElementById("text_ans");
+                    ansText.innerText = valAns;
+                    ansText.classList.remove("hidden");
+                    document.getElementById('mark_ans').classList.remove('hidden');
+                }
+
+                if (currentMode === 'free') {
+                    // 自由模式直接顯示完成字樣
+                    document.getElementById("successMessage").classList.remove("hidden");
+                } else {
+                    // 故事模式
+                    storyProgress[currentLevel - 1] = true;
+                    updateStoryProgressUI();
+                    
+                    // 彈出精美鼓勵 Modal
+                    showClearModal();
+                }
+            } else {
+                activateStep();
+            }
+        }
+
+        // 顯示過關 Modal 鼓勵
+        function showClearModal() {
+            const modal = document.getElementById("levelClearModal");
+            const txt = document.getElementById("modalEncourageText");
+            
+            // 針對 10 關提供隨機鼓勵字眼
+            const encourages = [
+                "好棒喔！成功挑戰第 " + currentLevel + " 關！",
+                "你太厲害了！離通關又近了一步！",
+                "真聰明！繼續保持！加油！",
+                "卡通夥伴們都為你歡呼呢！",
+                "答題速度真快！你是數學小天才！"
+            ];
+            txt.innerText = getRandom(encourages);
+            modal.classList.remove("hidden");
+            
+            // 小飄落特效
+            triggerConfettiEffect(25);
+        }
+
+        function closeClearModal() {
+            document.getElementById("levelClearModal").classList.add("hidden");
+            
+            if (currentLevel < 10) {
+                // 顯示「進入下一關」大按鈕
+                document.getElementById("nextLevelContainer").classList.remove("hidden");
+            } else {
+                // 通關 10 關，大結算！
+                showUltimateChampion();
+            }
+        }
+
+        // 點擊前往下一關
+        function goToNextLevel() {
+            document.getElementById("nextLevelContainer").classList.add("hidden");
+            currentLevel++;
+            startGame();
+        }
+
+        // 終極大通關！
+        function showUltimateChampion() {
+            document.getElementById("ultimateChampionCard").classList.remove("hidden");
+            // 大量滿屏彩帶特效！
+            triggerConfettiEffect(150);
+            
+            // 隔2秒再灑一次
+            setTimeout(() => {
+                triggerConfettiEffect(100);
+            }, 1500);
+        }
+
+        // 七彩紙屑飄落動態效果
+        function triggerConfettiEffect(count) {
+            const container = document.getElementById("celebrationContainer");
+            const colors = ['#f43f5e', '#ec4899', '#d946ef', '#a855f7', '#8b5cf6', '#6366f1', '#3b82f6', '#0ea5e9', '#10b981', '#f59e0b', '#f97316'];
+            
+            for (let i = 0; i < count; i++) {
+                const conf = document.createElement("div");
+                conf.className = "confetti";
+                conf.style.backgroundColor = getRandom(colors);
+                conf.style.left = Math.random() * 100 + "vw";
+                conf.style.animationDelay = Math.random() * 2 + "s";
+                conf.style.animationDuration = (Math.random() * 2 + 2) + "s";
+                conf.style.borderRadius = Math.random() > 0.5 ? "50%" : "0";
+                container.appendChild(conf);
+
+                // 4秒後自動銷毀
+                setTimeout(() => {
+                    conf.remove();
+                }, 4000);
+            }
+        }
+
+        function resetUI() {
+            currentStepIndex = 0;
+            currentInputVal = "";
+            document.getElementById("successMessage").classList.add("hidden");
+            document.getElementById("nextLevelContainer").classList.add("hidden");
+            document.getElementById("ultimateChampionCard").classList.add("hidden");
+
+            const elementsToHide = [
+                'step1', 'step2', 'step3', 'box_diff_S2_container', 
+                'mark_s1', 'mark_s2', 'mark_ans', 'text_ans', 'box_ans'
+            ];
+            for (let i = 0; i < elementsToHide.length; i++) {
+                const el = document.getElementById(elementsToHide[i]);
+                if (el) el.classList.add("hidden");
+            }
+
+            document.querySelectorAll(".num-box").forEach(box => {
+                box.innerText = "";
+                box.classList.remove("active", "correct", "error-shake", "hidden");
+                const defaultHiddenBoxes = ['box_ans', 'box_valA_S3', 'box_valDiff_S3'];
+                if (defaultHiddenBoxes.indexOf(box.id) !== -1) {
+                    box.classList.add('hidden');
+                }
+            });
+
+            document.querySelectorAll(".choice-btn").forEach(btn => {
+                btn.classList.remove("correct", "active-choice", "hidden", "error-shake");
+                btn.disabled = false;
+            });
+        }
+
+        window.onload = () => {
+            switchMode('free'); // 預設進來是自由練習
+        };
+    </script>
+</body>
+</html>
