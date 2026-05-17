@@ -184,6 +184,16 @@
                             <option value="難">難</option>
                         </select>
                     </div>
+                    <!-- 新增：提示切換開關 (Toggle) -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl font-bold text-gray-700">提示：</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="hintToggle" class="sr-only peer" checked onchange="updateHintLabel(); onSettingChange()">
+                            <div class="w-16 h-8 bg-slate-300 rounded-full peer peer-checked:bg-green-400 border-2 border-slate-200 peer-checked:border-green-400 transition-colors shadow-inner"></div>
+                            <div class="absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform peer-checked:translate-x-8 shadow-md"></div>
+                        </label>
+                        <span id="hintStatusText" class="text-xl font-bold text-green-600 ml-1 w-12">開啟</span>
+                    </div>
                     <button onclick="startGame()" class="bg-gradient-to-r from-orange-400 to-amber-500 hover:from-orange-500 hover:to-amber-600 text-white text-xl font-black py-2.5 px-8 rounded-xl shadow-md transform active:scale-95 transition">
                         重新開始 🚀
                     </button>
@@ -215,7 +225,7 @@
                 <div id="storyCard" class="bg-gradient-to-r from-amber-50 to-orange-50 border-4 border-amber-200 rounded-2xl p-5 mb-6 text-xl md:text-2xl font-bold text-amber-900 shadow-inner flex items-start gap-3 hidden">
                     <span class="text-3xl leading-none">📖</span>
                     <div>
-                        <div class="text-sm text-amber-600 font-extrabold tracking-widest uppercase mb-1">故事背景故事</div>
+                        <div class="text-sm text-amber-600 font-extrabold tracking-widest uppercase mb-1">故事背景</div>
                         <div id="storyText">故事加載中...</div>
                     </div>
                 </div>
@@ -231,7 +241,7 @@
                     <div id="step1" class="flex flex-wrap items-center gap-4 text-2xl md:text-3xl font-bold hidden whitespace-nowrap">
                         <span id="iCharA_Step1" class="text-red-600"></span>有
                         <div id="box_valA_S1" class="num-box"></div>
-                        <span>個<span class="iObjName"></span>，</span>
+                        <span><span class="iObjUnit"></span><span class="iObjName"></span>，</span>
                         <span id="mark_s1" class="text-green-500 text-4xl hidden">✅</span>
                     </div>
 
@@ -245,7 +255,7 @@
                         </div>
                         <div id="box_diff_S2_container" class="hidden flex items-center gap-4">
                             <div id="box_diff_S2" class="num-box"></div>
-                            <span>個<span class="iObjName"></span>。</span>
+                            <span><span class="iObjUnit"></span><span class="iObjName"></span>。</span>
                             <span id="mark_s2" class="text-green-500 text-4xl hidden">✅</span>
                         </div>
                     </div>
@@ -330,51 +340,200 @@
 
     <script>
         const themesData = {
-            "Sanrio": { chars: ["Hello Kitty", "My Melody", "Kuromi", "布甸狗", "玉桂狗", "PC狗"], objs: ["蘋果", "蝴蝶結", "糖果", "蛋糕"] },
-            "吉卡力": { chars: ["龍貓", "千尋", "波妞", "哈爾", "無臉男", "貓巴士"], objs: ["橡果", "煤炭屎鬼", "金幣", "星星"] },
-            "Disney": { chars: ["米奇", "米妮", "唐老鴨", "高飛", "維尼", "勞蘇"], objs: ["氣球", "蜂蜜", "星星", "魔法棒"] },
-            "Marvel": { chars: ["蜘蛛俠", "鐵甲奇俠", "美國隊長", "雷神", "黑寡婦"], objs: ["盾牌", "飛彈", "雷神鎚", "蜘蛛絲"] },
-            "Pixar": { chars: ["胡迪", "巴斯光年", "三眼仔", "毛毛", "大眼仔"], objs: ["玩具", "電池", "能量瓶", "門"] },
-            "日本動漫": { chars: ["多啦A夢", "路飛", "鳴人", "炭治郎", "悟空", "比卡超"], objs: ["銅鑼燒", "精靈球", "飛鏢", "肉"] }
+            "Sanrio": { 
+                chars: ["Hello Kitty", "My Melody", "Kuromi", "布甸狗", "玉桂狗", "PC狗", "蛋黃哥", "大口仔"], 
+                objs: [
+                    {name: "蘋果", unit: "個"}, {name: "蝴蝶結", unit: "個"}, {name: "糖果", unit: "粒"}, 
+                    {name: "蛋糕", unit: "件"}, {name: "草莓", unit: "粒"}, {name: "布丁", unit: "個"}, 
+                    {name: "曲奇餅", unit: "塊"}, {name: "氣球", unit: "個"}, {name: "花朵", unit: "朵"}, 
+                    {name: "畫筆", unit: "枝"}, {name: "筆記本", unit: "本"}, {name: "貼紙", unit: "張"}, 
+                    {name: "魔法棒", unit: "枝"}, {name: "皇冠", unit: "頂"}, {name: "甜甜圈", unit: "個"}
+                ] 
+            },
+            "吉卡力": { 
+                chars: ["龍貓", "千尋", "波妞", "哈爾", "無臉男", "貓巴士", "卡西法", "蘇菲"], 
+                objs: [
+                    {name: "橡果", unit: "粒"}, {name: "煤炭屎鬼", unit: "隻"}, {name: "金幣", unit: "枚"}, 
+                    {name: "星星", unit: "顆"}, {name: "魔法石", unit: "塊"}, {name: "掃帚", unit: "把"}, 
+                    {name: "麵包", unit: "個"}, {name: "飛行石", unit: "顆"}, {name: "樹葉", unit: "片"}, 
+                    {name: "花束", unit: "束"}, {name: "水晶", unit: "粒"}, {name: "飯糰", unit: "個"}, 
+                    {name: "車票", unit: "張"}, {name: "貝殼", unit: "隻"}, {name: "玻璃珠", unit: "粒"}
+                ] 
+            },
+            "Disney": { 
+                chars: ["米奇", "米妮", "唐老鴨", "高飛", "維尼", "勞蘇", "Duffy", "史迪仔", "鋼牙奇奇", "大鼻帝帝", "黛絲", "布魯托"], 
+                objs: [
+                    {name: "氣球", unit: "個"}, {name: "蜂蜜", unit: "桶"}, {name: "星星", unit: "顆"}, 
+                    {name: "魔法棒", unit: "枝"}, {name: "蘋果", unit: "個"}, {name: "玫瑰花", unit: "朵"}, 
+                    {name: "寶石", unit: "粒"}, {name: "皇冠", unit: "頂"}, {name: "水晶鞋", unit: "隻"}, 
+                    {name: "懷錶", unit: "個"}, {name: "煙花", unit: "枚"}, {name: "貝殼", unit: "隻"}, 
+                    {name: "松果", unit: "粒"}, {name: "糖果", unit: "粒"}, {name: "冰晶", unit: "片"}
+                ] 
+            },
+            "Marvel": { 
+                chars: ["蜘蛛俠", "鐵甲奇俠", "美國隊長", "雷神", "黑寡婦"], 
+                objs: [
+                    {name: "盾牌", unit: "塊"}, {name: "飛彈", unit: "枚"}, {name: "雷神鎚", unit: "把"}, 
+                    {name: "蜘蛛絲", unit: "條"}, {name: "能量方塊", unit: "件"}, {name: "盔甲", unit: "件"}, 
+                    {name: "戰機", unit: "架"}, {name: "寶石", unit: "顆"}, {name: "徽章", unit: "枚"}, 
+                    {name: "披薩", unit: "塊"}, {name: "漢堡包", unit: "個"}, {name: "護目鏡", unit: "副"}, 
+                    {name: "手套", unit: "隻"}, {name: "弓箭", unit: "枝"}, {name: "通訊器", unit: "部"}
+                ] 
+            },
+            "Pixar": { 
+                chars: ["胡迪", "巴斯光年", "三眼仔", "毛毛", "大眼仔", "阿樂", "阿焦", "阿燥", "阿厭"], 
+                objs: [
+                    {name: "玩具", unit: "件"}, {name: "電池", unit: "粒"}, {name: "能量瓶", unit: "支"}, 
+                    {name: "門", unit: "扇"}, {name: "氣球", unit: "個"}, {name: "賽車", unit: "架"}, 
+                    {name: "輪胎", unit: "條"}, {name: "記憶球", unit: "顆"}, {name: "結他", unit: "把"}, 
+                    {name: "獎盃", unit: "個"}, {name: "披薩", unit: "塊"}, {name: "廚師帽", unit: "頂"}, 
+                    {name: "望遠鏡", unit: "部"}, {name: "徽章", unit: "枚"}, {name: "閃光彈", unit: "枚"}
+                ] 
+            },
+            "日本動漫": { 
+                chars: ["多啦A夢", "路飛", "鳴人", "炭治郎", "悟空", "比卡超", "吉伊卡哇", "禰豆子", "喬巴", "大雄", "靜香", "小夫", "胖虎", "噴火龍", "胖丁", "伊貝"], 
+                objs: [
+                    {name: "銅鑼燒", unit: "個"}, {name: "精靈球", unit: "個"}, {name: "飛鏢", unit: "枚"}, 
+                    {name: "肉", unit: "塊"}, {name: "豆沙包", unit: "個"}, {name: "惡魔果實", unit: "顆"}, 
+                    {name: "寶箱", unit: "個"}, {name: "苦無", unit: "把"}, {name: "拉麵", unit: "碗"}, 
+                    {name: "飯糰", unit: "個"}, {name: "記憶麵包", unit: "塊"}, {name: "隨意門", unit: "扇"}, 
+                    {name: "金幣", unit: "枚"}, {name: "藥水", unit: "瓶"}, {name: "能量棒", unit: "條"}
+                ] 
+            }
         };
 
-        // 故事文字範本庫
         const storyTemplates = {
             "Sanrio": [
-                "🌸 櫻花盛開的季節，{charA} 邀請大家來草地野餐！他準備了美味的 {obj} 想分享給朋友們。",
-                "🎀 禮物籌備中！{charA} 打算手作一些精美的 {obj} 送給好朋友 {charB} 當作驚喜生日禮物！",
-                "🧁 點心時間到了！下午茶派對需要分配好吃的 {obj}，{charA} 正在努力分裝中。",
-                "🌟 星光燦爛的夜晚，{charA} 和 {charB} 在草地上露營，一邊數著星空下的 {obj} 一邊聊天。"
+                "🌸 春天來了！{charA} 邀請大家來花園野餐，帶了好多 {obj} 想分享給朋友們。",
+                "🎀 驚喜籌備中！{charA} 打算包裝一些精美的 {obj} 送給好朋友 {charB} 當禮物！",
+                "🧁 點心時間到了！派對上需要分配好 {obj}，{charA} 正在努力整理中。",
+                "🌟 星光燦爛的夜晚，{charA} 和 {charB} 在草地上露營，一邊數著發光的 {obj} 一邊聊天。",
+                "🎨 {charA} 和 {charB} 正在參加手工藝比賽，他們各自收集了五顏六色的 {obj} 當作裝飾！",
+                "🎶 歡樂的音樂節快到了，{charA} 準備了特別的 {obj} 送給在台上表演的 {charB}。",
+                "🏖️ 夏天到了！{charA} 在沙灘上堆沙堡，還特地找來 {obj} 點綴，準備給 {charB} 一個驚喜。",
+                "🏡 {charA} 正在打掃房間，在床底下發現了以前收藏的 {obj}，開心地跑去告訴 {charB}。",
+                "🎡 遊樂園裡，{charA} 挑戰了尋寶遊戲，贏得了好多 {obj}，分了一半給 {charB}！",
+                "🍎 秋天到了，{charA} 和 {charB} 去果園幫忙採收，兩人的籃子裡都裝滿了 {obj}。",
+                "🎁 {charA} 舉辦了一場交換禮物派對，大家輪流抽出驚喜的 {obj}，{charB} 期待極了！",
+                "🌧️ 雨天不能出去玩，{charA} 在家裡整理玩具箱，找出了最喜歡的 {obj} 和 {charB} 一起玩。",
+                "🌺 {charA} 的花園開滿了花，他用 {obj} 做成了漂亮的佈置，想要送給最好的朋友 {charB}。",
+                "📸 {charA} 和 {charB} 一起去旅行，拍了好多照片，還買了特別的 {obj} 作為紀念。",
+                "🏃‍♂️ 運動會上，{charA} 賣力地往前跑，為了贏得獎品 {obj}，{charB} 在旁邊大聲加油！",
+                "🍳 {charA} 今天當小幫手，特地為 {charB} 準備了滿滿一籃子的 {obj}。",
+                "🌙 睡覺時間到了，{charA} 聽著床邊故事，看著旁邊放著的 {obj}，安穩地睡著了。",
+                "🎈 派對結束後，{charA} 負責收拾場地，收集了散落一地的 {obj} 交給 {charB} 保管。",
+                "🚂 坐上小火車，{charA} 開心地望著窗外，手裡拿著剛買的 {obj} 準備跟 {charB} 一起分享。",
+                "📚 在圖書館裡，{charA} 找到了一本有趣的故事書，裡面還夾著可愛的 {obj}，趕緊拿給 {charB} 看。"
             ],
             "吉卡力": [
-                "🌳 充滿魔力的橡子森林深處，龍貓的朋友 {charA} 正在收集森林裡的 {obj}。",
-                "🪙 尋找神祕金幣！{charA} 帶領著無臉男和小煤炭，在溫泉屋裡幫忙點算 {obj} 的數量。",
+                "🌳 充滿魔力的森林深處，龍貓的朋友 {charA} 正在收集散落的 {obj}。",
+                "🪙 尋找神祕寶物！{charA} 帶領著無臉男和小煤炭，在溫泉屋裡幫忙點算 {obj} 的數量。",
                 "🚲 陽光明媚的午後，{charA} 和 {charB} 騎著腳踏車去海邊，一路上撿了好多亮晶晶的 {obj}！",
-                "✨ 奇幻大冒險！{charA} 乘著貓巴士出發，這次的任務是要載運珍寬的物資 {obj} 給好朋友。"
+                "✨ 奇幻大冒險！{charA} 乘著貓巴士出發，這次的任務是要載運珍貴的 {obj} 給好朋友。",
+                "🍃 微風吹過大樹，{charA} 在草叢下發現了閃閃發光的 {obj}，馬上叫 {charB} 來看！",
+                "🧹 魔法修行中！{charA} 騎著掃帚飛過城鎮，幫忙運送重要的 {obj} 給 {charB}。",
+                "💧 雨後的荷葉上，{charA} 收集了晶瑩剔透的雨滴，旁邊還散落著神秘的 {obj}。",
+                "⛰️ 爬上高高的山丘，{charA} 望著遠方的雲海，一邊整理著 {obj}，一邊等著 {charB}。",
+                "🔥 爐火劈啪作響，{charA} 正在溫暖的火爐旁看著 {obj}，神奇的光芒把 {charB} 都吸引過來了。",
+                "🌱 奇妙的種子發芽了！{charA} 每天辛勤澆水，終於收穫了特別的 {obj}，急忙拿給 {charB} 看。",
+                "🌌 滿天星斗的晚上，{charA} 坐在屋頂上，接住了從天而降的 {obj}，把它送給了 {charB}。",
+                "🥖 麵包店剛出爐了新鮮的麵包，{charA} 還順便準備了美味的 {obj}，打算和 {charB} 一起分享。",
+                "🎏 節日祭典上，{charA} 穿著浴衣，在攤位上開心地獲得了 {obj}，並跟 {charB} 炫耀。",
+                "🕰️ 古老的大鐘滴答作響，{charA} 在抽屜裡找到了充滿回憶的 {obj}，想起了和 {charB} 的故事。",
+                "🛤️ 沿著鐵軌一直走，{charA} 在水潭邊撿到了發亮的 {obj}，開心地把它當成禮物送給 {charB}。",
+                "🧶 {charA} 正在認真地打毛線，想要做一個裝滿 {obj} 的小袋子送給怕冷的 {charB}。",
+                "🍯 {charA} 在森林的深處探險，小心翼翼地收集了罕見的 {obj}，準備帶給 {charB}。",
+                "🎐 夏天的風鈴響起，{charA} 坐在走廊上乘涼，一邊看著 {obj}，一邊和 {charB} 聊天。",
+                "🏮 湯屋今天客人好多！{charA} 忙進忙出，整理著一盤又一盤的 {obj}，{charB} 也來幫忙。",
+                "✈️ 乘著滑翔翼飛上天空，{charA} 俯瞰著美麗的大地，口袋裡還裝著要給 {charB} 的 {obj}。"
             ],
             "Disney": [
                 "✨ 奇妙星空下，米奇妙妙屋的夥伴 {charA} 正在準備驚喜嘉年華所需要的 {obj}！",
                 "🎈 歡樂的下午，{charA} 和 {charB} 決定在神奇城堡前，給小夥伴們派發色彩繽紛的 {obj}。",
-                "🍯 百畝森林裡，{charA} 忙碌了一整天，正與好朋友們一起快樂地數著收集到的 {obj}！",
-                "👑 皇家宴會即將開始，{charA} 需要你的聰明智慧，幫忙清點宴會桌上亮麗的 {obj} 數量。"
+                "🍯 森林裡，{charA} 忙碌了一整天，正與好朋友們一起快樂地數著收集到的 {obj}！",
+                "👑 皇家宴會即將開始，{charA} 需要你的聰明智慧，幫忙清點宴會桌上亮麗的 {obj} 數量。",
+                "🎪 馬戲團來了！{charA} 表演了精彩的魔術，變出了好多 {obj}，台下的 {charB} 拍手叫好。",
+                "🚢 坐上大輪船出海冒險！{charA} 在甲板上發現了海盜留下的 {obj}，興奮地告訴了 {charB}。",
+                "🎄 節日到了，{charA} 在樹下放了包裝精美的 {obj}，期待 {charB} 打開時的表情。",
+                "❄️ 下雪了！{charA} 和 {charB} 一起堆雪人，還用 {obj} 幫雪人做了可愛的裝飾。",
+                "🏰 在華麗的城堡裡，{charA} 正在準備舞會，小心翼翼地擺放著閃亮的 {obj}，{charB} 在一旁幫忙。",
+                "🍎 {charA} 在森林裡採集了新鮮的水果，還特地挑選了最好的 {obj} 準備送給 {charB}。",
+                "🎇 迪士尼樂園的煙火好美！{charA} 一邊看著夜空，一邊拿著 {obj}，{charB} 也覺得好開心。",
+                "🛶 划著獨木舟順流而下，{charA} 在河岸邊發現了稀有的 {obj}，立刻划過去跟 {charB} 一起分享。",
+                "👑 戴上皇冠，{charA} 今天是小國王！他大方地把珍貴的 {obj} 分給了所有的好朋友，包括 {charB}。",
+                "🎨 {charA} 拿著畫筆，畫出了美麗的彩虹和閃閃發光的 {obj}，把畫送給了 {charB}。",
+                "🏕️ 森林露營之夜，{charA} 在帳篷旁邊生火，拿出了 {obj}，等著 {charB} 一起過來。",
+                "🚂 嘟嘟！玩具火車出發了，{charA} 把滿載著 {obj} 的車廂推向 {charB}，兩人玩得不亦樂乎。",
+                "🐚 在沙灘上散步，{charA} 撿到了美麗的貝殼和神奇的 {obj}，把它們收集起來送給 {charB}。",
+                "🎠 旋轉木馬轉呀轉，{charA} 開心地笑著，手裡還拿著 {charB} 送他的 {obj}。",
+                "🎃 萬聖節派對！{charA} 打扮成小幽靈，收集了滿滿一袋的 {obj}，分了一半給 {charB}。",
+                "🐾 {charA} 帶著寵物在公園散步，找到了藏在草叢裡的 {obj}，開心地和 {charB} 一起分享。"
             ],
             "Marvel": [
                 "🛡️ 守護和平！復仇者聯盟成員 {charA} 正在整頓裝備，準備出動維護正義。他正在整理 {obj}。",
-                "🕸️ 蜘蛛絲大作戰！{charA} 與好拍檔 {charB} 為了今晚的巡邏任務，正在快速準備足夠的 {obj}！",
-                "⚡ 雷神之力！{charA} 剛從阿斯嘉特回到地球，帶回了充滿神奇能量的 {obj} 要分給盟友們。",
-                "🚀 宇宙守護戰！{charA} 正在神盾局的基地中，幫忙隊長點算防禦用的 {obj} 庫存。"
+                "🕸️ 英雄大作戰！{charA} 與好拍檔 {charB} 為了今晚的巡邏任務，正在快速準備足夠的 {obj}！",
+                "⚡ 守護地球！{charA} 剛從外星回到地球，帶回了充滿神奇能量的 {obj} 要分給盟友們。",
+                "🚀 宇宙守護戰！{charA} 正在神盾局的基地中，幫忙隊長點算防禦用的 {obj} 庫存。",
+                "🦾 實驗室裡，{charA} 正在研發新的高科技裝備，需要用到稀有的 {obj}，{charB} 幫忙找到了很多。",
+                "🌆 城市巡邏中！{charA} 在大樓頂端發現了壞人留下的 {obj}，馬上聯絡 {charB} 來處理。",
+                "🌌 星際探險！{charA} 駕駛太空船來到了新星球，收集了充滿能量的 {obj} 準備帶回給 {charB}。",
+                "🏋️‍♂️ 訓練室裡，{charA} 滿頭大汗地練習，旁邊放著補充體力的 {obj}，{charB} 也加入了一起訓練。",
+                "🍕 拯救世界後肚子餓了！{charA} 準備了豐盛的大餐，還拿出了 {obj}，跟 {charB} 一起分享。",
+                "🛠️ 維修時間到！{charA} 的裝備受損了，他正在尋找備用的 {obj} 來修理，{charB} 也來幫忙找。",
+                "🛸 外星人來襲！{charA} 勇敢地迎戰，用神奇的 {obj} 成功擊退了敵人，{charB} 在一旁歡呼。",
+                "🚁 復仇者大樓的停機坪上，{charA} 正在卸下剛運來的 {obj} 補給品，交接給 {charB}。",
+                "📡 接收到神秘訊號！{charA} 追蹤訊號來源，發現了一個藏滿 {obj} 的秘密基地，馬上通知 {charB}。",
+                "❄️ 極地任務！{charA} 在冰天雪地中尋找失落的 {obj}，任務完成後與 {charB} 成功會合。",
+                "🌋 危險危機！{charA} 冒險進入險境，成功搶救出珍貴的 {obj}，交給了 {charB} 保管。",
+                "🌊 潛入深海！{charA} 在神秘的遺跡中發現了會發光的 {obj}，帶回去給 {charB} 研究。",
+                "🕰️ 穿梭時空！{charA} 執行秘密任務，拿回了關鍵的 {obj}，成功保護了未來，{charB} 鬆了一口氣。",
+                "🎭 變裝潛入！{charA} 換上西裝參加晚宴，暗中獲得了目標物 {obj}，並安全撤退與 {charB} 會合。",
+                "🛡️ 防禦陣線！{charA} 部署了強大的力場，並發放 {obj} 給每一位市民，{charB} 負責指揮疏散。",
+                "🎉 慶功宴！大家舉杯慶祝勝利，{charA} 開心地拿著特別準備的 {obj}，並跟 {charB} 擊掌。"
             ],
             "Pixar": [
                 "🎈 玩具箱大冒險！牛仔 {charA} 邀請太空戰士 {charB} 一起玩整理 {obj} 的計時遊戲。",
                 "🚪 怪獸電力公司今天非常忙碌，{charA} 和大眼仔需要把收集好能量的 {obj} 搬到儲藏室。",
                 "🏎️ 賽車跑道上，{charA} 正在與隊友清點賽車維修區需要用到的全新 {obj}，加油！",
-                "🧁 美食總動員！小鼠大廚 {charA} 研發了全新菜單，正在細心地裝飾每一盤美味的 {obj}。"
+                "🧁 美食總動員！小鼠大廚 {charA} 研發了全新菜單，正在細心地準備美味的 {obj}。",
+                "🚀 飛向宇宙，浩瀚無垠！{charA} 在外太空發現了奇妙的 {obj}，迫不及待地想給 {charB} 看。",
+                "🎸 彈起音樂，唱著歡樂的歌！{charA} 在舞台上表演，台下的 {charB} 揮舞著 {obj} 應援。",
+                "🐠 在美麗的珊瑚礁裡，{charA} 正在尋找閃閃發光的 {obj}，準備裝飾自己的家，{charB} 也來幫忙。",
+                "🎈 房子飛起來了！{charA} 在空中抓住了飄過的 {obj}，送給了同行的 {charB}。",
+                "🧠 腦筋急轉彎！{charA} 正在大腦總部裡整理發光的 {obj}，把最快樂的回憶留給 {charB}。",
+                "🐜 蟲蟲危機解除！{charA} 帶領大家收集了足夠過冬的 {obj}，{charB} 開心地跳起舞來。",
+                "🐼 變身紅熊貓！{charA} 努力控制情緒，深呼吸後把弄亂的 {obj} 整理好，還給了 {charB}。",
+                "🦸‍♂️ 超人出動！{charA} 展現超能力，瞬間收集了散落一地的 {obj}，讓 {charB} 看得目瞪口呆。",
+                "🦕 恐龍當家！{charA} 和好朋友一起在河邊探險，還意外發現了 {obj}，分給了 {charB}。",
+                "🍝 美味大餐！{charA} 在廚房裡忙翻了，用心地準備了滿滿的 {obj} 給 {charB} 品嚐。",
+                "🐀 料理大顯身手！{charA} 完美地處理了 {obj}，讓大家驚艷無比，{charB} 讚不絕口。",
+                "🏎️ 衝過終點線！{charA} 贏得了冠軍，獲得了金光閃閃的 {obj} 作為獎勵，和 {charB} 一起慶祝。",
+                "💀 奇妙的音樂響起！{charA} 循著花瓣，找到了充滿回憶的 {obj}，交給了 {charB}。",
+                "🐻 勇敢傳說！{charA} 在森林裡練習瞄準，百發百中地擊中了目標 {obj}，{charB} 在一旁拍手叫好。",
+                "🎷 爵士俱樂部裡沉醉於音樂，{charA} 手裡還拿著剛找到的 {obj}，準備給 {charB} 一個驚喜。",
+                "🗑️ 在地球上努力清理垃圾，{charA} 把找到的有趣 {obj} 小心翼翼地收藏在箱子裡，要給 {charB} 看。"
             ],
             "日本動漫": [
                 "🔥 友情與熱血的冒險開始了！{charA} 和隊友們在森林深處發現了一批珍貴的 {obj}！",
                 "⚽ 充滿朝氣的訓練場上，{charA} 為了即將到來的決賽，正熱情地跟夥伴們一起數著 {obj}。",
-                "🌌 穿越時空的探險！{charA} 與 {charB} 解開了古代遺跡的謎題，遺跡中出現了奇妙的 {obj}！",
-                "🐱 多啦A夢的法寶箱又裝滿了！{charA} 正在幫忙清理百寶袋裡各種神奇好玩的 {obj}。"
+                "🌌 穿越時空的探險！{charA} 與 {charB} 解開了古代謎題，獲得了奇妙的 {obj}！",
+                "🐱 法寶箱又裝滿了！{charA} 正在幫忙清理百寶袋裡各種神奇好玩的 {obj}。",
+                "⚔️ 訓練非常嚴格！{charA} 揮汗如雨地練習，休息時拿出了 {obj} 補充體力，也分給 {charB}。",
+                "🏴‍☠️ 尋找大秘寶！{charA} 在荒島上發現了寶藏，裡面裝滿了 {obj}，開心地和 {charB} 分享。",
+                "🍥 忍者村的麵店大排長龍！{charA} 點了大餐，還加了特大號的 {obj}，跟 {charB} 邊吃邊聊。",
+                "⚡ 十萬伏特！{charA} 在草叢裡探險，成功收集了稀有的 {obj}，{charB} 覺得好酷。",
+                "🚪 神奇的門打開了！{charA} 和朋友們來到了未知的世界，在那裡收集了好多 {obj} 給 {charB} 看。",
+                "🎶 歡樂的歌聲響起！大家都安靜聽著，{charA} 偷偷把 {obj} 放在 {charB} 的口袋裡。",
+                "🌸 夥伴們今天也努力工作！{charA} 獲得了豐厚的報酬 {obj}，開心地請 {charB} 一起慶祝。",
+                "🎒 放學後的空地是大家的秘密基地！{charA} 帶來了最新的 {obj}，和 {charB} 一起分享。",
+                "🐉 召喚奇蹟！{charA} 終於集齊了許願道具，得到了無限的 {obj}，馬上分了一半給 {charB}。",
+                "🚢 登上大船出海！{charA} 在幫忙準備航海的物資，裝滿了一大桶的 {obj}，{charB} 已經迫不及待了。",
+                "🔥 激烈的戰鬥結束！{charA} 成功擊敗了敵人，保護了珍貴的 {obj} 不被搶走，安全交給了 {charB}。",
+                "🚁 飛上天！{charA} 在空中俯瞰城鎮，發現屋頂上竟然有遺失的 {obj}，馬上撿起來還給 {charB}。",
+                "🥊 天下第一武道大會！{charA} 贏得了比賽的冠軍，獲得了豐厚的 {obj}，請 {charB} 吃豪華大餐。",
+                "🎵 音樂演奏會上，{charA} 在旁邊安靜地聽著，手裡拿著準備好的 {obj}，等演奏完送給 {charB}。",
+                "💰 又在炫耀新寶物了！這次是超稀有的 {obj}，{charA} 雖然羨慕，但也拿出了自己的珍藏給 {charB} 看。",
+                "🎤 個人演唱會即將開始！{charA} 為了應援，準備了特別的 {obj}，也順便給了 {charB} 一個。"
             ]
         };
 
@@ -392,6 +551,19 @@
 
         function getRandom(arr) {
             return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        // 更新提示文字狀態
+        function updateHintLabel() {
+            const toggle = document.getElementById('hintToggle');
+            const labelText = document.getElementById('hintStatusText');
+            if (toggle.checked) {
+                labelText.innerText = '開啟';
+                labelText.className = 'text-xl font-bold text-green-600 ml-1 w-12';
+            } else {
+                labelText.innerText = '關閉';
+                labelText.className = 'text-xl font-bold text-gray-400 ml-1 w-12';
+            }
         }
 
         // 切換遊戲模式
@@ -454,7 +626,10 @@
             charA = getRandom(chars);
             chars = chars.filter(c => c !== charA);
             charB = getRandom(chars);
-            obj = getRandom(theme.objs);
+            
+            let selectedObj = getRandom(theme.objs);
+            obj = selectedObj.name;
+            let unit = selectedObj.unit;
 
             // 隨機題型
             let qType = Math.floor(Math.random() * 4);
@@ -466,22 +641,22 @@
             // 重要：無論題目敘述順序，作答區引導永遠是 B 比 A
             switch(qType) {
                 case 0: // A有X, A比B多Y -> B比A少Y, B=X-Y
-                    questionHTML = `<span class="text-red-600">${charA}</span>有 ${valX} 個 ${obj}，<br><span class="text-red-600">${charA}</span>比 <span class="text-blue-600">${charB}</span>${moreLabel} ${valY} 個，<br><span class="text-blue-600">${charB}</span>有多少個 ${obj}？`;
+                    questionHTML = `<span class="text-red-600">${charA}</span>有 ${valX} ${unit} ${obj}，<br><span class="text-red-600">${charA}</span>比 <span class="text-blue-600">${charB}</span>${moreLabel} ${valY} ${unit}，<br><span class="text-blue-600">${charB}</span>有多少${unit} ${obj}？`;
                     valAns = valX - valY;
                     correctMoreLess = "少"; correctOp = "-";
                     break;
                 case 1: // A有X, A比B少Y -> B比A多Y, B=X+Y
-                    questionHTML = `<span class="text-red-600">${charA}</span>有 ${valX} 個 ${obj}，<br><span class="text-red-600">${charA}</span>比 <span class="text-blue-600">${charB}</span>${lessLabel} ${valY} 個，<br><span class="text-blue-600">${charB}</span>有多少個 ${obj}？`;
+                    questionHTML = `<span class="text-red-600">${charA}</span>有 ${valX} ${unit} ${obj}，<br><span class="text-red-600">${charA}</span>比 <span class="text-blue-600">${charB}</span>${lessLabel} ${valY} ${unit}，<br><span class="text-blue-600">${charB}</span>有多少${unit} ${obj}？`;
                     valAns = valX + valY;
                     correctMoreLess = "多"; correctOp = "+";
                     break;
                 case 2: // A有X, B比A多Y -> B比A多Y, B=X+Y
-                    questionHTML = `<span class="text-red-600">${charA}</span>有 ${valX} 個 ${obj}，<br><span class="text-blue-600">${charB}</span>比 <span class="text-red-600">${charA}</span>${moreLabel} ${valY} 個，<br><span class="text-blue-600">${charB}</span>有多少個 ${obj}？`;
+                    questionHTML = `<span class="text-red-600">${charA}</span>有 ${valX} ${unit} ${obj}，<br><span class="text-blue-600">${charB}</span>比 <span class="text-red-600">${charA}</span>${moreLabel} ${valY} ${unit}，<br><span class="text-blue-600">${charB}</span>有多少${unit} ${obj}？`;
                     valAns = valX + valY;
                     correctMoreLess = "多"; correctOp = "+";
                     break;
                 case 3: // A有X, B比A少Y -> B比A少Y, B=X-Y
-                    questionHTML = `<span class="text-red-600">${charA}</span>有 ${valX} 個 ${obj}，<br><span class="text-blue-600">${charB}</span>比 <span class="text-red-600">${charA}</span>${lessLabel} ${valY} 個，<br><span class="text-blue-600">${charB}</span>有多少個 ${obj}？`;
+                    questionHTML = `<span class="text-red-600">${charA}</span>有 ${valX} ${unit} ${obj}，<br><span class="text-blue-600">${charB}</span>比 <span class="text-red-600">${charA}</span>${lessLabel} ${valY} ${unit}，<br><span class="text-blue-600">${charB}</span>有多少${unit} ${obj}？`;
                     valAns = valX - valY;
                     correctMoreLess = "少"; correctOp = "-";
                     break;
@@ -505,6 +680,7 @@
             document.getElementById("iCharB_Step3").innerText = charB;
             
             document.querySelectorAll(".iObjName").forEach(el => el.innerText = obj);
+            document.querySelectorAll(".iObjUnit").forEach(el => el.innerText = unit);
 
             resetUI();
             buildSequence();
@@ -537,18 +713,23 @@
         }
 
         function buildSequence() {
-            // 嚴格按照要求的固定步驟
-            sequence = [
+            // 檢查提示是否開啟
+            let hintOn = document.getElementById("hintToggle").checked;
+            sequence = [];
+
+            if (hintOn) {
+                // 如果開啟提示，加入拆解步驟
                 // 1. A有 [輸入數量]
-                { id: 'box_valA_S1', type: 'num', target: valX, showId: 'step1' },
+                sequence.push({ id: 'box_valA_S1', type: 'num', target: valX, showId: 'step1' });
                 // 2. B 比 A [選多/少] [輸入數量]
-                { id: 'btnGroup_moreless', type: 'choice', target: correctMoreLess, showId: 'step2' },
-                { id: 'box_diff_S2', type: 'num', target: valY, showId: 'box_diff_S2_container' },
-                // 3. B : [輸入A量] [選+/-] [輸入相差量] = [輸入答案]
-                { id: 'box_valA_S3', type: 'num', target: valX, showId: 'step3' },
-                { id: 'btnGroup_op', type: 'choice', target: correctOp, showId: 'step3' },
-                { id: 'box_valDiff_S3', type: 'num', target: valY, showId: 'step3' }
-            ];
+                sequence.push({ id: 'btnGroup_moreless', type: 'choice', target: correctMoreLess, showId: 'step2' });
+                sequence.push({ id: 'box_diff_S2', type: 'num', target: valY, showId: 'box_diff_S2_container' });
+            }
+
+            // 3. B : [輸入A量] [選+/-] [輸入相差量] = [輸入答案] (無論如何都會顯示)
+            sequence.push({ id: 'box_valA_S3', type: 'num', target: valX, showId: 'step3' });
+            sequence.push({ id: 'btnGroup_op', type: 'choice', target: correctOp, showId: 'step3' });
+            sequence.push({ id: 'box_valDiff_S3', type: 'num', target: valY, showId: 'step3' });
 
             if (difficulty === '難') {
                 sequence.push({ id: 'box_ans', type: 'num', target: valAns, showId: 'step3', isLast: true });
