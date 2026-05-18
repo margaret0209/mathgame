@@ -6,12 +6,16 @@
     <title>比較應用題遊戲</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght=400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;700;900&display=swap');
         
         body {
             font-family: 'Noto Sans HK', sans-serif;
             background-color: #f0fdf4;
             user-select: none;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            transition: background-image 0.5s ease-in-out;
         }
 
         @keyframes shake {
@@ -45,9 +49,9 @@
             display: inline-block;
             min-width: 80px;
             height: 60px;
-            border: 4px solid #cbd5e1;
+            border: 4px solid rgba(203, 213, 225, 0.8);
             border-radius: 12px;
-            background-color: white;
+            background-color: rgba(255, 255, 255, 0.8);
             text-align: center;
             line-height: 52px;
             font-size: 2rem;
@@ -55,15 +59,16 @@
             vertical-align: middle;
             transition: all 0.2s;
             cursor: pointer;
+            backdrop-filter: blur(4px);
         }
         .num-box.active {
             border-color: #eab308;
-            background-color: #fefce8;
-            box-shadow: 0 0 0 4px #fef08a;
+            background-color: rgba(254, 252, 232, 0.9);
+            box-shadow: 0 0 0 4px rgba(254, 240, 138, 0.5);
         }
         .num-box.correct {
             border-color: #22c55e;
-            background-color: #f0fdf4;
+            background-color: rgba(240, 253, 244, 0.9);
             color: #166534;
         }
 
@@ -73,14 +78,15 @@
             align-items: center;
             justify-content: center;
             padding: 4px 20px;
-            border: 4px solid #cbd5e1;
+            border: 4px solid rgba(203, 213, 225, 0.8);
             border-radius: 12px;
-            background-color: white;
+            background-color: rgba(255, 255, 255, 0.8);
             font-size: 1.8rem;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
             min-width: 100px;
+            backdrop-filter: blur(4px);
         }
         .choice-btn .sub-text {
             font-size: 0.9rem;
@@ -95,16 +101,16 @@
         }
         .choice-btn.active-choice {
             border-color: #eab308;
-            background-color: #fefce8;
-            box-shadow: 0 0 0 4px #fef08a;
+            background-color: rgba(254, 252, 232, 0.9);
+            box-shadow: 0 0 0 4px rgba(254, 240, 138, 0.5);
         }
         .choice-btn.correct {
             border-color: #22c55e;
-            background-color: #22c55e;
+            background-color: rgba(34, 197, 94, 0.9);
             color: white;
         }
         .choice-btn.correct .sub-text {
-            color: white;
+            color: rgba(255, 255, 255, 0.9);
         }
 
         ruby rt {
@@ -116,8 +122,8 @@
 
         /* 縮小九宮格按鈕與鍵盤樣式 */
         .numpad-btn {
-            background-color: white;
-            border: 2px solid #e2e8f0;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(226, 232, 240, 0.8);
             border-radius: 12px;
             font-size: 1.8rem;
             font-weight: 900;
@@ -125,22 +131,23 @@
             padding: 8px 0;
             box-shadow: 0 3px 4px -1px rgba(0, 0, 0, 0.08);
             transition: all 0.1s;
+            backdrop-filter: blur(4px);
         }
         .numpad-btn:active {
-            background-color: #f1f5f9;
+            background-color: rgba(241, 245, 249, 0.9);
             transform: translateY(2px);
         }
         .numpad-action {
             font-size: 1.3rem;
-            background-color: #f8fafc;
+            background-color: rgba(248, 250, 252, 0.9);
         }
         .numpad-submit {
-            background-color: #3b82f6;
+            background-color: rgba(59, 130, 246, 0.9);
             color: white;
-            border-color: #2563eb;
+            border-color: rgba(37, 99, 235, 0.8);
         }
         .numpad-submit:active {
-            background-color: #1d4ed8;
+            background-color: rgba(29, 78, 216, 0.9);
         }
     </style>
 </head>
@@ -151,15 +158,15 @@
 
     <div class="max-w-7xl mx-auto">
         <!-- 頂部面板：模式切換與參數設定 -->
-        <div class="w-full bg-white rounded-3xl shadow-lg border-4 border-green-200 p-6 mb-6">
+        <div class="w-full bg-white/60 backdrop-blur-xl rounded-3xl shadow-lg border-4 border-green-200/50 p-6 mb-6">
             <div class="flex flex-col md:flex-row gap-6 items-center justify-between">
                 
                 <!-- 模式切換器 -->
-                <div class="flex bg-slate-100 p-1.5 rounded-2xl border-2 border-slate-200">
-                    <button id="modeFreeBtn" onclick="switchMode('free')" class="text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 bg-white text-green-700 shadow-md">
+                <div class="flex bg-slate-100/60 p-1.5 rounded-2xl border-2 border-slate-200/50">
+                    <button id="modeFreeBtn" onclick="switchMode('free')" class="text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 bg-white/90 text-green-700 shadow-md">
                         🎯 自由練習
                     </button>
-                    <button id="modeStoryBtn" onclick="switchMode('story')" class="text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 text-slate-500 hover:text-slate-800">
+                    <button id="modeStoryBtn" onclick="switchMode('story')" class="text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 text-slate-600 hover:text-slate-800">
                         ⭐ 故事闖關
                     </button>
                 </div>
@@ -167,10 +174,10 @@
                 <!-- 設定下拉選單 -->
                 <div class="flex flex-wrap gap-4 items-center justify-center">
                     <div class="flex items-center gap-2">
-                        <label class="text-xl font-bold text-gray-700">主題：</label>
-                        <select id="themeSelect" onchange="onSettingChange()" class="text-xl p-2.5 rounded-xl border-2 border-green-400 focus:outline-none bg-white font-bold text-gray-800 shadow-sm">
+                        <label class="text-xl font-bold text-gray-800">主題：</label>
+                        <select id="themeSelect" onchange="onSettingChange()" class="text-xl p-2.5 rounded-xl border-2 border-green-400/70 focus:outline-none bg-white/80 font-bold text-gray-800 shadow-sm backdrop-blur-sm">
                             <option value="Sanrio">Sanrio</option>
-                            <option value="吉卡力">吉卡力</option>
+                            <option value="吉卜力">吉卜力</option>
                             <option value="Disney">Disney</option>
                             <option value="Marvel">Marvel</option>
                             <option value="Pixar">Pixar</option>
@@ -178,23 +185,23 @@
                         </select>
                     </div>
                     <div class="flex items-center gap-2">
-                        <label class="text-xl font-bold text-gray-700">難度：</label>
-                        <select id="diffSelect" onchange="onSettingChange()" class="text-xl p-2.5 rounded-xl border-2 border-green-400 focus:outline-none bg-white font-bold text-gray-800 shadow-sm">
+                        <label class="text-xl font-bold text-gray-800">難度：</label>
+                        <select id="diffSelect" onchange="onSettingChange()" class="text-xl p-2.5 rounded-xl border-2 border-green-400/70 focus:outline-none bg-white/80 font-bold text-gray-800 shadow-sm backdrop-blur-sm">
                             <option value="易">易</option>
                             <option value="難">難</option>
                         </select>
                     </div>
-                    <!-- 新增：提示切換開關 (Toggle) -->
+                    <!-- 提示切換開關 (Toggle) -->
                     <div class="flex items-center gap-2">
-                        <span class="text-xl font-bold text-gray-700">提示：</span>
+                        <span class="text-xl font-bold text-gray-800">提示：</span>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" id="hintToggle" class="sr-only peer" checked onchange="updateHintLabel(); onSettingChange()">
-                            <div class="w-16 h-8 bg-slate-300 rounded-full peer peer-checked:bg-green-400 border-2 border-slate-200 peer-checked:border-green-400 transition-colors shadow-inner"></div>
+                            <div class="w-16 h-8 bg-slate-300/80 rounded-full peer peer-checked:bg-green-400/90 border-2 border-slate-200/50 peer-checked:border-green-400/50 transition-colors shadow-inner backdrop-blur-sm"></div>
                             <div class="absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform peer-checked:translate-x-8 shadow-md"></div>
                         </label>
-                        <span id="hintStatusText" class="text-xl font-bold text-green-600 ml-1 w-12">開啟</span>
+                        <span id="hintStatusText" class="text-xl font-bold text-green-700 ml-1 w-12 text-shadow-sm">開啟</span>
                     </div>
-                    <button onclick="startGame()" class="bg-gradient-to-r from-orange-400 to-amber-500 hover:from-orange-500 hover:to-amber-600 text-white text-xl font-black py-2.5 px-8 rounded-xl shadow-md transform active:scale-95 transition">
+                    <button onclick="startGame()" class="bg-gradient-to-r from-orange-400/90 to-amber-500/90 hover:from-orange-500 hover:to-amber-600 text-white text-xl font-black py-2.5 px-8 rounded-xl shadow-md transform active:scale-95 transition backdrop-blur-sm border border-white/20">
                         重新開始 🚀
                     </button>
                 </div>
@@ -218,11 +225,11 @@
         <!-- 主要作答區域：左右佈局 -->
         <div class="flex flex-col lg:flex-row gap-6 items-start">
             
-            <!-- 左側：故事背景、題目與步驟 (設定為 flex-1 自動擴展，使文字句子排在同一行) -->
-            <div class="w-full lg:flex-1 bg-white rounded-3xl shadow-xl border-4 border-white p-6 md:p-8 min-h-[500px] relative">
+            <!-- 左側：故事背景、題目與步驟 -->
+            <div class="w-full lg:flex-1 bg-white/60 backdrop-blur-xl rounded-3xl shadow-xl border-4 border-white/50 p-6 md:p-8 min-h-[500px] relative">
                 
                 <!-- 1. 溫馨故事導讀卡片 (僅故事模式顯示) -->
-                <div id="storyCard" class="bg-gradient-to-r from-amber-50 to-orange-50 border-4 border-amber-200 rounded-2xl p-5 mb-6 text-xl md:text-2xl font-bold text-amber-900 shadow-inner flex items-start gap-3 hidden">
+                <div id="storyCard" class="bg-gradient-to-r from-amber-50/80 to-orange-50/80 border-4 border-amber-200/60 rounded-2xl p-5 mb-6 text-xl md:text-2xl font-bold text-amber-900 shadow-inner flex items-start gap-3 backdrop-blur-sm hidden">
                     <span class="text-3xl leading-none">📖</span>
                     <div>
                         <div class="text-sm text-amber-600 font-extrabold tracking-widest uppercase mb-1">故事背景</div>
@@ -231,7 +238,7 @@
                 </div>
 
                 <!-- 2. 題目顯示區域 -->
-                <div id="questionArea" class="bg-blue-50 border-4 border-blue-200 rounded-2xl p-6 mb-8 text-2xl md:text-3xl leading-loose font-bold text-gray-800 shadow-inner hidden">
+                <div id="questionArea" class="bg-blue-50/80 border-4 border-blue-200/60 rounded-2xl p-6 mb-8 text-2xl md:text-3xl leading-loose font-bold text-gray-800 shadow-inner backdrop-blur-sm hidden">
                     <div id="qText"></div>
                 </div>
 
@@ -275,7 +282,7 @@
                         <span id="mark_ans" class="text-green-500 text-4xl hidden">✅</span>
                     </div>
 
-                    <!-- 單關完成：下一步按鈕 (自由模式不顯示，故事模式顯示) -->
+                    <!-- 單關完成：下一步按鈕 -->
                     <div id="nextLevelContainer" class="text-center pt-4 hidden">
                         <button onclick="goToNextLevel()" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-3xl font-black py-4 px-12 rounded-2xl shadow-lg transform hover:scale-105 active:scale-95 transition">
                             進入下一關 ✨ 👉
@@ -288,11 +295,11 @@
                     </div>
                 </div>
 
-                <!-- 終極大關卡成就結算卡 (當通關10關時顯示) -->
-                <div id="ultimateChampionCard" class="hidden absolute inset-0 bg-white rounded-3xl p-8 flex flex-col items-center justify-center text-center z-20">
+                <!-- 終極大關卡成就結算卡 -->
+                <div id="ultimateChampionCard" class="hidden absolute inset-0 bg-white/90 backdrop-blur-xl rounded-3xl p-8 flex flex-col items-center justify-center text-center z-20 border border-white/50 shadow-2xl">
                     <span class="text-8xl mb-4">🏆</span>
                     <h2 class="text-4xl font-black text-amber-600 mb-2">恭喜完成 10 關大挑戰！</h2>
-                    <p class="text-2xl font-bold text-gray-600 mb-8">你成功幫助了所有卡通世界的夥伴！你是超級數學小勇士！</p>
+                    <p class="text-2xl font-bold text-gray-700 mb-8">你成功幫助了所有卡通世界的夥伴！你是超級數學小勇士！</p>
                     <div class="flex gap-4">
                         <button onclick="switchMode('story')" class="bg-amber-500 hover:bg-amber-600 text-white text-2xl font-black py-4 px-8 rounded-2xl shadow-md transition transform hover:scale-105">
                             再挑戰一次 👑
@@ -304,9 +311,9 @@
                 </div>
             </div>
 
-            <!-- 右側：縮小版九宮格鍵盤 (寬度改為 w-full lg:w-72 固定寬度，按鈕間距改為 gap-2) -->
-            <div id="numpad" class="w-full lg:w-72 bg-slate-100 rounded-3xl p-4 border-4 border-slate-200 sticky top-6 hidden shrink-0">
-                <div class="text-center mb-3 text-gray-500 font-bold uppercase tracking-widest text-xs">數字輸入</div>
+            <!-- 右側：縮小版九宮格鍵盤 -->
+            <div id="numpad" class="w-full lg:w-72 bg-white/60 backdrop-blur-xl rounded-3xl p-4 border-4 border-white/50 sticky top-6 hidden shrink-0 shadow-xl">
+                <div class="text-center mb-3 text-gray-600 font-bold uppercase tracking-widest text-xs drop-shadow-sm">數字輸入</div>
                 <div class="grid grid-cols-3 gap-2">
                     <button class="numpad-btn" onclick="inputNum('1')">1</button>
                     <button class="numpad-btn" onclick="inputNum('2')">2</button>
@@ -407,7 +414,7 @@
                     {name: "魔法棒", unit: "枝"}, {name: "皇冠", unit: "頂"}, {name: "甜甜圈", unit: "個"}
                 ] 
             },
-            "吉卡力": { 
+            "吉卜力": { 
                 chars: ["龍貓", "千尋", "波妞", "哈爾", "無臉男", "貓巴士", "卡西法", "蘇菲"], 
                 objs: [
                     {name: "橡果", unit: "粒"}, {name: "煤炭屎鬼", unit: "隻"}, {name: "金幣", unit: "枚"}, 
@@ -482,7 +489,7 @@
                 "🚂 坐上小火車，{charA} 開心地望著窗外，手裡拿著剛買的 {obj} 準備跟 {charB} 一起分享。",
                 "📚 在圖書館裡，{charA} 找到了一本有趣的故事書，裡面還夾著可愛的 {obj}，趕緊拿給 {charB} 看。"
             ],
-            "吉卡力": [
+            "吉卜力": [
                 "🌳 充滿魔力的森林深處，龍貓的朋友 {charA} 正在收集散落的 {obj}。",
                 "🪙 尋找神祕寶物！{charA} 帶領著無臉男和小煤炭，在溫泉屋裡幫忙點算 {obj} 的數量。",
                 "🚲 陽光明媚的午後，{charA} 和 {charB} 騎著腳踏車去海邊，一路上撿了好多亮晶晶的 {obj}！",
@@ -594,6 +601,15 @@
             ]
         };
 
+        const themeBackgrounds = {
+            "Sanrio": "https://wallpapercave.com/wp/wp11298504.jpg",
+            "吉卜力": "https://media.craiyon.com/2025-07-22/ykX-ulLWQgaWQEJOOxQNhg.webp",
+            "Disney": "https://wallpapercave.com/wp/wp3287533.jpg",
+            "Marvel": "https://www.pixelstalk.net/wp-content/uploads/2016/04/Free-avengers-backgrounds.jpg",
+            "Pixar": "https://disneyparksblog.com/app/uploads/2024/06/Pixar-Fest-Characters-Wallpaper-2024_DESKTOP_5120x2880.jpg",
+            "日本動漫": "https://chinesedora.com/news/wp-content/uploads/2020/05/1920x1080.jpg?v=1705476043"
+        };
+
         let charA, charB, obj, valX, valY, valAns, difficulty;
         let correctMoreLess, correctOp;
         let sequence = [], currentStepIndex = 0, currentInputVal = "";
@@ -681,6 +697,10 @@
             SoundManager.init();
 
             const themeKey = document.getElementById("themeSelect").value;
+            
+            // 變更背景圖片 (降低白底遮罩的厚度，讓背景圖透出磨砂玻璃面板)
+            document.body.style.backgroundImage = `linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.3)), url('${themeBackgrounds[themeKey]}')`;
+            
             difficulty = document.getElementById("diffSelect").value;
             const theme = themesData[themeKey];
 
@@ -789,7 +809,7 @@
                 sequence.push({ id: 'box_diff_S2', type: 'num', target: valY, showId: 'box_diff_S2_container' });
             }
 
-            // 3. B : [輸入A量] [選+/-] [輸入相差量] = [輸入答案] (無論如何都會顯示)
+            // 3. B : [輸入A量] [選+/-] [輸入相差量] = [輸入答案]
             sequence.push({ id: 'box_valA_S3', type: 'num', target: valX, showId: 'step3' });
             sequence.push({ id: 'btnGroup_op', type: 'choice', target: correctOp, showId: 'step3' });
             sequence.push({ id: 'box_valDiff_S3', type: 'num', target: valY, showId: 'step3' });
