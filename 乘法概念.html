@@ -15,7 +15,7 @@
         /* 自訂動畫效果 */
         @keyframes float {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-6px); }
+            50% { transform: translateY(-4px); }
         }
         .animate-float {
             animation: float 2.5s ease-in-out infinite;
@@ -43,7 +43,7 @@
     <script type="text/babel">
         // 量詞字典
         const measureWords = {
-            '🍎': '顆', '🍏': '顆', '🍉': '顆', '🍊': '顆', '🍋': '顆', '🍐': '顆', '🥭': '顆', '🍑': '顆', '🍈': '顆', '🍍': '顆', '🥑': '顆', '🫑': '顆', '🥦': '顆', '🌽': '根', '🍅': '顆', '🍆': '條', '🥝': '顆', '🧅': '顆', '🥔': '顆', '🍠': '條',
+            '🍎': '顆', '🍏': '顆', '🍉': '顆', '🍊': '顆', '🍋': '顆', '🍐': '顆', '🥭': '顆', '🍑': '顆', '🍈': '顆', '🍍': '顆', '🥑': '顆', '𫫇': '顆', '🥦': '顆', '🌽': '根', '🍅': '顆', '🍆': '條', '🥝': '顆', '🧅': '顆', '🥔': '顆', '🍠': '條',
             '🐶': '隻', '🦊': '隻', '🐱': '隻', '🐻': '隻', '🐭': '隻', '🐼': '隻', '🐹': '隻', '🐰': '隻', '🐨': '隻', '🐯': '隻', '🦁': '隻', '🐮': '頭', '🐷': '隻', '🐵': '隻', '🐸': '隻', '🐢': '隻', '🐍': '條', '🦥': '隻',
             '🦑': '隻', '🪼': '隻', '🦐': '隻', '🦞': '隻', '🦀': '隻', '🐡': '尾', '🐠': '尾', '🐟': '尾', '🐬': '隻', '🐳': '隻', '🐋': '隻', '🦈': '尾', '🦭': '隻', '🦦': '隻',
             '🌺': '朵', '🌸': '朵', '🌹': '朵', '🌻': '朵', '🪷': '朵', '🎋': '根', '🎄': '棵',
@@ -376,52 +376,55 @@
                             ✖️ 趣味乘法遊戲 ✖️
                         </h1>
 
-                        {/* 頂部雙模式切換 Toggle */}
-                        <div className="flex justify-center mb-8">
-                            <div className="bg-gray-100 p-1.5 rounded-2xl flex shadow-inner border border-gray-200">
-                                <button
-                                    onClick={() => handleToggleMode(false)}
-                                    className={`px-6 py-3 rounded-xl font-bold text-lg transition-all flex items-center gap-2 ${
-                                        !isAdvanced 
-                                            ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md transform scale-102' 
-                                            : 'text-gray-500 hover:text-gray-700'
-                                    }`}
-                                >
-                                    🏫 概念引導模式
-                                </button>
-                                <button
-                                    onClick={() => handleToggleMode(true)}
-                                    className={`px-6 py-3 rounded-xl font-bold text-lg transition-all flex items-center gap-2 ${
-                                        isAdvanced 
-                                            ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md transform scale-102' 
-                                            : 'text-gray-500 hover:text-gray-700'
-                                    }`}
-                                >
-                                    ⚡ 進階挑戰模式
-                                </button>
+                        {/* 頂部：雙模式切換 與 主題選擇 整合在同一行 */}
+                        <div className="flex flex-col lg:flex-row items-center justify-between gap-4 mb-8 border-b pb-6 border-gray-100">
+                            {/* 模式切換 Toggle */}
+                            <div className="flex-shrink-0">
+                                <div className="bg-gray-100 p-1.5 rounded-2xl flex shadow-inner border border-gray-200">
+                                    <button
+                                        onClick={() => handleToggleMode(false)}
+                                        className={`px-5 py-2.5 rounded-xl font-bold text-base transition-all flex items-center gap-1.5 ${
+                                            !isAdvanced 
+                                                ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md transform scale-102' 
+                                                : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                    >
+                                        🏫 概念引導模式
+                                    </button>
+                                    <button
+                                        onClick={() => handleToggleMode(true)}
+                                        className={`px-5 py-2.5 rounded-xl font-bold text-base transition-all flex items-center gap-1.5 ${
+                                            isAdvanced 
+                                                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md transform scale-102' 
+                                                : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                    >
+                                        ⚡ 進階挑戰模式
+                                    </button>
+                                </div>
                             </div>
-                        </div>
 
-                        {/* 頂部主題選擇 */}
-                        <div className="flex flex-wrap justify-center gap-3 mb-10">
-                            {themesData.map(theme => (
-                                <button 
-                                    key={theme.id}
-                                    onClick={() => { sounds.click(); startNewGame(theme.id); }}
-                                    className={`px-5 py-3 rounded-full font-bold text-xl transition-all shadow-sm flex items-center gap-2 ${
-                                        currentTheme === theme.id 
-                                            ? 'bg-blue-500 text-white shadow-md transform scale-105' 
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
-                                >
-                                    <span>{theme.icon}</span> {theme.id}
-                                </button>
-                            ))}
+                            {/* 主題選擇 */}
+                            <div className="flex flex-wrap justify-center gap-2">
+                                {themesData.map(theme => (
+                                    <button 
+                                        key={theme.id}
+                                        onClick={() => { sounds.click(); startNewGame(theme.id); }}
+                                        className={`px-4 py-2.5 rounded-full font-bold text-lg transition-all shadow-sm flex items-center gap-1.5 ${
+                                            currentTheme === theme.id 
+                                                ? 'bg-blue-500 text-white shadow-md transform scale-105' 
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        <span>{theme.icon}</span> {theme.id}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         {/* 模式玩法提示小貼士 */}
                         <div className="text-center mb-6">
-                            <span className="inline-block px-4 py-1.5 bg-yellow-50 border border-yellow-200 rounded-full text-amber-700 font-bold text-sm">
+                            <span className="inline-block px-4 py-1.5 bg-yellow-50 border border-yellow-200 rounded-full text-amber-700 font-bold text-sm animate-pulse">
                                 {isAdvanced 
                                     ? "💡 進階模式：只需填寫乘法算式，寫完後按下方的「檢查答案」！" 
                                     : "💡 引導模式：請依照發光的藍框順序填寫，系統會幫你即時檢查喔！"}
@@ -429,21 +432,21 @@
                         </div>
 
                         {/* 句子生成區域 */}
-                        <div className="text-3xl md:text-4xl font-bold text-center text-gray-700 leading-relaxed mb-8">
+                        <div className="text-3xl md:text-4xl font-bold text-center text-gray-700 leading-relaxed mb-6">
                             一盒有 <span className="text-blue-600 text-5xl mx-1">{X}</span> {mWord}
                             <span className="text-5xl mx-1 drop-shadow-md">{emoji}</span>，
                             有 <span className="text-green-600 text-5xl mx-1">{Y}</span> 盒，<br className="hidden md:block"/>
                             共有多少{mWord} <span className="text-5xl mx-1 drop-shadow-md">{emoji}</span>？
                         </div>
 
-                        {/* 中間圖案視覺區 */}
-                        <div className="bg-blue-50/50 border-4 border-white backdrop-blur-sm rounded-3xl p-6 mb-10 flex flex-wrap justify-center gap-4 shadow-inner">
+                        {/* 中間圖案視覺區 - 縮小版 */}
+                        <div className="bg-blue-50/40 border-2 border-white backdrop-blur-sm rounded-2xl p-4 mb-6 flex flex-wrap justify-center gap-3 shadow-inner max-w-4xl mx-auto">
                             {Array.from({ length: Y }).map((_, i) => (
-                                <div key={i} className="bg-white/80 border-4 border-dashed border-blue-300 rounded-2xl p-4 shadow-sm min-w-[100px] flex flex-wrap justify-center items-center gap-2">
+                                <div key={i} className="bg-white/80 border-2 border-dashed border-blue-200 rounded-xl p-2 shadow-sm min-w-[60px] sm:min-w-[80px] flex flex-wrap justify-center items-center gap-1">
                                     {Array.from({ length: X }).map((_, j) => (
                                         <span 
                                             key={j} 
-                                            className="text-4xl animate-float"
+                                            className="text-2xl sm:text-3xl animate-float"
                                             style={{ animationDelay: `${(i * X + j) * 0.1}s` }}
                                         >
                                             {emoji}
