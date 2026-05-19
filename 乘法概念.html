@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動乘法遊戲</title>
+    
+    <!-- 引入 React 及 Tailwind CSS -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        /* 自訂動畫效果 */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .animate-float {
+            animation: float 2.5s ease-in-out infinite;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+        .animate-shake {
+            animation: shake 0.3s ease-in-out;
+        }
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(59, 130, 246, 1); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); }
+            50% { border-color: rgba(147, 197, 253, 1); box-shadow: 0 0 0 8px rgba(147, 197, 253, 0.4); }
+        }
+        .animate-pulse-border {
+            animation: pulse-border 1.8s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-yellow-100 via-green-50 to-blue-100 min-h-screen font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // 量詞字典
+        const measureWords = {
+            '🍎': '顆', '🍏': '顆', '🍉': '顆', '🍊': '顆', '🍋': '顆', '🍐': '顆', '🥭': '顆', '🍑': '顆', '🍈': '顆', '🍍': '顆', '🥑': '顆', '🫑': '顆', '🥦': '顆', '🌽': '根', '🍅': '顆', '🍆': '條', '🥝': '顆', '🧅': '顆', '🥔': '顆', '🍠': '條',
+            '🐶': '隻', '🦊': '隻', '🐱': '隻', '🐻': '隻', '🐭': '隻', '🐼': '隻', '🐹': '隻', '🐰': '隻', '🐨': '隻', '🐯': '隻', '🦁': '隻', '🐮': '頭', '🐷': '隻', '🐵': '隻', '🐸': '隻', '🐢': '隻', '🐍': '條', '🦥': '隻',
+            '🦑': '隻', '🪼': '隻', '🦐': '隻', '🦞': '隻', '🦀': '隻', '🐡': '尾', '🐠': '尾', '🐟': '尾', '🐬': '隻', '🐳': '隻', '🐋': '隻', '🦈': '尾', '🦭': '隻', '🦦': '隻',
+            '🌺': '朵', '🌸': '朵', '🌹': '朵', '🌻': '朵', '🪷': '朵', '🎋': '根', '🎄': '棵',
+            '🥐': '個', '🥯': '個', '🍞': '條', '🥖': '根', '🥨': '個', '🥞': '份', '🧇': '塊', '🌭': '份', '🍔': '個', '🥪': '份'
+        };
+
+        // 音效系統 (Web Audio API)
+        let audioCtx = null;
+        const initAudio = () => {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        };
+
+        const playTone = (frequency, type, duration, vol=0.05) => {
+            try {
+                initAudio();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.type = type;
+                oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + duration);
+            } catch (e) { console.error("Audio error:", e); }
+        };
+
+        const sounds = {
+            click: () => playTone(600, 'sine', 0.05, 0.03),
+            cellSuccess: () => {
+                playTone(523.25, 'sine', 0.08, 0.03); // C5
+                setTimeout(() => playTone(659.25, 'sine', 0.12, 0.03), 80); // E5
+            },
+            success: () => {
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, idx) => {
+                    setTimeout(() => playTone(freq, 'sine', 0.15, 0.05), idx * 100);
+                });
+            },
+            error: () => {
+                playTone(180, 'triangle', 0.25, 0.06);
+            }
+        };
+
+        // 主題與物件定義
+        const themesData = [
+            { id: '蔬果', icon: '🍎', emojis: [...'🍎🍏🍉🍊🍋🍐🥭🍑🍈🍍🥑🫑🥦🌽🍅🍆🥝🧅🥔🍠'] },
+            { id: '動物', icon: '🐶', emojis: [...'🐶🦊🐱🐻🐭🐼🐹🐰🐨🐯🦁🐮🐷🐵🐸🐢🐍🦥'] },
+            { id: '海洋', icon: '🐟', emojis: [...'🦑🪼🦐🦞🦀🐡🐠🐟🐬🐳🐋🦈🦭🦦'] },
+            { id: '植物', icon: '🌻', emojis: [...'🌺🌸🌹🌻🪷🎋🎄'] },
+            { id: '麵包', icon: '🍞', emojis: [...'🥐🥯🍞🥖🥨🥞🧇🌭🍔🥪'] }
+        ];
+
+        function App() {
+            const [currentTheme, setCurrentTheme] = React.useState('蔬果');
+            const [X, setX] = React.useState(1);
+            const [Y, setY] = React.useState(1);
+            const [emoji, setEmoji] = React.useState('🍎');
+            
+            // 模式狀態：false 為概念引導模式，true 為進階挑戰模式
+            const [isAdvanced, setIsAdvanced] = React.useState(false);
+            
+            // 使用者輸入狀態
+            const [inputs, setInputs] = React.useState({});
+            // 答錯閃爍鎖定狀態 (避免在錯誤重設期間重複輸入)
+            const [isLockedByError, setIsLockedByError] = React.useState(false);
+            const [gameWon, setGameWon] = React.useState(false);
+            
+            // 手動選取的輸入格 ID (預設在引導模式下是 add_0，進階模式下是 mul_1)
+            const [selectedActiveId, setSelectedActiveId] = React.useState('add_0');
+            
+            // 驗證結果狀態
+            const [message, setMessage] = React.useState('');
+            const [wrongIds, setWrongIds] = React.useState([]);
+
+            // 獲取目前的量詞，若找不到預設為「個」
+            const mWord = measureWords[emoji] || '個';
+
+            // 重新出題
+            const startNewGame = (themeId = currentTheme) => {
+                const newX = Math.floor(Math.random() * 10) + 1;
+                const newY = Math.floor(Math.random() * 10) + 1;
+                const themeInfo = themesData.find(t => t.id === themeId);
+                const emojiList = themeInfo.emojis;
+                const newEmoji = emojiList[Math.floor(Math.random() * emojiList.length)];
+                
+                setX(newX);
+                setY(newY);
+                setEmoji(newEmoji);
+                setCurrentTheme(themeId);
+                
+                // 重置輸入與狀態
+                setInputs({});
+                setGameWon(false);
+                setMessage('');
+                setWrongIds([]);
+                setIsLockedByError(false);
+                setSelectedActiveId(isAdvanced ? 'mul_1' : 'add_0');
+            };
+
+            // 首次載入執行
+            React.useEffect(() => {
+                startNewGame();
+            }, []);
+
+            // 獲取所有輸入框的關卡順序
+            const getSequence = () => {
+                let ids = [];
+                if (!isAdvanced) {
+                    for (let i = 0; i < Y; i++) ids.push('add_' + i);
+                    ids.push('add_ans', 'rep_num', 'rep_times');
+                }
+                ids.push('mul_1', 'mul_2', 'mul_ans');
+                return ids;
+            };
+
+            const sequence = getSequence();
+
+            // 取得某一格應填寫的正確目標值字串
+            const getTargetValue = (id) => {
+                if (id.startsWith('add_')) {
+                    if (id === 'add_ans') return String(X * Y);
+                    return String(X);
+                }
+                if (id === 'rep_num') return String(X);
+                if (id === 'rep_times') return String(Y);
+                if (id === 'mul_1') return String(X);
+                if (id === 'mul_2') return String(Y);
+                if (id === 'mul_ans') return String(X * Y);
+                return '';
+            };
+
+            // 【概念引導模式】下，目前應該填寫的 activeId (第一個尚未完全答對的格子)
+            const conceptActiveId = sequence.find(id => inputs[id] !== getTargetValue(id)) || null;
+
+            // 決定目前要編輯的格子 ID
+            const activeId = isAdvanced ? selectedActiveId : conceptActiveId;
+
+            // 【概念引導模式】判斷是否全部自動通關
+            React.useEffect(() => {
+                if (!isAdvanced && sequence.length > 0 && !conceptActiveId && !gameWon) {
+                    setGameWon(true);
+                    sounds.success();
+                    setMessage('🎉 太厲害了！全部都答對了！');
+                }
+            }, [inputs, conceptActiveId, isAdvanced, sequence]);
+
+            // 切換遊戲模式
+            const handleToggleMode = (advancedVal) => {
+                sounds.click();
+                setIsAdvanced(advancedVal);
+                // 重置狀態以維護公平性
+                setInputs({});
+                setGameWon(false);
+                setMessage('');
+                setWrongIds([]);
+                setSelectedActiveId(advancedVal ? 'mul_1' : 'add_0');
+                setIsLockedByError(false);
+            };
+
+            // 手動檢查答案 (僅在進階挑戰模式啟用)
+            const handleCheckAdvanced = () => {
+                initAudio();
+                let wrongs = [];
+                sequence.forEach(id => {
+                    const val = inputs[id] || '';
+                    const target = getTargetValue(id);
+                    if (val !== target) {
+                        wrongs.push(id);
+                    }
+                });
+
+                setWrongIds(wrongs);
+
+                if (wrongs.length === 0) {
+                    setGameWon(true);
+                    sounds.success();
+                    setMessage('🎉 太厲害了！進階挑戰大成功！');
+                } else {
+                    sounds.error();
+                    setMessage('🤔 有些地方寫錯了，請檢查紅色的框框並修正！');
+                }
+            };
+
+            // 九宮格輸入處理
+            const handleNum = (num) => {
+                if (gameWon || !activeId || isLockedByError) return;
+                initAudio();
+
+                const target = getTargetValue(activeId);
+                const currentVal = inputs[activeId] || '';
+                const newVal = currentVal + num;
+
+                if (!isAdvanced) {
+                    // --- 概念引導模式的邏輯 ---
+                    if (target.startsWith(newVal)) {
+                        sounds.click();
+                        setInputs(prev => ({ ...prev, [activeId]: newVal }));
+                        
+                        // 如果剛好完整答對了此格
+                        if (newVal === target) {
+                            sounds.cellSuccess();
+                        }
+                    } else {
+                        // 輸入錯誤！
+                        sounds.error();
+                        setWrongIds(prev => [...prev, activeId]);
+                        setInputs(prev => ({ ...prev, [activeId]: newVal }));
+                        setIsLockedByError(true);
+
+                        // 閃爍震動 600ms 後自動清除，讓玩家重新填寫本格
+                        setTimeout(() => {
+                            setInputs(prev => ({ ...prev, [activeId]: '' }));
+                            setWrongIds(prev => prev.filter(id => id !== activeId));
+                            setIsLockedByError(false);
+                        }, 600);
+                    }
+                } else {
+                    // --- 進階挑戰模式的邏輯：允許任意輸入不立即檢查 ---
+                    if (newVal.length <= 3) {
+                        sounds.click();
+                        setInputs(prev => ({ ...prev, [activeId]: newVal }));
+                        // 清除當前格子的紅色報錯狀態
+                        setWrongIds(prev => prev.filter(id => id !== activeId));
+                    }
+                }
+            };
+
+            // 刪除/清除處理
+            const handleDel = () => {
+                if (gameWon || !activeId || isLockedByError) return;
+                sounds.click();
+                setInputs(prev => ({ ...prev, [activeId]: '' }));
+                setWrongIds(prev => prev.filter(id => id !== activeId));
+            };
+
+            // 切換至下一格 (僅適用於進階模式)
+            const handleNextInput = () => {
+                if (gameWon || !isAdvanced) return;
+                sounds.click();
+                const ids = getSequence();
+                const idx = ids.indexOf(selectedActiveId);
+                if (idx !== -1) {
+                    const nextIdx = (idx + 1) % ids.length;
+                    setSelectedActiveId(ids[nextIdx]);
+                    // 順便清除新選取格子的報錯狀態，提升填答體驗
+                    setWrongIds(prev => prev.filter(id => id !== ids[nextIdx]));
+                }
+            };
+
+            // 繪製單個輸入框元件
+            const renderInput = (id) => {
+                const target = getTargetValue(id);
+                const currentVal = inputs[id] || '';
+                const isWrong = wrongIds.includes(id);
+
+                let isCompleted = false;
+                let isActive = false;
+                let isLocked = false;
+
+                if (!isAdvanced) {
+                    isCompleted = currentVal === target;
+                    isActive = activeId === id && !gameWon;
+                    isLocked = !isCompleted && !isActive;
+                } else {
+                    // 進階模式：已通關時全綠，否則亮起手動選擇的格
+                    isCompleted = gameWon; 
+                    isActive = selectedActiveId === id && !gameWon;
+                }
+
+                let baseStyle = 'inline-flex justify-center items-center min-w-[4.5rem] px-3 h-14 text-3xl font-black rounded-2xl border-4 transition-all duration-200 cursor-pointer ';
+                
+                if (isCompleted) {
+                    // 答對/過關的亮麗綠色
+                    baseStyle += 'border-green-500 bg-green-100 text-green-700 shadow-md scale-100 ';
+                } else if (isWrong) {
+                    // 答錯時的紅色震動
+                    baseStyle += 'border-red-500 bg-red-100 text-red-600 animate-shake z-10 ';
+                } else if (isActive) {
+                    // 當前輸入格：閃爍藍色
+                    baseStyle += 'border-blue-500 bg-blue-50 text-blue-700 scale-110 z-10 animate-pulse-border ';
+                } else if (isLocked) {
+                    // 尚未開啟的鎖定格
+                    baseStyle += 'border-gray-200 bg-gray-50/50 text-gray-300 border-dashed opacity-40 cursor-not-allowed ';
+                } else {
+                    // 一般狀態 (進階模式未點選的空格)
+                    baseStyle += 'border-gray-300 bg-white text-gray-700 hover:border-blue-300 ';
+                }
+
+                return (
+                    <div 
+                        onClick={() => {
+                            if (isAdvanced && !gameWon) {
+                                sounds.click();
+                                setSelectedActiveId(id);
+                                setWrongIds(prev => prev.filter(wId => wId !== id));
+                            }
+                        }} 
+                        className={baseStyle}
+                    >
+                        {currentVal}
+                    </div>
+                );
+            };
+
+            // 繪製九宮格按鈕
+            const renderNumBtn = (num) => (
+                <button 
+                    key={num}
+                    onClick={() => handleNum(num)}
+                    disabled={gameWon || isLockedByError}
+                    className="bg-white border-2 border-b-8 border-gray-200 rounded-2xl py-4 text-3xl font-black text-gray-700 shadow-sm hover:bg-gray-50 hover:border-gray-300 active:border-b-2 active:translate-y-2 transition-all disabled:opacity-50"
+                >
+                    {num}
+                </button>
+            );
+
+            return (
+                <div className="max-w-6xl mx-auto p-4 py-8">
+                    {/* 白色主視覺卡片 */}
+                    <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-6 md:p-10 border-4 border-white">
+                        
+                        <h1 className="text-center text-4xl md:text-5xl font-black text-gray-800 mb-6 tracking-wide drop-shadow-sm">
+                            ✖️ 趣味乘法遊戲 ✖️
+                        </h1>
+
+                        {/* 頂部雙模式切換 Toggle */}
+                        <div className="flex justify-center mb-8">
+                            <div className="bg-gray-100 p-1.5 rounded-2xl flex shadow-inner border border-gray-200">
+                                <button
+                                    onClick={() => handleToggleMode(false)}
+                                    className={`px-6 py-3 rounded-xl font-bold text-lg transition-all flex items-center gap-2 ${
+                                        !isAdvanced 
+                                            ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md transform scale-102' 
+                                            : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                                >
+                                    🏫 概念引導模式
+                                </button>
+                                <button
+                                    onClick={() => handleToggleMode(true)}
+                                    className={`px-6 py-3 rounded-xl font-bold text-lg transition-all flex items-center gap-2 ${
+                                        isAdvanced 
+                                            ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md transform scale-102' 
+                                            : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                                >
+                                    ⚡ 進階挑戰模式
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 頂部主題選擇 */}
+                        <div className="flex flex-wrap justify-center gap-3 mb-10">
+                            {themesData.map(theme => (
+                                <button 
+                                    key={theme.id}
+                                    onClick={() => { sounds.click(); startNewGame(theme.id); }}
+                                    className={`px-5 py-3 rounded-full font-bold text-xl transition-all shadow-sm flex items-center gap-2 ${
+                                        currentTheme === theme.id 
+                                            ? 'bg-blue-500 text-white shadow-md transform scale-105' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    <span>{theme.icon}</span> {theme.id}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* 模式玩法提示小貼士 */}
+                        <div className="text-center mb-6">
+                            <span className="inline-block px-4 py-1.5 bg-yellow-50 border border-yellow-200 rounded-full text-amber-700 font-bold text-sm">
+                                {isAdvanced 
+                                    ? "💡 進階模式：只需填寫乘法算式，寫完後按下方的「檢查答案」！" 
+                                    : "💡 引導模式：請依照發光的藍框順序填寫，系統會幫你即時檢查喔！"}
+                            </span>
+                        </div>
+
+                        {/* 句子生成區域 */}
+                        <div className="text-3xl md:text-4xl font-bold text-center text-gray-700 leading-relaxed mb-8">
+                            一盒有 <span className="text-blue-600 text-5xl mx-1">{X}</span> {mWord}
+                            <span className="text-5xl mx-1 drop-shadow-md">{emoji}</span>，
+                            有 <span className="text-green-600 text-5xl mx-1">{Y}</span> 盒，<br className="hidden md:block"/>
+                            共有多少{mWord} <span className="text-5xl mx-1 drop-shadow-md">{emoji}</span>？
+                        </div>
+
+                        {/* 中間圖案視覺區 */}
+                        <div className="bg-blue-50/50 border-4 border-white backdrop-blur-sm rounded-3xl p-6 mb-10 flex flex-wrap justify-center gap-4 shadow-inner">
+                            {Array.from({ length: Y }).map((_, i) => (
+                                <div key={i} className="bg-white/80 border-4 border-dashed border-blue-300 rounded-2xl p-4 shadow-sm min-w-[100px] flex flex-wrap justify-center items-center gap-2">
+                                    {Array.from({ length: X }).map((_, j) => (
+                                        <span 
+                                            key={j} 
+                                            className="text-4xl animate-float"
+                                            style={{ animationDelay: `${(i * X + j) * 0.1}s` }}
+                                        >
+                                            {emoji}
+                                        </span>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* 互動填答區與九宮格 */}
+                        <div className="flex flex-col lg:flex-row gap-8">
+                            
+                            {/* 左側：算式填空 */}
+                            <div className="flex-1 flex flex-col gap-6 justify-center">
+                                {/* 加法算式 (僅在引導模式顯示) */}
+                                {!isAdvanced && (
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-4 text-2xl font-bold text-gray-700 bg-orange-50/50 border-4 border-orange-100 p-5 rounded-2xl">
+                                        <span className="w-full sm:w-auto text-orange-600 mb-2 sm:mb-0">加法算式：</span>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            {Array.from({ length: Y }).map((_, i) => (
+                                                <React.Fragment key={'add_frag_' + i}>
+                                                    {renderInput('add_' + i)}
+                                                    {i < Y - 1 && <span className="text-orange-300 text-3xl">+</span>}
+                                                </React.Fragment>
+                                            ))}
+                                            <span className="text-orange-300 text-3xl">=</span>
+                                            {renderInput('add_ans')}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 重複數字與次數 (僅在引導模式顯示) */}
+                                {!isAdvanced && (
+                                    <div className="flex flex-col sm:flex-row gap-6 w-full">
+                                        <div className="flex-1 flex flex-wrap items-center gap-4 text-2xl font-bold text-gray-700 bg-green-50/50 border-4 border-green-100 p-5 rounded-2xl">
+                                            <span className="text-green-600">重複的數字：</span>
+                                            {renderInput('rep_num')}
+                                        </div>
+                                        <div className="flex-1 flex flex-wrap items-center gap-4 text-2xl font-bold text-gray-700 bg-green-50/50 border-4 border-green-100 p-5 rounded-2xl">
+                                            <span className="text-green-600">重複的次數：</span>
+                                            {renderInput('rep_times')}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 乘法算式 (不論何種模式都顯示) */}
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-4 text-2xl font-bold text-gray-700 bg-purple-50/50 border-4 border-purple-200 p-5 rounded-2xl">
+                                    <span className="w-full sm:w-auto text-purple-700 mb-2 sm:mb-0">乘法算式：</span>
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        {renderInput('mul_1')}
+                                        <span className="text-purple-300 text-3xl">×</span>
+                                        {renderInput('mul_2')}
+                                        <span className="text-purple-300 text-3xl">=</span>
+                                        {renderInput('mul_ans')}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* 右側：數字九宮格 */}
+                            <div className="w-full lg:w-96 flex-shrink-0 flex flex-col items-center bg-gray-50/80 border-4 border-gray-200 rounded-3xl p-6 shadow-sm">
+                                <div className="text-xl font-bold mb-4 text-gray-500 bg-white px-6 py-2 rounded-full shadow-sm border border-gray-100">
+                                    ⌨️ 數字小鍵盤
+                                </div>
+                                <div className="grid grid-cols-3 gap-3 w-full max-w-[300px]">
+                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => renderNumBtn(num))}
+                                    
+                                    {/* 清除 */}
+                                    <button 
+                                        onClick={handleDel}
+                                        disabled={gameWon || isLockedByError}
+                                        className="bg-red-50 border-2 border-b-8 border-red-200 text-red-500 rounded-2xl py-4 text-2xl font-black shadow-sm hover:bg-red-100 hover:border-red-300 active:border-b-2 active:translate-y-2 transition-all disabled:opacity-50"
+                                    >
+                                        清除
+                                    </button>
+                                    
+                                    {/* 0 */}
+                                    {renderNumBtn(0)}
+
+                                    {/* 下一格 */}
+                                    <button 
+                                        onClick={handleNextInput}
+                                        disabled={gameWon || !isAdvanced}
+                                        className="bg-blue-50 border-2 border-b-8 border-blue-200 text-blue-600 rounded-2xl py-4 text-xl font-black shadow-sm hover:bg-blue-100 hover:border-blue-300 active:border-b-2 active:translate-y-2 transition-all disabled:opacity-50 disabled:bg-gray-100 disabled:text-gray-300 disabled:border-gray-200"
+                                    >
+                                        下一格
+                                    </button>
+                                </div>
+
+                                {/* 如果是進階挑戰模式，顯示「檢查答案」按鈕 */}
+                                {isAdvanced && (
+                                    <button 
+                                        onClick={handleCheckAdvanced}
+                                        disabled={gameWon}
+                                        className="mt-6 w-full max-w-[300px] py-4 bg-gradient-to-b from-green-400 to-green-500 border-b-8 border-green-600 text-white rounded-2xl font-black text-2xl shadow-md hover:brightness-110 active:border-b-2 active:translate-y-2 transition-all disabled:opacity-50"
+                                    >
+                                        ✅ 檢查答案
+                                    </button>
+                                )}
+                            </div>
+
+                        </div>
+
+                        {/* 回饋訊息與下一題按鈕 */}
+                        <div className="mt-8 flex flex-col items-center min-h-[100px]">
+                            {message && (
+                                <div className={`text-center text-3xl font-black mb-6 animate-bounce ${message.includes('不對') ? 'text-red-500' : 'text-green-500'}`}>
+                                    {message}
+                                </div>
+                            )}
+                            
+                            {gameWon && (
+                                <button 
+                                    onClick={() => { sounds.click(); startNewGame(); }} 
+                                    className="px-12 py-5 bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-full font-black text-3xl shadow-lg hover:scale-105 active:scale-95 transition-transform flex items-center gap-2"
+                                >
+                                    挑戰下一題 ➔
+                                </button>
+                            )}
+                        </div>
+
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
