@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>科學探究方法互動學習與實驗網 (豪華專業優化版)</title>
+    <title>科學探究方法互動學習與實驗網 (舒適閱讀專業優化版)</title>
     <!-- Tailwind CSS 與 Lucide Icons -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -86,20 +86,20 @@
 
     <!-- 頂部導航 -->
     <header class="bg-gradient-to-r from-indigo-700 to-purple-800 text-white shadow-xl sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-            <h1 class="text-2xl font-bold flex items-center gap-2">
-                <i data-lucide="microscope" class="w-8 h-8 text-yellow-300"></i>
+        <div class="max-w-7xl mx-auto px-4 py-5 flex flex-col lg:flex-row justify-between items-center gap-4">
+            <h1 class="text-3xl font-extrabold flex items-center gap-2">
+                <i data-lucide="microscope" class="w-10 h-10 text-yellow-300"></i>
                 <span>科學探究方法互動學習平台</span>
             </h1>
             <nav class="flex flex-wrap gap-2">
-                <button onclick="switchMainTab('learn')" id="btn-tab-learn" class="tab-active px-4 py-2 rounded-lg font-semibold transition hover:bg-indigo-600 flex items-center gap-1">
-                    <i data-lucide="book-open" class="w-4 h-4"></i> 學習導航
+                <button onclick="switchMainTab('learn')" id="btn-tab-learn" class="tab-active px-5 py-2.5 rounded-lg text-lg font-bold transition hover:bg-indigo-600 flex items-center gap-2">
+                    <i data-lucide="book-open" class="w-5 h-5"></i> 學習導航
                 </button>
-                <button onclick="switchMainTab('lab')" id="btn-tab-lab" class="px-4 py-2 bg-indigo-600 rounded-lg font-semibold transition hover:bg-indigo-500 flex items-center gap-1 text-indigo-100">
-                    <i data-lucide="beaker" class="w-4 h-4"></i> 虛擬實驗區 (12)
+                <button onclick="switchMainTab('lab')" id="btn-tab-lab" class="px-5 py-2.5 bg-indigo-600 rounded-lg text-lg font-bold transition hover:bg-indigo-500 flex items-center gap-2 text-indigo-100">
+                    <i data-lucide="beaker" class="w-5 h-5"></i> 虛擬實驗區 (12)
                 </button>
-                <button onclick="switchMainTab('quiz')" id="btn-tab-quiz" class="px-4 py-2 bg-indigo-600 rounded-lg font-semibold transition hover:bg-indigo-500 flex items-center gap-1 text-indigo-100">
-                    <i data-lucide="help-circle" class="w-4 h-4"></i> 隨堂測試 (24)
+                <button onclick="switchMainTab('quiz')" id="btn-tab-quiz" class="px-5 py-2.5 bg-indigo-600 rounded-lg text-lg font-bold transition hover:bg-indigo-500 flex items-center gap-2 text-indigo-100">
+                    <i data-lucide="help-circle" class="w-5 h-5"></i> 隨堂測試 (24)
                 </button>
             </nav>
         </div>
@@ -110,13 +110,13 @@
 
         <!-- ================= 1. 學習導航區 ================= -->
         <section id="main-learn" class="fade-in space-y-8">
-            <div class="text-center max-w-3xl mx-auto">
-                <h2 class="text-3xl font-extrabold text-slate-800 mb-3">走進科學家的思維世界</h2>
-                <p class="text-slate-600 text-lg">探究科學問題沒有單一路徑！根據要解答的疑惑種類，科學家會靈活運用這四種核心方法。</p>
+            <div class="text-center max-w-3xl mx-auto space-y-4">
+                <h2 class="text-4xl font-black text-slate-900">走進科學家的思維世界</h2>
+                <p class="text-slate-700 text-xl leading-relaxed">探究科學問題沒有單一路徑！根據要解答的疑惑種類，科學家會靈活運用這四種核心方法。讓我們一起來認識它們吧！</p>
             </div>
 
             <!-- 四種方法大卡片 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8" id="learn-cards-container">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8" id="learn-cards-container">
                 <!-- JS 動態生成 -->
             </div>
         </section>
@@ -124,340 +124,352 @@
         <!-- ================= 2. 虛擬實驗區 ================= -->
         <section id="main-lab" class="hidden fade-in space-y-6">
             <div class="text-center max-w-3xl mx-auto mb-6">
-                <h2 class="text-3xl font-extrabold text-slate-800">🔬 探究方法虛擬實驗室</h2>
-                <p class="text-slate-600 mt-2">內含 12 個科學實驗，請點選不同的實驗項目進行實際動手探究！</p>
+                <h2 class="text-4xl font-black text-slate-900">🔬 探究方法虛擬實驗室</h2>
+                <p class="text-slate-700 text-lg mt-2">內含 12 個互動科學實驗，請點選下方的分類與實驗項目進行動手操作探究！</p>
             </div>
 
             <!-- 實驗選擇網格 -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <p class="text-sm font-bold text-slate-500 mb-3 flex items-center gap-1"><i data-lucide="list-filter" class="w-4 h-4"></i> 選擇探究分類與實驗項目：</p>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <p class="text-base font-extrabold text-slate-600 mb-4 flex items-center gap-2"><i data-lucide="list-filter" class="w-5 h-5 text-indigo-600"></i> 請選擇探究分類與實驗項目：</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <!-- 分類實驗 -->
-                    <div class="p-3 bg-emerald-50 rounded-lg border border-emerald-100 space-y-2">
-                        <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">🗂️ 分類法</span>
-                        <div class="flex flex-col gap-1.5 mt-1">
-                            <button onclick="openLab(1)" id="lab-btn-1" class="w-full text-left text-sm py-1.5 px-2 rounded bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition">1. 海洋生物分類</button>
-                            <button onclick="openLab(2)" id="lab-btn-2" class="w-full text-left text-sm py-1.5 px-2 rounded bg-white text-emerald-800 border border-emerald-200 hover:bg-emerald-50 transition">2. 物質三態分類</button>
-                            <button onclick="openLab(3)" id="lab-btn-3" class="w-full text-left text-sm py-1.5 px-2 rounded bg-white text-emerald-800 border border-emerald-200 hover:bg-emerald-50 transition">3. 地球岩石辨識</button>
+                    <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-100 space-y-3 shadow-sm">
+                        <span class="text-sm font-black text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full">🗂️ 分類法 (Classification)</span>
+                        <div class="flex flex-col gap-2 mt-2">
+                            <button onclick="openLab(1)" id="lab-btn-1" class="w-full text-left text-base py-2 px-3 rounded-lg bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition">1. 海洋生物分類</button>
+                            <button onclick="openLab(2)" id="lab-btn-2" class="w-full text-left text-base py-2 px-3 rounded-lg bg-white text-emerald-800 border border-emerald-200 font-bold hover:bg-emerald-50 transition">2. 物質三態分類</button>
+                            <button onclick="openLab(3)" id="lab-btn-3" class="w-full text-left text-base py-2 px-3 rounded-lg bg-white text-emerald-800 border border-emerald-200 font-bold hover:bg-emerald-50 transition">3. 地球岩石辨識</button>
                         </div>
                     </div>
                     <!-- 尋找規律 -->
-                    <div class="p-3 bg-blue-50 rounded-lg border border-blue-100 space-y-2">
-                        <span class="text-xs font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">📈 尋找規律</span>
-                        <div class="flex flex-col gap-1.5 mt-1">
-                            <button onclick="openLab(4)" id="lab-btn-4" class="w-full text-left text-sm py-1.5 px-2 rounded bg-white text-blue-800 border border-blue-200 hover:bg-blue-50 transition">4. 鐘擺長度與週期</button>
-                            <button onclick="openLab(5)" id="lab-btn-5" class="w-full text-left text-sm py-1.5 px-2 rounded bg-white text-blue-800 border border-blue-200 hover:bg-blue-50 transition">5. 彈簧受力與拉伸</button>
-                            <button onclick="openLab(6)" id="lab-btn-6" class="w-full text-left text-sm py-1.5 px-2 rounded bg-white text-blue-800 border border-blue-200 hover:bg-blue-50 transition">6. 影子長度規律</button>
+                    <div class="p-4 bg-blue-50 rounded-xl border border-blue-100 space-y-3 shadow-sm">
+                        <span class="text-sm font-black text-blue-800 bg-blue-100 px-3 py-1 rounded-full">📈 尋找規律 (Pattern Seeking)</span>
+                        <div class="flex flex-col gap-2 mt-2">
+                            <button onclick="openLab(4)" id="lab-btn-4" class="w-full text-left text-base py-2 px-3 rounded-lg bg-white text-blue-800 border border-blue-200 font-bold hover:bg-blue-50 transition">4. 鐘擺長度與週期</button>
+                            <button onclick="openLab(5)" id="lab-btn-5" class="w-full text-left text-base py-2 px-3 rounded-lg bg-white text-blue-800 border border-blue-200 font-bold hover:bg-blue-50 transition">5. 彈簧受力與拉伸</button>
+                            <button onclick="openLab(6)" id="lab-btn-6" class="w-full text-left text-base py-2 px-3 rounded-lg bg-white text-blue-800 border border-blue-200 font-bold hover:bg-blue-50 transition">6. 影子長度規律</button>
                         </div>
                     </div>
                     <!-- 模擬 -->
-                    <div class="p-3 bg-purple-50 rounded-lg border border-purple-100 space-y-2">
-                        <span class="text-xs font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded">🌋 模擬</span>
-                        <div class="flex flex-col gap-1.5 mt-1">
-                            <button onclick="openLab(7)" id="lab-btn-7" class="w-full text-left text-sm py-1.5 px-2 rounded bg-white text-purple-800 border border-purple-200 hover:bg-purple-50 transition">7. 火山化學模擬</button>
-                            <button onclick="openLab(8)" id="lab-btn-8" class="w-full text-left text-sm py-1.5 px-2 rounded bg-white text-purple-800 border border-purple-200 hover:bg-purple-50 transition">8. 地球自轉與日夜</button>
-                            <button onclick="openLab(9)" id="lab-btn-9" class="w-full text-left text-sm py-1.5 px-2 rounded bg-white text-purple-800 border border-purple-200 hover:bg-purple-50 transition">9. 迷你水循環模擬</button>
+                    <div class="p-4 bg-purple-50 rounded-xl border border-purple-100 space-y-3 shadow-sm">
+                        <span class="text-sm font-black text-purple-800 bg-purple-100 px-3 py-1 rounded-full">🌋 模擬 (Modelling)</span>
+                        <div class="flex flex-col gap-2 mt-2">
+                            <button onclick="openLab(7)" id="lab-btn-7" class="w-full text-left text-base py-2 px-3 rounded-lg bg-white text-purple-800 border border-purple-200 font-bold hover:bg-purple-50 transition">7. 火山化學模擬</button>
+                            <button onclick="openLab(8)" id="lab-btn-8" class="w-full text-left text-base py-2 px-3 rounded-lg bg-white text-purple-800 border border-purple-200 font-bold hover:bg-purple-50 transition">8. 地球自轉與日夜</button>
+                            <button onclick="openLab(9)" id="lab-btn-9" class="w-full text-left text-base py-2 px-3 rounded-lg bg-white text-purple-800 border border-purple-200 font-bold hover:bg-purple-50 transition">9. 迷你水循環模擬</button>
                         </div>
                     </div>
                     <!-- 公平測試 -->
-                    <div class="p-3 bg-orange-50 rounded-lg border border-orange-100 space-y-2">
-                        <span class="text-xs font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded">⚖️ 公平測試</span>
-                        <div class="flex flex-col gap-1.5 mt-1">
-                            <button onclick="openLab(10)" id="lab-btn-10" class="w-full text-left text-sm py-1.5 px-2 rounded bg-white text-orange-800 border border-orange-200 hover:bg-orange-50 transition">10. 綠豆發芽環境</button>
-                            <button onclick="openLab(11)" id="lab-btn-11" class="w-full text-left text-sm py-1.5 px-2 rounded bg-white text-orange-800 border border-orange-200 hover:bg-orange-50 transition">11. 降落傘空阻測試</button>
-                            <button onclick="openLab(12)" id="lab-btn-12" class="w-full text-left text-sm py-1.5 px-2 rounded bg-white text-orange-800 border border-orange-200 hover:bg-orange-50 transition">12. 食糖溶解速率</button>
+                    <div class="p-4 bg-orange-50 rounded-xl border border-orange-100 space-y-3 shadow-sm">
+                        <span class="text-sm font-black text-orange-800 bg-orange-100 px-3 py-1 rounded-full">⚖️ 公平測試 (Fair Testing)</span>
+                        <div class="flex flex-col gap-2 mt-2">
+                            <button onclick="openLab(10)" id="lab-btn-10" class="w-full text-left text-base py-2 px-3 rounded-lg bg-white text-orange-800 border border-orange-200 font-bold hover:bg-orange-50 transition">10. 綠豆發芽環境</button>
+                            <button onclick="openLab(11)" id="lab-btn-11" class="w-full text-left text-base py-2 px-3 rounded-lg bg-white text-orange-800 border border-orange-200 font-bold hover:bg-orange-50 transition">11. 降落傘空阻測試</button>
+                            <button onclick="openLab(12)" id="lab-btn-12" class="w-full text-left text-base py-2 px-3 rounded-lg bg-white text-orange-800 border border-orange-200 font-bold hover:bg-orange-50 transition">12. 食糖溶解速率</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 12個實驗容器 (每次只顯示一個) -->
-            <div id="active-lab-container" class="bg-white rounded-2xl shadow-md p-6 border border-slate-200 min-h-[400px]">
+            <!-- 12個實驗容器 -->
+            <div id="active-lab-container" class="bg-white rounded-3xl shadow-md p-8 border border-slate-200 min-h-[450px]">
                 
-                <!-- 實驗 1：海洋生物分類 (優化操作：移除按鈕，改為 100% 拖放完成，支援行動端觸控) -->
+                <!-- 實驗 1：海洋生物分類 -->
                 <div id="panel-lab-1" class="space-y-6">
-                    <div class="border-b pb-3">
-                        <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i data-lucide="tag" class="text-emerald-500"></i> 實驗一：海洋生物大分類</h3>
-                        <p class="text-sm text-slate-500 mt-1">操作說明：將下方的生物卡片拖曳到兩側對應的虛線分類框中以完成探究。</p>
+                    <div class="border-b pb-4">
+                        <h3 class="text-2xl font-black text-slate-900 flex items-center gap-2"><i data-lucide="tag" class="text-emerald-500 w-7 h-7"></i> 實驗一：海洋生物大分類</h3>
+                        <p class="text-base text-slate-600 mt-2 leading-relaxed"><b>操作說明：</b>請用滑鼠或手指觸控將下方的海洋生物卡片，拖曳到兩側對應的虛線分類框中以完成探究。</p>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <!-- 脊椎動物 -->
-                        <div class="border-2 border-dashed border-sky-300 bg-sky-50/50 rounded-xl p-4 min-h-[220px] transition-all duration-200 flex flex-col" 
+                        <div class="border-2 border-dashed border-sky-300 bg-sky-50/50 rounded-2xl p-5 min-h-[250px] transition-all duration-200 flex flex-col" 
                              id="box-l1-vert" ondragover="allowDrop(event, 'box-l1-vert')" ondragleave="leaveDrag('box-l1-vert')" ondrop="dropL1(event, 'vert')">
-                            <h4 class="font-bold text-sky-800 text-sm mb-3 text-center flex items-center justify-center gap-1">🦴 脊椎動物門</h4>
-                            <div class="flex flex-wrap gap-2 justify-center flex-grow content-start" id="drop-l1-vert"></div>
+                            <h4 class="font-extrabold text-sky-900 text-lg mb-4 text-center flex items-center justify-center gap-2">🦴 有脊椎動物門</h4>
+                            <div class="flex flex-wrap gap-2.5 justify-center flex-grow content-start" id="drop-l1-vert"></div>
                         </div>
                         
                         <!-- 待分類生物 -->
-                        <div class="bg-slate-100 rounded-xl p-4 flex flex-col items-center border border-slate-200">
-                            <h4 class="font-bold text-slate-600 text-sm mb-4">🔬 待分類生物池 (拖曳它們)</h4>
-                            <div class="flex flex-col gap-3 w-full" id="pool-l1"></div>
-                            <button onclick="resetLab1()" class="mt-6 w-full py-2 bg-slate-200 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-300 transition">重置分類 🔄</button>
+                        <div class="bg-slate-100 rounded-2xl p-5 flex flex-col items-center border border-slate-200">
+                            <h4 class="font-extrabold text-slate-700 text-base mb-4 flex items-center gap-1">🔬 待分類生物池</h4>
+                            <div class="flex flex-col gap-3.5 w-full" id="pool-l1"></div>
+                            <button onclick="resetLab1()" class="mt-6 w-full py-3 bg-slate-200 text-slate-800 rounded-xl text-sm font-extrabold hover:bg-slate-300 transition">重置分類 🔄</button>
                         </div>
                         
                         <!-- 無脊椎動物 -->
-                        <div class="border-2 border-dashed border-teal-300 bg-teal-50/50 rounded-xl p-4 min-h-[220px] transition-all duration-200 flex flex-col" 
+                        <div class="border-2 border-dashed border-teal-300 bg-teal-50/50 rounded-2xl p-5 min-h-[250px] transition-all duration-200 flex flex-col" 
                              id="box-l1-invert" ondragover="allowDrop(event, 'box-l1-invert')" ondragleave="leaveDrag('box-l1-invert')" ondrop="dropL1(event, 'invert')">
-                            <h4 class="font-bold text-teal-800 text-sm mb-3 text-center flex items-center justify-center gap-1">💧 無脊椎動物</h4>
-                            <div class="flex flex-wrap gap-2 justify-center flex-grow content-start" id="drop-l1-invert"></div>
+                            <h4 class="font-extrabold text-teal-900 text-lg mb-4 text-center flex items-center justify-center gap-2">💧 無脊椎動物門</h4>
+                            <div class="flex flex-wrap gap-2.5 justify-center flex-grow content-start" id="drop-l1-invert"></div>
                         </div>
                     </div>
-                    <div id="msg-l1" class="text-center font-bold text-emerald-600 text-sm hidden">🎉 非常正確！分類能讓我們在往後遇到新生物時，迅速了解牠的基礎生理構造！</div>
+                    <div id="msg-l1" class="text-center font-bold text-emerald-700 text-lg hidden p-3 bg-emerald-100 rounded-xl">🎉 非常正確！分類能讓我們在往後遇到新生物時，迅速了解牠的基礎生理構造！</div>
                     <!-- 實驗 1 結論 -->
-                    <div id="concl-l1" class="hidden mt-4 p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg shadow-sm fade-in">
-                        <h4 class="font-bold text-emerald-900 flex items-center gap-1"><i data-lucide="lightbulb" class="w-5 h-5"></i> 實驗結論：分類 (Classification)</h4>
-                        <p class="text-sm text-emerald-800 mt-1 leading-relaxed">透過將散亂的生物依據「有無脊椎骨」進行系統化分組，我們完成了這項分類。分類能幫助科學家快速定位新物種，並有條理地理解龐雜的自然世界！</p>
+                    <div id="concl-l1" class="hidden p-5 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-2xl shadow-sm fade-in">
+                        <h4 class="font-extrabold text-emerald-950 text-lg flex items-center gap-2"><i data-lucide="lightbulb" class="w-6 h-6 text-emerald-600"></i> 實驗結論：分類 (Classification)</h4>
+                        <p class="text-base text-emerald-900 mt-2 leading-relaxed">透過將散亂的生物依據「有無脊椎骨」進行系統化分組，我們完成了這項分類。分類能幫助科學家快速定位新物種，並有條理地理解龐雜的自然世界！</p>
                     </div>
                 </div>
 
                 <!-- 實驗 2：物質三態分類 -->
                 <div id="panel-lab-2" class="space-y-6 hidden">
-                    <div class="border-b pb-3">
-                        <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i data-lucide="droplet" class="text-emerald-500"></i> 實驗二：物質狀態分類學</h3>
+                    <div class="border-b pb-4">
+                        <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i data-lucide="droplet" class="text-emerald-500 w-7 h-7"></i> 實驗二：物質狀態分類學</h3>
                         <p class="text-sm text-slate-500 mt-1">操作說明：將下方的物質卡片分別拖入對應的物理狀態分類框中。</p>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="border-2 border-dashed border-slate-300 bg-slate-50 p-3 rounded-lg min-h-[150px] flex flex-col transition-all duration-200" 
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <div class="border-2 border-dashed border-slate-300 bg-slate-50 p-4 rounded-xl min-h-[180px] flex flex-col transition-all duration-200" 
                              id="box-l2-solid" ondragover="allowDrop(event, 'box-l2-solid')" ondragleave="leaveDrag('box-l2-solid')" ondrop="dropL2(event, 'solid')">
-                            <h4 class="font-bold text-slate-700 text-sm mb-2 text-center">🧱 固體 (形狀固定)</h4>
-                            <div class="flex flex-col gap-2 flex-grow" id="drop-l2-solid"></div>
+                            <h4 class="font-bold text-slate-800 text-base mb-3 text-center">🧱 固體 (形狀固定)</h4>
+                            <div class="flex flex-col gap-2.5 flex-grow" id="drop-l2-solid"></div>
                         </div>
-                        <div class="border-2 border-dashed border-slate-300 bg-slate-50 p-3 rounded-lg min-h-[150px] flex flex-col transition-all duration-200" 
+                        <div class="border-2 border-dashed border-slate-300 bg-slate-50 p-4 rounded-xl min-h-[180px] flex flex-col transition-all duration-200" 
                              id="box-l2-liquid" ondragover="allowDrop(event, 'box-l2-liquid')" ondragleave="leaveDrag('box-l2-liquid')" ondrop="dropL2(event, 'liquid')">
-                            <h4 class="font-bold text-slate-700 text-sm mb-2 text-center">💧 液體 (形狀不固定)</h4>
-                            <div class="flex flex-col gap-2 flex-grow" id="drop-l2-liquid"></div>
+                            <h4 class="font-bold text-slate-800 text-base mb-3 text-center">💧 液體 (形狀不固定)</h4>
+                            <div class="flex flex-col gap-2.5 flex-grow" id="drop-l2-liquid"></div>
                         </div>
-                        <div class="border-2 border-dashed border-slate-300 bg-slate-50 p-3 rounded-lg min-h-[150px] flex flex-col transition-all duration-200" 
+                        <div class="border-2 border-dashed border-slate-300 bg-slate-50 p-4 rounded-xl min-h-[180px] flex flex-col transition-all duration-200" 
                              id="box-l2-gas" ondragover="allowDrop(event, 'box-l2-gas')" ondragleave="leaveDrag('box-l2-gas')" ondrop="dropL2(event, 'gas')">
-                            <h4 class="font-bold text-slate-700 text-sm mb-2 text-center">💨 氣體 (無固定形狀)</h4>
-                            <div class="flex flex-col gap-2 flex-grow" id="drop-l2-gas"></div>
+                            <h4 class="font-bold text-slate-800 text-base mb-3 text-center">💨 氣體 (無固定形狀)</h4>
+                            <div class="flex flex-col gap-2.5 flex-grow" id="drop-l2-gas"></div>
                         </div>
-                        <div class="bg-indigo-50 border border-indigo-100 p-3 rounded-lg text-center flex flex-col justify-between">
+                        <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-xl text-center flex flex-col justify-between shadow-sm">
                             <div>
-                                <h4 class="font-bold text-indigo-900 text-xs mb-3">待歸類物質</h4>
-                                <div class="flex flex-col gap-2" id="pool-l2"></div>
+                                <h4 class="font-bold text-indigo-950 text-sm mb-3">待歸類物質</h4>
+                                <div class="flex flex-col gap-3" id="pool-l2"></div>
                             </div>
-                            <button onclick="resetLab2()" class="mt-4 w-full py-1.5 bg-slate-200 text-slate-700 text-xs font-bold rounded hover:bg-slate-300 transition">重設 🔄</button>
+                            <button onclick="resetLab2()" class="mt-4 w-full py-2 bg-slate-200 text-slate-800 text-sm font-bold rounded-lg hover:bg-slate-300 transition">重設 🔄</button>
                         </div>
                     </div>
-                    <div id="msg-l2" class="text-center font-bold text-emerald-600 text-sm hidden">🎉 答對了！科學家根據微觀分子排列規律，成功將巨觀物質分成這三類！</div>
+                    <div id="msg-l2" class="text-center font-bold text-emerald-700 text-lg hidden p-3 bg-emerald-100 rounded-xl">🎉 答對了！科學家根據微觀分子排列規律，成功將巨觀物質分成這三類！</div>
                     <!-- 實驗 2 結論 -->
-                    <div id="concl-l2" class="hidden mt-4 p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg shadow-sm fade-in">
-                        <h4 class="font-bold text-emerald-900 flex items-center gap-1"><i data-lucide="lightbulb" class="w-5 h-5"></i> 實驗結論：分類 (Classification)</h4>
-                        <p class="text-sm text-emerald-800 mt-1 leading-relaxed">雖然物質千變萬化，但透過觀察「形狀與體積是否固定」，我們成功將其分類為固、液、氣三大態。這展現了分類法在化學基礎研究中的重要性！</p>
+                    <div id="concl-l2" class="hidden p-5 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-2xl shadow-sm fade-in">
+                        <h4 class="font-bold text-emerald-950 text-lg flex items-center gap-2"><i data-lucide="lightbulb" class="w-6 h-6 text-emerald-600"></i> 實驗結論：分類 (Classification)</h4>
+                        <p class="text-base text-emerald-900 mt-2 leading-relaxed">雖然物質千變萬化，但透過觀察「形狀與體積是否固定」，我們成功將其分類為固、液、氣三大態。這展現了分類法在化學基礎研究中的重要性！</p>
                     </div>
                 </div>
 
                 <!-- 實驗 3：岩石辨識 -->
                 <div id="panel-lab-3" class="space-y-6 hidden">
-                    <div class="border-b pb-3">
-                        <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i data-lucide="mountain" class="text-emerald-500"></i> 實驗三：地質岩石辨識</h3>
-                        <p class="text-sm text-slate-500 mt-1">操作說明：依照成因，將岩石拖入對應的「火成岩」、「沈積岩」或「變質岩」區域中。</p>
+                    <div class="border-b pb-4">
+                        <h3 class="text-2xl font-black text-slate-900 flex items-center gap-2"><i data-lucide="mountain" class="text-emerald-500 w-7 h-7"></i> 實驗三：地質岩石辨識</h3>
+                        <p class="text-base text-slate-600 mt-2">操作說明：依照成因，將下方的岩石卡片拖入對應的「火成岩」、「沈積岩」或「變質岩」虛線區域中。</p>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="bg-amber-50 p-3 rounded-lg border-2 border-dashed border-amber-200 text-center min-h-[150px] flex flex-col transition-all duration-200" 
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <!-- 火成岩目標框 -->
+                        <div class="bg-amber-50/50 p-4 rounded-xl border-2 border-dashed border-amber-300 text-center min-h-[200px] flex flex-col transition-all duration-200" 
                              id="box-l3-igneous" ondragover="allowDrop(event, 'box-l3-igneous')" ondragleave="leaveDrag('box-l3-igneous')" ondrop="dropL3(event, 'igneous')">
-                            <h4 class="font-bold text-amber-800 text-sm mb-2 flex items-center justify-center gap-1">🌋 火成岩</h4>
-                            <div class="flex flex-col gap-2 flex-grow"></div>
+                            <h4 class="font-extrabold text-amber-900 text-base mb-3 flex items-center justify-center gap-1">🌋 火成岩</h4>
+                            <div class="flex flex-wrap gap-2.5 justify-center flex-grow content-start" id="drop-l3-igneous-list"></div>
                         </div>
-                        <div class="bg-orange-50 p-3 rounded-lg border-2 border-dashed border-orange-200 text-center min-h-[150px] flex flex-col transition-all duration-200" 
+                        <!-- 沈積岩目標框 -->
+                        <div class="bg-orange-50/50 p-4 rounded-xl border-2 border-dashed border-orange-300 text-center min-h-[200px] flex flex-col transition-all duration-200" 
                              id="box-l3-sediment" ondragover="allowDrop(event, 'box-l3-sediment')" ondragleave="leaveDrag('box-l3-sediment')" ondrop="dropL3(event, 'sediment')">
-                            <h4 class="font-bold text-orange-800 text-sm mb-2 flex items-center justify-center gap-1">🏖️ 沈積岩</h4>
-                            <div class="flex flex-col gap-2 flex-grow"></div>
+                            <h4 class="font-extrabold text-orange-800 text-base mb-3 flex items-center justify-center gap-1">🏖️ 沈積岩</h4>
+                            <div class="flex flex-wrap gap-2.5 justify-center flex-grow content-start" id="drop-l3-sediment-list"></div>
                         </div>
-                        <div class="bg-rose-50 p-3 rounded-lg border-2 border-dashed border-rose-200 text-center min-h-[150px] flex flex-col transition-all duration-200" 
+                        <!-- 變質岩目標框 -->
+                        <div class="bg-rose-50/50 p-4 rounded-xl border-2 border-dashed border-rose-300 text-center min-h-[200px] flex flex-col transition-all duration-200" 
                              id="box-l3-meta" ondragover="allowDrop(event, 'box-l3-meta')" ondragleave="leaveDrag('box-l3-meta')" ondrop="dropL3(event, 'meta')">
-                            <h4 class="font-bold text-rose-800 text-sm mb-2 flex items-center justify-center gap-1">🧬 變質岩</h4>
-                            <div class="flex flex-col gap-2 flex-grow"></div>
+                            <h4 class="font-extrabold text-rose-800 text-base mb-3 flex items-center justify-center gap-1">🧬 變質岩</h4>
+                            <div class="flex flex-wrap gap-2.5 justify-center flex-grow content-start" id="drop-l3-meta-list"></div>
                         </div>
-                        <div class="bg-slate-100 p-3 rounded-lg text-center flex flex-col justify-between border">
+                        <!-- 待分類岩石 -->
+                        <div class="bg-slate-100 p-4 rounded-xl text-center flex flex-col justify-between border border-slate-200 shadow-sm">
                             <div>
-                                <h4 class="font-bold text-slate-700 text-xs mb-3">待分類岩石</h4>
-                                <div class="flex flex-col gap-2" id="pool-l3"></div>
+                                <h4 class="font-bold text-slate-700 text-sm mb-3">待分類岩石</h4>
+                                <div class="flex flex-col gap-3" id="pool-l3"></div>
                             </div>
-                            <button onclick="resetLab3()" class="mt-4 w-full py-1.5 bg-slate-200 text-slate-700 text-xs font-bold rounded hover:bg-slate-300 transition">重設 🔄</button>
+                            <button onclick="resetLab3()" class="mt-4 w-full py-2 bg-slate-200 text-slate-800 text-sm font-bold rounded-lg hover:bg-slate-300 transition">重設 🔄</button>
                         </div>
                     </div>
-                    <div id="msg-l3" class="text-center font-bold text-emerald-600 text-sm hidden">🎉 太讚了！從熔岩冷卻（火成岩）、泥沙堆疊（沉積岩）到高溫高壓（變質岩），分類清晰明瞭！</div>
+                    <div id="msg-l3" class="text-center font-bold text-emerald-700 text-lg hidden p-3 bg-emerald-100 rounded-xl">🎉 太讚了！從熔岩冷卻（火成岩）、泥沙堆疊（沉積岩）到高溫高壓（變質岩），分類清晰明瞭！</div>
                     <!-- 實驗 3 結論 -->
-                    <div id="concl-l3" class="hidden mt-4 p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg shadow-sm fade-in">
-                        <h4 class="font-bold text-emerald-900 flex items-center gap-1"><i data-lucide="lightbulb" class="w-5 h-5"></i> 實驗結論：分類 (Classification)</h4>
+                    <div id="concl-l3" class="hidden p-5 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-2xl shadow-sm fade-in">
+                        <h4 class="font-bold text-emerald-950 text-lg flex items-center gap-2"><i data-lucide="lightbulb" class="w-6 h-6 text-emerald-600"></i> 實驗結論：分類 (Classification)</h4>
                         <p class="text-sm text-emerald-800 mt-1 leading-relaxed">透過分析岩石的「形成原因」（岩漿冷卻、碎屑沉積、高溫高壓變質），我們將地球上的岩石有條理地分類。清晰的分類系統是地質學研究的基石！</p>
                     </div>
                 </div>
 
                 <!-- 實驗 4：鐘擺週期與擺長 -->
                 <div id="panel-lab-4" class="space-y-6 hidden">
-                    <div class="border-b pb-3">
-                        <h3 class="text-xl font-bold text-slate-800">⏱️ 實驗四：鐘擺長度與週期規律</h3>
-                        <p class="text-sm text-slate-500 mt-1">目的：觀察不同擺線長度下，鐘擺完成 10 次完整來回擺動所需的時間，找出內在物理規律。</p>
+                    <div class="border-b pb-4">
+                        <h3 class="text-2xl font-black text-slate-900 flex items-center gap-2"><i data-lucide="activity" class="text-blue-500 w-7 h-7"></i> 實驗四：鐘擺長度與週期規律</h3>
+                        <p class="text-base text-slate-600 mt-2 leading-relaxed">目的：觀察不同擺線長度下，鐘擺完成 10 次完整來回擺動所需的時間，找出內在物理規律。</p>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-6 flex flex-col items-center relative overflow-hidden h-64 justify-between">
-                            <div class="w-full h-1 bg-slate-600"></div>
+                        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col items-center relative overflow-hidden h-72 justify-between shadow-sm">
+                            <div class="w-full h-1.5 bg-slate-600"></div>
                             <!-- 鐘擺主體 -->
-                            <div id="pendulum-l4" class="absolute top-6 origin-top" style="height: 100px; transform: rotate(0deg);">
-                                <div class="w-0.5 bg-slate-800 h-full mx-auto"></div>
-                                <div class="w-8 h-8 bg-indigo-600 rounded-full -mt-2"></div>
+                            <div id="pendulum-l4" class="absolute top-6 origin-top" style="height: 110px; transform: rotate(0deg);">
+                                <div class="w-1 bg-slate-800 h-full mx-auto"></div>
+                                <div class="w-10 h-10 bg-indigo-600 rounded-full -mt-2 shadow-md"></div>
                             </div>
-                            <div class="w-full flex gap-2 z-10">
-                                <button onclick="startPendulumL4()" class="flex-grow py-1.5 bg-indigo-600 text-white rounded text-sm font-bold hover:bg-indigo-500 transition">開始擺動</button>
-                                <button onclick="stopPendulumL4()" class="px-3 py-1.5 bg-slate-300 text-slate-700 rounded text-sm font-bold hover:bg-slate-400">重設</button>
+                            <div class="w-full flex gap-3 z-10">
+                                <button onclick="startPendulumL4()" class="flex-grow py-3 bg-indigo-600 text-white rounded-xl text-base font-extrabold hover:bg-indigo-500 transition shadow">開始擺動</button>
+                                <button onclick="stopPendulumL4()" class="px-5 py-3 bg-slate-300 text-slate-800 rounded-xl text-base font-extrabold hover:bg-slate-400 transition">重設</button>
                             </div>
                         </div>
-                        <div class="space-y-4">
-                            <div class="space-y-2">
-                                <label class="block text-sm font-bold">調節擺長：<span id="lbl-l4-length" class="text-indigo-600">中 (150 cm)</span></label>
-                                <input type="range" min="1" max="3" value="2" id="slider-l4-len" oninput="changeL4Length()" class="w-full accent-indigo-600">
+                        <div class="space-y-5">
+                            <div class="space-y-3">
+                                <label class="block text-base font-bold text-slate-700">調節擺長：<span id="lbl-l4-length" class="text-indigo-600 font-extrabold">中 (150 cm)</span></label>
+                                <input type="range" min="1" max="3" value="2" id="slider-l4-len" oninput="changeL4Length()" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
                             </div>
-                            <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                                <h4 class="font-bold text-indigo-900 text-sm mb-2">觀測記錄 (10次擺動)：</h4>
-                                <ul class="text-xs space-y-1 text-indigo-800">
-                                    <li>📏 短擺長 (100cm)：<span class="font-bold text-slate-900" id="res-l4-1">-</span> <button onclick="recL4(1, 10.1)" class="ml-2 px-1.5 py-0.5 bg-white border border-indigo-300 rounded hover:bg-indigo-100">計時</button></li>
-                                    <li>📏 中擺長 (150cm)：<span class="font-bold text-slate-900" id="res-l4-2">-</span> <button onclick="recL4(2, 12.3)" class="ml-2 px-1.5 py-0.5 bg-white border border-indigo-300 rounded hover:bg-indigo-100">計時</button></li>
-                                    <li>📏 長擺長 (200cm)：<span class="font-bold text-slate-900" id="res-l4-3">-</span> <button onclick="recL4(3, 14.2)" class="ml-2 px-1.5 py-0.5 bg-white border border-indigo-300 rounded hover:bg-indigo-100">計時</button></li>
+                            <div class="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 space-y-3">
+                                <h4 class="font-extrabold text-indigo-950 text-base mb-2">📊 觀測記錄 (10次來回擺動)：</h4>
+                                <ul class="text-sm space-y-2.5 text-indigo-900">
+                                    <li class="flex items-center justify-between">
+                                        <span>📏 短擺長 (100cm)：<span class="font-extrabold text-slate-900" id="res-l4-1">-</span></span>
+                                        <button onclick="recL4(1, 10.1)" class="px-3 py-1 bg-white border border-indigo-300 rounded-lg font-bold text-xs hover:bg-indigo-100 transition shadow-sm">計時</button>
+                                    </li>
+                                    <li class="flex items-center justify-between">
+                                        <span>📏 中擺長 (150cm)：<span class="font-extrabold text-slate-900" id="res-l4-2">-</span></span>
+                                        <button onclick="recL4(2, 12.3)" class="px-3 py-1 bg-white border border-indigo-300 rounded-lg font-bold text-xs hover:bg-indigo-100 transition shadow-sm">計時</button>
+                                    </li>
+                                    <li class="flex items-center justify-between">
+                                        <span>📏 長擺長 (200cm)：<span class="font-extrabold text-slate-900" id="res-l4-3">-</span></span>
+                                        <button onclick="recL4(3, 14.2)" class="px-3 py-1 bg-white border border-indigo-300 rounded-lg font-bold text-xs hover:bg-indigo-100 transition shadow-sm">計時</button>
+                                    </li>
                                 </ul>
-                                <div class="mt-4 border-t pt-3 space-y-2 hidden" id="question-l4">
-                                    <p class="text-xs font-bold text-slate-700">✍️ 觀察數據得出什麼規律？</p>
-                                    <div class="flex flex-col gap-1">
-                                        <button onclick="checkL4Ans(true)" class="text-left text-xs p-2 bg-white hover:bg-slate-100 border rounded">A. 擺長越長，來回一次所需時間（週期）越長。</button>
-                                        <button onclick="checkL4Ans(false)" class="text-left text-xs p-2 bg-white hover:bg-slate-100 border rounded">B. 擺長越長，週期越短。</button>
+                                <div class="mt-4 border-t border-indigo-200 pt-4 space-y-3 hidden" id="question-l4">
+                                    <p class="text-base font-extrabold text-slate-800">✍️ 觀察實驗數據，你得出什麼規律？</p>
+                                    <div class="flex flex-col gap-2">
+                                        <button onclick="checkL4Ans(true)" class="text-left text-sm p-3 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl transition font-semibold shadow-sm">A. 擺長越長，來回一次所需時間（週期）越長。</button>
+                                        <button onclick="checkL4Ans(false)" class="text-left text-sm p-3 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl transition font-semibold shadow-sm">B. 擺長越長，週期越短。</button>
                                     </div>
-                                    <p id="msg-l4" class="text-xs font-bold mt-2"></p>
+                                    <p id="msg-l4" class="text-sm font-bold mt-2"></p>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <!-- 實驗 4 結論 -->
-                    <div id="concl-l4" class="hidden mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg shadow-sm fade-in">
-                        <h4 class="font-bold text-blue-900 flex items-center gap-1"><i data-lucide="lightbulb" class="w-5 h-5"></i> 實驗結論：尋找規律 (Pattern Seeking)</h4>
-                        <p class="text-sm text-blue-800 mt-1 leading-relaxed">透過連續記錄不同擺長的數據，我們成功尋找到規律：擺長越長，擺動週期越長（時間越久）。物理學家正是藉由這種數據規律的收集與尋找，推導出大自然運作的數學公式！</p>
+                    <div id="concl-l4" class="hidden p-5 bg-blue-50 border-l-4 border-blue-500 rounded-r-2xl shadow-sm fade-in">
+                        <h4 class="font-extrabold text-blue-950 text-lg flex items-center gap-2"><i data-lucide="lightbulb" class="w-6 h-6 text-blue-600"></i> 實驗結論：尋找規律 (Pattern Seeking)</h4>
+                        <p class="text-base text-blue-900 mt-2 leading-relaxed">透過連續記錄不同擺長的數據，我們成功尋找到規律：擺長越長，擺動週期越長（時間越久）。物理學家正是藉由這種數據規律的收集與尋找，推導出大自然運作的數學公式！</p>
                     </div>
                 </div>
 
                 <!-- 實驗 5：彈簧受力與拉伸 -->
                 <div id="panel-lab-5" class="space-y-6 hidden">
-                    <div class="border-b pb-3">
-                        <h3 class="text-xl font-bold text-slate-800">📈 實驗五：胡克定律 - 彈簧受力拉伸規律</h3>
-                        <p class="text-sm text-slate-500 mt-1">目的：探討懸掛砝碼數量（外力）與彈簧伸長量之間的數學關係（胡克定律）。</p>
+                    <div class="border-b pb-4">
+                        <h3 class="text-2xl font-black text-slate-900 flex items-center gap-2"><i data-lucide="line-chart" class="text-blue-500 w-7 h-7"></i> 實驗五：胡克定律 - 彈簧受力拉伸規律</h3>
+                        <p class="text-base text-slate-600 mt-2 leading-relaxed">目的：探討懸掛砝碼數量（外力）與彈簧伸長量之間的數學關係（胡克定律）。</p>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-slate-100 border rounded-xl p-4 flex flex-col items-center justify-between h-72">
-                            <!-- 彈簧秤視覺繪製 -->
+                        <div class="bg-slate-100 border rounded-2xl p-5 flex flex-col items-center justify-between h-80 shadow-sm">
                             <div class="flex flex-col items-center w-full relative">
-                                <div class="w-12 h-2 bg-slate-500 rounded"></div>
+                                <div class="w-16 h-3 bg-slate-500 rounded-full"></div>
                                 <!-- 彈簧線 -->
-                                <div id="spring-l5" class="w-4 bg-yellow-400 border border-amber-600 transition-all duration-300" style="height: 40px;"></div>
+                                <div id="spring-l5" class="w-5 bg-yellow-400 border-2 border-amber-600 transition-all duration-300" style="height: 40px;"></div>
                                 <!-- 吊鉤與砝碼 -->
                                 <div class="flex flex-col items-center">
-                                    <div class="w-1 h-4 bg-slate-700"></div>
-                                    <div id="weights-l5" class="space-y-0.5"></div>
+                                    <div class="w-1.5 h-5 bg-slate-700"></div>
+                                    <div id="weights-l5" class="space-y-1"></div>
                                 </div>
                             </div>
-                            <div class="flex gap-2">
-                                <button onclick="addWeightL5()" class="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded hover:bg-blue-500">掛上1個砝碼 (100g)</button>
-                                <button onclick="clearWeightL5()" class="px-3 py-1 bg-slate-300 text-slate-700 text-xs font-bold rounded hover:bg-slate-400">清空砝碼</button>
+                            <div class="flex gap-3">
+                                <button onclick="addWeightL5()" class="px-4 py-2 bg-blue-600 text-white text-sm font-extrabold rounded-lg hover:bg-blue-500 shadow transition">掛上1個砝碼 (100g)</button>
+                                <button onclick="clearWeightL5()" class="px-4 py-2 bg-slate-300 text-slate-800 text-sm font-extrabold rounded-lg hover:bg-slate-400 transition">清空砝碼</button>
                             </div>
                         </div>
-                        <div class="space-y-4">
-                            <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 text-xs">
-                                <h4 class="font-bold text-sm text-blue-900 mb-2">數據統計：</h4>
-                                <table class="w-full text-center border-collapse bg-white">
+                        <div class="space-y-5">
+                            <div class="bg-blue-50 p-5 rounded-2xl border border-blue-100 space-y-3">
+                                <h4 class="font-extrabold text-base text-blue-950 mb-2">📊 數據統計與測量紀錄：</h4>
+                                <table class="w-full text-center border-collapse bg-white text-base rounded-xl overflow-hidden shadow-sm">
                                     <thead>
-                                        <tr class="bg-slate-100">
-                                            <th class="p-1.5 border">砝碼重 (g)</th>
-                                            <th class="p-1.5 border">彈簧伸長量 (cm)</th>
-                                            <th class="p-1.5 border">觀測動作</th>
+                                        <tr class="bg-slate-100 text-slate-800">
+                                            <th class="p-2.5 border font-extrabold">砝碼重 (g)</th>
+                                            <th class="p-2.5 border font-extrabold">彈簧伸長量 (cm)</th>
+                                            <th class="p-2.5 border font-extrabold">觀測動作</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody class="text-slate-800">
                                         <tr>
-                                            <td class="p-1.5 border">100g</td>
-                                            <td class="p-1.5 border font-mono" id="val-l5-1">-</td>
-                                            <td class="p-1.5 border"><button onclick="recL5(1, 2.0)" class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">測量</button></td>
+                                            <td class="p-2.5 border">100g</td>
+                                            <td class="p-2.5 border font-bold text-indigo-700" id="val-l5-1">-</td>
+                                            <td class="p-2.5 border"><button onclick="recL5(1, 2.0)" class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-200">測量</button></td>
                                         </tr>
                                         <tr>
-                                            <td class="p-1.5 border">200g</td>
-                                            <td class="p-1.5 border font-mono" id="val-l5-2">-</td>
-                                            <td class="p-1.5 border"><button onclick="recL5(2, 4.0)" class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">測量</button></td>
+                                            <td class="p-2.5 border">200g</td>
+                                            <td class="p-2.5 border font-bold text-indigo-700" id="val-l5-2">-</td>
+                                            <td class="p-2.5 border"><button onclick="recL5(2, 4.0)" class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-200">測量</button></td>
                                         </tr>
                                         <tr>
-                                            <td class="p-1.5 border">300g</td>
-                                            <td class="p-1.5 border font-mono" id="val-l5-3">-</td>
-                                            <td class="p-1.5 border"><button onclick="recL5(3, 6.0)" class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">測量</button></td>
+                                            <td class="p-2.5 border">300g</td>
+                                            <td class="p-2.5 border font-bold text-indigo-700" id="val-l5-3">-</td>
+                                            <td class="p-2.5 border"><button onclick="recL5(3, 6.0)" class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-200">測量</button></td>
                                         </tr>
                                     </tbody>
                                 </table>
-                                <div class="mt-4 border-t pt-3 hidden" id="question-l5">
-                                    <p class="font-bold text-slate-700 mb-2">🔍 你找到了什麼比例規律？</p>
-                                    <div class="flex flex-col gap-1">
-                                        <button onclick="checkL5Ans(true)" class="text-left p-2 border bg-white rounded hover:bg-slate-50">A. 彈簧的伸長量與受力（砝碼重）成正比例關係。</button>
-                                        <button onclick="checkL5Ans(false)" class="text-left p-2 border bg-white rounded hover:bg-slate-50">B. 彈簧伸長量與受力成反比例（受力越大伸長越短）。</button>
+                                <div class="mt-4 border-t border-blue-200 pt-4 hidden" id="question-l5">
+                                    <p class="font-extrabold text-slate-800 mb-3 text-base">🔍 你找到了什麼比例規律？</p>
+                                    <div class="flex flex-col gap-2">
+                                        <button onclick="checkL5Ans(true)" class="text-left p-3 border border-slate-300 bg-white rounded-xl text-sm font-semibold hover:bg-slate-50 transition shadow-sm">A. 彈簧的伸長量與受力（砝碼重）成正比例關係。</button>
+                                        <button onclick="checkL5Ans(false)" class="text-left p-3 border border-slate-300 bg-white rounded-xl text-sm font-semibold hover:bg-slate-50 transition shadow-sm">B. 彈簧伸長量與受力成反比例（受力越大伸長越短）。</button>
                                     </div>
-                                    <p id="msg-l5" class="font-bold mt-2 text-xs"></p>
+                                    <p id="msg-l5" class="font-bold mt-2 text-sm"></p>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <!-- 實驗 5 結論 -->
-                    <div id="concl-l5" class="hidden mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg shadow-sm fade-in">
-                        <h4 class="font-bold text-blue-900 flex items-center gap-1"><i data-lucide="lightbulb" class="w-5 h-5"></i> 實驗結論：尋找規律 (Pattern Seeking)</h4>
+                    <div id="concl-l5" class="hidden p-5 bg-blue-50 border-l-4 border-blue-500 rounded-r-2xl shadow-sm fade-in">
+                        <h4 class="font-bold text-blue-950 text-lg flex items-center gap-2"><i data-lucide="lightbulb" class="w-6 h-6 text-blue-600"></i> 實驗結論：尋找規律 (Pattern Seeking)</h4>
                         <p class="text-sm text-blue-800 mt-1 leading-relaxed">透過實驗數據收集，我們找到了完美的比例規律（胡克定律）：在彈性限度內，彈簧伸長量與受到的外力成正比。這證明了「尋找規律」能將觀察結果轉化為精確的科學定理！</p>
                     </div>
                 </div>
 
                 <!-- 實驗 6：影子長度與時間 -->
                 <div id="panel-lab-6" class="space-y-6 hidden">
-                    <div class="border-b pb-3">
-                        <h3 class="text-xl font-bold text-slate-800">📈 實驗六：一天之中太陽位置與影長規律</h3>
-                        <p class="text-sm text-slate-500 mt-1">目的：探究戶外立桿的影子長度如何隨着一天中太陽角度的軌跡變化。</p>
+                    <div class="border-b pb-4">
+                        <h3 class="text-2xl font-black text-slate-900 flex items-center gap-2"><i data-lucide="sun" class="text-blue-500 w-7 h-7"></i> 實驗六：一天之中太陽位置與影長規律</h3>
+                        <p class="text-base text-slate-600 mt-2 leading-relaxed">目的：探究戶外立桿的影子長度如何隨着一天中太陽角度的軌跡變化。</p>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-sky-100 rounded-xl p-4 flex flex-col justify-between items-center relative h-64 overflow-hidden">
+                        <div class="bg-sky-100 rounded-2xl p-5 flex flex-col justify-between items-center relative h-72 overflow-hidden shadow-sm">
                             <!-- 太陽天空 -->
-                            <div class="w-full flex justify-between px-4">
-                                <span class="text-xs font-bold text-slate-500">東方</span>
-                                <span class="text-xs font-bold text-slate-500">西方</span>
+                            <div class="w-full flex justify-between px-4 z-10">
+                                <span class="text-sm font-black text-slate-600">🌅 東方</span>
+                                <span class="text-sm font-black text-slate-600">🌇 西方</span>
                             </div>
                             <!-- 太陽圖案位置 (受 CSS/JS 控制) -->
-                            <div id="sun-l6" class="absolute w-10 h-10 bg-yellow-400 rounded-full shadow-lg border border-yellow-200 transition-all duration-500" style="bottom: 100px; left: 10%;"></div>
+                            <div id="sun-l6" class="absolute w-12 h-12 bg-yellow-400 rounded-full shadow-[0_0_20px_rgba(234,179,8,0.7)] border border-yellow-200 transition-all duration-500" style="bottom: 100px; left: 10%;"></div>
                             <!-- 地面與立桿 -->
-                            <div class="w-full h-12 bg-amber-200 absolute bottom-0 flex justify-center items-start">
-                                <div class="w-2 h-16 bg-slate-700 -mt-16 relative">
+                            <div class="w-full h-16 bg-amber-200 absolute bottom-0 flex justify-center items-start">
+                                <div class="w-2.5 h-20 bg-slate-700 -mt-20 relative">
                                     <!-- 影子 -->
-                                    <div id="shadow-l6" class="absolute bottom-0 h-1.5 bg-black/40 origin-left transition-all duration-500" style="left: 4px; width: 80px; transform: scaleX(1.5);"></div>
+                                    <div id="shadow-l6" class="absolute bottom-0 h-2 bg-black/40 origin-left transition-all duration-500" style="left: 4px; width: 80px; transform: scaleX(1.5);"></div>
                                 </div>
                             </div>
                         </div>
-                        <div class="space-y-4">
-                            <div class="space-y-2">
-                                <label class="block text-sm font-bold">切換觀測時間：</label>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <button onclick="setL6Time('morning')" class="py-1 px-3 bg-indigo-100 hover:bg-indigo-200 text-indigo-900 rounded font-semibold text-xs">☀️ 早上 (08:00)</button>
-                                    <button onclick="setL6Time('noon')" class="py-1 px-3 bg-indigo-100 hover:bg-indigo-200 text-indigo-900 rounded font-semibold text-xs">☀️ 中午 (12:00)</button>
-                                    <button onclick="setL6Time('afternoon')" class="py-1 px-3 bg-indigo-100 hover:bg-indigo-200 text-indigo-900 rounded font-semibold text-xs">☀️ 下午 (16:00)</button>
+                        <div class="space-y-5">
+                            <div class="space-y-3">
+                                <label class="block text-base font-extrabold text-slate-800">☀️ 切換觀測時間：</label>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <button onclick="setL6Time('morning')" class="py-2.5 px-4 bg-indigo-100 hover:bg-indigo-200 text-indigo-900 rounded-xl font-bold text-sm transition shadow-sm">早上 (08:00)</button>
+                                    <button onclick="setL6Time('noon')" class="py-2.5 px-4 bg-indigo-100 hover:bg-indigo-200 text-indigo-900 rounded-xl font-bold text-sm transition shadow-sm">中午 (12:00)</button>
+                                    <button onclick="setL6Time('afternoon')" class="py-2.5 px-4 bg-indigo-100 hover:bg-indigo-200 text-indigo-900 rounded-xl font-bold text-sm transition shadow-sm">下午 (16:00)</button>
                                 </div>
                             </div>
-                            <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 text-xs">
-                                <p class="font-bold mb-2 text-indigo-900">觀測所得數據紀錄：</p>
-                                <ul class="space-y-1 mb-4">
-                                    <li>早上影子長度：<span class="font-bold text-slate-950" id="res-l6-1">-</span> <button onclick="recL6(1, '8.5 cm (長)')" class="ml-2 py-0.5 px-1 bg-white border rounded">紀錄</button></li>
-                                    <li>中午影子長度：<span class="font-bold text-slate-950" id="res-l6-2">-</span> <button onclick="recL6(2, '1.2 cm (極短)')" class="ml-2 py-0.5 px-1 bg-white border rounded">紀錄</button></li>
-                                    <li>下午影子長度：<span class="font-bold text-slate-950" id="res-l6-3">-</span> <button onclick="recL6(3, '8.3 cm (長)')" class="ml-2 py-0.5 px-1 bg-white border rounded">紀錄</button></li>
+                            <div class="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 space-y-3">
+                                <p class="font-extrabold text-indigo-950 text-base mb-2">📝 觀測數據紀錄：</p>
+                                <ul class="space-y-2 text-sm text-indigo-900">
+                                    <li class="flex items-center justify-between">早上影子長度：<span class="font-extrabold text-slate-950" id="res-l6-1">-</span> <button onclick="recL6(1, '8.5 cm (長)')" class="ml-2 py-1 px-3 bg-white border rounded-lg hover:bg-slate-100 text-xs font-bold transition">紀錄</button></li>
+                                    <li class="flex items-center justify-between">中午影子長度：<span class="font-extrabold text-slate-950" id="res-l6-2">-</span> <button onclick="recL6(2, '1.2 cm (極短)')" class="ml-2 py-1 px-3 bg-white border rounded-lg hover:bg-slate-100 text-xs font-bold transition">紀錄</button></li>
+                                    <li class="flex items-center justify-between">下午影子長度：<span class="font-extrabold text-slate-955" id="res-l6-3">-</span> <button onclick="recL6(3, '8.3 cm (長)')" class="ml-2 py-1 px-3 bg-white border rounded-lg hover:bg-slate-100 text-xs font-bold transition">紀錄</button></li>
                                 </ul>
-                                <div class="border-t pt-3 hidden" id="question-l6">
-                                    <p class="font-bold text-slate-700 mb-2">🔎 影子的長短變化呈現什麼規律？</p>
-                                    <div class="flex flex-col gap-1">
-                                        <button onclick="checkL6Ans(true)" class="text-left p-1.5 border bg-white rounded">A. 影子的長度在早晚最長，中午最短。</button>
-                                        <button onclick="checkL6Ans(false)" class="text-left p-1.5 border bg-white rounded">B. 影子從早上到晚上一直不停縮短。</button>
+                                <div class="border-t border-indigo-200 pt-4 hidden space-y-3" id="question-l6">
+                                    <p class="font-extrabold text-slate-800 text-base">🔎 影子的長短變化呈現什麼規律？</p>
+                                    <div class="flex flex-col gap-2">
+                                        <button onclick="checkL6Ans(true)" class="text-left p-3 border border-slate-300 bg-white rounded-xl text-sm font-semibold hover:bg-slate-100 transition shadow-sm">A. 影子的長度在早晚最長，中午最短。</button>
+                                        <button onclick="checkL6Ans(false)" class="text-left p-3 border border-slate-300 bg-white rounded-xl text-sm font-semibold hover:bg-slate-100 transition shadow-sm">B. 影子從早上到晚上一直不停縮短。</button>
                                     </div>
-                                    <p id="msg-l6" class="font-bold mt-2 text-xs"></p>
+                                    <p id="msg-l6" class="font-bold mt-2 text-sm"></p>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <!-- 實驗 6 結論 -->
-                    <div id="concl-l6" class="hidden mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg shadow-sm fade-in">
+                    <div id="concl-l6" class="hidden p-5 bg-blue-50 border-l-4 border-blue-500 rounded-r-2xl shadow-sm fade-in">
                         <h4 class="font-bold text-blue-900 flex items-center gap-1"><i data-lucide="lightbulb" class="w-5 h-5"></i> 實驗結論：尋找規律 (Pattern Seeking)</h4>
                         <p class="text-sm text-blue-800 mt-1 leading-relaxed">由於我們無法控制太陽的運行，透過長時間觀測記錄影子變化來尋找規律是最好的探究方法。我們成功發現了太陽高度角與影子長短的負相關規律！</p>
                     </div>
@@ -465,96 +477,97 @@
 
                 <!-- 實驗 7：火山噴發模型 (模擬) -->
                 <div id="panel-lab-7" class="space-y-6 hidden">
-                    <div class="border-b pb-3">
-                        <h3 class="text-xl font-bold text-slate-800">🌋 實驗七：火山噴發模型模擬</h3>
-                        <p class="text-sm text-slate-500 mt-1">目的：在安全的室內模型中，利用小蘇打與酸性液體化學產氣反應，模擬地熱岩漿的高壓爆發現象。</p>
+                    <div class="border-b pb-4">
+                        <h3 class="text-2xl font-black text-slate-900 flex items-center gap-2"><i data-lucide="volcano" class="text-purple-600 w-7 h-7"></i> 實驗七：火山噴發模型模擬</h3>
+                        <p class="text-base text-slate-600 mt-2 leading-relaxed">目的：在安全的室內模型中，利用小蘇打與酸性液體化學產氣反應，模擬地熱岩漿的高壓爆發現象。</p>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-indigo-950 rounded-xl h-64 relative overflow-hidden flex items-end justify-center">
+                        <div class="bg-indigo-950 rounded-2xl h-72 relative overflow-hidden flex items-end justify-center shadow-sm">
                             <!-- 爆發效果容器 -->
                             <div id="lava-particles-l7" class="absolute bottom-[90px] w-full h-full flex justify-center items-end pointer-events-none"></div>
                             <!-- 火山山脈 -->
-                            <svg class="w-64 h-24 z-10" viewBox="0 0 200 100" preserveAspectRatio="none">
+                            <svg class="w-72 h-28 z-10" viewBox="0 0 200 100" preserveAspectRatio="none">
                                 <polygon points="10,100 80,20 120,20 190,100" fill="#3f3f46" />
                                 <ellipse cx="100" cy="20" rx="20" ry="4" fill="#1c1917" />
                             </svg>
                             <!-- 配方即時監測 -->
-                            <div class="absolute top-4 left-4 bg-black/60 text-white p-2 text-xs rounded">
-                                配方：<span id="lbl-l7-formula">醋 15ml / 小蘇打 1匙</span><br>
-                                模擬狀態：<span id="lbl-l7-status" class="text-green-300">安全平衡</span>
+                            <div class="absolute top-4 left-4 bg-black/60 text-white p-3 text-xs rounded-xl border border-slate-700">
+                                <b>配方監測：</b><br>
+                                <span id="lbl-l7-formula">醋 15ml / 小蘇打 1匙</span><br>
+                                模擬狀態：<span id="lbl-l7-status" class="text-green-300 font-extrabold">安全平衡</span>
                             </div>
                         </div>
                         <div class="space-y-4">
-                            <h4 class="font-bold text-slate-800 text-sm">🧪 配方控制儀：</h4>
+                            <h4 class="font-extrabold text-slate-800 text-base">🧪 模擬配方控制盤：</h4>
                             <div class="space-y-2">
-                                <label class="block text-xs font-bold text-slate-600">小蘇打粉量 (Sodum Bicarbonate)：</label>
+                                <label class="block text-sm font-bold text-slate-600">1. 小蘇打粉量 (Sodum Bicarbonate)：</label>
                                 <div class="flex gap-2">
-                                    <button onclick="setL7Recipe('soda', 1)" id="btn-l7-s1" class="flex-1 py-1 bg-purple-600 text-white text-xs font-bold rounded">1 匙 (低濃度)</button>
-                                    <button onclick="setL7Recipe('soda', 3)" id="btn-l7-s3" class="flex-1 py-1 bg-purple-600 text-white text-xs font-bold rounded">3 匙 (飽和)</button>
+                                    <button onclick="setL7Recipe('soda', 1)" id="btn-l7-s1" class="flex-1 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg">1 匙 (低氣體強度)</button>
+                                    <button onclick="setL7Recipe('soda', 3)" id="btn-l7-s3" class="flex-1 py-2 bg-white border text-purple-900 border-purple-300 text-sm font-bold rounded-lg hover:bg-purple-50 transition">3 匙 (飽和氣體)</button>
                                 </div>
                             </div>
                             <div class="space-y-2">
-                                <label class="block text-xs font-bold text-slate-600">醋注入量 (Acid Reactant)：</label>
+                                <label class="block text-sm font-bold text-slate-600">2. 醋注入量 (Acid Reactant)：</label>
                                 <div class="flex gap-2">
-                                    <button onclick="setL7Recipe('vinegar', 10)" id="btn-l7-v10" class="flex-1 py-1 bg-purple-600 text-white text-xs font-bold rounded">10 ml</button>
-                                    <button onclick="setL7Recipe('vinegar', 40)" id="btn-l7-v40" class="flex-1 py-1 bg-purple-600 text-white text-xs font-bold rounded">40 ml (高壓)</button>
+                                    <button onclick="setL7Recipe('vinegar', 10)" id="btn-l7-v10" class="flex-1 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg">10 ml</button>
+                                    <button onclick="setL7Recipe('vinegar', 40)" id="btn-l7-v40" class="flex-1 py-2 bg-white border text-purple-900 border-purple-300 text-sm font-bold rounded-lg hover:bg-purple-50 transition">40 ml (超高壓)</button>
                                 </div>
                             </div>
-                            <button onclick="triggerL7Erupt()" class="w-full py-2 bg-purple-700 text-white text-sm font-bold rounded hover:bg-purple-600 transition shadow">🔥 開始爆發模擬</button>
+                            <button onclick="triggerL7Erupt()" class="w-full py-3 mt-2 bg-purple-700 text-white text-base font-extrabold rounded-xl hover:bg-purple-600 transition shadow-md flex items-center justify-center gap-2">🔥 啟動高壓爆發模擬</button>
                         </div>
                     </div>
                     <!-- 實驗 7 結論 -->
-                    <div id="concl-l7" class="hidden mt-4 p-4 bg-purple-50 border-l-4 border-purple-500 rounded-r-lg shadow-sm fade-in">
-                        <h4 class="font-bold text-purple-900 flex items-center gap-1"><i data-lucide="lightbulb" class="w-5 h-5"></i> 實驗結論：模擬 (Modelling)</h4>
+                    <div id="concl-l7" class="hidden p-5 bg-purple-50 border-l-4 border-purple-500 rounded-r-2xl shadow-sm fade-in">
+                        <h4 class="font-bold text-purple-950 text-lg flex items-center gap-2"><i data-lucide="lightbulb" class="w-6 h-6 text-purple-600"></i> 實驗結論：模擬 (Modelling)</h4>
                         <p class="text-sm text-purple-800 mt-1 leading-relaxed">真正的火山爆發極度危險且難以靠近。透過化學產氣反應來建立模擬模型，我們能在安全、可控的桌面上，直觀地理解高壓氣體如何將岩漿推向火山口的自然機制！</p>
                     </div>
                 </div>
 
                 <!-- 實驗 8：地球自轉與日夜 -->
                 <div id="panel-lab-8" class="space-y-6 hidden">
-                    <div class="border-b pb-3">
-                        <h3 class="text-xl font-bold text-slate-800">🌍 實驗八：地球自轉與日夜交替模型</h3>
-                        <p class="text-sm text-slate-500 mt-1">目的：利用光源照射運行的地球儀，模擬解釋太空中難以肉眼觀看的行星自轉與晝夜轉換規律。</p>
+                    <div class="border-b pb-4">
+                        <h3 class="text-2xl font-black text-slate-900 flex items-center gap-2"><i data-lucide="globe" class="text-purple-600 w-7 h-7"></i> 實驗八：地球自轉與日夜交替模型</h3>
+                        <p class="text-base text-slate-600 mt-2 leading-relaxed">目的：利用光源照射運行的地球儀，模擬解釋太空中難以肉眼觀看的行星自轉與晝夜轉換規律。</p>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-slate-900 rounded-xl h-64 relative flex items-center justify-around overflow-hidden">
+                        <div class="bg-slate-900 rounded-2xl h-72 relative flex items-center justify-around overflow-hidden shadow-inner">
                             <!-- 太陽光源 -->
                             <div class="flex flex-col items-center">
-                                <div class="w-16 h-16 bg-yellow-400 rounded-full shadow-[0_0_40px_rgba(251,191,36,0.8)] border border-yellow-200"></div>
-                                <span class="text-[10px] text-yellow-300 mt-2 font-bold">太陽 (固定光源)</span>
+                                <div class="w-20 h-20 bg-yellow-400 rounded-full shadow-[0_0_50px_rgba(251,191,36,0.9)] border-2 border-yellow-200"></div>
+                                <span class="text-xs text-yellow-300 mt-3 font-bold">太陽 (固定光源)</span>
                             </div>
                             <!-- 地球與自轉 -->
                             <div class="flex flex-col items-center relative">
-                                <div id="earth-l8" class="w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-indigo-900 border-2 border-sky-400 transition-all duration-1000 flex items-center justify-center" style="transform: rotate(0deg);">
-                                    <div class="text-[10px] text-white font-bold rotate-12">亞洲 📍</div>
+                                <div id="earth-l8" class="w-24 h-24 rounded-full bg-gradient-to-r from-blue-500 to-indigo-950 border-2 border-sky-400 transition-all duration-1000 flex items-center justify-center shadow-lg" style="transform: rotate(0deg);">
+                                    <div class="text-xs text-white font-bold rotate-12">亞洲 📍</div>
                                 </div>
-                                <span class="text-[10px] text-sky-300 mt-2 font-bold">地球儀</span>
+                                <span class="text-xs text-sky-300 mt-3 font-bold">地球儀 (模擬行星)</span>
                             </div>
                         </div>
                         <div class="space-y-4">
-                            <h4 class="font-bold text-slate-800 text-sm">自轉模型操控台：</h4>
-                            <div class="flex gap-2">
-                                <button onclick="rotateEarthL8(180)" class="flex-1 py-2 bg-indigo-600 text-white text-xs font-bold rounded hover:bg-indigo-500">🔄 旋轉 180度 (模擬半天)</button>
-                                <button onclick="rotateEarthL8(360)" class="flex-1 py-2 bg-indigo-600 text-white text-xs font-bold rounded hover:bg-indigo-500">🔄 旋轉 360度 (模擬一天)</button>
+                            <h4 class="font-extrabold text-slate-800 text-base">🌎 自轉模型操控台：</h4>
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <button onclick="rotateEarthL8(180)" class="flex-1 py-3 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-500 transition shadow">🔄 旋轉 180度 (模擬晝夜轉移)</button>
+                                <button onclick="rotateEarthL8(360)" class="flex-1 py-3 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-500 transition shadow">🔄 旋轉 360度 (模擬自轉一天)</button>
                             </div>
-                            <div class="bg-indigo-50 p-4 rounded-xl text-xs text-indigo-900 leading-relaxed border border-indigo-100">
-                                <p class="font-bold">🧑‍🏫 科學探究核心：</p>
-                                <p class="mt-1">我們無法跳到宇宙中觀察地球旋轉，但透過「地球儀與手電筒」的模型，我們成功地展示了：當「亞洲」轉到背向太陽的陰影處時，當地正是<b>深夜</b>；轉向太陽時則是<b>白晝</b>。這就是模型模擬的力量！</p>
+                            <div class="bg-indigo-50 p-5 rounded-2xl text-base text-indigo-900 leading-relaxed border border-indigo-100">
+                                <p class="font-extrabold flex items-center gap-1"><i data-lucide="help-circle" class="w-5 h-5 text-indigo-700"></i> 科學探究思維：</p>
+                                <p class="mt-2 text-slate-700">我們無法跳到太空中俯瞰地球。但利用「地球儀與固定燈泡」模型，我們成功展示了：當「亞洲」轉到背向太陽的陰影時即為<b>深夜</b>，轉回面對太陽時即為<b>白天</b>。這就是模型對大尺度天體的極佳模擬！</p>
                             </div>
                         </div>
                     </div>
                     <!-- 實驗 8 結論 -->
-                    <div id="concl-l8" class="hidden mt-4 p-4 bg-purple-50 border-l-4 border-purple-500 rounded-r-lg shadow-sm fade-in">
-                        <h4 class="font-bold text-purple-900 flex items-center gap-1"><i data-lucide="lightbulb" class="w-5 h-5"></i> 實驗結論：模擬 (Modelling)</h4>
+                    <div id="concl-l8" class="hidden p-5 bg-purple-50 border-l-4 border-purple-500 rounded-r-2xl shadow-sm fade-in">
+                        <h4 class="font-bold text-purple-950 text-lg flex items-center gap-2"><i data-lucide="lightbulb" class="w-6 h-6 text-purple-600"></i> 實驗結論：模擬 (Modelling)</h4>
                         <p class="text-sm text-purple-800 mt-1 leading-relaxed">我們無法親自飛入太空觀察地球運轉。利用地球儀與光源建立立體模擬模型，成功將抽象的「自轉與晝夜交替」現象完全具象化，這正是模型在天文學中不可或缺的價值！</p>
                     </div>
                 </div>
 
                 <!-- 實驗 9：迷你水循環模擬 (優化：引入高質感 2D 物理粒子動畫水缸) -->
                 <div id="panel-lab-9" class="space-y-6 hidden">
-                    <div class="border-b pb-3">
-                        <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i data-lucide="cloud-rain" class="text-purple-600"></i> 實驗九：密閉水缸內的水循環微觀模擬</h3>
-                        <p class="text-sm text-slate-500 mt-1">目的：利用模擬環境探究大自然「受熱蒸發 ➔ 遇冷凝結 ➔ 飽和降雨」的動態循環原理。</p>
+                    <div class="border-b pb-4">
+                        <h3 class="text-2xl font-black text-slate-900 flex items-center gap-2"><i data-lucide="cloud-rain" class="text-purple-600 w-7 h-7"></i> 實驗九：密閉水缸內的水循環微觀模擬</h3>
+                        <p class="text-base text-slate-600 mt-2 leading-relaxed">目的：利用密閉模擬環境探究大自然「受熱蒸發 ➔ 遇冷凝結 ➔ 飽和降雨」的動態循環規律。</p>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <!-- 模擬水缸 -->
@@ -568,9 +581,7 @@
                             </div>
                             
                             <!-- 中空大氣粒子活動區 -->
-                            <div id="l9-atmosphere" class="relative flex-grow w-full overflow-hidden pointer-events-none">
-                                <!-- JS 動態產生的水蒸氣(上升)和雨滴(下降)將顯示在此處 -->
-                            </div>
+                            <div id="l9-atmosphere" class="relative flex-grow w-full overflow-hidden pointer-events-none"></div>
                             
                             <!-- 底層積水盤 -->
                             <div id="l9-bottom-basin" class="w-full bg-blue-950/80 p-3 rounded-lg border border-blue-900 text-center relative transition-all duration-500 z-20">
@@ -581,29 +592,29 @@
 
                         <!-- 操控控制面板 -->
                         <div class="space-y-4">
-                            <h4 class="font-bold text-sm text-slate-700 flex items-center gap-1"><i data-lucide="sliders" class="w-4 h-4"></i> 熱力學控制閥</h4>
+                            <h4 class="font-bold text-base text-slate-700 flex items-center gap-1"><i data-lucide="sliders" class="w-5 h-5 text-purple-600"></i> 熱力學控制閥</h4>
                             <div class="grid grid-cols-2 gap-3">
-                                <button onclick="toggleL9Heat()" id="btn-l9-heat" class="py-3 px-4 bg-slate-200 text-slate-700 font-bold text-xs rounded-xl hover:bg-red-50 hover:text-red-700 transition border border-slate-300 flex flex-col items-center gap-1">
-                                    <span class="text-lg">🔥</span>
+                                <button onclick="toggleL9Heat()" id="btn-l9-heat" class="py-3 px-4 bg-slate-200 text-slate-800 font-extrabold text-sm rounded-xl hover:bg-red-50 hover:text-red-700 transition border border-slate-300 flex flex-col items-center gap-1">
+                                    <span class="text-xl">🔥</span>
                                     <span>開啟底部加熱</span>
                                 </button>
-                                <button onclick="toggleL9Cool()" id="btn-l9-cool" class="py-3 px-4 bg-slate-200 text-slate-700 font-bold text-xs rounded-xl hover:bg-blue-50 hover:text-blue-700 transition border border-slate-300 flex flex-col items-center gap-1">
-                                    <span class="text-lg">❄️</span>
+                                <button onclick="toggleL9Cool()" id="btn-l9-cool" class="py-3 px-4 bg-slate-200 text-slate-800 font-extrabold text-sm rounded-xl hover:bg-blue-50 hover:text-blue-700 transition border border-slate-300 flex flex-col items-center gap-1">
+                                    <span class="text-xl">❄️</span>
                                     <span>開啟頂部加冰</span>
                                 </button>
                             </div>
-                            <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 text-xs text-indigo-900 leading-relaxed space-y-2">
-                                <p class="font-bold flex items-center gap-1"><i data-lucide="activity" class="w-4 h-4"></i> 水缸物理狀態觀測：</p>
-                                <ul class="list-disc list-inside space-y-1">
-                                    <li>加熱狀態：<span id="st-l9-heat" class="font-bold text-slate-600">關閉 (25°C)</span></li>
-                                    <li>冷卻狀態：<span id="st-l9-cool" class="font-bold text-slate-600">關閉 (25°C)</span></li>
-                                    <li>當前現象：<span id="st-l9-desc" class="font-bold text-slate-800">靜止狀態，水分子能量不足以大量蒸發。</span></li>
+                            <div class="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 text-base text-indigo-950 leading-relaxed space-y-2">
+                                <p class="font-extrabold flex items-center gap-1"><i data-lucide="activity" class="w-5 h-5 text-indigo-700"></i> 水缸物理狀態觀測：</p>
+                                <ul class="list-disc list-inside space-y-1 text-slate-800">
+                                    <li>加熱狀態：<span id="st-l9-heat" class="font-bold text-slate-700">關閉 (25°C)</span></li>
+                                    <li>冷卻狀態：<span id="st-l9-cool" class="font-bold text-slate-700">關閉 (25°C)</span></li>
+                                    <li>當前現象：<span id="st-l9-desc" class="font-bold text-slate-900">靜止狀態，水分子能量不足以大量蒸發。</span></li>
                                 </ul>
                             </div>
                         </div>
                     </div>
                     <!-- 實驗 9 結論 -->
-                    <div id="concl-l9" class="hidden mt-4 p-4 bg-purple-50 border-l-4 border-purple-500 rounded-r-lg shadow-sm fade-in">
+                    <div id="concl-l9" class="hidden p-5 bg-purple-50 border-l-4 border-purple-500 rounded-r-2xl shadow-sm fade-in">
                         <h4 class="font-bold text-purple-900 flex items-center gap-1"><i data-lucide="lightbulb" class="w-5 h-5"></i> 實驗結論：模擬 (Modelling)</h4>
                         <p class="text-sm text-purple-800 mt-1 leading-relaxed">大自然的水循環範圍廣達全球、耗時長久。利用密閉容器進行微觀模擬，我們成功在極短時間內、桌面上重現了「蒸發、凝結、降雨」的完整運作過程！這證明了模擬法能讓我們跨越時空界限來理解宏觀現象。</p>
                     </div>
@@ -611,49 +622,49 @@
 
                 <!-- 實驗 10：綠豆發芽條件 (公平測試) -->
                 <div id="panel-lab-10" class="space-y-6 hidden">
-                    <div class="border-b pb-3">
-                        <h3 class="text-xl font-bold text-slate-800">⚖️ 實驗十：綠豆萌發影響因素 (水分)</h3>
-                        <p class="text-sm text-slate-500 mt-1">目的：探究「水分多寡」對綠豆種子發芽高度的影響。為了進行公平測試，除水分外其餘變因必須一致。</p>
+                    <div class="border-b pb-4">
+                        <h3 class="text-2xl font-black text-slate-900 flex items-center gap-2"><i data-lucide="scale" class="text-orange-500 w-7 h-7"></i> 實驗十：綠豆萌發影響因素 (水分)</h3>
+                        <p class="text-base text-slate-600 mt-2 leading-relaxed"><b>目標：</b>探究「水分多寡」對綠豆種子發芽高度的影響。為了進行公平測試，除水分外其餘變因必須一致。</p>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="bg-slate-50 p-3 rounded-lg border">
-                            <h4 class="font-bold text-xs text-slate-700 text-center mb-2">🪴 測試盆 1</h4>
-                            <div class="space-y-2 text-xs">
-                                <label class="block">陽光 (控制變因)：</label>
-                                <select id="sel-l10-sun1" class="w-full border p-1 rounded bg-white"><option value="sun">充足 ☀️</option><option value="dark">遮光 🌑</option></select>
-                                <label class="block">水分 (操縱變因)：</label>
-                                <select id="sel-l10-water1" class="w-full border p-1 rounded bg-white"><option value="yes">適量澆水 💧</option><option value="no">乾燥不澆水 ❌</option></select>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="bg-slate-50 p-4 rounded-xl border">
+                            <h4 class="font-extrabold text-base text-slate-800 text-center mb-3">🪴 測試盆 1</h4>
+                            <div class="space-y-3 text-base">
+                                <label class="block font-bold">陽光 (控制變因)：</label>
+                                <select id="sel-l10-sun1" class="w-full border p-2 rounded-lg bg-white"><option value="sun">充足 ☀️</option><option value="dark">遮光 🌑</option></select>
+                                <label class="block font-bold">水分 (操縱變因)：</label>
+                                <select id="sel-l10-water1" class="w-full border p-2 rounded-lg bg-white"><option value="yes">適量澆水 💧</option><option value="no">乾燥不澆水 ❌</option></select>
                             </div>
                         </div>
-                        <div class="bg-slate-50 p-3 rounded-lg border">
-                            <h4 class="font-bold text-xs text-slate-700 text-center mb-2">🪴 測試盆 2</h4>
-                            <div class="space-y-2 text-xs">
-                                <label class="block">陽光 (控制變因)：</label>
-                                <select id="sel-l10-sun2" class="w-full border p-1 rounded bg-white"><option value="sun">充足 ☀️</option><option value="dark">遮光 🌑</option></select>
+                        <div class="bg-slate-50 p-4 rounded-xl border">
+                            <h4 class="font-extrabold text-base text-slate-800 text-center mb-3">🪴 測試盆 2</h4>
+                            <div class="space-y-3 text-base">
+                                <label class="block font-bold">陽光 (控制變因)：</label>
+                                <select id="sel-l10-sun2" class="w-full border p-2 rounded-lg bg-white"><option value="sun">充足 ☀️</option><option value="dark">遮光 🌑</option></select>
                                 <label class="block">水分 (操縱變因)：</label>
-                                <select id="sel-l10-water2" class="w-full border p-1 rounded bg-white"><option value="no" selected>乾燥不澆水 ❌</option><option value="yes">適量澆水 💧</option></select>
+                                <select id="sel-l10-water2" class="w-full border p-2 rounded-lg bg-white"><option value="no" selected>乾燥不澆水 ❌</option><option value="yes">適量澆水 💧</option></select>
                             </div>
                         </div>
-                        <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100 flex flex-col justify-between">
-                            <button onclick="runL10Test()" class="w-full py-2 bg-orange-600 text-white font-bold text-xs rounded hover:bg-orange-500 transition">🚀 啟動發芽分析</button>
-                            <div id="st-l10-output" class="text-xs text-slate-700 mt-3 p-2 bg-white rounded border">
-                                點選上方按鈕開始進行公平測試。
+                        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex flex-col justify-between shadow-sm">
+                            <button onclick="runL10Test()" class="w-full py-3 bg-orange-600 text-white font-extrabold text-base rounded-xl hover:bg-orange-500 transition">🚀 啟動發芽分析</button>
+                            <div id="st-l10-output" class="text-sm text-slate-800 mt-3 p-3 bg-white rounded-lg border leading-relaxed">
+                                請依據公平測試原則，設定完變因後，點選上方按鈕開始進行。
                             </div>
                         </div>
                     </div>
                     <!-- 生長高度視覺呈現 -->
-                    <div id="visual-l10-growth" class="h-28 bg-emerald-50 rounded-xl border border-emerald-100 flex justify-around items-end p-4 hidden">
+                    <div id="visual-l10-growth" class="h-32 bg-emerald-50 rounded-xl border border-emerald-100 flex justify-around items-end p-4 hidden">
                         <div class="flex flex-col items-center">
-                            <div id="bar-l10-1" class="w-6 bg-emerald-500 rounded-t transition-all duration-1000" style="height: 0px;"></div>
-                            <span class="text-xs mt-1 font-bold">測試盆 1</span>
+                            <div id="bar-l10-1" class="w-8 bg-emerald-500 rounded-t transition-all duration-1000" style="height: 0px;"></div>
+                            <span class="text-sm mt-2 font-extrabold text-slate-700">測試盆 1 (實驗組)</span>
                         </div>
                         <div class="flex flex-col items-center">
-                            <div id="bar-l10-2" class="w-6 bg-emerald-500 rounded-t transition-all duration-1000" style="height: 0px;"></div>
-                            <span class="text-xs mt-1 font-bold">測試盆 2</span>
+                            <div id="bar-l10-2" class="w-8 bg-emerald-500 rounded-t transition-all duration-1000" style="height: 0px;"></div>
+                            <span class="text-sm mt-2 font-extrabold text-slate-700">測試盆 2 (對照組)</span>
                         </div>
                     </div>
                     <!-- 實驗 10 結論 -->
-                    <div id="concl-l10" class="hidden mt-4 p-4 bg-orange-50 border-l-4 border-orange-500 rounded-r-lg shadow-sm fade-in">
+                    <div id="concl-l10" class="hidden p-5 bg-orange-50 border-l-4 border-orange-500 rounded-r-2xl shadow-sm fade-in">
                         <h4 class="font-bold text-orange-900 flex items-center gap-1"><i data-lucide="lightbulb" class="w-5 h-5"></i> 實驗結論：公平測試 (Fair Testing)</h4>
                         <p class="text-sm text-orange-800 mt-1 leading-relaxed">這是一次標準的公平測試！透過嚴格控制「陽光」條件不變，只改變單一操縱變因「水分」，我們排除了其他干擾，得出了「水分是綠豆發芽必要條件」的強烈因果科學證據。</p>
                     </div>
@@ -661,46 +672,46 @@
 
                 <!-- 實驗 11：降落傘空阻測試 (公平測試) -->
                 <div id="panel-lab-11" class="space-y-6 hidden">
-                    <div class="border-b pb-3">
-                        <h3 class="text-xl font-bold text-slate-800">⚖️ 實驗十一：降落傘「傘面面積」與下降時間</h3>
-                        <p class="text-sm text-slate-500 mt-1">目的：探究傘面截面積大小是否會影響下降速率。為達公平，吊重及釋放高度必須相同。</p>
+                    <div class="border-b pb-4">
+                        <h3 class="text-2xl font-black text-slate-900 flex items-center gap-2"><i data-lucide="shield" class="text-orange-500 w-7 h-7"></i> 實驗十一：降落傘「傘面面積」與下降時間</h3>
+                        <p class="text-base text-slate-600 mt-2 leading-relaxed">目的：探究傘面截面積大小是否會影響下降速率。為達公平，吊重及釋放高度必須相同。</p>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-sky-50 rounded-xl p-4 h-64 border relative flex justify-around overflow-hidden">
+                        <div class="bg-sky-50 rounded-2xl p-5 h-72 border relative flex justify-around overflow-hidden shadow-sm">
                             <!-- 降落傘 A -->
                             <div class="flex flex-col items-center absolute left-1/4 transition-all duration-1000 ease-in-out" id="para-l11-1" style="top: 10px;">
-                                <div class="w-8 h-4 bg-red-400 rounded-t-full shadow"></div>
-                                <div class="w-0.5 bg-slate-400 h-8"></div>
-                                <div class="w-3 h-3 bg-slate-800 rounded"></div>
-                                <span class="text-[9px] font-bold mt-1 text-slate-600">小傘 (甲)</span>
+                                <div class="w-10 h-5 bg-red-400 rounded-t-full shadow"></div>
+                                <div class="w-0.5 bg-slate-400 h-10"></div>
+                                <div class="w-4 h-4 bg-slate-800 rounded"></div>
+                                <span class="text-xs font-bold mt-2 text-slate-700">小傘 (甲)</span>
                             </div>
                             <!-- 降落傘 B -->
                             <div class="flex flex-col items-center absolute right-1/4 transition-all duration-1000 ease-in-out" id="para-l11-2" style="top: 10px;">
-                                <div class="w-16 h-8 bg-blue-400 rounded-t-full shadow"></div>
-                                <div class="w-0.5 bg-slate-400 h-8"></div>
-                                <div class="w-3 h-3 bg-slate-800 rounded"></div>
-                                <span class="text-[9px] font-bold mt-1 text-slate-600">大傘 (乙)</span>
+                                <div class="w-20 h-10 bg-blue-400 rounded-t-full shadow"></div>
+                                <div class="w-0.5 bg-slate-400 h-10"></div>
+                                <div class="w-4 h-4 bg-slate-800 rounded"></div>
+                                <span class="text-xs font-bold mt-2 text-slate-700">大傘 (乙)</span>
                             </div>
                             <!-- 地面 -->
-                            <div class="absolute bottom-0 w-full h-4 bg-slate-300"></div>
+                            <div class="absolute bottom-0 w-full h-5 bg-slate-300"></div>
                         </div>
                         <div class="space-y-4">
-                            <h4 class="font-bold text-sm">變因設計面板：</h4>
-                            <div class="space-y-2 text-xs">
-                                <label class="block font-bold">1. 吊重重量控制 (控制變因)：</label>
-                                <select id="sel-l11-weight" class="w-full border p-1 rounded bg-white">
+                            <h4 class="font-extrabold text-base text-slate-800">變因設計面板：</h4>
+                            <div class="space-y-2 text-base">
+                                <label class="block font-bold text-slate-700">1. 吊重重量控制 (控制變因)：</label>
+                                <select id="sel-l11-weight" class="w-full border p-2.5 rounded-xl bg-white font-semibold">
                                     <option value="same">兩者皆為 50g (公平 ✅)</option>
                                     <option value="diff">甲 30g / 乙 100g (不公平 ❌)</option>
                                 </select>
                             </div>
-                            <button onclick="runL11Test()" class="w-full py-2 bg-orange-600 text-white font-bold text-xs rounded hover:bg-orange-500 transition">🎈 釋放降落傘</button>
-                            <div id="st-l11-output" class="text-xs p-3 bg-amber-50 rounded border border-amber-200">
+                            <button onclick="runL11Test()" class="w-full py-3 bg-orange-600 text-white font-extrabold text-base rounded-xl hover:bg-orange-500 transition shadow">🎈 釋放降落傘</button>
+                            <div id="st-l11-output" class="text-sm p-4 bg-amber-50 rounded-xl border border-amber-200 leading-relaxed text-slate-800">
                                 設定變因並點擊「釋放降落傘」來觀察。
                             </div>
                         </div>
                     </div>
                     <!-- 實驗 11 結論 -->
-                    <div id="concl-l11" class="hidden mt-4 p-4 bg-orange-50 border-l-4 border-orange-500 rounded-r-lg shadow-sm fade-in">
+                    <div id="concl-l11" class="hidden p-5 bg-orange-50 border-l-4 border-orange-500 rounded-r-2xl shadow-sm fade-in">
                         <h4 class="font-bold text-orange-900 flex items-center gap-1"><i data-lucide="lightbulb" class="w-5 h-5"></i> 實驗結論：公平測試 (Fair Testing)</h4>
                         <p class="text-sm text-orange-800 mt-1 leading-relaxed">透過控制吊重完全相同，我們成功排成了重量的干擾。這次公平測試明確證實：在其他條件一致下，傘面面積越大，空氣阻力越大，下降速度越慢！</p>
                     </div>
@@ -708,52 +719,52 @@
 
                 <!-- 實驗 12：食糖溶解速率 (公平測試) -->
                 <div id="panel-lab-12" class="space-y-6 hidden">
-                    <div class="border-b pb-3">
-                        <h3 class="text-xl font-bold text-slate-800">⚖️ 實驗十二：水溫對食糖溶解速度的影響</h3>
-                        <p class="text-sm text-slate-500 mt-1">目的：探究「水溫的高低」能否縮短食糖在水中完全溶解的時間。為保持公平，糖量與攪拌速度必須嚴格相同。</p>
+                    <div class="border-b pb-4">
+                        <h3 class="text-2xl font-black text-slate-900 flex items-center gap-2"><i data-lucide="flame" class="text-orange-500 w-7 h-7"></i> 實驗十二：水溫對食糖溶解速度的影響</h3>
+                        <p class="text-base text-slate-600 mt-2 leading-relaxed">目的：探究「水溫的高低」能否縮短食糖在水中完全溶解的時間。為保持公平，糖量與攪拌速度必須嚴格相同。</p>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-indigo-50 border rounded-xl p-4 h-64 flex justify-around items-end">
+                        <div class="bg-indigo-50 border rounded-2xl p-5 h-72 flex justify-around items-end shadow-sm">
                             <div class="flex flex-col items-center">
-                                <div class="w-16 h-28 bg-white/80 border-2 rounded-t-lg relative flex flex-col justify-end p-2" id="cup-l12-1">
+                                <div class="w-20 h-32 bg-white/80 border-2 rounded-t-xl relative flex flex-col justify-end p-2 shadow-inner" id="cup-l12-1">
                                     <div class="bg-red-400/20 w-full h-1/2 absolute top-1/2 left-0 z-0"></div>
                                     <!-- 溶解微粒 -->
-                                    <div id="sugar-l12-1" class="w-10 h-6 bg-slate-300 rounded mx-auto text-center text-[10px] z-10 transition-opacity duration-[1000ms]">🍭 糖塊</div>
+                                    <div id="sugar-l12-1" class="w-12 h-8 bg-slate-300 rounded-lg mx-auto text-center text-xs font-bold z-10 transition-opacity duration-[1000ms] flex items-center justify-center">🍭 糖塊</div>
                                 </div>
-                                <span class="text-xs mt-2 font-bold">高溫熱水杯</span>
+                                <span class="text-sm mt-2.5 font-extrabold text-slate-700">高溫熱水杯</span>
                             </div>
                             <div class="flex flex-col items-center">
-                                <div class="w-16 h-28 bg-white/80 border-2 rounded-t-lg relative flex flex-col justify-end p-2" id="cup-l12-2">
+                                <div class="w-20 h-32 bg-white/80 border-2 rounded-t-xl relative flex flex-col justify-end p-2 shadow-inner" id="cup-l12-2">
                                     <div class="bg-blue-400/20 w-full h-1/2 absolute top-1/2 left-0 z-0"></div>
                                     <!-- 溶解微粒 -->
-                                    <div id="sugar-l12-2" class="w-10 h-6 bg-slate-300 rounded mx-auto text-center text-[10px] z-10 transition-opacity duration-[4000ms]">🍭 糖塊</div>
+                                    <div id="sugar-l12-2" class="w-12 h-8 bg-slate-300 rounded-lg mx-auto text-center text-xs font-bold z-10 transition-opacity duration-[4000ms] flex items-center justify-center">🍭 糖塊</div>
                                 </div>
-                                <span class="text-xs mt-2 font-bold">低溫冷水杯</span>
+                                <span class="text-sm mt-2.5 font-extrabold text-slate-700">低溫冷水杯</span>
                             </div>
                         </div>
-                        <div class="space-y-4 text-xs">
-                            <div class="space-y-1">
-                                <label class="block font-bold">1. 攪拌條件 (控制變因)：</label>
-                                <select id="sel-l12-stir" class="w-full border p-1 rounded bg-white">
+                        <div class="space-y-4 text-base">
+                            <div class="space-y-2">
+                                <label class="block font-bold text-slate-700">1. 攪拌條件 (控制變因)：</label>
+                                <select id="sel-l12-stir" class="w-full border p-2.5 rounded-xl bg-white font-semibold">
                                     <option value="same">兩杯皆不攪拌 (公平 ✅)</option>
                                     <option value="diff">僅熱水杯攪拌 (不公平 ❌)</option>
                                 </select>
                             </div>
-                            <div class="space-y-1">
-                                <label class="block font-bold">2. 食糖重量 (控制變因)：</label>
-                                <select id="sel-l12-sugar" class="w-full border p-1 rounded bg-white">
+                            <div class="space-y-2">
+                                <label class="block font-bold text-slate-700">2. 食糖重量 (控制變因)：</label>
+                                <select id="sel-l12-sugar" class="w-full border p-2.5 rounded-xl bg-white font-semibold">
                                     <option value="same">兩杯皆為 10g (公平 ✅)</option>
                                     <option value="diff">熱水 5g / 冷水 20g (不公平 ❌)</option>
                                 </select>
                             </div>
-                            <button onclick="runL12Test()" class="w-full py-2 bg-orange-600 text-white font-bold rounded hover:bg-orange-500 transition">🧪 倒入食糖進行溶解</button>
-                            <div id="st-l12-output" class="p-3 rounded border bg-amber-50">
+                            <button onclick="runL12Test()" class="w-full py-3 bg-orange-600 text-white font-extrabold text-base rounded-xl hover:bg-orange-500 transition shadow">🧪 倒入食糖進行溶解</button>
+                            <div id="st-l12-output" class="p-4 rounded-xl border bg-amber-50 text-sm leading-relaxed text-slate-800">
                                 調整好變因，確認符合「公平測試」後，將糖倒入兩杯水中。
                             </div>
                         </div>
                     </div>
                     <!-- 實驗 12 結論 -->
-                    <div id="concl-l12" class="hidden mt-4 p-4 bg-orange-50 border-l-4 border-orange-500 rounded-r-lg shadow-sm fade-in">
+                    <div id="concl-l12" class="hidden p-5 bg-orange-50 border-l-4 border-orange-500 rounded-r-2xl shadow-sm fade-in">
                         <h4 class="font-bold text-orange-900 flex items-center gap-1"><i data-lucide="lightbulb" class="w-5 h-5"></i> 實驗結論：公平測試 (Fair Testing)</h4>
                         <p class="text-sm text-orange-800 mt-1 leading-relaxed">在確保糖量與攪拌條件完全一致的公平測試下，我們精確且客觀地證明了「水溫越高，溶解速度越快」。排除干擾變因是科學實驗最具說服力的關鍵！</p>
                     </div>
@@ -764,44 +775,44 @@
 
         <!-- ================= 3. 隨堂測試區 (24題) ================= -->
         <section id="main-quiz" class="hidden fade-in max-w-4xl mx-auto space-y-6">
-            <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-slate-100">
-                <div class="text-center mb-6">
-                    <h2 class="text-3xl font-extrabold text-indigo-600 mb-2">🎯 探究方法 24 題實戰考驗</h2>
-                    <p class="text-slate-500 text-sm">此題庫全面涵蓋各類型科學思維挑戰。請仔細思考後選擇最合適的方法！</p>
+            <div class="bg-white rounded-3xl shadow-lg p-6 md:p-8 border border-slate-100">
+                <div class="text-center mb-6 space-y-2">
+                    <h2 class="text-3xl font-black text-indigo-700 mb-2">🎯 探究方法 24 題實戰考驗</h2>
+                    <p class="text-slate-600 text-base leading-relaxed">此題庫全面涵蓋各類型科學思維挑戰。請仔細閱讀情境並點選最適當的探究方法！</p>
                 </div>
 
                 <!-- 答題進度條 -->
-                <div class="w-full bg-slate-200 rounded-full h-3 mb-6 relative">
-                    <div id="quiz-progress-bar" class="bg-indigo-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
-                    <span id="quiz-progress-text" class="absolute right-0 top-[-25px] text-xs font-bold text-slate-500">第 1 / 24 題</span>
+                <div class="w-full bg-slate-200 rounded-full h-4 mb-6 relative">
+                    <div id="quiz-progress-bar" class="bg-indigo-600 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    <span id="quiz-progress-text" class="absolute right-0 top-[-25px] text-sm font-bold text-slate-600">第 1 / 24 題</span>
                 </div>
 
                 <!-- 答題與題目渲染區 -->
                 <div id="quiz-active-block" class="space-y-6">
-                    <div class="p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
-                        <span class="text-xs font-bold text-indigo-700 bg-indigo-200 px-2.5 py-1 rounded">題目情境</span>
-                        <h3 id="lbl-question-title" class="text-lg font-bold text-slate-800 mt-2 leading-relaxed">題目加載中...</h3>
+                    <div class="p-5 bg-indigo-50 border border-indigo-100 rounded-2xl shadow-inner">
+                        <span class="text-xs font-bold text-indigo-700 bg-indigo-200 px-3 py-1 rounded-full">題目情境</span>
+                        <h3 id="lbl-question-title" class="text-xl font-bold text-slate-900 mt-3 leading-relaxed">題目加載中...</h3>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="quiz-options-container">
                         <!-- 由 JS 動態繪製 4 個選項 -->
                     </div>
 
                     <!-- 對錯即時回饋 -->
-                    <div id="quiz-feedback-box" class="p-4 rounded-xl hidden space-y-2">
-                        <h4 id="lbl-feedback-title" class="font-bold text-base"></h4>
-                        <p id="lbl-feedback-explanation" class="text-sm leading-relaxed"></p>
-                        <button onclick="goToNextQuestion()" class="mt-2 px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-500 transition shadow">下一題 ➡️</button>
+                    <div id="quiz-feedback-box" class="p-6 rounded-2xl hidden space-y-3">
+                        <h4 id="lbl-feedback-title" class="font-extrabold text-lg flex items-center gap-2"></h4>
+                        <p id="lbl-feedback-explanation" class="text-base leading-relaxed text-slate-800"></p>
+                        <button onclick="goToNextQuestion()" class="mt-2 px-6 py-2.5 bg-indigo-600 text-white font-extrabold rounded-lg hover:bg-indigo-500 transition shadow-md">下一題 ➡️</button>
                     </div>
                 </div>
 
                 <!-- 最終測驗結算 -->
                 <div id="quiz-result-block" class="hidden text-center py-8 space-y-4">
                     <div class="text-7xl">🏆</div>
-                    <h3 class="text-3xl font-extrabold text-slate-800">全能科學測驗完成！</h3>
+                    <h3 class="text-3xl font-black text-slate-800">全能科學測驗完成！</h3>
                     <p class="text-lg text-slate-600">你在 24 道高難度科學探究題目中，答對了：</p>
-                    <div class="text-5xl font-black text-indigo-600" id="lbl-final-score">0 / 24</div>
-                    <div class="max-w-md mx-auto p-4 bg-slate-100 rounded-xl text-slate-700 text-sm font-medium" id="lbl-final-evaluation"></div>
-                    <button onclick="restartQuiz()" class="mt-6 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-500 shadow-lg transition">再次考驗 🔄</button>
+                    <div class="text-6xl font-black text-indigo-600" id="lbl-final-score">0 / 24</div>
+                    <div class="max-w-xl mx-auto p-5 bg-slate-100 rounded-2xl text-slate-800 text-base font-semibold leading-relaxed" id="lbl-final-evaluation"></div>
+                    <button onclick="restartQuiz()" class="mt-6 px-8 py-3 bg-indigo-600 text-white font-bold text-lg rounded-2xl hover:bg-indigo-500 shadow-lg transition">再次考驗 🔄</button>
                 </div>
             </div>
         </section>
@@ -809,7 +820,7 @@
     </main>
 
     <!-- 頁腳 -->
-    <footer class="bg-slate-800 text-slate-400 text-center py-6 border-t border-slate-700 text-xs">
+    <footer class="bg-slate-800 text-slate-400 text-center py-6 border-t border-slate-700 text-sm">
         <p>© 2026 科學探究方法互動學習平台 - 24題超容量題庫與12個互動實驗室</p>
     </footer>
 
@@ -910,7 +921,7 @@
                 exp: "按照化學特性將所有元素排在週期表相應分組區塊，這顯然是高階『分類』法。"
             },
             {
-                q: "氣象局在地面和高空釋放探空氣球，收集某次強烈冷氣團南下時的濕度與氣壓變化數據。這是為了：",
+                q: "氣象局在地面 and 高空釋放探空氣球，收集某次強烈冷氣團南下時的濕度與氣壓變化數據。這是為了：",
                 opts: ["分類", "尋找規律", "模擬", "公平測試"],
                 ans: 1,
                 exp: "氣象資料是自然發生的，科學家無法在戶外控制冷氣團的行進。透過大面積收集數據『尋找規律』是了解氣候的核心。"
@@ -955,7 +966,7 @@
                 q: "某洗髮水品牌宣稱『去屑效果更持久』。第三方檢驗機構召集 100 名測試者，強制要求所有人保持相同的洗頭次數、飲食習慣 and 睡眠時間，但一半人使用該洗髮水，另一半人使用無去屑成分洗髮水。這屬於：",
                 opts: ["分類", "尋找規律", "模擬", "公平測試"],
                 ans: 3,
-                exp: "控制了生活作息和次數，唯一改變的是洗髮水（操縱變因），進而探究頭皮屑改善率，為『公平測試』。"
+                exp: "控制了生活作息 and 次數，唯一改變的是洗髮水（操縱變因），進而探究頭皮屑改善率，為『公平測試』。"
             },
             {
                 q: "小麗在校園草地上，一邊行走一邊記錄不同位置『蝴蝶出現的數量』和『花朵的密度』，想要看看蝴蝶是不是真的喜歡花多的地方。這屬於：",
@@ -1017,10 +1028,10 @@
                 const btn = document.getElementById(`btn-tab-${id}`);
                 if (id === tabId) {
                     el.classList.remove('hidden');
-                    btn.className = "tab-active px-4 py-2 rounded-lg font-semibold transition hover:bg-indigo-600 flex items-center gap-1";
+                    btn.className = "tab-active px-5 py-2.5 rounded-lg text-lg font-bold transition hover:bg-indigo-600 flex items-center gap-2";
                 } else {
                     el.classList.add('hidden');
-                    btn.className = "px-4 py-2 bg-indigo-600 rounded-lg font-semibold transition hover:bg-indigo-500 flex items-center gap-1 text-indigo-100";
+                    btn.className = "px-5 py-2.5 bg-indigo-600 rounded-lg text-lg font-bold transition hover:bg-indigo-500 flex items-center gap-2 text-indigo-100";
                 }
             });
             if (tabId === 'quiz') {
@@ -1028,7 +1039,7 @@
             }
         }
 
-        // 渲染學習區卡片
+        // 渲染學習區卡片 (大幅調大字體大小，行高與襯托間距)
         function renderMethods() {
             const container = document.getElementById('learn-cards-container');
             container.innerHTML = '';
@@ -1046,28 +1057,28 @@
                 }
 
                 const card = document.createElement('div');
-                card.className = `method-card border-2 bg-white rounded-2xl p-6 shadow-sm transition duration-300 ${borderCol}`;
+                card.className = `method-card border-2 bg-white rounded-3xl p-8 shadow-md transition duration-300 ${borderCol}`;
                 card.innerHTML = `
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="text-4xl">${item.emoji}</span>
-                        <h3 class="text-2xl font-bold ${titleCol}">${item.title}</h3>
+                    <div class="flex items-center gap-4 mb-5">
+                        <span class="text-5xl">${item.emoji}</span>
+                        <h3 class="text-3xl font-black ${titleCol}">${item.title}</h3>
                     </div>
-                    <div class="space-y-4 text-slate-700 text-sm">
-                        <div>
-                            <span class="inline-block px-2.5 py-0.5 rounded-full font-bold mb-1 ${badgeBg} ${titleCol}">🎯 探究核心目的</span>
-                            <p class="leading-relaxed">${item.purpose}</p>
+                    <div class="space-y-6 text-slate-800 text-base md:text-lg">
+                        <div class="space-y-1">
+                            <span class="inline-block px-3 py-1 rounded-full font-black text-sm mb-1 ${badgeBg} ${titleCol}">🎯 探究核心目的</span>
+                            <p class="leading-relaxed font-medium">${item.purpose}</p>
                         </div>
-                        <div>
-                            <span class="inline-block px-2.5 py-0.5 rounded-full font-bold mb-1 bg-slate-100 text-slate-700">🌟 方法帶來的好處</span>
-                            <p class="leading-relaxed">${item.benefits}</p>
+                        <div class="space-y-1">
+                            <span class="inline-block px-3 py-1 rounded-full font-black text-sm mb-1 bg-slate-100 text-slate-700">🌟 方法帶來的好處</span>
+                            <p class="leading-relaxed font-medium">${item.benefits}</p>
                         </div>
-                        <div>
-                            <span class="inline-block px-2.5 py-0.5 rounded-full font-bold mb-1 bg-slate-100 text-slate-700">💡 科學經典例證</span>
-                            <p class="leading-relaxed">${item.example}</p>
+                        <div class="space-y-1">
+                            <span class="inline-block px-3 py-1 rounded-full font-black text-sm mb-1 bg-slate-100 text-slate-700">💡 科學經典例證</span>
+                            <p class="leading-relaxed font-medium">${item.example}</p>
                         </div>
-                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                            <span class="font-bold text-slate-800">✅ 得出成果形式：</span>
-                            <span>${item.output}</span>
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                            <span class="font-extrabold text-slate-900">✅ 得出成果形式：</span>
+                            <span class="font-bold">${item.output}</span>
                         </div>
                     </div>
                 `;
@@ -1085,7 +1096,7 @@
                 // 復原選單按鈕樣式
                 const btn = document.getElementById(`lab-btn-${i}`);
                 if (btn) {
-                    btn.className = "w-full text-left text-sm py-1.5 px-2 rounded bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition";
+                    btn.className = "w-full text-left text-base py-2 px-3 rounded-lg bg-white text-slate-700 border border-slate-200 font-bold hover:bg-slate-50 transition";
                 }
                 // 隱藏各實驗的結論方塊，確保下次進入時重新計算
                 const concl = document.getElementById(`concl-l${i}`);
@@ -1102,7 +1113,7 @@
             else if (num <= 9) themeColor = 'purple-600';
             else themeColor = 'orange-600';
             
-            actBtn.className = `w-full text-left text-sm py-1.5 px-2 rounded bg-${themeColor} text-white font-bold transition`;
+            actBtn.className = `w-full text-left text-base py-2 px-3 rounded-lg bg-${themeColor} text-white font-extrabold transition shadow-sm`;
 
             // 各實驗特定的載入及關閉行為
             if (num === 1) resetLab1();
@@ -1124,6 +1135,7 @@
             document.getElementById(id).classList.add('drag-hover');
         }
 
+        // 離開拖曳區時清除高亮
         function leaveDrag(id) {
             document.getElementById(id).classList.remove('drag-hover');
         }
@@ -1137,7 +1149,6 @@
             let proxy = null;
 
             element.addEventListener('touchstart', function(e) {
-                // 排除按鈕本身的點擊干擾
                 if (e.target.tagName.toLowerCase() === 'button') return;
 
                 const touch = e.touches[0];
@@ -1146,13 +1157,10 @@
                 
                 element.classList.add('dragging');
 
-                // 複製一個漂浮在指尖下的卡片外觀
                 proxy = element.cloneNode(true);
                 proxy.classList.add('touch-drag-proxy');
-                // 移除複製品內部的按鈕防衝突
                 proxy.querySelectorAll('button').forEach(btn => btn.remove());
                 
-                // 設定複製品初始位置
                 proxy.style.left = startX + 'px';
                 proxy.style.top = startY + 'px';
                 document.body.appendChild(proxy);
@@ -1164,22 +1172,17 @@
                 currentX = touch.clientX;
                 currentY = touch.clientY;
 
-                // 漂浮卡片跟隨手指移動
                 proxy.style.left = currentX + 'px';
                 proxy.style.top = currentY + 'px';
 
-                // 尋找手指當前懸停的底層元素（Drop Target）
-                // 暫時隱藏 proxy 避免阻擋
                 proxy.style.display = 'none';
                 const elemBelow = document.elementFromPoint(currentX, currentY);
                 proxy.style.display = 'block';
 
                 if (!elemBelow) return;
 
-                // 向上尋找合法的 Drop Container (帶有特定 id 且是釋放區)
                 const targetBox = elemBelow.closest('[id^="box-l"]');
                 
-                // 先清除所有當前 Lab 內的其他 Drop target 的 drag-hover 高亮
                 document.querySelectorAll('[id^="box-l"]').forEach(box => {
                     box.classList.remove('drag-hover');
                 });
@@ -1193,7 +1196,6 @@
                 if (!proxy) return;
                 element.classList.remove('dragging');
 
-                // 獲取最後釋放的位置並尋找對應的 Drop target
                 proxy.style.display = 'none';
                 const elemBelow = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
                 proxy.style.display = 'block';
@@ -1201,7 +1203,6 @@
                 document.body.removeChild(proxy);
                 proxy = null;
 
-                // 移除所有高亮
                 document.querySelectorAll('[id^="box-l"]').forEach(box => {
                     box.classList.remove('drag-hover');
                 });
@@ -1209,7 +1210,7 @@
                 if (elemBelow) {
                     const targetBox = elemBelow.closest('[id^="box-l"]');
                     if (targetBox) {
-                        const targetId = targetBox.id; // 例如：'box-l1-vert'
+                        const targetId = targetBox.id;
                         onDropCallback(element.id, targetId);
                     }
                 }
@@ -1254,14 +1255,13 @@
                         badge.classList.remove('dragging');
                     };
                     badge.innerHTML = `
-                        <span class="font-bold text-xs text-slate-700">${c.name}</span>
-                        <div class="flex items-center text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
-                            <i data-lucide="move" class="w-3 h-3 mr-0.5"></i> 拖曳此處
+                        <span class="font-extrabold text-base text-slate-800">${c.name}</span>
+                        <div class="flex items-center text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">
+                            <i data-lucide="move" class="w-3.5 h-3.5 mr-1"></i> 拖曳
                         </div>
                     `;
                     pool.appendChild(badge);
 
-                    // 綁定觸控拖放功能
                     makeTouchDraggable(badge, function(itemId, targetBoxId) {
                         if (targetBoxId === 'box-l1-vert') moveL1(itemId, 'vert');
                         if (targetBoxId === 'box-l1-invert') moveL1(itemId, 'invert');
@@ -1284,12 +1284,10 @@
             if (!c || stateL1[id]) return;
             stateL1[id] = box;
             
-            // 重新刷新畫面
             renderPoolL1();
             renderBoxL1('vert', 'drop-l1-vert');
             renderBoxL1('invert', 'drop-l1-invert');
             
-            // 驗證
             const allPlaced = Object.keys(stateL1).length === creaturesL1.length;
             const allCorrect = creaturesL1.every(x => stateL1[x.id] === x.type);
             if (allPlaced && allCorrect) {
@@ -1307,7 +1305,7 @@
                     const c = creaturesL1.find(x => x.id === id);
                     const isCorrect = c.type === boxType;
                     const el = document.createElement('div');
-                    el.className = `p-1.5 px-3 text-xs font-bold rounded-lg border flex items-center gap-1 ${isCorrect ? 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-sm' : 'bg-red-50 text-red-800 border-red-300'}`;
+                    el.className = `p-2 px-4 text-sm font-extrabold rounded-xl border flex items-center gap-1.5 ${isCorrect ? 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-sm' : 'bg-red-50 text-red-800 border-red-300'}`;
                     el.textContent = `${c.name} ${isCorrect ? '✅' : '❌'}`;
                     container.appendChild(el);
                 }
@@ -1341,7 +1339,7 @@
             itemsL2.forEach(item => {
                 if (!stateL2[item.id]) {
                     const div = document.createElement('div');
-                    div.className = 'p-2 bg-white border border-slate-200 rounded-xl shadow-sm flex justify-between items-center hover:border-indigo-400 transition cursor-grab select-none';
+                    div.className = 'p-3 bg-white border border-slate-200 rounded-xl shadow-sm flex justify-between items-center hover:border-indigo-400 transition cursor-grab select-none';
                     div.draggable = true;
                     div.id = item.id;
                     div.ondragstart = (e) => {
@@ -1352,14 +1350,13 @@
                         div.classList.remove('dragging');
                     };
                     div.innerHTML = `
-                        <span class="font-bold text-xs text-slate-700">${item.name}</span>
+                        <span class="font-extrabold text-sm text-slate-800">${item.name}</span>
                         <div class="flex items-center text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">
                             <i data-lucide="move" class="w-2.5 h-2.5 mr-0.5"></i> 拖曳
                         </div>
                     `;
                     pool.appendChild(div);
 
-                    // 觸控拖曳
                     makeTouchDraggable(div, function(itemId, targetBoxId) {
                         if (targetBoxId === 'box-l2-solid') moveL2(itemId, 'solid');
                         if (targetBoxId === 'box-l2-liquid') moveL2(itemId, 'liquid');
@@ -1381,7 +1378,6 @@
             stateL2[id] = target;
             renderPoolL2();
             
-            // 繪製結果
             ['solid', 'liquid', 'gas'].forEach(type => {
                 const dom = document.getElementById(`drop-l2-${type}`);
                 dom.innerHTML = '';
@@ -1390,7 +1386,7 @@
                         const original = itemsL2.find(x => x.id === key);
                         const isCorrect = original.type === type;
                         const el = document.createElement('div');
-                        el.className = `p-1.5 text-xs text-center border rounded-lg font-bold shadow-sm ${isCorrect ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-red-50 text-red-800 border-red-300'}`;
+                        el.className = `p-2 text-xs text-center border rounded-lg font-bold shadow-sm ${isCorrect ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-red-50 text-red-800 border-red-300'}`;
                         el.textContent = `${original.name} ${isCorrect ? '✅' : '❌'}`;
                         dom.appendChild(el);
                     }
@@ -1408,11 +1404,11 @@
 
         // --- 實驗 3 邏輯 (三大岩石) ---
         const rocksL3 = [
-            { id: 'l3_1', name: '玄武岩 (熔岩冷卻)', type: 'igneous' },
-            { id: 'l3_2', name: '砂岩 (砂粒沈積壓實)', type: 'sediment' },
-            { id: 'l3_3', name: '大理岩 (高溫高壓變質)', type: 'meta' },
-            { id: 'l3_4', name: '花崗岩 (深處岩漿冷卻)', type: 'igneous' },
-            { id: 'l3_5', name: '頁岩 (泥質粘土沉積)', type: 'sediment' }
+            { id: 'l3_1', name: '🌋 玄武岩 (熔岩冷卻)', type: 'igneous' },
+            { id: 'l3_2', name: '🏖️ 砂岩 (砂粒沈積壓實)', type: 'sediment' },
+            { id: 'l3_3', name: '🧬 大理岩 (高溫高壓變質)', type: 'meta' },
+            { id: 'l3_4', name: '🌋 花崗岩 (深處岩漿冷卻)', type: 'igneous' },
+            { id: 'l3_5', name: '🏖️ 頁岩 (泥質粘土沉積)', type: 'sediment' }
         ];
         let stateL3 = {};
 
@@ -1420,9 +1416,9 @@
             stateL3 = {};
             document.getElementById('msg-l3').classList.add('hidden');
             document.getElementById('concl-l3')?.classList.add('hidden');
-            document.getElementById('drop-l3-igneous').querySelector('div').innerHTML = '';
-            document.getElementById('drop-l3-sediment').querySelector('div').innerHTML = '';
-            document.getElementById('drop-l3-meta').querySelector('div').innerHTML = '';
+            document.getElementById('drop-l3-igneous-list').innerHTML = '';
+            document.getElementById('drop-l3-sediment-list').innerHTML = '';
+            document.getElementById('drop-l3-meta-list').innerHTML = '';
             renderPoolL3();
         }
 
@@ -1432,7 +1428,7 @@
             rocksL3.forEach(rock => {
                 if (!stateL3[rock.id]) {
                     const div = document.createElement('div');
-                    div.className = 'p-2 bg-white border border-slate-200 rounded-xl shadow-sm flex justify-between items-center hover:border-indigo-400 transition cursor-grab select-none';
+                    div.className = 'p-3 bg-white border border-slate-200 rounded-xl shadow-sm flex justify-between items-center hover:border-indigo-400 transition cursor-grab select-none';
                     div.draggable = true;
                     div.id = rock.id;
                     div.ondragstart = (e) => {
@@ -1443,14 +1439,13 @@
                         div.classList.remove('dragging');
                     };
                     div.innerHTML = `
-                        <span class="font-bold text-[10px] text-slate-700 leading-tight">${rock.name.split(' ')[0]}</span>
-                        <div class="flex items-center text-[9px] font-bold text-slate-400 bg-slate-50 px-1 py-0.5 rounded">
+                        <span class="font-black text-xs text-slate-800 leading-tight">${rock.name.split(' ')[1]}</span>
+                        <div class="flex items-center text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">
                             <i data-lucide="move" class="w-2.5 h-2.5 mr-0.5"></i> 拖曳
                         </div>
                     `;
                     pool.appendChild(div);
 
-                    // 觸控拖曳
                     makeTouchDraggable(div, function(itemId, targetBoxId) {
                         if (targetBoxId === 'box-l3-igneous') moveL3(itemId, 'igneous');
                         if (targetBoxId === 'box-l3-sediment') moveL3(itemId, 'sediment');
@@ -1461,28 +1456,32 @@
             lucide.createIcons();
         }
 
-        function dropL3(ev, target) {
+        function dropL3(ev, targetType) {
             ev.preventDefault();
-            document.getElementById(`box-l3-${target}`).classList.remove('drag-hover');
+            const boxId = `box-l3-${targetType}`;
+            document.getElementById(boxId).classList.remove('drag-hover');
             const id = ev.dataTransfer.getData("text");
-            if (id) moveL3(id, target);
+            if (id) moveL3(id, targetType);
         }
 
         function moveL3(id, type) {
+            const r = rocksL3.find(x => x.id === id);
+            if (!r || stateL3[id]) return;
             stateL3[id] = type;
+            
             renderPoolL3();
-
-            ['igneous', 'sediment', 'meta'].forEach(target => {
-                const container = document.getElementById(`drop-l3-${target}`).querySelector('div');
-                container.innerHTML = '';
+            
+            ['igneous', 'sediment', 'meta'].forEach(targetType => {
+                const listContainer = document.getElementById(`drop-l3-${targetType}-list`);
+                listContainer.innerHTML = '';
                 Object.keys(stateL3).forEach(key => {
-                    if (stateL3[key] === target) {
+                    if (stateL3[key] === targetType) {
                         const original = rocksL3.find(x => x.id === key);
-                        const isCorrect = original.type === target;
+                        const isCorrect = original.type === targetType;
                         const el = document.createElement('div');
-                        el.className = `p-1.5 text-[10px] font-bold border rounded-lg shadow-sm ${isCorrect ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-red-50 text-red-800 border-red-300'}`;
-                        el.textContent = `${original.name.split(' ')[0]} ${isCorrect ? '✅' : '❌'}`;
-                        container.appendChild(el);
+                        el.className = `p-2 text-xs font-bold border rounded-lg shadow-sm flex items-center gap-1 ${isCorrect ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-red-50 text-red-800 border-red-300'}`;
+                        el.textContent = `${original.name.split(' ')[1]} ${isCorrect ? '✅' : '❌'}`;
+                        listContainer.appendChild(el);
                     }
                 });
             });
@@ -1534,7 +1533,6 @@
         }
         function recL4(id, time) {
             document.getElementById(`res-l4-${id}`).textContent = `${time} 秒`;
-            // 檢查是否全部記完
             if (document.getElementById('res-l4-1').textContent !== '-' &&
                 document.getElementById('res-l4-2').textContent !== '-' &&
                 document.getElementById('res-l4-3').textContent !== '-') {
@@ -1545,12 +1543,12 @@
             const msg = document.getElementById('msg-l4');
             if (isCorrect) {
                 msg.textContent = "🎉 答對了！你順利發現了物理規律：擺動週期完全由擺線長度決定！";
-                msg.className = "text-xs font-bold mt-2 text-emerald-600";
+                msg.className = "text-base font-bold mt-2 text-emerald-600";
                 document.getElementById('concl-l4').classList.remove('hidden');
                 lucide.createIcons();
             } else {
                 msg.textContent = "❌ 不太對喔，仔細看記錄，長擺長的秒數是不是明顯比短擺長還要多？";
-                msg.className = "text-xs font-bold mt-2 text-red-600";
+                msg.className = "text-base font-bold mt-2 text-red-600";
                 document.getElementById('concl-l4').classList.add('hidden');
             }
         }
@@ -1572,12 +1570,11 @@
             const spring = document.getElementById('spring-l5');
             container.innerHTML = '';
             
-            // 伸長彈簧高度
             spring.style.height = `${40 + currentWeightCountL5 * 25}px`;
 
             for (let i = 0; i < currentWeightCountL5; i++) {
                 const w = document.createElement('div');
-                w.className = 'w-6 h-4 bg-slate-600 rounded-sm border border-slate-800 text-[9px] text-white flex items-center justify-center font-bold shadow';
+                w.className = 'w-8 h-5 bg-slate-600 rounded-sm border border-slate-800 text-[10px] text-white flex items-center justify-center font-bold shadow';
                 w.textContent = '100g';
                 container.appendChild(w);
             }
@@ -1594,12 +1591,12 @@
             const msg = document.getElementById('msg-l5');
             if (isCorrect) {
                 msg.textContent = "🎉 非常正確！這就是經典的胡克定律：在彈力極限內，彈簧伸長量與受力成完美的正比例。這是尋找規律的極佳實例！";
-                msg.className = "font-bold mt-2 text-xs text-emerald-600";
+                msg.className = "font-bold mt-2 text-base text-emerald-600";
                 document.getElementById('concl-l5').classList.remove('hidden');
                 lucide.createIcons();
             } else {
-                msg.textContent = "❌ 不對喔。100g伸長 2cm，200g伸長 4cm，300g伸長 6cm，這屬於倍增關係（正比）。";
-                msg.className = "font-bold mt-2 text-xs text-red-600";
+                msg.textContent = "❌ 不對喔。100g 伸長 2cm，200g 伸長 4cm，300g 伸長 6cm，這屬於倍增關係（正比）。";
+                msg.className = "font-bold mt-2 text-base text-red-600";
                 document.getElementById('concl-l5').classList.add('hidden');
             }
         }
@@ -1637,12 +1634,12 @@
             const msg = document.getElementById('msg-l6');
             if (isCorrect) {
                 msg.textContent = "🎉 太棒了！這正是自然規律：中午太陽角度最高、影子最短；早晚太陽角度低斜、影子最長。";
-                msg.className = "font-bold mt-2 text-xs text-emerald-600";
+                msg.className = "font-bold mt-2 text-base text-emerald-600";
                 document.getElementById('concl-l6').classList.remove('hidden');
                 lucide.createIcons();
             } else {
                 msg.textContent = "❌ 答錯囉！請看紀錄，中午的影子明明只有 1.2 cm（極短），並非一直在縮短。";
-                msg.className = "font-bold mt-2 text-xs text-red-600";
+                msg.className = "font-bold mt-2 text-base text-red-600";
                 document.getElementById('concl-l6').classList.add('hidden');
             }
         }
@@ -1652,16 +1649,14 @@
         function setL7Recipe(type, val) {
             recipeL7[type] = val;
             document.getElementById('lbl-l7-formula').textContent = `醋 ${recipeL7.vinegar}ml / 小蘇打 ${recipeL7.soda}匙`;
-            // 按鈕外觀
             if (type === 'soda') {
-                document.getElementById('btn-l7-s1').className = val === 1 ? 'flex-1 py-1 bg-purple-600 text-white text-xs font-bold rounded' : 'flex-1 py-1 bg-white border text-xs font-bold rounded';
-                document.getElementById('btn-l7-s3').className = val === 3 ? 'flex-1 py-1 bg-purple-600 text-white text-xs font-bold rounded' : 'flex-1 py-1 bg-white border text-xs font-bold rounded';
+                document.getElementById('btn-l7-s1').className = val === 1 ? 'flex-1 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-lg' : 'flex-1 py-1.5 bg-white border text-xs font-bold rounded-lg';
+                document.getElementById('btn-l7-s3').className = val === 3 ? 'flex-1 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-lg' : 'flex-1 py-1.5 bg-white border text-xs font-bold rounded-lg';
             } else {
-                document.getElementById('btn-l7-v10').className = val === 10 ? 'flex-1 py-1 bg-purple-600 text-white text-xs font-bold rounded' : 'flex-1 py-1 bg-white border text-xs font-bold rounded';
-                document.getElementById('btn-l7-v40').className = val === 40 ? 'flex-1 py-1 bg-purple-600 text-white text-xs font-bold rounded' : 'flex-1 py-1 bg-white border text-xs font-bold rounded';
+                document.getElementById('btn-l7-v10').className = val === 10 ? 'flex-1 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-lg' : 'flex-1 py-1.5 bg-white border text-xs font-bold rounded-lg';
+                document.getElementById('btn-l7-v40').className = val === 40 ? 'flex-1 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-lg' : 'flex-1 py-1.5 bg-white border text-xs font-bold rounded-lg';
             }
 
-            // 狀態計算
             const status = document.getElementById('lbl-l7-status');
             if (recipeL7.soda === 3 && recipeL7.vinegar === 40) {
                 status.textContent = '高壓臨界 ⚠️';
@@ -1692,7 +1687,6 @@
                 p.style.width = `${size}px`;
                 p.style.height = `${size}px`;
                 p.style.left = '50%';
-                // 擴散效果
                 const tx = (Math.random() - 0.5) * txMax;
                 const tx2 = tx * 1.5;
                 p.style.setProperty('--tx', `${tx}px`);
@@ -1700,7 +1694,6 @@
                 p.style.animationDuration = `${0.6 + Math.random() * 0.8}s`;
                 container.appendChild(p);
             }
-            // 顯示結論
             document.getElementById('concl-l7').classList.remove('hidden');
             lucide.createIcons();
         }
@@ -1730,9 +1723,8 @@
             l9Cool = false;
             stopL9Physics();
             
-            // 復原初始 UI
-            document.getElementById('btn-l9-heat').className = "py-3 px-4 bg-slate-200 text-slate-700 font-bold text-xs rounded-xl hover:bg-red-50 hover:text-red-700 transition border border-slate-300 flex flex-col items-center gap-1";
-            document.getElementById('btn-l9-cool').className = "py-3 px-4 bg-slate-200 text-slate-700 font-bold text-xs rounded-xl hover:bg-blue-50 hover:text-blue-700 transition border border-slate-300 flex flex-col items-center gap-1";
+            document.getElementById('btn-l9-heat').className = "py-3 px-4 bg-slate-200 text-slate-800 font-extrabold text-sm rounded-xl hover:bg-red-50 hover:text-red-700 transition border border-slate-300 flex flex-col items-center gap-1";
+            document.getElementById('btn-l9-cool').className = "py-3 px-4 bg-slate-200 text-slate-800 font-extrabold text-sm rounded-xl hover:bg-blue-50 hover:text-blue-700 transition border border-slate-300 flex flex-col items-center gap-1";
             document.getElementById('st-l9-heat').textContent = '關閉 (25°C)';
             document.getElementById('st-l9-cool').textContent = '關閉 (25°C)';
             document.getElementById('st-l9-desc').textContent = '靜止狀態，水分子能量不足以大量蒸發。';
@@ -1761,12 +1753,12 @@
             const lblBottom = document.getElementById('lbl-l9-bottom');
 
             if (l9Heat) {
-                btn.className = "py-3 px-4 bg-red-600 text-white font-bold text-xs rounded-xl hover:bg-red-500 transition border border-red-700 flex flex-col items-center gap-1 shadow-lg shadow-red-500/20 animate-pulse";
+                btn.className = "py-3 px-4 bg-red-600 text-white font-bold text-sm rounded-xl hover:bg-red-500 transition border border-red-700 flex flex-col items-center gap-1 shadow-lg shadow-red-500/20 animate-pulse";
                 stHeat.textContent = '開啟 🔥 (高溫 80°C)';
                 bottomCap.className = "w-full bg-gradient-to-r from-red-950 to-blue-950 p-3 rounded-lg border border-red-800 text-center relative transition-all duration-500 z-20 shadow-md";
                 lblBottom.textContent = '底盤積水 (高溫受熱 80°C)';
             } else {
-                btn.className = "py-3 px-4 bg-slate-200 text-slate-700 font-bold text-xs rounded-xl hover:bg-red-50 hover:text-red-700 transition border border-slate-300 flex flex-col items-center gap-1";
+                btn.className = "py-3 px-4 bg-slate-200 text-slate-800 font-extrabold text-sm rounded-xl hover:bg-red-50 hover:text-red-700 transition border border-slate-300 flex flex-col items-center gap-1";
                 stHeat.textContent = '關閉 (25°C)';
                 bottomCap.className = "w-full bg-blue-950/80 p-3 rounded-lg border border-blue-900 text-center relative transition-all duration-500 z-20";
                 lblBottom.textContent = '底盤積水 (室溫 25°C)';
@@ -1782,12 +1774,12 @@
             const lblTop = document.getElementById('lbl-l9-top');
 
             if (l9Cool) {
-                btn.className = "py-3 px-4 bg-blue-600 text-white font-bold text-xs rounded-xl hover:bg-blue-500 transition border border-blue-700 flex flex-col items-center gap-1 shadow-lg shadow-blue-500/20 animate-pulse";
+                btn.className = "py-3 px-4 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-500 transition border border-blue-700 flex flex-col items-center gap-1 shadow-lg shadow-blue-500/20 animate-pulse";
                 stCool.textContent = '開啟 ❄️ (低溫 0°C)';
                 topCap.className = "w-full bg-gradient-to-r from-cyan-900 to-slate-800 p-2.5 rounded-lg border border-sky-600 text-center relative transition-all duration-500 z-20 shadow-md";
                 lblTop.textContent = '頂蓋 (加冰冷卻 0°C)';
             } else {
-                btn.className = "py-3 px-4 bg-slate-200 text-slate-700 font-bold text-xs rounded-xl hover:bg-blue-50 hover:text-blue-700 transition border border-slate-300 flex flex-col items-center gap-1";
+                btn.className = "py-3 px-4 bg-slate-200 text-slate-800 font-extrabold text-sm rounded-xl hover:bg-blue-50 hover:text-blue-700 transition border border-slate-300 flex flex-col items-center gap-1";
                 stCool.textContent = '關閉 (25°C)';
                 topCap.className = "w-full bg-slate-800/80 p-2.5 rounded-lg border border-slate-700 text-center relative transition-all duration-500 z-20";
                 lblTop.textContent = '頂蓋 (室溫 25°C)';
@@ -1801,7 +1793,6 @@
             const concl = document.getElementById('concl-l9');
             const atmosphere = document.getElementById('l9-atmosphere');
 
-            // 停止現有粒子
             stopL9Physics();
 
             if (!l9Heat && !l9Cool) {
@@ -1814,7 +1805,6 @@
                 clouds.style.opacity = '0.2';
                 concl.classList.add('hidden');
                 
-                // 動態生成上升暖蒸氣氣泡
                 l9VaporInterval = setInterval(() => {
                     if (atmosphere.children.length < 25) {
                         spawnVaporParticle(atmosphere);
@@ -1832,7 +1822,6 @@
                 concl.classList.remove('hidden');
                 lucide.createIcons();
 
-                // 完美水循環：產生上升暖蒸氣 與 下降雨滴
                 l9VaporInterval = setInterval(() => {
                     if (atmosphere.children.length < 20) {
                         spawnVaporParticle(atmosphere);
@@ -1840,7 +1829,6 @@
                 }, 150);
 
                 l9RainInterval = setInterval(() => {
-                    // 控制雨滴密度
                     if (atmosphere.querySelectorAll('.rain-drop').length < 30) {
                         spawnRainDrop(atmosphere);
                     }
@@ -1891,25 +1879,21 @@
             const water2 = document.getElementById('sel-l10-water2').value;
             const out = document.getElementById('st-l10-output');
             
-            // 驗證是否公平
-            // 操縱變因：水 (必須一個澆水、一個乾燥)
-            // 控制變因：陽光 (必須相同)
             const waterDiff = water1 !== water2;
             const sunSame = sun1 === sun2;
 
             if (!waterDiff) {
-                out.className = "text-xs p-2 bg-red-100 text-red-800 rounded border border-red-300 mt-3";
-                out.innerHTML = "❌ <b>測試失敗！</b><br>你探究的是『水分對綠豆的影響』，因此兩組的水分<b>必須設定成不同</b>才能對比！";
+                out.className = "text-sm p-3 bg-red-100 text-red-800 rounded-xl border border-red-300 mt-3 font-semibold leading-relaxed";
+                out.innerHTML = "❌ <b>測試失敗！</b><br>你探究的是『水分對綠豆的影響』，因此兩組的水分<b>必須設定成不同</b>（有澆水、不澆水）才能形成對比！";
                 return;
             }
             if (!sunSame) {
-                out.className = "text-xs p-2 bg-red-100 text-red-800 rounded border border-red-300 mt-3";
-                out.innerHTML = "❌ <b>違反公平測試！</b><br>除水分（操縱變因）外，其餘變因『陽光』必須在兩盆<b>保持完全相同</b>！請調整下拉選單。";
+                out.className = "text-sm p-3 bg-red-100 text-red-800 rounded-xl border border-red-300 mt-3 font-semibold leading-relaxed";
+                out.innerHTML = "❌ <b>違反公平測試！</b><br>除水分（操縱變因）外，其餘變因『陽光』必須在兩盆<b>保持完全相同</b>以作為控制變因！請調整下拉選單。";
                 return;
             }
 
-            // 公平測試成功
-            out.className = "text-xs p-2 bg-emerald-100 text-emerald-800 rounded border border-emerald-300 mt-3";
+            out.className = "text-sm p-3 bg-emerald-100 text-emerald-800 rounded-xl border border-emerald-300 mt-3 font-semibold leading-relaxed";
             out.innerHTML = "🎉 <b>公平測試建立成功！</b><br>你成功鎖定『陽光』為控制變因，僅改變了『水分』。7天生長結果顯現：有澆水盆順利長高，無水盆不發芽。";
             
             document.getElementById('visual-l10-growth').classList.remove('hidden');
@@ -1936,20 +1920,19 @@
             p2.style.top = '10px';
 
             if (weight === 'diff') {
-                out.className = "text-xs p-3 bg-red-100 text-red-800 rounded border border-red-300";
+                out.className = "text-sm p-3 bg-red-100 text-red-800 rounded-xl border border-red-300 leading-relaxed font-semibold";
                 out.innerHTML = "❌ <b>這不是公平測試！</b><br>既然想探究『傘面面積』對速度的影響，那吊掛的重量（變因）就<b>必須保持一樣</b>，不然我們無法確定是誰導致速度落差！";
                 return;
             }
 
-            // 公平
-            out.className = "text-xs p-3 bg-emerald-100 text-emerald-800 rounded border border-emerald-300";
+            out.className = "text-sm p-3 bg-emerald-100 text-emerald-800 rounded-xl border border-emerald-300 leading-relaxed font-semibold";
             out.innerHTML = "🎉 <b>完美的公平測試！</b><br>保持重量一致，僅有傘面截面積大小不同。大傘空阻大，所以下降最慢，完美證實空氣阻力理論！";
             
             setTimeout(() => {
-                p1.style.top = '180px'; // 小傘落得快
+                p1.style.top = '180px';
             }, 100);
             setTimeout(() => {
-                p2.style.top = '180px'; // 大傘落得慢
+                p2.style.top = '180px';
                 document.getElementById('concl-l11').classList.remove('hidden');
                 lucide.createIcons();
             }, 500);
@@ -1969,12 +1952,12 @@
             s2.style.opacity = '1';
 
             if (stir === 'diff' || sugar === 'diff') {
-                out.className = "p-3 rounded border bg-red-100 text-red-800";
+                out.className = "p-3 rounded-xl border bg-red-100 text-red-800 font-semibold leading-relaxed";
                 out.innerHTML = "❌ <b>測試失真！</b><br>在探究『水溫』對溶解時間的影響時，其餘可能影響速度的『攪拌手法』和『砂糖重量』<b>絕不能存在落差</b>，這違反了公平測試單一變量的規則！";
                 return;
             }
 
-            out.className = "p-3 rounded border bg-emerald-100 text-emerald-800";
+            out.className = "p-3 rounded-xl border bg-emerald-100 text-emerald-800 font-semibold leading-relaxed";
             out.innerHTML = "🎉 <b>公平測試過關！</b><br>你成功鎖定了糖重量與攪拌動作。可以觀察到：由於熱水分子運動劇烈，熱水杯中的糖塊會迅速溶解消失；冷水杯則需要數倍的時間才能完全溶解。";
 
             setTimeout(() => {
@@ -1989,7 +1972,7 @@
 
 
         // ==========================================
-        //  🎯 24題實戰考驗：答題引擎
+        //  🎯 24題實戰考驗：答題引擎 (優化字體，提升操作反饋)
         // ==========================================
         let currentQuizIndex = 0;
         let quizScore = 0;
@@ -2007,23 +1990,18 @@
             quizIsAnswered = false;
             const q = quizQuestions[currentQuizIndex];
 
-            // 進度與渲染
             const progressPct = (currentQuizIndex / quizQuestions.length) * 100;
             document.getElementById('quiz-progress-bar').style.width = `${progressPct}%`;
             document.getElementById('quiz-progress-text').textContent = `第 ${currentQuizIndex + 1} / ${quizQuestions.length} 題`;
 
-            // 隱藏回饋框
             document.getElementById('quiz-feedback-box').classList.add('hidden');
-
-            // 題目名稱
             document.getElementById('lbl-question-title').textContent = q.q;
 
-            // 選項
             const optContainer = document.getElementById('quiz-options-container');
             optContainer.innerHTML = '';
             q.opts.forEach((opt, idx) => {
                 const btn = document.createElement('button');
-                btn.className = "quiz-opt-btn w-full p-4 text-left border-2 border-slate-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition font-medium text-slate-700 text-sm";
+                btn.className = "quiz-opt-btn w-full p-5 text-left border-2 border-slate-200 rounded-2xl hover:bg-indigo-50 hover:border-indigo-300 transition font-bold text-slate-800 text-base md:text-lg shadow-sm";
                 btn.textContent = `${String.fromCharCode(65 + idx)}. ${opt}`;
                 btn.onclick = () => selectQuizAnswer(idx, btn);
                 optContainer.appendChild(btn);
@@ -2041,30 +2019,30 @@
             allBtns.forEach((btn, idx) => {
                 btn.style.cursor = 'default';
                 if (idx === q.ans) {
-                    btn.className = "quiz-opt-btn w-full p-4 text-left border-2 border-emerald-500 bg-emerald-50 text-emerald-800 rounded-xl font-bold text-sm";
+                    btn.className = "quiz-opt-btn w-full p-5 text-left border-2 border-emerald-500 bg-emerald-50 text-emerald-900 rounded-2xl font-black text-base md:text-lg shadow";
                 } else if (idx === selIdx && !isCorrect) {
-                    btn.className = "quiz-opt-btn w-full p-4 text-left border-2 border-red-500 bg-red-50 text-red-800 rounded-xl font-bold text-sm";
+                    btn.className = "quiz-opt-btn w-full p-5 text-left border-2 border-red-500 bg-red-50 text-red-900 rounded-2xl font-black text-base md:text-lg shadow";
                 } else {
-                    btn.className = "quiz-opt-btn w-full p-4 text-left border-2 border-slate-100 bg-white text-slate-400 rounded-xl text-sm opacity-50";
+                    btn.className = "quiz-opt-btn w-full p-5 text-left border-2 border-slate-100 bg-white text-slate-400 rounded-2xl text-base md:text-lg opacity-40";
                 }
             });
 
-            // 顯示即時回饋
             const fbBox = document.getElementById('quiz-feedback-box');
             const fbTitle = document.getElementById('lbl-feedback-title');
             const fbExp = document.getElementById('lbl-feedback-explanation');
 
-            fbBox.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'bg-red-50', 'text-red-800');
+            fbBox.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-900', 'bg-red-50', 'text-red-900');
 
             if (isCorrect) {
                 quizScore++;
-                fbBox.classList.add('bg-emerald-50', 'text-emerald-800');
-                fbTitle.textContent = "✅ 回答正確！";
+                fbBox.classList.add('bg-emerald-50', 'text-emerald-900');
+                fbTitle.innerHTML = `<i data-lucide="check-circle" class="w-6 h-6 text-emerald-600"></i> 回答正確！`;
             } else {
-                fbBox.classList.add('bg-red-50', 'text-red-800');
-                fbTitle.textContent = `❌ 答錯了！正確答案應為: ${q.opts[q.ans]}`;
+                fbBox.classList.add('bg-red-50', 'text-red-900');
+                fbTitle.innerHTML = `<i data-lucide="x-circle" class="w-6 h-6 text-red-600"></i> 答錯了！正確答案應為: ${q.opts[q.ans]}`;
             }
             fbExp.textContent = q.exp;
+            lucide.createIcons();
         }
 
         function goToNextQuestion() {
@@ -2085,7 +2063,6 @@
 
             document.getElementById('lbl-final-score').textContent = `${quizScore} / ${quizQuestions.length}`;
 
-            // 給予科學家等級評價
             const eval = document.getElementById('lbl-final-evaluation');
             if (quizScore === 24) {
                 eval.innerHTML = "👑 <b>愛因斯坦大師級別！</b><br>天哪！你獲得了 24 滿分！你對科學探究的四大方法擁有了無可挑剔的透徹認知，已經具備了頂尖科學家的極致思維！";
