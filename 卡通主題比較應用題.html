@@ -375,7 +375,7 @@
     <div id="leaderboardModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 hidden backdrop-blur-sm">
         <div class="bg-white/95 backdrop-blur-xl rounded-3xl p-6 max-w-lg w-full border-4 border-purple-300 shadow-2xl flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-3xl font-black text-purple-700">🏆 榮譽排行榜</h3>
+                <h3 id="lbTitle" class="text-3xl font-black text-purple-700">🏆 榮譽排行榜</h3>
                 <button onclick="closeLeaderboardModal()" class="text-gray-400 hover:text-red-500 text-4xl font-bold leading-none">&times;</button>
             </div>
             
@@ -560,8 +560,8 @@
         function startTimer() {
             clearInterval(timerInterval);
             if (currentMode === 'time') {
-                // 難度為「難」時 240 秒，否則 60 秒
-                timer = difficulty === '難' ? 240 : 60; 
+                // 難度為「難」時 180 秒，否則 60 秒
+                timer = difficulty === '難' ? 180 : 60; 
             } else {
                 timer = 0;  // 故事模式正數計時
             }
@@ -605,7 +605,7 @@
         function initGame() {
             // 提早取得難度以更新 UI 與計時器
             difficulty = document.getElementById("diffSelect").value;
-            const timeStr = difficulty === '難' ? '240秒挑戰' : '60秒挑戰';
+            const timeStr = difficulty === '難' ? '180秒挑戰' : '60秒挑戰';
             document.getElementById("modeTimeBtn").innerText = `⏱️ ${timeStr}`;
             document.getElementById("tabTimeLB").innerText = timeStr;
 
@@ -988,12 +988,13 @@
         async function renderLeaderboard(tab) {
             SoundManager.click();
             
-            // 獲取當前難度來更新頁籤文字
+            // 獲取當前難度來更新頁籤文字與標題
             difficulty = document.getElementById("diffSelect").value;
-            const timeStr = difficulty === '難' ? '240秒挑戰' : '60秒挑戰';
+            const timeStr = difficulty === '難' ? '180秒挑戰' : '60秒挑戰';
             const tabTimeLB = document.getElementById("tabTimeLB");
             const tabStoryLB = document.getElementById("tabStoryLB");
             
+            document.getElementById("lbTitle").innerText = `🏆 榮譽排行榜 (${difficulty})`;
             tabTimeLB.innerText = timeStr;
 
             // 切換頁籤視覺
