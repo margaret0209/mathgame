@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>比較應用題遊戲</title>
     
-    <!-- 效能優化 1：預先連接字型伺服器，大幅減少字型載入延遲 -->
+    <!-- 引入 Firebase 相容版 SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;700;900&display=swap" rel="stylesheet">
@@ -163,60 +166,73 @@
     <div class="max-w-7xl mx-auto">
         <!-- 頂部面板：模式切換與參數設定 -->
         <div class="w-full bg-white/60 backdrop-blur-xl rounded-3xl shadow-lg border-4 border-green-200/50 p-6 mb-6 animate-fade-in">
-            <div class="flex flex-col md:flex-row gap-6 items-center justify-between">
+            <div class="flex flex-col md:flex-row gap-6 items-center justify-between mb-4 border-b-2 border-white/40 pb-4">
                 
                 <!-- 模式切換器 -->
                 <div class="flex bg-slate-100/60 p-1.5 rounded-2xl border-2 border-slate-200/50">
-                    <button id="modeFreeBtn" onclick="switchMode('free')" class="text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 bg-white text-green-700 shadow-md">
-                        🎯 自由練習
+                    <button id="modeTimeBtn" onclick="switchMode('time')" class="text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 bg-white/90 text-green-700 shadow-md">
+                        ⏱️ 60秒挑戰
                     </button>
                     <button id="modeStoryBtn" onclick="switchMode('story')" class="text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 text-slate-600 hover:text-slate-800">
                         ⭐ 故事闖關
                     </button>
                 </div>
-
-                <!-- 設定下拉選單 -->
-                <div class="flex flex-wrap gap-4 items-center justify-center">
-                    <div class="flex items-center gap-2">
-                        <label class="text-xl font-bold text-gray-800">主題：</label>
-                        <select id="themeSelect" onchange="onSettingChange()" class="text-xl p-2.5 rounded-xl border-2 border-green-400/70 focus:outline-none bg-white/80 font-bold text-gray-800 shadow-sm backdrop-blur-sm">
-                            <option value="Sanrio">Sanrio</option>
-                            <option value="吉卜力">吉卜力</option>
-                            <option value="Disney">Disney</option>
-                            <option value="Marvel">Marvel</option>
-                            <option value="Pixar">Pixar</option>
-                            <option value="日本動漫">日本動漫</option>
-                        </select>
+                
+                <!-- 計分與計時 UI -->
+                <div class="flex gap-4 items-center">
+                    <div id="timerDisplay" class="text-xl md:text-2xl font-black text-blue-700 bg-blue-100/80 border-2 border-blue-200 px-4 py-2 rounded-xl shadow-sm backdrop-blur-sm w-32 text-center">
+                        ⏱️ 00:00
                     </div>
-                    <div class="flex items-center gap-2">
-                        <label class="text-xl font-bold text-gray-800">難度：</label>
-                        <select id="diffSelect" onchange="onSettingChange()" class="text-xl p-2.5 rounded-xl border-2 border-green-400/70 focus:outline-none bg-white/80 font-bold text-gray-800 shadow-sm backdrop-blur-sm">
-                            <option value="易">易</option>
-                            <option value="難">難</option>
-                        </select>
+                    <div id="scoreDisplay" class="text-xl md:text-2xl font-black text-orange-600 bg-orange-100/80 border-2 border-orange-200 px-4 py-2 rounded-xl shadow-sm backdrop-blur-sm min-w-[140px] text-center">
+                        🌟 分數: 0
                     </div>
-                    <!-- 提示切換開關 (Toggle) -->
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl font-bold text-gray-800">提示：</span>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="hintToggle" class="sr-only peer" checked onchange="updateHintLabel(); onSettingChange()">
-                            <div class="w-16 h-8 bg-slate-300/80 rounded-full peer peer-checked:bg-green-400/90 border-2 border-slate-200/50 peer-checked:border-green-400/50 transition-colors shadow-inner backdrop-blur-sm"></div>
-                            <div class="absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform peer-checked:translate-x-8 shadow-md"></div>
-                        </label>
-                        <span id="hintStatusText" class="text-xl font-bold text-green-700 ml-1 w-12 text-shadow-sm">開啟</span>
-                    </div>
-                    <button onclick="startGame()" class="bg-gradient-to-r from-orange-400/90 to-amber-500/90 hover:from-orange-500 hover:to-amber-600 text-white text-xl font-black py-2.5 px-8 rounded-xl shadow-md transform active:scale-95 transition backdrop-blur-sm border border-white/20">
-                        重新開始 🚀
+                    <button onclick="showLeaderboardModal()" class="text-xl font-bold text-purple-700 bg-purple-100/90 hover:bg-purple-200/90 border-2 border-purple-300 px-4 py-2 rounded-xl transition shadow-sm backdrop-blur-sm">
+                        🏆 排行榜
                     </button>
                 </div>
             </div>
 
+            <!-- 設定下拉選單 -->
+            <div class="flex flex-wrap gap-4 items-center justify-center">
+                <div class="flex items-center gap-2">
+                    <label class="text-xl font-bold text-gray-800">主題：</label>
+                    <select id="themeSelect" onchange="onSettingChange()" class="text-xl p-2.5 rounded-xl border-2 border-green-400/70 focus:outline-none bg-white/80 font-bold text-gray-800 shadow-sm backdrop-blur-sm">
+                        <option value="Sanrio">Sanrio</option>
+                        <option value="吉卜力">吉卜力</option>
+                        <option value="Disney">Disney</option>
+                        <option value="Marvel">Marvel</option>
+                        <option value="Pixar">Pixar</option>
+                        <option value="日本動漫">日本動漫</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="text-xl font-bold text-gray-800">難度：</label>
+                    <select id="diffSelect" onchange="onSettingChange()" class="text-xl p-2.5 rounded-xl border-2 border-green-400/70 focus:outline-none bg-white/80 font-bold text-gray-800 shadow-sm backdrop-blur-sm">
+                        <option value="易">易</option>
+                        <option value="難">難</option>
+                    </select>
+                </div>
+                <!-- 提示切換開關 (Toggle) -->
+                <div class="flex items-center gap-2">
+                    <span class="text-xl font-bold text-gray-800">提示：</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="hintToggle" class="sr-only peer" checked onchange="updateHintLabel(); onSettingChange()">
+                        <div class="w-16 h-8 bg-slate-300/80 rounded-full peer peer-checked:bg-green-400/90 border-2 border-slate-200/50 peer-checked:border-green-400/50 transition-colors shadow-inner backdrop-blur-sm"></div>
+                        <div class="absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform peer-checked:translate-x-8 shadow-md"></div>
+                    </label>
+                    <span id="hintStatusText" class="text-xl font-bold text-green-700 ml-1 w-12 text-shadow-sm">開啟</span>
+                </div>
+                <button onclick="initGame()" class="bg-gradient-to-r from-orange-400/90 to-amber-500/90 hover:from-orange-500 hover:to-amber-600 text-white text-xl font-black py-2.5 px-8 rounded-xl shadow-md transform active:scale-95 transition backdrop-blur-sm border border-white/20">
+                    開始遊戲 🚀
+                </button>
+            </div>
+
             <!-- 故事模式進度顯示條 -->
-            <div id="storyProgressContainer" class="mt-6 pt-4 border-t-2 border-green-100 hidden">
+            <div id="storyProgressContainer" class="mt-6 pt-4 border-t-2 border-white/50 hidden">
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div class="text-2xl font-black text-amber-600 flex items-center gap-2">
+                    <div class="text-2xl font-black text-amber-600 flex items-center gap-2 drop-shadow-sm">
                         <span>🏆 闖關大挑戰</span>
-                        <span id="progressText" class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-lg">第 1 / 10 關</span>
+                        <span id="progressText" class="bg-amber-100/90 text-amber-800 px-3 py-1 rounded-full text-lg shadow-sm">第 1 / 10 關</span>
                     </div>
                     <!-- 星星進度條 -->
                     <div id="starsProgress" class="flex gap-2 text-3xl">
@@ -250,74 +266,59 @@
                 <div id="interactionArea" class="space-y-8 hidden">
                     <!-- 步驟 1: A 的數量 -->
                     <div id="step1" class="flex flex-wrap items-center gap-4 text-2xl md:text-3xl font-bold hidden whitespace-nowrap">
-                        <span id="iCharA_Step1" class="text-red-600"></span>有
+                        <span id="iCharA_Step1" class="text-red-600 drop-shadow-sm"></span>有
                         <div id="box_valA_S1" class="num-box"></div>
-                        <span><span class="iObjUnit"></span><span class="iObjName"></span>，</span>
-                        <span id="mark_s1" class="text-green-500 text-4xl hidden">✅</span>
+                        <span class="drop-shadow-sm"><span class="iObjUnit"></span><span class="iObjName"></span>，</span>
+                        <span id="mark_s1" class="text-green-500 text-4xl hidden drop-shadow-sm">✅</span>
                     </div>
 
                     <!-- 步驟 2: B 比 A 的關係 -->
                     <div id="step2" class="flex flex-wrap items-center gap-4 text-2xl md:text-3xl font-bold hidden whitespace-nowrap">
-                        <span id="iCharB_Step2" class="text-blue-600"></span>比 
-                        <span id="iCharA_Step2" class="text-red-600"></span>
+                        <span id="iCharB_Step2" class="text-blue-600 drop-shadow-sm"></span>比 
+                        <span id="iCharA_Step2" class="text-red-600 drop-shadow-sm"></span>
                         <div id="btnGroup_moreless" class="flex gap-3">
                             <button class="choice-btn" onclick="handleChoice('多')"><span class="sub-text">more</span>多</button>
                             <button class="choice-btn" onclick="handleChoice('少')"><span class="sub-text">less</span>少</button>
                         </div>
                         <div id="box_diff_S2_container" class="hidden flex items-center gap-4">
                             <div id="box_diff_S2" class="num-box"></div>
-                            <span><span class="iObjUnit"></span><span class="iObjName"></span>。</span>
-                            <span id="mark_s2" class="text-green-500 text-4xl hidden">✅</span>
+                            <span class="drop-shadow-sm"><span class="iObjUnit"></span><span class="iObjName"></span>。</span>
+                            <span id="mark_s2" class="text-green-500 text-4xl hidden drop-shadow-sm">✅</span>
                         </div>
                     </div>
 
                     <!-- 步驟 3: 計算 B 的算式 -->
                     <div id="step3" class="flex flex-wrap items-center gap-4 text-2xl md:text-3xl font-bold hidden whitespace-nowrap">
-                        <span id="iCharB_Step3" class="text-blue-600 font-black"></span>：
+                        <span id="iCharB_Step3" class="text-blue-600 font-black drop-shadow-sm"></span>：
                         <div id="box_valA_S3" class="num-box"></div>
                         <div id="btnGroup_op" class="flex gap-3">
                             <button class="choice-btn text-2xl h-16" onclick="handleChoice('+')">+</button>
                             <button class="choice-btn text-2xl h-16" onclick="handleChoice('-')">-</button>
                         </div>
                         <div id="box_valDiff_S3" class="num-box"></div>
-                        <span>=</span>
-                        <span id="text_ans" class="text-4xl text-green-600 hidden"></span>
+                        <span class="drop-shadow-sm">=</span>
+                        <span id="text_ans" class="text-4xl text-green-600 hidden drop-shadow-sm"></span>
                         <div id="box_ans" class="num-box hidden"></div>
-                        <span id="mark_ans" class="text-green-500 text-4xl hidden">✅</span>
+                        <span id="mark_ans" class="text-green-500 text-4xl hidden drop-shadow-sm">✅</span>
                     </div>
 
-                    <!-- 單關完成：下一步按鈕 -->
+                    <!-- 單關完成：下一步按鈕 (故事模式用) -->
                     <div id="nextLevelContainer" class="text-center pt-4 hidden">
                         <button onclick="goToNextLevel()" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-3xl font-black py-4 px-12 rounded-2xl shadow-lg transform hover:scale-105 active:scale-95 transition">
                             進入下一關 ✨ 👉
                         </button>
                     </div>
 
-                    <!-- 自由模式完成訊息 -->
-                    <div id="successMessage" class="text-center text-4xl font-bold text-orange-500 mt-8 hidden animate-bounce">
-                        🎉 好叻呀！答對全部喇！ 🎉
-                    </div>
-                </div>
-
-                <!-- 終極大關卡成就結算卡 -->
-                <div id="ultimateChampionCard" class="hidden absolute inset-0 bg-white/90 backdrop-blur-xl rounded-3xl p-8 flex flex-col items-center justify-center text-center z-20 border border-white/50 shadow-2xl">
-                    <span class="text-8xl mb-4">🏆</span>
-                    <h2 class="text-4xl font-black text-amber-600 mb-2">恭喜完成 10 關大挑戰！</h2>
-                    <p class="text-2xl font-bold text-gray-700 mb-8">你成功幫助了所有卡通世界的夥伴！你是超級數學小勇士！</p>
-                    <div class="flex gap-4">
-                        <button onclick="switchMode('story')" class="bg-amber-500 hover:bg-amber-600 text-white text-2xl font-black py-4 px-8 rounded-2xl shadow-md transition transform hover:scale-105">
-                            再挑戰一次 👑
-                        </button>
-                        <button onclick="switchMode('free')" class="bg-blue-500 hover:bg-blue-600 text-white text-2xl font-black py-4 px-8 rounded-2xl shadow-md transition transform hover:scale-105">
-                            去自由練習 🎯
-                        </button>
+                    <!-- 時間挑戰模式單題完成提示 -->
+                    <div id="successMessage" class="text-center text-3xl font-bold text-orange-500 mt-8 hidden animate-bounce drop-shadow-md">
+                        🎉 答對了！準備下一題... 🎉
                     </div>
                 </div>
             </div>
 
             <!-- 右側：縮小版九宮格鍵盤 -->
-            <div id="numpad" class="w-full lg:w-72 bg-white/60 backdrop-blur-xl rounded-3xl p-4 border-4 border-white/50 sticky top-6 hidden shrink-0 shadow-xl">
-                <div class="text-center mb-3 text-gray-600 font-bold uppercase tracking-widest text-xs drop-shadow-sm">數字輸入</div>
+            <div id="numpad" class="w-full lg:w-72 bg-white/60 backdrop-blur-xl rounded-3xl p-4 border-4 border-white/50 sticky top-6 hidden shrink-0 shadow-xl opacity-50 pointer-events-none transition-opacity duration-300">
+                <div class="text-center mb-3 text-gray-600 font-bold uppercase tracking-widest text-xs drop-shadow-sm">數字輸入 <span class="text-[10px] lowercase text-green-600">(自動送出)</span></div>
                 <div class="grid grid-cols-3 gap-2">
                     <button class="numpad-btn" onclick="inputNum('1')">1</button>
                     <button class="numpad-btn" onclick="inputNum('2')">2</button>
@@ -330,16 +331,16 @@
                     <button class="numpad-btn" onclick="inputNum('9')">9</button>
                     <button class="numpad-btn numpad-action text-red-500" onclick="clearNum()">清除</button>
                     <button class="numpad-btn" onclick="inputNum('0')">0</button>
-                    <button class="numpad-btn numpad-submit" onclick="submitNum()">確定</button>
+                    <button class="numpad-btn numpad-submit bg-slate-300 border-slate-400 opacity-80" onclick="submitNum()" title="輸入正確會自動送出">確定</button>
                 </div>
             </div>
 
         </div>
     </div>
 
-    <!-- 自定義答對關卡鼓勵視窗 (Modal) -->
-    <div id="levelClearModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 hidden">
-        <div class="bg-white rounded-3xl p-8 max-w-md w-full border-8 border-green-300 shadow-2xl text-center transform scale-95 transition-all">
+    <!-- 答對關卡鼓勵視窗 (故事模式用) -->
+    <div id="levelClearModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 hidden backdrop-blur-sm">
+        <div class="bg-white/95 backdrop-blur-xl rounded-3xl p-8 max-w-md w-full border-8 border-green-300 shadow-2xl text-center transform scale-95 transition-all">
             <span class="text-7xl block mb-4">⭐</span>
             <h3 class="text-3xl font-black text-green-600 mb-2">答對了！好棒！</h3>
             <p id="modalEncourageText" class="text-xl font-bold text-gray-600 mb-6">你獲得了一顆星星！</p>
@@ -349,8 +350,71 @@
         </div>
     </div>
 
+    <!-- 遊戲結束/結算視窗 -->
+    <div id="gameOverModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 hidden backdrop-blur-sm">
+        <div class="bg-white/95 backdrop-blur-xl rounded-3xl p-8 max-w-lg w-full border-8 border-amber-300 shadow-2xl text-center transform transition-all">
+            <span class="text-7xl block mb-4" id="endIcon">🏆</span>
+            <h3 class="text-4xl font-black text-amber-600 mb-2" id="endTitle">遊戲結束！</h3>
+            <div class="my-6 bg-amber-50 p-4 rounded-2xl border-2 border-amber-100">
+                <p class="text-xl font-bold text-gray-600 mb-2">你的最終分數</p>
+                <p class="text-5xl font-black text-orange-500" id="finalScoreText">0</p>
+            </div>
+            
+            <div class="mb-6 text-left">
+                <label class="block text-gray-700 font-bold mb-2 text-lg">留下你的大名：</label>
+                <input type="text" id="playerNameInput" placeholder="例如：數學小勇士 (最多8字)" maxlength="8" class="w-full p-3 border-4 border-slate-200 rounded-xl text-xl font-bold focus:border-amber-400 focus:outline-none text-center">
+            </div>
+
+            <button onclick="submitScoreAndShowLB()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-2xl font-black py-4 rounded-2xl shadow-md active:scale-95 transition">
+                提交並查看排行榜 🥇
+            </button>
+        </div>
+    </div>
+
+    <!-- 排行榜視窗 -->
+    <div id="leaderboardModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 hidden backdrop-blur-sm">
+        <div class="bg-white/95 backdrop-blur-xl rounded-3xl p-6 max-w-lg w-full border-4 border-purple-300 shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-3xl font-black text-purple-700">🏆 榮譽排行榜</h3>
+                <button onclick="closeLeaderboardModal()" class="text-gray-400 hover:text-red-500 text-4xl font-bold leading-none">&times;</button>
+            </div>
+            
+            <!-- 排行榜頁籤 -->
+            <div class="flex bg-slate-100 p-1 rounded-xl mb-4">
+                <button id="tabTimeLB" onclick="renderLeaderboard('time')" class="flex-1 py-2 text-lg font-bold rounded-lg bg-white shadow text-purple-700 transition">60秒挑戰</button>
+                <button id="tabStoryLB" onclick="renderLeaderboard('story')" class="flex-1 py-2 text-lg font-bold rounded-lg text-slate-500 hover:text-slate-800 transition">故事闖關</button>
+            </div>
+
+            <!-- 名單區 -->
+            <div class="overflow-y-auto flex-1 pr-2 custom-scrollbar">
+                <ul id="leaderboardList" class="space-y-2">
+                    <!-- JS 動態填入 -->
+                </ul>
+            </div>
+            
+            <div class="mt-4 pt-4 border-t-2 border-slate-100 text-center">
+                <button onclick="closeLeaderboardModal()" class="bg-purple-500 hover:bg-purple-600 text-white text-xl font-black py-3 px-8 rounded-xl shadow-md active:scale-95 transition">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // --- 音效管理器 (Web Audio API) ---
+        // --- 你的個人 Firebase 資料庫初始化 ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDb--vpnEkOGFBF8clfbmt6ufBxDDvIU0Y",
+            authDomain: "margaret0209.firebaseapp.com",
+            projectId: "margaret0209",
+            storageBucket: "margaret0209.firebasestorage.app",
+            messagingSenderId: "1057757105089",
+            appId: "1:1057757105089:web:57591ca6c5853a468cfd40",
+            measurementId: "G-RY56208R0P"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // --- 音效管理器 ---
         const SoundManager = {
             ctx: null,
             init: function() {
@@ -367,242 +431,51 @@
                 const gain = this.ctx.createGain();
                 osc.type = type;
                 osc.frequency.setValueAtTime(freq, this.ctx.currentTime + startTimeOffset);
-                
                 gain.gain.setValueAtTime(vol, this.ctx.currentTime + startTimeOffset);
                 gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + startTimeOffset + duration);
-                
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
-                
                 osc.start(this.ctx.currentTime + startTimeOffset);
                 osc.stop(this.ctx.currentTime + startTimeOffset + duration);
             },
-            click: function() {
-                this.init();
-                this.playTone(600, 'sine', 0.1, 0, 0.05);
+            click: function() { this.init(); this.playTone(600, 'sine', 0.1, 0, 0.05); },
+            correct: function() { 
+                this.init(); this.playTone(523.25, 'sine', 0.1, 0, 0.1); 
+                this.playTone(659.25, 'sine', 0.1, 0.1, 0.1); 
+                this.playTone(783.99, 'sine', 0.3, 0.2, 0.15); 
             },
-            correct: function() {
-                this.init();
-                this.playTone(523.25, 'sine', 0.1, 0, 0.1);    // C5
-                this.playTone(659.25, 'sine', 0.1, 0.1, 0.1);  // E5
-                this.playTone(783.99, 'sine', 0.3, 0.2, 0.15); // G5
+            wrong: function() { 
+                this.init(); this.playTone(150, 'sawtooth', 0.2, 0, 0.1); 
+                this.playTone(100, 'sawtooth', 0.2, 0.15, 0.1); 
             },
-            wrong: function() {
-                this.init();
-                this.playTone(150, 'sawtooth', 0.2, 0, 0.1);
-                this.playTone(100, 'sawtooth', 0.2, 0.15, 0.1);
+            clear: function() { 
+                this.init(); this.playTone(440, 'square', 0.1, 0, 0.05); 
+                this.playTone(554.37, 'square', 0.1, 0.15, 0.05); 
+                this.playTone(659.25, 'square', 0.4, 0.3, 0.05); 
             },
-            clear: function() {
+            champion: function() { 
                 this.init();
-                this.playTone(440, 'square', 0.1, 0, 0.05);
-                this.playTone(554.37, 'square', 0.1, 0.15, 0.05);
-                this.playTone(659.25, 'square', 0.4, 0.3, 0.05);
-            },
-            champion: function() {
-                this.init();
-                [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
-                    this.playTone(f, 'sine', 0.2, i * 0.15, 0.1);
-                });
-                this.playTone(1046.50, 'sine', 0.8, 0.6, 0.15);
+                [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => { this.playTone(f, 'sine', 0.2, i * 0.15, 0.1); });
+                this.playTone(1046.50, 'sine', 0.8, 0.6, 0.15); 
             }
         };
 
         const themesData = {
-            "Sanrio": { 
-                chars: ["Hello Kitty", "My Melody", "Kuromi", "布甸狗", "玉桂狗", "PC狗", "蛋黃哥", "大口仔"], 
-                objs: [
-                    {name: "蘋果", unit: "個"}, {name: "蝴蝶結", unit: "個"}, {name: "糖果", unit: "粒"}, 
-                    {name: "蛋糕", unit: "件"}, {name: "草莓", unit: "粒"}, {name: "布丁", unit: "個"}, 
-                    {name: "曲奇餅", unit: "塊"}, {name: "氣球", unit: "個"}, {name: "花朵", unit: "朵"}, 
-                    {name: "畫筆", unit: "枝"}, {name: "筆記本", unit: "本"}, {name: "貼紙", unit: "張"}, 
-                    {name: "魔法棒", unit: "枝"}, {name: "皇冠", unit: "頂"}, {name: "甜甜圈", unit: "個"}
-                ] 
-            },
-            "吉卜力": { 
-                chars: ["龍貓", "千尋", "波妞", "哈爾", "無臉男", "貓巴士", "卡西法", "蘇菲"], 
-                objs: [
-                    {name: "橡果", unit: "粒"}, {name: "煤炭屎鬼", unit: "隻"}, {name: "金幣", unit: "枚"}, 
-                    {name: "星星", unit: "顆"}, {name: "魔法石", unit: "塊"}, {name: "掃帚", unit: "把"}, 
-                    {name: "麵包", unit: "個"}, {name: "飛行石", unit: "顆"}, {name: "樹葉", unit: "片"}, 
-                    {name: "花束", unit: "束"}, {name: "水晶", unit: "粒"}, {name: "飯糰", unit: "個"}, 
-                    {name: "車票", unit: "張"}, {name: "貝殼", unit: "隻"}, {name: "玻璃珠", unit: "粒"}
-                ] 
-            },
-            "Disney": { 
-                chars: ["米奇", "米妮", "唐老鴨", "高飛", "維尼", "勞蘇", "Duffy", "史迪仔", "鋼牙奇奇", "大鼻帝帝", "黛絲", "布魯托"], 
-                objs: [
-                    {name: "氣球", unit: "個"}, {name: "蜂蜜", unit: "桶"}, {name: "星星", unit: "顆"}, 
-                    {name: "魔法棒", unit: "枝"}, {name: "蘋果", unit: "個"}, {name: "玫瑰花", unit: "朵"}, 
-                    {name: "寶石", unit: "粒"}, {name: "皇冠", unit: "頂"}, {name: "水晶鞋", unit: "隻"}, 
-                    {name: "懷錶", unit: "個"}, {name: "煙花", unit: "枚"}, {name: "貝殼", unit: "隻"}, 
-                    {name: "松果", unit: "粒"}, {name: "糖果", unit: "粒"}, {name: "冰晶", unit: "片"}
-                ] 
-            },
-            "Marvel": { 
-                chars: ["蜘蛛俠", "鐵甲奇俠", "美國隊長", "雷神", "黑寡婦"], 
-                objs: [
-                    {name: "盾牌", unit: "塊"}, {name: "飛彈", unit: "枚"}, {name: "雷神鎚", unit: "把"}, 
-                    {name: "蜘蛛絲", unit: "條"}, {name: "能量方塊", unit: "件"}, {name: "盔甲", unit: "件"}, 
-                    {name: "戰機", unit: "架"}, {name: "寶石", unit: "顆"}, {name: "徽章", unit: "枚"}, 
-                    {name: "披薩", unit: "塊"}, {name: "漢堡包", unit: "個"}, {name: "護目鏡", unit: "副"}, 
-                    {name: "手套", unit: "隻"}, {name: "弓箭", unit: "枝"}, {name: "通訊器", unit: "部"}
-                ] 
-            },
-            "Pixar": { 
-                chars: ["胡迪", "巴斯光年", "三眼仔", "毛毛", "大眼仔", "阿樂", "阿焦", "阿燥", "阿厭"], 
-                objs: [
-                    {name: "玩具", unit: "件"}, {name: "電池", unit: "粒"}, {name: "能量瓶", unit: "支"}, 
-                    {name: "門", unit: "扇"}, {name: "氣球", unit: "個"}, {name: "賽車", unit: "架"}, 
-                    {name: "輪胎", unit: "條"}, {name: "記憶球", unit: "顆"}, {name: "結他", unit: "把"}, 
-                    {name: "獎盃", unit: "個"}, {name: "披薩", unit: "塊"}, {name: "廚師帽", unit: "頂"}, 
-                    {name: "望遠鏡", unit: "部"}, {name: "徽章", unit: "枚"}, {name: "閃光彈", unit: "枚"}
-                ] 
-            },
-            "日本動漫": { 
-                chars: ["多啦A夢", "路飛", "鳴人", "炭治郎", "悟空", "比卡超", "吉伊卡哇", "禰豆子", "喬巴", "大雄", "靜香", "小夫", "胖虎", "噴火龍", "胖丁", "伊貝"], 
-                objs: [
-                    {name: "銅鑼燒", unit: "個"}, {name: "精靈球", unit: "個"}, {name: "飛鏢", unit: "枚"}, 
-                    {name: "肉", unit: "塊"}, {name: "豆沙包", unit: "個"}, {name: "惡魔果實", unit: "顆"}, 
-                    {name: "寶箱", unit: "個"}, {name: "苦無", unit: "把"}, {name: "拉麵", unit: "碗"}, 
-                    {name: "飯糰", unit: "個"}, {name: "記憶麵包", unit: "塊"}, {name: "隨意門", unit: "扇"}, 
-                    {name: "金幣", unit: "枚"}, {name: "藥水", unit: "瓶"}, {name: "能量棒", unit: "條"}
-                ] 
-            }
+            "Sanrio": { chars: ["Hello Kitty", "My Melody", "Kuromi", "布甸狗", "玉桂狗", "PC狗", "蛋黃哥", "大口仔"], objs: [{name: "蘋果", unit: "個"}, {name: "蝴蝶結", unit: "個"}, {name: "糖果", unit: "粒"}, {name: "蛋糕", unit: "件"}, {name: "草莓", unit: "粒"}, {name: "布丁", unit: "個"}, {name: "曲奇餅", unit: "塊"}, {name: "氣球", unit: "個"}, {name: "花朵", unit: "朵"}, {name: "畫筆", unit: "枝"}, {name: "筆記本", unit: "本"}, {name: "貼紙", unit: "張"}, {name: "魔法棒", unit: "枝"}, {name: "皇冠", unit: "頂"}, {name: "甜甜圈", unit: "個"}] },
+            "吉卜力": { chars: ["龍貓", "千尋", "波妞", "哈爾", "無臉男", "貓巴士", "卡西法", "蘇菲"], objs: [{name: "橡果", unit: "粒"}, {name: "煤炭屎鬼", unit: "隻"}, {name: "金幣", unit: "枚"}, {name: "星星", unit: "顆"}, {name: "魔法石", unit: "塊"}, {name: "掃帚", unit: "把"}, {name: "麵包", unit: "個"}, {name: "飛行石", unit: "顆"}, {name: "樹葉", unit: "片"}, {name: "花束", unit: "束"}, {name: "水晶", unit: "粒"}, {name: "飯糰", unit: "個"}, {name: "車票", unit: "張"}, {name: "貝殼", unit: "隻"}, {name: "玻璃珠", unit: "粒"}] },
+            "Disney": { chars: ["米奇", "米妮", "唐老鴨", "高飛", "維尼", "勞蘇", "Duffy", "史迪仔", "鋼牙奇奇", "大鼻帝帝", "黛絲", "布魯托"], objs: [{name: "氣球", unit: "個"}, {name: "蜂蜜", unit: "桶"}, {name: "星星", unit: "顆"}, {name: "魔法棒", unit: "枝"}, {name: "蘋果", unit: "個"}, {name: "玫瑰花", unit: "朵"}, {name: "寶石", unit: "粒"}, {name: "皇冠", unit: "頂"}, {name: "水晶鞋", unit: "隻"}, {name: "懷錶", unit: "個"}, {name: "煙花", unit: "枚"}, {name: "貝殼", unit: "隻"}, {name: "松果", unit: "粒"}, {name: "糖果", unit: "粒"}, {name: "冰晶", unit: "片"}] },
+            "Marvel": { chars: ["蜘蛛俠", "鐵甲奇俠", "美國隊長", "雷神", "黑寡婦"], objs: [{name: "盾牌", unit: "塊"}, {name: "飛彈", unit: "枚"}, {name: "雷神鎚", unit: "把"}, {name: "蜘蛛絲", unit: "條"}, {name: "能量方塊", unit: "件"}, {name: "盔甲", unit: "件"}, {name: "戰機", unit: "架"}, {name: "寶石", unit: "顆"}, {name: "徽章", unit: "枚"}, {name: "披薩", unit: "塊"}, {name: "漢堡包", unit: "個"}, {name: "護目鏡", unit: "副"}, {name: "手套", unit: "隻"}, {name: "弓箭", unit: "枝"}, {name: "通訊器", unit: "部"}] },
+            "Pixar": { chars: ["胡迪", "巴斯光年", "三眼仔", "毛毛", "大眼仔", "阿樂", "阿焦", "阿燥", "阿厭"], objs: [{name: "玩具", unit: "件"}, {name: "電池", unit: "粒"}, {name: "能量瓶", unit: "支"}, {name: "門", unit: "扇"}, {name: "氣球", unit: "個"}, {name: "賽車", unit: "架"}, {name: "輪胎", unit: "條"}, {name: "記憶球", unit: "顆"}, {name: "結他", unit: "把"}, {name: "獎盃", unit: "個"}, {name: "披薩", unit: "塊"}, {name: "廚師帽", unit: "頂"}, {name: "望遠鏡", unit: "部"}, {name: "徽章", unit: "枚"}, {name: "閃光彈", unit: "枚"}] },
+            "日本動漫": { chars: ["多啦A夢", "路飛", "鳴人", "炭治郎", "悟空", "比卡超", "吉伊卡哇", "禰豆子", "喬巴", "大雄", "靜香", "小夫", "胖虎", "噴火龍", "胖丁", "伊貝"], objs: [{name: "銅鑼燒", unit: "個"}, {name: "精靈球", unit: "個"}, {name: "飛鏢", unit: "枚"}, {name: "肉", unit: "塊"}, {name: "豆沙包", unit: "個"}, {name: "惡魔果實", unit: "顆"}, {name: "寶箱", unit: "個"}, {name: "苦無", unit: "把"}, {name: "拉麵", unit: "碗"}, {name: "飯糰", unit: "個"}, {name: "記憶麵包", unit: "塊"}, {name: "隨意門", unit: "扇"}, {name: "金幣", unit: "枚"}, {name: "藥水", unit: "瓶"}, {name: "能量棒", unit: "條"}] }
         };
 
         const storyTemplates = {
-            "Sanrio": [
-                "🌸 春天來了！{charA} 邀請大家來花園野餐，帶了好多 {obj} 想分享給朋友們。",
-                "🎀 驚喜籌備中！{charA} 打算包裝一些精美的 {obj} 送給好朋友 {charB} 當禮物！",
-                "🧁 點心時間到了！派對上需要分配好 {obj}，{charA} 正在努力整理中。",
-                "🌟 星光燦爛的夜晚，{charA} 和 {charB} 在草地上露營，一邊數著發光的 {obj} 一邊聊天。",
-                "🎨 {charA} 和 {charB} 正在參加手工藝比賽，他們各自收集了五顏六色的 {obj} 當作裝飾！",
-                "🎶 歡樂的音樂節快到了，{charA} 準備了特別的 {obj} 送給在台上表演的 {charB}。",
-                "🏖️ 夏天到了！{charA} 在沙灘上堆沙堡，還特地找來 {obj} 點綴，準備給 {charB} 一個驚喜。",
-                "🏡 {charA} 正在打掃房間，在床底下發現了以前收藏的 {obj}，開心地跑去告訴 {charB}。",
-                "🎡 遊樂園裡，{charA} 挑戰了尋寶遊戲，贏得了好多 {obj}，分了一半給 {charB}！",
-                "🍎 秋天到了，{charA} 和 {charB} 去果園幫忙採收，兩人的籃子裡都裝滿了 {obj}。",
-                "🎁 {charA} 舉辦了一場交換禮物派對，大家輪流抽出驚喜的 {obj}，{charB} 期待極了！",
-                "🌧️ 雨天不能出去玩，{charA} 在家裡整理玩具箱，找出了最喜歡的 {obj} 和 {charB} 一起玩。",
-                "🌺 {charA} 的花園開滿了花，他用 {obj} 做成了漂亮的佈置，想要送給最好的朋友 {charB}。",
-                "📸 {charA} 和 {charB} 一起去旅行，拍了好多照片，還買了特別的 {obj} 作為紀念。",
-                "🏃‍♂️ 運動會上，{charA} 賣力地往前跑，為了贏得獎品 {obj}，{charB} 在旁邊大聲加油！",
-                "🍳 {charA} 今天當小幫手，特地為 {charB} 準備了滿滿一籃子的 {obj}。",
-                "🌙 睡覺時間到了，{charA} 聽著床邊故事，看著旁邊放著的 {obj}，安穩地睡著了。",
-                "🎈 派對結束後，{charA} 負責收拾場地，收集了散落一地的 {obj} 交給 {charB} 保管。",
-                "🚂 坐上小火車，{charA} 開心地望著窗外，手裡拿著剛買的 {obj} 準備跟 {charB} 一起分享。",
-                "📚 在圖書館裡，{charA} 找到了一本有趣的故事書，裡面還夾著可愛的 {obj}，趕緊拿給 {charB} 看。"
-            ],
-            "吉卜力": [
-                "🌳 充滿魔力的森林深處，龍貓的朋友 {charA} 正在收集散落的 {obj}。",
-                "🪙 尋找神祕寶物！{charA} 帶領著無臉男和小煤炭，在溫泉屋裡幫忙點算 {obj} 的數量。",
-                "🚲 陽光明媚的午後，{charA} 和 {charB} 騎著腳踏車去海邊，一路上撿了好多亮晶晶的 {obj}！",
-                "✨ 奇幻大冒險！{charA} 乘著貓巴士出發，這次的任務是要載運珍貴的 {obj} 給好朋友。",
-                "🍃 微風吹過大樹，{charA} 在草叢下發現了閃閃發光的 {obj}，馬上叫 {charB} 來看！",
-                "🧹 魔法修行中！{charA} 騎著掃帚飛過城鎮，幫忙運送重要的 {obj} 給 {charB}。",
-                "💧 雨後的荷葉上，{charA} 收集了晶瑩剔透的雨滴，旁邊還散落著神秘的 {obj}。",
-                "⛰️ 爬上高高的山丘，{charA} 望著遠方的雲海，一邊整理著 {obj}，一邊等著 {charB}。",
-                "🔥 爐火劈啪作響，{charA} 正在溫暖的火爐旁看著 {obj}，神奇的光芒把 {charB} 都吸引過來了。",
-                "🌱 奇妙的種子發芽了！{charA} 每天辛勤澆水，終於收穫了特別的 {obj}，急忙拿給 {charB} 看。",
-                "🌌 滿天星斗的晚上，{charA} 坐在屋頂上，接住了從天而降的 {obj}，把它送給了 {charB}。",
-                "🥖 麵包店剛出爐了新鮮的麵包，{charA} 還順便準備了美味的 {obj}，打算和 {charB} 一起分享。",
-                "🎏 節日祭典上，{charA} 穿著浴衣，在攤位上開心地獲得了 {obj}，並跟 {charB} 炫耀。",
-                "🕰️ 古老的大鐘滴答作響，{charA} 在抽屜裡找到了充滿回憶的 {obj}，想起了和 {charB} 的故事。",
-                "🛤️ 沿著鐵軌一直走，{charA} 在水潭邊撿到了發亮的 {obj}，開心地把它當成禮物送給 {charB}。",
-                "🧶 {charA} 正在認真地打毛線，想要做一個裝滿 {obj} 的小袋子送給怕冷的 {charB}。",
-                "🍯 {charA} 在森林的深處探險，小心翼翼地收集了罕見的 {obj}，準備帶給 {charB}。",
-                "🎐 夏天的風鈴響起，{charA} 坐在走廊上乘涼，一邊看著 {obj}，一邊和 {charB} 聊天。",
-                "🏮 湯屋今天客人好多！{charA} 忙進忙出，整理著一盤又一盤的 {obj}，{charB} 也來幫忙。",
-                "✈️ 乘著滑翔翼飛上天空，{charA} 俯瞰著美麗的大地，口袋裡還裝著要給 {charB} 的 {obj}。"
-            ],
-            "Disney": [
-                "✨ 奇妙星空下，米奇妙妙屋的夥伴 {charA} 正在準備驚喜嘉年華所需要的 {obj}！",
-                "🎈 歡樂的下午，{charA} 和 {charB} 決定在神奇城堡前，給小夥伴們派發色彩繽紛的 {obj}。",
-                "🍯 森林裡，{charA} 忙碌了一整天，正與好朋友們一起快樂地數著收集到的 {obj}！",
-                "👑 皇家宴會即將開始，{charA} 需要你的聰明智慧，幫忙清點宴會桌上亮麗的 {obj} 數量。",
-                "🎪 馬戲團來了！{charA} 表演了精彩的魔術，變出了好多 {obj}，台下的 {charB} 拍手叫好。",
-                "🚢 坐上大輪船出海冒險！{charA} 在甲板上發現了海盜留下的 {obj}，興奮地告訴了 {charB}。",
-                "🎄 節日到了，{charA} 在樹下放了包裝精美的 {obj}，期待 {charB} 打開時的表情。",
-                "❄️ 下雪了！{charA} 和 {charB} 一起堆雪人，還用 {obj} 幫雪人做了可愛的裝飾。",
-                "🏰 在華麗的城堡裡，{charA} 正在準備舞會，小心翼翼地擺放著閃亮的 {obj}，{charB} 在一旁幫忙。",
-                "🍎 {charA} 在森林裡採集了新鮮的水果，還特地挑選了最好的 {obj} 準備送給 {charB}。",
-                "🎇 迪士尼樂園的煙火好美！{charA} 一邊看著夜空，一邊拿著 {obj}，{charB} 也覺得好開心。",
-                "🛶 划著獨木舟順流而下，{charA} 在河岸邊發現了稀有的 {obj}，立刻划過去跟 {charB} 一起分享。",
-                "👑 戴上皇冠，{charA} 今天是小國王！他大方地把珍貴的 {obj} 分給了所有的好朋友，包括 {charB}。",
-                "🎨 {charA} 拿著畫筆，畫出了美麗的彩虹和閃閃發光的 {obj}，把畫送給了 {charB}。",
-                "🏕️ 森林露營之夜，{charA} 在帳篷旁邊生火，拿出了 {obj}，等著 {charB} 一起過來。",
-                "🚂 嘟嘟！玩具火車出發了，{charA} 把滿載著 {obj} 的車廂推向 {charB}，兩人玩得不亦樂乎。",
-                "🐚 在沙灘上散步，{charA} 撿到了美麗的貝殼和神奇的 {obj}，把它們收集起來送給 {charB}。",
-                "🎠 旋轉木馬轉呀轉，{charA} 開心地笑著，手裡還拿著 {charB} 送他的 {obj}。",
-                "🎃 萬聖節派對！{charA} 打扮成小幽靈，收集了滿滿一袋的 {obj}，分了一半給 {charB}。",
-                "🐾 {charA} 帶著寵物在公園散步，找到了藏在草叢裡的 {obj}，開心地和 {charB} 一起分享。"
-            ],
-            "Marvel": [
-                "🛡️ 守護和平！復仇者聯盟成員 {charA} 正在整頓裝備，準備出動維護正義。他正在整理 {obj}。",
-                "🕸️ 英雄大作戰！{charA} 與好拍檔 {charB} 為了今晚的巡邏任務，正在快速準備足夠的 {obj}！",
-                "⚡ 守護地球！{charA} 剛從外星回到地球，帶回了充滿神奇能量的 {obj} 要分給盟友們。",
-                "🚀 宇宙守護戰！{charA} 正在神盾局的基地中，幫忙隊長點算防禦用的 {obj} 庫存。",
-                "🦾 實驗室裡，{charA} 正在研發新的高科技裝備，需要用到稀有的 {obj}，{charB} 幫忙找到了很多。",
-                "🌆 城市巡邏中！{charA} 在大樓頂端發現了壞人留下的 {obj}，馬上聯絡 {charB} 來處理。",
-                "🌌 星際探險！{charA} 駕駛太空船來到了新星球，收集了充滿能量的 {obj} 準備帶回給 {charB}。",
-                "🏋️‍♂️ 訓練室裡，{charA} 滿頭大汗地練習，旁邊放著補充體力的 {obj}，{charB} 也加入了一起訓練。",
-                "🍕 拯救世界後肚子餓了！{charA} 準備了豐盛的大餐，還拿出了 {obj}，跟 {charB} 一起分享。",
-                "🛠️ 維修時間到！{charA} 的裝備受損了，他正在尋找備用的 {obj} 來修理，{charB} 也來幫忙找。",
-                "🛸 外星人來襲！{charA} 勇敢地迎戰，用神奇的 {obj} 成功擊退了敵人，{charB} 在一旁歡呼。",
-                "🚁 復仇者大樓的停機坪上，{charA} 正在卸下剛運來的 {obj} 補給品，交接給 {charB}。",
-                "📡 接收到神秘訊號！{charA} 追蹤訊號來源，發現了一個藏滿 {obj} 的秘密基地，馬上通知 {charB}。",
-                "❄️ 極地任務！{charA} 在冰天雪地中尋找失落的 {obj}，任務完成後與 {charB} 成功會合。",
-                "🌋 危險危機！{charA} 冒險進入險境，成功搶救出珍貴的 {obj}，交給了 {charB} 保管。",
-                "🌊 潛入深海！{charA} 在神秘的遺跡中發現了會發光的 {obj}，帶回去給 {charB} 研究。",
-                "🕰️ 穿梭時空！{charA} 執行秘密任務，拿回了關鍵的 {obj}，成功保護了未來，{charB} 鬆了一口氣。",
-                "🎭 變裝潛入！{charA} 換上西裝參加晚宴，暗中獲得了目標物 {obj}，並安全撤退與 {charB} 會合。",
-                "🛡️ 防禦陣線！{charA} 部署了強大的力場，並發放 {obj} 給每一位市民，{charB} 負責指揮疏散。",
-                "🎉 慶功宴！大家舉杯慶祝勝利，{charA} 開心地拿著特別準備的 {obj}，並跟 {charB} 擊掌。"
-            ],
-            "Pixar": [
-                "🎈 玩具箱大冒險！牛仔 {charA} 邀請太空戰士 {charB} 一起玩整理 {obj} 的計時遊戲。",
-                "🚪 怪獸電力公司今天非常忙碌，{charA} 和大眼仔需要把收集好能量的 {obj} 搬到儲藏室。",
-                "🏎️ 賽車跑道上，{charA} 正在與隊友清點賽車維修區需要用到的全新 {obj}，加油！",
-                "🧁 美食總動員！小鼠大廚 {charA} 研發了全新菜單，正在細心地準備美味的 {obj}。",
-                "🚀 飛向宇宙，浩瀚無垠！{charA} 在外太空發現了奇妙的 {obj}，迫不及待地想給 {charB} 看。",
-                "🎸 彈起音樂，唱著歡樂的歌！{charA} 在舞台上表演，台下的 {charB} 揮舞著 {obj} 應援。",
-                "🐠 在美麗的珊瑚礁裡，{charA} 正在尋找閃閃發光的 {obj}，準備裝飾自己的家，{charB} 也來幫忙。",
-                "🎈 房子飛起來了！{charA} 在空中抓住了飄過的 {obj}，送給了同行的 {charB}。",
-                "🧠 腦筋急轉彎！{charA} 正在大腦總部裡整理發光的 {obj}，把最快樂的回憶留給 {charB}。",
-                "🐜 蟲蟲危機解除！{charA} 帶領大家收集了足夠過冬的 {obj}，{charB} 開心地跳起舞來。",
-                "🐼 變身紅熊貓！{charA} 努力控制情緒，深呼吸後把弄亂的 {obj} 整理好，還給了 {charB}。",
-                "🦸‍♂️ 超人出動！{charA} 展現超能力，瞬間收集了散落一地的 {obj}，讓 {charB} 看得目瞪口呆。",
-                "🦕 恐龍當家！{charA} 和好朋友一起在河邊探險，還意外發現了 {obj}，分給了 {charB}。",
-                "🍝 美味大餐！{charA} 在廚房裡忙翻了，用心地準備了滿滿的 {obj} 給 {charB} 品嚐。",
-                "🐀 料理大顯身手！{charA} 完美地處理了 {obj}，讓大家驚艷無比，{charB} 讚不絕口。",
-                "🏎️ 衝過終點線！{charA} 贏得了冠軍，獲得了金光閃閃的 {obj} 作為獎勵，和 {charB} 一起慶祝。",
-                "💀 奇妙的音樂響起！{charA} 循著花瓣，找到了充滿回憶的 {obj}，交給了 {charB}。",
-                "🐻 勇敢傳說！{charA} 在森林裡練習瞄準，百發百中地擊中了目標 {obj}，{charB} 在一旁拍手叫好。",
-                "🎷 爵士俱樂部裡沉醉於音樂，{charA} 手裡還拿著剛找到的 {obj}，準備給 {charB} 一個驚喜。",
-                "🗑️ 在地球上努力清理垃圾，{charA} 把找到的有趣 {obj} 小心翼翼地收藏在箱子裡，要給 {charB} 看。"
-            ],
-            "日本動漫": [
-                "🔥 友情與熱血的冒險開始了！{charA} 和隊友們在森林深處發現了一批珍貴的 {obj}！",
-                "⚽ 充滿朝氣的訓練場上，{charA} 為了即將到來的決賽，正熱情地跟夥伴們一起數著 {obj}。",
-                "🌌 穿越時空的探險！{charA} 與 {charB} 解開了古代謎題，獲得了奇妙的 {obj}！",
-                "🐱 法寶箱又裝滿了！{charA} 正在幫忙清理百寶袋裡各種神奇好玩的 {obj}。",
-                "⚔️ 訓練非常嚴格！{charA} 揮汗如雨地練習，休息時拿出了 {obj} 補充體力，也分給 {charB}。",
-                "🏴‍☠️ 尋找大秘寶！{charA} 在荒島上發現了寶藏，裡面裝滿了 {obj}，開心地和 {charB} 分享。",
-                "🍥 忍者村的麵店大排長龍！{charA} 點了大餐，還加了特大號的 {obj}，跟 {charB} 邊吃邊聊。",
-                "⚡ 十萬伏特！{charA} 在草叢裡探險，成功收集了稀有的 {obj}，{charB} 覺得好酷。",
-                "🚪 神奇的門打開了！{charA} 和朋友們來到了未知的世界，在那裡收集了好多 {obj} 給 {charB} 看。",
-                "🎶 歡樂的歌聲響起！大家都安靜聽著，{charA} 偷偷把 {obj} 放在 {charB} 的口袋裡。",
-                "🌸 夥伴們今天也努力工作！{charA} 獲得了豐厚的報酬 {obj}，開心地請 {charB} 一起慶祝。",
-                "🎒 放學後的空地是大家的秘密基地！{charA} 帶來了最新的 {obj}，和 {charB} 一起分享。",
-                "🐉 召喚奇蹟！{charA} 終於集齊了許願道具，得到了無限的 {obj}，馬上分了一半給 {charB}。",
-                "🚢 登上大船出海！{charA} 在幫忙準備航海的物資，裝滿了一大桶的 {obj}，{charB} 已經迫不及待了。",
-                "🔥 激烈的戰鬥結束！{charA} 成功擊敗了敵人，保護了珍貴的 {obj} 不被搶走，安全交給了 {charB}。",
-                "🚁 飛上天！{charA} 在空中俯瞰城鎮，發現屋頂上竟然有遺失的 {obj}，馬上撿起來還給 {charB}。",
-                "🥊 天下第一武道大會！{charA} 贏得了比賽的冠軍，獲得了豐厚的 {obj}，請 {charB} 吃豪華大餐。",
-                "🎵 音樂演奏會上，{charA} 在旁邊安靜地聽著，手裡拿著準備好的 {obj}，等演奏完送給 {charB}。",
-                "💰 又在炫耀新寶物了！這次是超稀有的 {obj}，{charA} 雖然羨慕，但也拿出了自己的珍藏給 {charB} 看。",
-                "🎤 個人演唱會即將開始！{charA} 為了應援，準備了特別的 {obj}，也順便給了 {charB} 一個。"
-            ]
+            "Sanrio": [ "🌸 春天來了！{charA} 邀請大家來花園野餐，帶了好多 {obj} 想分享給朋友們。", "🎀 驚喜籌備中！{charA} 打算包裝一些精美的 {obj} 送給好朋友 {charB} 當禮物！", "🧁 點心時間到了！派對上需要分配好 {obj}，{charA} 正在努力整理中。", "🌟 星光燦爛的夜晚，{charA} 和 {charB} 在草地上露營，一邊數著發光的 {obj} 一邊聊天。", "🎨 {charA} 和 {charB} 正在參加手工藝比賽，他們各自收集了五顏六色的 {obj} 當作裝飾！", "🎶 歡樂的音樂節快到了，{charA} 準備了特別的 {obj} 送給在台上表演的 {charB}。", "🏖️ 夏天到了！{charA} 在沙灘上堆沙堡，還特地找來 {obj} 點綴，準備給 {charB} 一個驚喜。", "🏡 {charA} 正在打掃房間，在床底下發現了以前收藏的 {obj}，開心地跑去告訴 {charB}。", "🎡 遊樂園裡，{charA} 挑戰了尋寶遊戲，贏得了好多 {obj}，分了一半給 {charB}！", "🍎 秋天到了，{charA} 和 {charB} 去果園幫忙採收，兩人的籃子裡都裝滿了 {obj}。", "🎁 {charA} 舉辦了一場交換禮物派對，大家輪流抽出驚喜的 {obj}，{charB} 期待極了！", "🌧️ 雨天不能出去玩，{charA} 在家裡整理玩具箱，找出了最喜歡的 {obj} 和 {charB} 一起玩。", "🌺 {charA} 的花園開滿了花，他用 {obj} 做成了漂亮的佈置，想要送給最好的朋友 {charB}。", "📸 {charA} 和 {charB} 一起去旅行，拍了好多照片，還買了特別的 {obj} 作為紀念。", "🏃‍♂️ 運動會上，{charA} 賣力地往前跑，為了贏得獎品 {obj}，{charB} 在旁邊大聲加油！", "🍳 {charA} 今天當小幫手，特地為 {charB} 準備了滿滿一籃子的 {obj}。", "🌙 睡覺時間到了，{charA} 聽著床邊故事，看著旁邊放著的 {obj}，安穩地睡著了。", "🎈 派對結束後，{charA} 負責收拾場地，收集了散落一地的 {obj} 交給 {charB} 保管。", "🚂 坐上小火車，{charA} 開心地望著窗外，手裡拿著剛買的 {obj} 準備跟 {charB} 一起分享。", "📚 在圖書館裡，{charA} 找到了一本有趣的故事書，裡面還夾著可愛的 {obj}，趕緊拿給 {charB} 看。" ],
+            "吉卜力": [ "🌳 充滿魔力的森林深處，龍貓的朋友 {charA} 正在收集散落的 {obj}。", "🪙 尋找神祕寶物！{charA} 帶領著無臉男和小煤炭，在溫泉屋裡幫忙點算 {obj} 的數量。", "🚲 陽光明媚的午後，{charA} 和 {charB} 騎著腳踏車去海邊，一路上撿了好多亮晶晶的 {obj}！", "✨ 奇幻大冒險！{charA} 乘著貓巴士出發，這次的任務是要載運珍貴的 {obj} 給好朋友。", "🍃 微風吹過大樹，{charA} 在草叢下發現了閃閃發光的 {obj}，馬上叫 {charB} 來看！", "🧹 魔法修行中！{charA} 騎著掃帚飛過城鎮，幫忙運送重要的 {obj} 給 {charB}。", "💧 雨後的荷葉上，{charA} 收集了晶瑩剔透的雨滴，旁邊還散落著神秘的 {obj}。", "⛰️ 爬上高高的山丘，{charA} 望著遠方的雲海，一邊整理著 {obj}，一邊等著 {charB}。", "🔥 爐火劈啪作響，{charA} 正在溫暖的火爐旁看著 {obj}，神奇的光芒把 {charB} 都吸引過來了。", "🌱 奇妙的種子發芽了！{charA} 每天辛勤澆水，終於收穫了特別的 {obj}，急忙拿給 {charB} 看。", "🌌 滿天星斗的晚上，{charA} 坐在屋頂上，接住了從天而降的 {obj}，把它送給了 {charB}。", "🥖 麵包店剛出爐了新鮮的麵包，{charA} 還順便準備了美味的 {obj}，打算和 {charB} 一起分享。", "🎏 節日祭典上，{charA} 穿著浴衣，在攤位上開心地獲得了 {obj}，並跟 {charB} 炫耀。", "🕰️ 古老的大鐘滴答作響，{charA} 在抽屜裡找到了充滿回憶的 {obj}，想起了和 {charB} 的故事。", "🛤️ 沿著鐵軌一直走，{charA} 在水潭邊撿到了發亮的 {obj}，開心地把它當成禮物送給 {charB}。", "🧶 {charA} 正在認真地打毛線，想要做一個裝滿 {obj} 的小袋子送給怕冷的 {charB}。", "🍯 {charA} 在森林的深處探險，小心翼翼地收集了罕見的 {obj}，準備帶給 {charB}。", "🎐 夏天的風鈴響起，{charA} 坐在走廊上乘涼，一邊看著 {obj}，一邊和 {charB} 聊天。", "🏮 湯屋今天客人好多！{charA} 忙進忙出，整理著一盤又一盤的 {obj}，{charB} 也來幫忙。", "✈️ 乘著滑翔翼飛上天空，{charA} 俯瞰著美麗的大地，口袋裡還裝著要給 {charB} 的 {obj}。" ],
+            "Disney": [ "✨ 奇妙星空下，米奇妙妙屋的夥伴 {charA} 正在準備驚喜嘉年華所需要的 {obj}！", "🎈 歡樂的下午，{charA} 和 {charB} 決定在神奇城堡前，給小夥伴們派發色彩繽紛的 {obj}。", "🍯 森林裡，{charA} 忙碌了一整天，正與好朋友們一起快樂地數著收集到的 {obj}！", "👑 皇家宴會即將開始，{charA} 需要你的聰明智慧，幫忙清點宴會桌上亮麗的 {obj} 數量。", "🎪 馬戲團來了！{charA} 表演了精彩的魔術，變出了好多 {obj}，台下的 {charB} 拍手叫好。", "🚢 坐上大輪船出海冒險！{charA} 在甲板上發現了海盜留下的 {obj}，興奮地告訴了 {charB}。", "🎄 節日到了，{charA} 在樹下放了包裝精美的 {obj}，期待 {charB} 打開時的表情。", "❄️ 下雪了！{charA} 和 {charB} 一起堆雪人，還用 {obj} 幫雪人做了可愛的裝飾。", "🏰 在華麗的城堡裡，{charA} 正在準備舞會，小心翼翼地擺放著閃亮的 {obj}，{charB} 在一旁幫忙。", "🍎 {charA} 在森林裡採集了新鮮的水果，還特地挑選了最好的 {obj} 準備送給 {charB}。", "🎇 迪士尼樂園的煙火好美！{charA} 一邊看著夜空，一邊拿著 {obj}，{charB} 也覺得好開心。", "🛶 划著獨木舟順流而下，{charA} 在河岸邊發現了稀有的 {obj}，立刻划過去跟 {charB} 一起分享。", "👑 戴上皇冠，{charA} 今天是小國王！他大方地把珍貴的 {obj} 分給了所有的好朋友，包括 {charB}。", "🎨 {charA} 拿著畫筆，畫出了美麗的彩虹和閃閃發光的 {obj}，把畫送給了 {charB}。", "🏕️ 森林露營之夜，{charA} 在帳篷旁邊生火，拿出了 {obj}，等著 {charB} 一起過來。", "🚂 嘟嘟！玩具火車出發了，{charA} 把滿載著 {obj} 的車廂推向 {charB}，兩人玩得不亦樂乎。", "🐚 在沙灘上散步，{charA} 撿到了美麗的貝殼和神奇的 {obj}，把它們收集起來送給 {charB}。", "🎠 旋轉木馬轉呀轉，{charA} 開心地笑著，手裡還拿著 {charB} 送他的 {obj}。", "🎃 萬聖節派對！{charA} 打扮成小幽靈，收集了滿滿一袋的 {obj}，分了一半給 {charB}。", "🐾 {charA} 帶著寵物在公園散步，找到了藏在草叢裡的 {obj}，開心地和 {charB} 一起分享。" ],
+            "Marvel": [ "🛡️ 守護和平！復仇者聯盟成員 {charA} 正在整頓裝備，準備出動維護正義。他正在整理 {obj}。", "🕸️ 英雄大作戰！{charA} 與好拍檔 {charB} 為了今晚的巡邏任務，正在快速準備足夠的 {obj}！", "⚡ 守護地球！{charA} 剛從外星回到地球，帶回了充滿神奇能量的 {obj} 要分給盟友們。", "🚀 宇宙守護戰！{charA} 正在神盾局的基地中，幫忙隊長點算防禦用的 {obj} 庫存。", "🦾 實驗室裡，{charA} 正在研發新的高科技裝備，需要用到稀有的 {obj}，{charB} 幫忙找到了很多。", "🌆 城市巡邏中！{charA} 在大樓頂端發現了壞人留下的 {obj}，馬上聯絡 {charB} 來處理。", "🌌 星際探險！{charA} 駕駛太空船來到了新星球，收集了充滿能量的 {obj} 準備帶回給 {charB}。", "🏋️‍♂️ 訓練室裡，{charA} 滿頭大汗地練習，旁邊放著補充體力的 {obj}，{charB} 也加入了一起訓練。", "🍕 拯救世界後肚子餓了！{charA} 準備了豐盛的大餐，還拿出了 {obj}，跟 {charB} 一起分享。", "🛠️ 維修時間到！{charA} 的裝備受損了，他正在尋找備用的 {obj} 來修理，{charB} 也來幫忙找。", "🛸 外星人來襲！{charA} 勇敢地迎戰，用神奇的 {obj} 成功擊退了敵人，{charB} 在一旁歡呼。", "🚁 復仇者大樓的停機坪上，{charA} 正在卸下剛運來的 {obj} 補給品，交接給 {charB}。", "📡 接收到神秘訊號！{charA} 追蹤訊號來源，發現了一個藏滿 {obj} 的秘密基地，馬上通知 {charB}。", "❄️ 極地任務！{charA} 在冰天雪地中尋找失落的 {obj}，任務完成後與 {charB} 成功會合。", "🌋 危險危機！{charA} 冒險進入險境，成功搶救出珍貴的 {obj}，交給了 {charB} 保管。", "🌊 潛入深海！{charA} 在神秘的遺跡中發現了會發光的 {obj}，帶回去給 {charB} 研究。", "🕰️ 穿梭時空！{charA} 執行秘密任務，拿回了關鍵的 {obj}，成功保護了未來，{charB} 鬆了一口氣。", "🎭 變裝潛入！{charA} 換上西裝參加晚宴，暗中獲得了目標物 {obj}，並安全撤退與 {charB} 會合。", "🛡️ 防禦陣線！{charA} 部署了強大的力場，並發放 {obj} 給每一位市民，{charB} 負責指揮疏散。", "🎉 慶功宴！大家舉杯慶祝勝利，{charA} 開心地拿著特別準備的 {obj}，並跟 {charB} 擊掌。" ],
+            "Pixar": [ "🎈 玩具箱大冒險！牛仔 {charA} 邀請太空戰士 {charB} 一起玩整理 {obj} 的計時遊戲。", "🚪 怪獸電力公司今天非常忙碌，{charA} 和大眼仔需要把收集好能量的 {obj} 搬到儲藏室。", "🏎️ 賽車跑道上，{charA} 正在與隊友清點賽車維修區需要用到的全新 {obj}，加油！", "🧁 美食總動員！小鼠大廚 {charA} 研發了全新菜單，正在細心地準備美味的 {obj}。", "🚀 飛向宇宙，浩瀚無垠！{charA} 在外太空發現了奇妙的 {obj}，迫不及待地想給 {charB} 看。", "🎸 彈起音樂，唱著歡樂的歌！{charA} 在舞台上表演，台下的 {charB} 揮舞著 {obj} 應援。", "🐠 在美麗的珊瑚礁裡，{charA} 正在尋找閃閃發光的 {obj}，準備裝飾自己的家，{charB} 也來幫忙。", "🎈 房子飛起來了！{charA} 在空中抓住了飄過的 {obj}，送給了同行的 {charB}。", "🧠 腦筋急轉彎！{charA} 正在大腦總部裡整理發光的 {obj}，把最快樂的回憶留給 {charB}。", "🐜 蟲蟲危機解除！{charA} 帶領大家收集了足夠過冬的 {obj}，{charB} 開心地跳起舞來。", "🐼 變身紅熊貓！{charA} 努力控制情緒，深呼吸後把弄亂的 {obj} 整理好，還給了 {charB}。", "🦸‍♂️ 超人出動！{charA} 展現超能力，瞬間收集了散落一地的 {obj}，讓 {charB} 看得目瞪口呆。", "🦕 恐龍當家！{charA} 和好朋友一起在河邊探險，還意外發現了 {obj}，分給了 {charB}。", "🍝 美味大餐！{charA} 在廚房裡忙翻了，用心地準備了滿滿的 {obj} 給 {charB} 品嚐。", "🐀 料理大顯身手！{charA} 完美地處理了 {obj}，讓大家驚艷無比，{charB} 讚不絕口。", "🏎️ 衝過終點線！{charA} 贏得了冠軍，獲得了金光閃閃的 {obj} 作為獎勵，和 {charB} 一起慶祝。", "💀 奇妙的音樂響起！{charA} 循著花瓣，找到了充滿回憶的 {obj}，交給了 {charB}。", "🐻 勇敢傳說！{charA} 在森林裡練習瞄準，百發百中地擊中了目標 {obj}，{charB} 在一旁拍手叫好。", "🎷 爵士俱樂部裡沉醉於音樂，{charA} 手裡還拿著剛找到的 {obj}，準備給 {charB} 一個驚喜。", "🗑️ 在地球上努力清理垃圾，{charA} 把找到的有趣 {obj} 小心翼翼地收藏在箱子裡，要給 {charB} 看。" ],
+            "日本動漫": [ "🔥 友情與熱血的冒險開始了！{charA} 和隊友們在森林深處發現了一批珍貴的 {obj}！", "⚽ 充滿朝氣的訓練場上，{charA} 為了即將到來的決賽，正熱情地跟夥伴們一起數著 {obj}。", "🌌 穿越時空的探險！{charA} 與 {charB} 解開了古代謎題，獲得了奇妙的 {obj}！", "🐱 法寶箱又裝滿了！{charA} 正在幫忙清理百寶袋裡各種神奇好玩的 {obj}。", "⚔️ 訓練非常嚴格！{charA} 揮汗如雨地練習，休息時拿出了 {obj} 補充體力，也分給 {charB}。", "🏴‍☠️ 尋找大秘寶！{charA} 在荒島上發現了寶藏，裡面裝滿了 {obj}，開心地和 {charB} 分享。", "🍥 忍者村的麵店大排長龍！{charA} 點了大餐，還加了特大號的 {obj}，跟 {charB} 邊吃邊聊。", "⚡ 十萬伏特！{charA} 在草叢裡探險，成功收集了稀有的 {obj}，{charB} 覺得好酷。", "🚪 神奇的門打開了！{charA} 和朋友們來到了未知的世界，在那裡收集了好多 {obj} 給 {charB} 看。", "🎶 歡樂的歌聲響起！大家都安靜聽著，{charA} 偷偷把 {obj} 放在 {charB} 的口袋裡。", "🌸 夥伴們今天也努力工作！{charA} 獲得了豐厚的報酬 {obj}，開心地請 {charB} 一起慶祝。", "🎒 放學後的空地是大家的秘密基地！{charA} 帶來了最新的 {obj}，和 {charB} 一起分享。", "🐉 召喚奇蹟！{charA} 終於集齊了許願道具，得到了無限的 {obj}，馬上分了一半給 {charB}。", "🚢 登上大船出海！{charA} 在幫忙準備航海的物資，裝滿了一大桶的 {obj}，{charB} 已經迫不及待了。", "🔥 激烈的戰鬥結束！{charA} 成功擊敗了敵人，保護了珍貴的 {obj} 不被搶走，安全交給了 {charB}。", "🚁 飛上天！{charA} 在空中俯瞰城鎮，發現屋頂上竟然有遺失的 {obj}，馬上撿起來還給 {charB}。", "🥊 天下第一武道大會！{charA} 贏得了比賽的冠軍，獲得了豐厚的 {obj}，請 {charB} 吃豪華大餐。", "🎵 音樂演奏會上，{charA} 在旁邊安靜地聽著，手裡拿著準備好的 {obj}，等演奏完送給 {charB}。", "💰 又在炫耀新寶物了！這次是超稀有的 {obj}，{charA} 雖然羨慕，但也拿出了自己的珍藏給 {charB} 看。", "🎤 個人演唱會即將開始！{charA} 為了應援，準備了特別的 {obj}，也順便給了 {charB} 一個。" ]
         };
 
         const themeBackgrounds = {
@@ -610,29 +483,33 @@
             "吉卜力": "https://media.craiyon.com/2025-07-22/ykX-ulLWQgaWQEJOOxQNhg.webp",
             "Disney": "https://wallpapercave.com/wp/wp3287533.jpg",
             "Marvel": "https://www.pixelstalk.net/wp-content/uploads/2016/04/Free-avengers-backgrounds.jpg",
-            // 效能優化 2：將原本 Pixar 極大尺寸圖片替換為最合適、同樣高清但經過優化的圖片
             "Pixar": "https://images.alphacoders.com/272/272314.jpg",
             "日本動漫": "https://chinesedora.com/news/wp-content/uploads/2020/05/1920x1080.jpg?v=1705476043"
         };
 
-        // 效能優化 3：主題專屬後備漸變背景。當網絡慢或加載圖片時，先呈現優雅的主題顏色過渡
         const themePlaceholders = {
-            "Sanrio": "linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)",      // 粉色系
-            "吉卜力": "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",      // 溫馨黃色系
-            "Disney": "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)",      // 夢幻藍色系
-            "Marvel": "linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%)",      // 熱血紅色系
-            "Pixar": "linear-gradient(135deg, #fef08a 0%, #fef08a 100%)",       // 活力亮黃色系
-            "日本動漫": "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)"     // 藍綠草地系
+            "Sanrio": "linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)",
+            "吉卜力": "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
+            "Disney": "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)",
+            "Marvel": "linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%)",
+            "Pixar": "linear-gradient(135deg, #fef08a 0%, #fef08a 100%)",
+            "日本動漫": "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)"
         };
 
         let charA, charB, obj, valX, valY, valAns, difficulty;
         let correctMoreLess, correctOp;
         let sequence = [], currentStepIndex = 0, currentInputVal = "";
+        
+        // 防連點標記 (自動送出用)
+        let isSubmitting = false;
 
-        // 闖關模式相關變數
-        let currentMode = 'free'; // 'free' 自由練習, 'story' 故事闖關
-        let currentLevel = 1;     // 目前關卡 1-10
-        let storyProgress = [];   // 用於儲存 10 關的星星狀態 [true, false, ...]
+        // 模式與計分變數
+        let currentMode = 'time'; // 'time' 60秒挑戰, 'story' 故事闖關
+        let currentLevel = 1;
+        let storyProgress = [];
+        let score = 0;
+        let timer = 0;
+        let timerInterval = null;
 
         const moreLabel = '<ruby>多<rt>more</rt></ruby>';
         const lessLabel = '<ruby>少<rt>less</rt></ruby>';
@@ -641,79 +518,124 @@
             return arr[Math.floor(Math.random() * arr.length)];
         }
 
-        // 更新提示文字狀態
         function updateHintLabel() {
             SoundManager.click();
             const toggle = document.getElementById('hintToggle');
             const labelText = document.getElementById('hintStatusText');
             if (toggle.checked) {
                 labelText.innerText = '開啟';
-                labelText.className = 'text-xl font-bold text-green-600 ml-1 w-12';
+                labelText.className = 'text-xl font-bold text-green-700 ml-1 w-12 text-shadow-sm';
             } else {
                 labelText.innerText = '關閉';
-                labelText.className = 'text-xl font-bold text-gray-400 ml-1 w-12';
+                labelText.className = 'text-xl font-bold text-gray-500 ml-1 w-12 text-shadow-sm';
             }
         }
 
-        // 切換遊戲模式
         function switchMode(mode) {
             SoundManager.click();
             currentMode = mode;
-            const freeBtn = document.getElementById("modeFreeBtn");
+            const timeBtn = document.getElementById("modeTimeBtn");
             const storyBtn = document.getElementById("modeStoryBtn");
             const progressContainer = document.getElementById("storyProgressContainer");
 
-            if (mode === 'free') {
-                freeBtn.className = "text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 bg-white text-green-700 shadow-md";
-                storyBtn.className = "text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 text-slate-500 hover:text-slate-800";
+            if (mode === 'time') {
+                timeBtn.className = "text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 bg-white/90 text-green-700 shadow-md";
+                storyBtn.className = "text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 text-slate-600 hover:text-slate-800";
                 progressContainer.classList.add("hidden");
                 document.getElementById("storyCard").classList.add("hidden");
             } else {
-                storyBtn.className = "text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 bg-white text-green-700 shadow-md";
-                freeBtn.className = "text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 text-slate-500 hover:text-slate-800";
+                storyBtn.className = "text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 bg-white/90 text-green-700 shadow-md";
+                timeBtn.className = "text-lg md:text-xl font-black px-6 py-2.5 rounded-xl transition duration-200 text-slate-600 hover:text-slate-800";
                 progressContainer.classList.remove("hidden");
-                // 初始化 10 關
-                currentLevel = 1;
-                storyProgress = Array(10).fill(false);
-                updateStoryProgressUI();
             }
-            startGame();
+            initGame();
         }
 
-        // 下拉選單更變時觸發重新開始
         function onSettingChange() {
             SoundManager.click();
+            initGame();
+        }
+
+        // --- 計時與計分模塊 ---
+        function startTimer() {
+            clearInterval(timerInterval);
+            if (currentMode === 'time') {
+                // 難度為「難」時 240 秒，否則 60 秒
+                timer = difficulty === '難' ? 240 : 60; 
+            } else {
+                timer = 0;  // 故事模式正數計時
+            }
+            updateTimerUI();
+            
+            timerInterval = setInterval(() => {
+                if (currentMode === 'time') {
+                    timer--;
+                    if (timer <= 0) {
+                        timer = 0;
+                        endGame(); // 時間到
+                    }
+                } else {
+                    timer++;
+                }
+                updateTimerUI();
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            let m = Math.floor(timer / 60).toString().padStart(2, '0');
+            let s = (timer % 60).toString().padStart(2, '0');
+            document.getElementById('timerDisplay').innerText = `⏱️ ${m}:${s}`;
+            
+            if (currentMode === 'time' && timer <= 10) {
+                document.getElementById('timerDisplay').classList.add('text-red-600', 'animate-pulse');
+            } else {
+                document.getElementById('timerDisplay').classList.remove('text-red-600', 'animate-pulse');
+            }
+        }
+
+        function addScore(points) {
+            score += points;
+            const display = document.getElementById('scoreDisplay');
+            display.innerText = `🌟 分數: ${score}`;
+            display.classList.add('scale-110');
+            setTimeout(() => display.classList.remove('scale-110'), 200);
+        }
+
+        // 初始化一場完整的遊戲 (會重置分數與計時)
+        function initGame() {
+            // 提早取得難度以更新 UI 與計時器
+            difficulty = document.getElementById("diffSelect").value;
+            const timeStr = difficulty === '難' ? '240秒挑戰' : '60秒挑戰';
+            document.getElementById("modeTimeBtn").innerText = `⏱️ ${timeStr}`;
+            document.getElementById("tabTimeLB").innerText = timeStr;
+
+            score = 0;
+            document.getElementById('scoreDisplay').innerText = `🌟 分數: 0`;
+            document.getElementById("gameOverModal").classList.add("hidden");
+            
             if (currentMode === 'story') {
                 currentLevel = 1;
                 storyProgress = Array(10).fill(false);
                 updateStoryProgressUI();
             }
+            startTimer();
             startGame();
         }
 
-        // 產生溫馨背景故事文字
         function generateStoryText(themeKey, charA, charB, obj) {
             const templates = storyTemplates[themeKey];
-            let rawTemplate = "";
-            if (Array.isArray(templates)) {
-                rawTemplate = getRandom(templates);
-            } else {
-                rawTemplate = "🌟 {charA} 和 {charB} 正在高興地數著手中的 {obj}，大家一起來幫忙算算看吧！";
-            }
+            let rawTemplate = Array.isArray(templates) ? getRandom(templates) : "🌟 {charA} 和 {charB} 正在高興地數著手中的 {obj}，大家一起來幫忙算算看吧！";
             return rawTemplate
                 .replace(/{charA}/g, `<span class='text-red-600 font-extrabold'>${charA}</span>`)
                 .replace(/{charB}/g, `<span class='text-blue-600 font-extrabold'>${charB}</span>`)
                 .replace(/{obj}/g, `<span class='text-orange-600 font-extrabold'>${obj}</span>`);
         }
 
-        // 開始新一局遊戲/關卡
+        // 開始新一題
         function startGame() {
-            // 嘗試初始化音效（確保按鈕點擊後能發聲）
             SoundManager.init();
 
             const themeKey = document.getElementById("themeSelect").value;
-            
-            // 效能優化 4：漸進式載入圖片。先瞬間顯示特製的後備主題色彩漸變，再於後台異步載入背景大圖
             const placeholderGradient = themePlaceholders[themeKey] || "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)";
             document.body.style.backgroundImage = `linear-gradient(rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.65)), ${placeholderGradient}`;
             
@@ -722,7 +644,6 @@
                 const bgLoader = new Image();
                 bgLoader.src = backgroundImageUrl;
                 bgLoader.onload = () => {
-                    // 下載成功後，再無縫平滑過渡成真實大背景圖
                     document.body.style.backgroundImage = `linear-gradient(rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.65)), url('${backgroundImageUrl}')`;
                 };
             }
@@ -730,7 +651,6 @@
             difficulty = document.getElementById("diffSelect").value;
             const theme = themesData[themeKey];
 
-            // 確保角色與物品不重複
             let chars = [...theme.chars];
             charA = getRandom(chars);
             chars = chars.filter(c => c !== charA);
@@ -740,40 +660,28 @@
             obj = selectedObj.name;
             let unit = selectedObj.unit;
 
-            // 隨機題型
             let qType = Math.floor(Math.random() * 4);
-            valY = Math.floor(Math.random() * 500) + 1; // 相差值
-            valX = Math.floor(Math.random() * 500) + 501; // 基數 A
+            valY = Math.floor(Math.random() * 500) + 1;
+            valX = Math.floor(Math.random() * 500) + 501;
 
             let questionHTML = "";
-            
-            // 重要：無論題目敘述順序，作答區引導永遠是 B 比 A
             switch(qType) {
-                case 0: // A有X, A比B多Y -> B比A少Y, B=X-Y
+                case 0:
                     questionHTML = `<span class="text-red-600">${charA}</span>有 ${valX} ${unit} ${obj}，<br><span class="text-red-600">${charA}</span>比 <span class="text-blue-600">${charB}</span>${moreLabel} ${valY} ${unit}，<br><span class="text-blue-600">${charB}</span>有多少${unit} ${obj}？`;
-                    valAns = valX - valY;
-                    correctMoreLess = "少"; correctOp = "-";
-                    break;
-                case 1: // A有X, A比B少Y -> B比A多Y, B=X+Y
+                    valAns = valX - valY; correctMoreLess = "少"; correctOp = "-"; break;
+                case 1:
                     questionHTML = `<span class="text-red-600">${charA}</span>有 ${valX} ${unit} ${obj}，<br><span class="text-red-600">${charA}</span>比 <span class="text-blue-600">${charB}</span>${lessLabel} ${valY} ${unit}，<br><span class="text-blue-600">${charB}</span>有多少${unit} ${obj}？`;
-                    valAns = valX + valY;
-                    correctMoreLess = "多"; correctOp = "+";
-                    break;
-                case 2: // A有X, B比A多Y -> B比A多Y, B=X+Y
+                    valAns = valX + valY; correctMoreLess = "多"; correctOp = "+"; break;
+                case 2:
                     questionHTML = `<span class="text-red-600">${charA}</span>有 ${valX} ${unit} ${obj}，<br><span class="text-blue-600">${charB}</span>比 <span class="text-red-600">${charA}</span>${moreLabel} ${valY} ${unit}，<br><span class="text-blue-600">${charB}</span>有多少${unit} ${obj}？`;
-                    valAns = valX + valY;
-                    correctMoreLess = "多"; correctOp = "+";
-                    break;
-                case 3: // A有X, B比A少Y -> B比A少Y, B=X-Y
+                    valAns = valX + valY; correctMoreLess = "多"; correctOp = "+"; break;
+                case 3:
                     questionHTML = `<span class="text-red-600">${charA}</span>有 ${valX} ${unit} ${obj}，<br><span class="text-blue-600">${charB}</span>比 <span class="text-red-600">${charA}</span>${lessLabel} ${valY} ${unit}，<br><span class="text-blue-600">${charB}</span>有多少${unit} ${obj}？`;
-                    valAns = valX - valY;
-                    correctMoreLess = "少"; correctOp = "-";
-                    break;
+                    valAns = valX - valY; correctMoreLess = "少"; correctOp = "-"; break;
             }
 
             document.getElementById("qText").innerHTML = questionHTML;
             
-            // 處理故事內容顯示
             if (currentMode === 'story') {
                 document.getElementById("storyText").innerHTML = generateStoryText(themeKey, charA, charB, obj);
                 document.getElementById("storyCard").classList.remove("hidden");
@@ -782,7 +690,6 @@
                 document.getElementById("storyCard").classList.add("hidden");
             }
 
-            // 設定步驟文字（固定的對比邏輯）
             document.getElementById("iCharA_Step1").innerText = charA;
             document.getElementById("iCharB_Step2").innerText = charB;
             document.getElementById("iCharA_Step2").innerText = charA;
@@ -800,7 +707,6 @@
             document.getElementById("numpad").classList.remove("hidden");
         }
 
-        // 更新故事模式的星星進度 UI
         function updateStoryProgressUI() {
             document.getElementById("progressText").innerText = `第 ${currentLevel} / 10 關`;
             const starsContainer = document.getElementById("starsProgress");
@@ -822,20 +728,15 @@
         }
 
         function buildSequence() {
-            // 檢查提示是否開啟
             let hintOn = document.getElementById("hintToggle").checked;
             sequence = [];
 
             if (hintOn) {
-                // 如果開啟提示，加入拆解步驟
-                // 1. A有 [輸入數量]
                 sequence.push({ id: 'box_valA_S1', type: 'num', target: valX, showId: 'step1' });
-                // 2. B 比 A [選多/少] [輸入數量]
                 sequence.push({ id: 'btnGroup_moreless', type: 'choice', target: correctMoreLess, showId: 'step2' });
                 sequence.push({ id: 'box_diff_S2', type: 'num', target: valY, showId: 'box_diff_S2_container' });
             }
 
-            // 3. B : [輸入A量] [選+/-] [輸入相差量] = [輸入答案]
             sequence.push({ id: 'box_valA_S3', type: 'num', target: valX, showId: 'step3' });
             sequence.push({ id: 'btnGroup_op', type: 'choice', target: correctOp, showId: 'step3' });
             sequence.push({ id: 'box_valDiff_S3', type: 'num', target: valY, showId: 'step3' });
@@ -871,13 +772,27 @@
             }
         }
 
+        // 改良版 inputNum: 加入智能自動送出邏輯
         function inputNum(n) {
+            if (isSubmitting) return; // 避免連點引發多次送出
             let step = sequence[currentStepIndex];
             if (!step || step.type !== 'num') return;
+            
             SoundManager.click();
-            if (currentInputVal.length < 4) {
+            let targetStr = step.target.toString();
+
+            if (currentInputVal.length < targetStr.length) {
                 currentInputVal += n;
                 document.getElementById(step.id).innerText = currentInputVal;
+            }
+
+            // 判斷是否需要自動送出 (1. 答案完全正確, 或 2. 長度達標但不正確，讓它自動判定錯誤)
+            if (currentInputVal === targetStr) {
+                isSubmitting = true;
+                setTimeout(() => { isSubmitting = false; submitNum(); }, 150);
+            } else if (currentInputVal.length >= targetStr.length) {
+                isSubmitting = true;
+                setTimeout(() => { isSubmitting = false; submitNum(); }, 150);
             }
         }
 
@@ -889,6 +804,7 @@
             document.getElementById(step.id).innerText = "";
         }
 
+        // submitNum 現可由自動偵測觸發，或手動點擊「確定」
         function submitNum() {
             let step = sequence[currentStepIndex];
             if (!step || step.type !== 'num') return;
@@ -898,12 +814,14 @@
 
             if (inputNumVal === step.target) {
                 SoundManager.correct();
+                addScore(10); // 答對一個步驟加 10 分
                 box.classList.remove("active");
                 box.classList.add("correct");
-                // 檢查是否標記 ✅
+                
                 if (step.id === 'box_valA_S1') document.getElementById('mark_s1').classList.remove('hidden');
                 if (step.id === 'box_diff_S2') document.getElementById('mark_s2').classList.remove('hidden');
                 if (step.id === 'box_ans') document.getElementById('mark_ans').classList.remove('hidden');
+                
                 nextStep(step);
             } else {
                 SoundManager.wrong();
@@ -921,6 +839,7 @@
 
             if (val === step.target) {
                 SoundManager.correct();
+                addScore(10); // 答對選擇題加 10 分
                 container.classList.remove("active-choice");
                 buttons.forEach(btn => {
                     if (btn.innerText.includes(val) || btn.innerText === val) {
@@ -944,7 +863,6 @@
         function nextStep(currentStep) {
             currentStepIndex++;
             if (currentStep.isLast) {
-                // 關卡答對處理
                 document.getElementById("numpad").style.opacity = "0.5";
                 document.getElementById("numpad").style.pointerEvents = "none";
                 
@@ -955,57 +873,47 @@
                     document.getElementById('mark_ans').classList.remove('hidden');
                 }
 
-                if (currentMode === 'free') {
-                    // 自由模式直接顯示完成字樣
+                // 答對整題加 100 分
+                addScore(100);
+
+                if (currentMode === 'time') {
                     document.getElementById("successMessage").classList.remove("hidden");
+                    // 計時挑戰：1秒後自動進下一題，爭取時間
+                    setTimeout(() => {
+                        if (timer > 0) startGame();
+                    }, 1000);
                 } else {
-                    // 故事模式
                     storyProgress[currentLevel - 1] = true;
                     updateStoryProgressUI();
-                    
-                    // 彈出精美鼓勵 Modal
-                    showClearModal();
+                    if (currentLevel < 10) {
+                        showClearModal();
+                    } else {
+                        endGame(); // 故事通關
+                    }
                 }
             } else {
                 activateStep();
             }
         }
 
-        // 顯示過關 Modal 鼓勵
         function showClearModal() {
             SoundManager.clear();
             const modal = document.getElementById("levelClearModal");
             const txt = document.getElementById("modalEncourageText");
-            
-            // 針對 10 關提供隨機鼓勵字眼
-            const encourages = [
-                "好棒喔！成功挑戰第 " + currentLevel + " 關！",
-                "你太厲害了！離通關又近了一步！",
-                "真聰明！繼續保持！加油！",
-                "卡通夥伴們都為你歡呼呢！",
-                "答題速度真快！你是數學小天才！"
-            ];
+            const encourages = ["好棒喔！成功挑戰第 " + currentLevel + " 關！", "你太厲害了！離通關又近了一步！", "真聰明！繼續保持！加油！", "卡通夥伴們都為你歡呼呢！", "答題速度真快！你是數學小天才！"];
             txt.innerText = getRandom(encourages);
             modal.classList.remove("hidden");
-            
-            // 小飄落特效
             triggerConfettiEffect(25);
         }
 
         function closeClearModal() {
             SoundManager.click();
             document.getElementById("levelClearModal").classList.add("hidden");
-            
             if (currentLevel < 10) {
-                // 顯示「進入下一關」大按鈕
                 document.getElementById("nextLevelContainer").classList.remove("hidden");
-            } else {
-                // 通關 10 關，大結算！
-                showUltimateChampion();
             }
         }
 
-        // 點擊前往下一關
         function goToNextLevel() {
             SoundManager.click();
             document.getElementById("nextLevelContainer").classList.add("hidden");
@@ -1013,24 +921,149 @@
             startGame();
         }
 
-        // 終極大通關！
-        function showUltimateChampion() {
+        // --- 遊戲結束與結算 ---
+        function endGame() {
+            clearInterval(timerInterval);
             SoundManager.champion();
-            document.getElementById("ultimateChampionCard").classList.remove("hidden");
-            // 大量滿屏彩帶特效！
-            triggerConfettiEffect(150);
             
-            // 隔2秒再灑一次
-            setTimeout(() => {
-                triggerConfettiEffect(100);
-            }, 1500);
+            // 故事模式通關有時間獎勵 (越快越高分，每秒扣 5 分，滿分 3000)
+            if (currentMode === 'story') {
+                let timeBonus = Math.max(0, 3000 - (timer * 5));
+                addScore(timeBonus);
+                document.getElementById("endTitle").innerText = "恭喜完成 10 關大挑戰！";
+                document.getElementById("endIcon").innerText = "🏆";
+                triggerConfettiEffect(150);
+                setTimeout(() => triggerConfettiEffect(100), 1500);
+            } else {
+                document.getElementById("endTitle").innerText = "時間到！";
+                document.getElementById("endIcon").innerText = "⏱️";
+            }
+            
+            document.getElementById("finalScoreText").innerText = score;
+            document.getElementById("gameOverModal").classList.remove("hidden");
         }
 
-        // 七彩紙屑飄落動態效果
+        // --- 排行榜儲存與顯示 (整合 Firebase) ---
+        async function submitScoreAndShowLB() {
+            SoundManager.click();
+            let name = document.getElementById("playerNameInput").value.trim();
+            if (!name) name = "無名英雄";
+            
+            // 將不同難度分開儲存，確保排行榜公平
+            difficulty = document.getElementById("diffSelect").value;
+            let storageKey = `leaderboard_${currentMode}_${difficulty === '難' ? 'hard' : 'easy'}`;
+            
+            // 替換原本的 localStorage，改為儲存到個人的 Firebase 資料庫
+            try {
+                // 將成績加入對應的 collection，不處理排序，讓讀取端以 JavaScript 統一處理（避免建立索引報錯）
+                await db.collection(storageKey).add({
+                    name: name,
+                    score: score,
+                    date: new Date().toLocaleDateString(),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (error) {
+                console.error("寫入 Firebase 失敗：", error);
+            }
+            
+            document.getElementById("gameOverModal").classList.add("hidden");
+            
+            // 清空輸入框
+            document.getElementById("playerNameInput").value = "";
+            
+            showLeaderboardModal(currentMode);
+        }
+
+        function showLeaderboardModal(activeTab = 'time') {
+            SoundManager.click();
+            document.getElementById("leaderboardModal").classList.remove("hidden");
+            renderLeaderboard(activeTab);
+        }
+
+        function closeLeaderboardModal() {
+            SoundManager.click();
+            document.getElementById("leaderboardModal").classList.add("hidden");
+        }
+
+        async function renderLeaderboard(tab) {
+            SoundManager.click();
+            
+            // 獲取當前難度來更新頁籤文字
+            difficulty = document.getElementById("diffSelect").value;
+            const timeStr = difficulty === '難' ? '240秒挑戰' : '60秒挑戰';
+            const tabTimeLB = document.getElementById("tabTimeLB");
+            const tabStoryLB = document.getElementById("tabStoryLB");
+            
+            tabTimeLB.innerText = timeStr;
+
+            // 切換頁籤視覺
+            if (tab === 'time') {
+                tabTimeLB.className = "flex-1 py-2 text-lg font-bold rounded-lg bg-white shadow text-purple-700 transition";
+                tabStoryLB.className = "flex-1 py-2 text-lg font-bold rounded-lg text-slate-500 hover:text-slate-800 transition";
+            } else {
+                tabStoryLB.className = "flex-1 py-2 text-lg font-bold rounded-lg bg-white shadow text-purple-700 transition";
+                tabTimeLB.className = "flex-1 py-2 text-lg font-bold rounded-lg text-slate-500 hover:text-slate-800 transition";
+            }
+
+            const listEl = document.getElementById("leaderboardList");
+            listEl.innerHTML = "<li class='text-center py-6 text-gray-500 font-bold'>正在從雲端載入數據...</li>";
+
+            // 讀取數據：依據不同難度從個人的 Firebase 資料庫讀取
+            let storageKey = `leaderboard_${tab}_${difficulty === '難' ? 'hard' : 'easy'}`;
+            let lb = [];
+            
+            try {
+                // 取出該集合內的所有資料
+                const snapshot = await db.collection(storageKey).get();
+                snapshot.forEach(doc => {
+                    lb.push(doc.data());
+                });
+
+                // 取出後，在前端 JavaScript 進行分數由高到低的排序（避免未設置 Firebase 複合索引而報錯）
+                lb.sort((a, b) => b.score - a.score);
+                lb = lb.slice(0, 10); // 只保留前 10 名
+                
+            } catch (error) {
+                console.error("從 Firebase 讀取失敗：", error);
+                listEl.innerHTML = "<li class='text-center py-6 text-red-500 font-bold'>載入失敗，請檢查網絡。</li>";
+                return;
+            }
+
+            listEl.innerHTML = "";
+
+            if (lb.length === 0) {
+                listEl.innerHTML = "<li class='text-center py-6 text-gray-500 font-bold'>目前尚無紀錄，快來挑戰吧！</li>";
+                return;
+            }
+
+            // 渲染前 10 名
+            lb.forEach((entry, index) => {
+                let badge = "";
+                if (index === 0) badge = "🥇";
+                else if (index === 1) badge = "🥈";
+                else if (index === 2) badge = "🥉";
+                else badge = `<span class="inline-block w-6 text-center text-gray-400">${index + 1}</span>`;
+
+                const li = document.createElement("li");
+                li.className = "flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200";
+                li.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">${badge}</span>
+                        <span class="font-bold text-gray-800 text-lg">${entry.name}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-black text-orange-500 text-xl">${entry.score} 分</span>
+                        <div class="text-xs text-gray-400">${entry.date}</div>
+                    </div>
+                `;
+                listEl.appendChild(li);
+            });
+        }
+
+        // 煙火特效
         function triggerConfettiEffect(count) {
             const container = document.getElementById("celebrationContainer");
             const colors = ['#f43f5e', '#ec4899', '#d946ef', '#a855f7', '#8b5cf6', '#6366f1', '#3b82f6', '#0ea5e9', '#10b981', '#f59e0b', '#f97316'];
-            
             for (let i = 0; i < count; i++) {
                 const conf = document.createElement("div");
                 conf.className = "confetti";
@@ -1040,11 +1073,7 @@
                 conf.style.animationDuration = (Math.random() * 2 + 2) + "s";
                 conf.style.borderRadius = Math.random() > 0.5 ? "50%" : "0";
                 container.appendChild(conf);
-
-                // 4秒後自動銷毀
-                setTimeout(() => {
-                    conf.remove();
-                }, 4000);
+                setTimeout(() => conf.remove(), 4000);
             }
         }
 
@@ -1053,13 +1082,8 @@
             currentInputVal = "";
             document.getElementById("successMessage").classList.add("hidden");
             document.getElementById("nextLevelContainer").classList.add("hidden");
-            document.getElementById("ultimateChampionCard").classList.add("hidden");
 
-            // 效能優化 5：避免冗長的重複語法宣告，改用效能最佳的簡單 for 迴圈
-            const elementsToHide = [
-                'step1', 'step2', 'step3', 'box_diff_S2_container', 
-                'mark_s1', 'mark_s2', 'mark_ans', 'text_ans', 'box_ans'
-            ];
+            const elementsToHide = ['step1', 'step2', 'step3', 'box_diff_S2_container', 'mark_s1', 'mark_s2', 'mark_ans', 'text_ans', 'box_ans'];
             for (let i = 0; i < elementsToHide.length; i++) {
                 const el = document.getElementById(elementsToHide[i]);
                 if (el) el.classList.add("hidden");
@@ -1081,7 +1105,7 @@
         }
 
         window.onload = () => {
-            switchMode('free'); // 預設進來是自由練習
+            switchMode('time'); // 預設進來是60秒挑戰
         };
     </script>
 </body>
