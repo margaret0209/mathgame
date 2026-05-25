@@ -205,7 +205,7 @@
 
   <!-- 底部可愛宣告 -->
   <footer class="text-center mt-12 text-[#8C5D3A]/60 font-bold text-sm">
-    🎈 專為小學一、二年級打造的硬幣學習樂園 🎈
+    🎈 硬幣學習樂園 🎈
   </footer>
 
   <!-- 音效與音頻模擬機制 (Web Audio API) -->
@@ -218,6 +218,61 @@
     };
 
     const COIN_VALUES = [1, 2, 5, 10];
+
+    // 51 種可愛貨品中央資料庫
+    const TOY_DATABASE = [
+      { name: "棒棒糖", emoji: "🍭" },
+      { name: "香甜冰淇淋", emoji: "🍦" },
+      { name: "草莓甜甜圈", emoji: "🍩" },
+      { name: "巧克力磚", emoji: "🍫" },
+      { name: "鮮奶油小蛋糕", emoji: "🍰" },
+      { name: "Ｑ彈布丁", emoji: "🍮" },
+      { name: "繽紛糖果", emoji: "🍬" },
+      { name: "巧克力曲奇", emoji: "🍪" },
+      { name: "蜂蜜罐", emoji: "🍯" },
+      { name: "紅草莓", emoji: "🍓" },
+      { name: "小櫻桃", emoji: "🍒" },
+      { name: "水蜜桃", emoji: "🍑" },
+      { name: "哈密瓜", emoji: "🍈" },
+      { name: "香蕉", emoji: "🍌" },
+      { name: "爆米花", emoji: "🍿" },
+      { name: "熱帶果汁", emoji: "🍹" },
+      { name: "泰迪熊玩偶", emoji: "🧸" },
+      { name: "發光小汽車", emoji: "🚗" },
+      { name: "神奇氣球", emoji: "🎈" },
+      { name: "彩色蠟筆", emoji: "🖍️" },
+      { name: "童話故事書", emoji: "📖" },
+      { name: "彩色積木", emoji: "🧱" },
+      { name: "小恐龍玩具", emoji: "🦖" },
+      { name: "魔術方塊", emoji: "🧩" },
+      { name: "彩虹飛盤", emoji: "🥏" },
+      { name: "小飛機模型", emoji: "✈️" },
+      { name: "小木船", emoji: "⛵" },
+      { name: "帥氣腳踏車", emoji: "🚲" },
+      { name: "復古玩具相機", emoji: "📷" },
+      { name: "神奇吹泡泡", emoji: "🫧" },
+      { name: "水果橡皮擦", emoji: "🧼" },
+      { name: "精緻鉛筆盒", emoji: "✏️" },
+      { name: "彩色小風車", emoji: "🎡" },
+      { name: "玩具小鋼琴", emoji: "🎹" },
+      { name: "旋轉木馬音樂盒", emoji: "🎠" },
+      { name: "玩具皇冠", emoji: "👑" },
+      { name: "星星魔法棒", emoji: "🪄" },
+      { name: "金色小鈴鐺", emoji: "🔔" },
+      { name: "探險放大鏡", emoji: "🔍" },
+      { name: "彩色熊軟糖", emoji: "🐻" },
+      { name: "招財貓公仔", emoji: "🐱" },
+      { name: "哈士奇玩偶", emoji: "🐶" },
+      { name: "粉紅小兔氣球", emoji: "🐰" },
+      { name: "迷你雪人公仔", emoji: "⛄" },
+      { name: "閃亮愛心貼紙", emoji: "💖" },
+      { name: "幸運小金星", emoji: "⭐" },
+      { name: "彩虹拱橋玩具", emoji: "🌈" },
+      { name: "玩具吉他", emoji: "🎸" },
+      { name: "發光機器人", emoji: "🤖" },
+      { name: "天文望遠鏡", emoji: "🔭" },
+      { name: "珍奶磁鐵", emoji: "🧋" }
+    ];
 
     let currentMode = 'match';
     let score = 0;
@@ -269,10 +324,8 @@
     function toggleHint() {
       hintEnabled = document.getElementById('hintToggle').checked;
       renderHint();
-      
       renderGame();
       
-      // 中高階模式，切換提示時進行條件審核
       if (hintEnabled && ['pay_medium', 'pay_hard'].includes(currentMode)) {
         if (paidAmount === currentQuestionData.targetValue && !isAnsweredCorrectly) {
           handleSuccess();
@@ -358,17 +411,22 @@
         currentQuestionData = { targetValue: count };
       } else if (currentMode === 'pay_easy') {
         const val = COIN_VALUES[Math.floor(Math.random() * COIN_VALUES.length)];
-        const items = [
-          { name: "糖果 🍬", price: 1 }, { name: "布丁 🍮", price: 2 },
-          { name: "冰淇淋 🍦", price: 5 }, { name: "小熊氣球 🎈", price: 10 }
-        ];
-        const item = items.find(i => i.price === val);
-        currentQuestionData = { targetValue: val, itemName: item.name };
+        // 從 51 種可愛貨品中隨機挑選一件
+        const randomItem = TOY_DATABASE[Math.floor(Math.random() * TOY_DATABASE.length)];
+        currentQuestionData = { 
+          targetValue: val, 
+          itemName: randomItem.name, 
+          itemEmoji: randomItem.emoji 
+        };
       } else if (currentMode === 'pay_medium' || currentMode === 'pay_hard') {
         const price = Math.floor(Math.random() * 10) + 1;
-        const toyItems = ["小汽車 🚗", "可愛洋娃娃 🧸", "彩色蠟筆 🖍️", "橡皮擦 🧼", "童話故事書 📖", "水果棒棒糖 🍭", "積木城堡 🧱", "恐龍玩具 🦖", "美味甜甜圈 🍩", "神奇魔術方塊 🧩"];
-        const name = toyItems[price - 1];
-        currentQuestionData = { targetValue: price, itemName: name };
+        // 從 51 種可愛貨品中隨機挑選一件
+        const randomItem = TOY_DATABASE[Math.floor(Math.random() * TOY_DATABASE.length)];
+        currentQuestionData = { 
+          targetValue: price, 
+          itemName: randomItem.name, 
+          itemEmoji: randomItem.emoji 
+        };
       }
 
       renderGame();
@@ -485,15 +543,15 @@
         case 'pay_medium':
           title.textContent = "🛒 買東西付零錢 (中階)";
           desc.textContent = hintEnabled ? 
-            `請將 1 元硬幣【拖曳】到籃子裡，累計付足 $${currentQuestionData.targetValue}！` : 
-            `無提示挑戰！請自行點算籃內硬幣，確認無誤後點擊「確認付款」。`;
+            `請將 1 元硬幣【拖曳】到籃子裡，累計付足 $${currentQuestionData.targetValue} 來購買【${currentQuestionData.itemName}】！` : 
+            `無提示挑戰！請自行點算籃內硬幣，確認無誤後點擊「確認付款」來購買【${currentQuestionData.itemName}】。`;
           renderPayMediumMode(area);
           break;
         case 'pay_hard':
           title.textContent = "🛒 買東西付零錢 (進階)";
           desc.textContent = hintEnabled ? 
-            `自由搭配不同的硬幣【拖曳】投入籃中，付足 $${currentQuestionData.targetValue}！` : 
-            `無提示挑戰！請自行搭配並點算硬幣，確認無誤後點擊「確認付款」。`;
+            `自由搭配不同的硬幣【拖曳】投入籃中，付足 $${currentQuestionData.targetValue} 來購買【${currentQuestionData.itemName}】！` : 
+            `無提示挑戰！請自行搭配並點算硬幣，確認無誤後點擊「確認付款」來購買【${currentQuestionData.itemName}】。`;
           renderPayHardMode(area);
           break;
       }
@@ -586,7 +644,6 @@
     function checkMatchAnswer(chosenValue) {
       if (isAnsweredCorrectly) return;
       if (chosenValue === currentQuestionData.targetValue) {
-        // 發光回饋
         const cards = document.querySelectorAll('[data-val]');
         cards.forEach(card => {
           if (parseInt(card.getAttribute('data-val')) === chosenValue) {
@@ -756,7 +813,7 @@
         btn.onclick = () => {
           if (isAnsweredCorrectly) return;
           if (val === currentQuestionData.targetValue) {
-            btn.classList.add('glow-correct'); // 發光特效
+            btn.classList.add('glow-correct'); 
             handleSuccess();
           } else {
             handleWrong(val);
@@ -787,14 +844,13 @@
         img.setAttribute('data-counted', 'false');
 
         const countTag = document.createElement('span');
-        countTag.className = "absolute -top-6 bg-rose-400 text-white text-xs font-bold rounded-full px-2 py-0.5 opacity-0 transition-all pointer-events-none scale-0";
+        countTag.className = "absolute -top-6 bg-[#FF9E79] text-white text-xs font-bold rounded-full px-2 py-0.5 opacity-0 transition-all pointer-events-none scale-0";
         countTag.id = `count-tag-${i}`;
 
         img.onclick = () => {
           if (isAnsweredCorrectly) return;
           
           if (img.getAttribute('data-counted') === 'false') {
-            // 強制由左至右：只能點擊當前順序的下一個硬幣
             if (i !== selectedCount) return;
 
             playCoinSound();
@@ -805,7 +861,6 @@
             countTag.classList.remove('opacity-0', 'scale-0');
             countTag.classList.add('opacity-100', 'scale-100');
           } else {
-            // 強制由右至左取消：若要取消點算，只能點擊最後一個被點算過的硬幣
             if (i !== selectedCount - 1) return;
 
             playCoinSound();
@@ -813,7 +868,7 @@
             img.classList.remove('ring-4', 'ring-rose-200', 'rounded-full');
             countTag.classList.add('opacity-0', 'scale-0');
             countTag.classList.remove('opacity-100', 'scale-100');
-            selectedCount--; // 確實扣除計數
+            selectedCount--; 
           }
         };
 
@@ -840,7 +895,7 @@
         btn.onclick = () => {
           if (isAnsweredCorrectly) return;
           if (v === currentQuestionData.targetValue) {
-            btn.classList.add('glow-correct'); // 發光特效
+            btn.classList.add('glow-correct'); 
             handleSuccess();
           } else {
             handleWrong(v);
@@ -861,7 +916,7 @@
       const showcase = document.createElement('div');
       showcase.className = "flex flex-col items-center justify-center p-6 border-2 border-emerald-200 bg-emerald-50/50 rounded-3xl w-72 relative";
       showcase.innerHTML = `
-        <div class="text-7xl mb-4">${getIconForToy(currentQuestionData.itemName)}</div>
+        <div class="text-7xl mb-4">${currentQuestionData.itemEmoji}</div>
         <div class="font-bold text-gray-800 text-xl mb-2">${currentQuestionData.itemName}</div>
         <div class="bg-[#FF9E79] text-white font-extrabold text-2xl px-8 py-2 rounded-full shadow-md border-2 border-white">
           $${currentQuestionData.targetValue}
@@ -965,7 +1020,7 @@
       const showcase = document.createElement('div');
       showcase.className = "flex flex-col items-center justify-center p-6 border-2 border-purple-200 bg-purple-50/50 rounded-3xl w-72";
       showcase.innerHTML = `
-        <div class="text-7xl mb-3">${getIconForToy(currentQuestionData.itemName)}</div>
+        <div class="text-7xl mb-3">${currentQuestionData.itemEmoji}</div>
         <div class="font-bold text-gray-800 text-xl mb-2">${currentQuestionData.itemName}</div>
         <div class="bg-[#FF9E79] text-white font-extrabold text-2xl px-8 py-2 rounded-full shadow-md border-2 border-white">
           $${currentQuestionData.targetValue}
@@ -983,14 +1038,12 @@
 
       const progressPercent = (paidAmount / currentQuestionData.targetValue) * 100;
       
-      // 有提示時才顯示進度條
       const progressHtml = hintEnabled ? `
         <div class="w-full bg-purple-50 rounded-full h-3 overflow-hidden border border-purple-100 mt-2">
           <div id="inlineProgressBar" class="bg-[#FFD3BA] h-full transition-all duration-300" style="width: ${progressPercent}%"></div>
         </div>
       ` : '';
 
-      // 有提示時才顯示文字累計金額
       const accumulatedHtml = hintEnabled ? `
         <div class="text-xs font-bold text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
           累計放入: $${paidAmount}
@@ -1032,7 +1085,6 @@
       payZoneWrapper.className = "flex flex-col items-center gap-4 w-72";
       payZoneWrapper.appendChild(payZone);
       
-      // 無提示時，新增確認付款按鈕
       if (!hintEnabled) {
         const confirmBtn = document.createElement('button');
         confirmBtn.className = "btn-macaron-green text-base font-bold py-2 px-8 rounded-full shadow-md transition-all";
@@ -1090,13 +1142,11 @@
       playCoinSound();
       paidAmount += 1;
       
-      // 若無提示，不自動判斷過關，只畫硬幣
       if (!hintEnabled) {
         renderGame();
         return;
       }
       
-      // 有提示狀態的自動檢核與防呆
       if (paidAmount === currentQuestionData.targetValue) {
         renderGame();
         setTimeout(() => {
@@ -1124,7 +1174,7 @@
       const showcase = document.createElement('div');
       showcase.className = "flex flex-col items-center justify-center p-6 border-2 border-indigo-200 bg-indigo-50/50 rounded-3xl w-72";
       showcase.innerHTML = `
-        <div class="text-7xl mb-3">${getIconForToy(currentQuestionData.itemName)}</div>
+        <div class="text-7xl mb-3">${currentQuestionData.itemEmoji}</div>
         <div class="font-bold text-gray-800 text-xl mb-2">${currentQuestionData.itemName}</div>
         <div class="bg-[#FF9E79] text-white font-extrabold text-2xl px-8 py-2 rounded-full shadow-md border-2 border-white">
           $${currentQuestionData.targetValue}
@@ -1192,7 +1242,6 @@
       payZoneWrapper.className = "flex flex-col items-center gap-4 w-72";
       payZoneWrapper.appendChild(payZone);
       
-      // 無提示時，新增確認付款按鈕
       if (!hintEnabled) {
         const confirmBtn = document.createElement('button');
         confirmBtn.className = "btn-macaron-green text-base font-bold py-2 px-8 rounded-full shadow-md transition-all";
@@ -1318,9 +1367,8 @@
 
     function handleSuccess(autoNext = true) {
       playSuccessSound();
-      isAnsweredCorrectly = true; // 設置答對狀態
+      isAnsweredCorrectly = true; 
 
-      // 鎖定互動區不允許任何點擊或拖放
       const interactionArea = document.getElementById('interactionArea');
       if (interactionArea) {
         interactionArea.style.pointerEvents = 'none';
@@ -1353,7 +1401,6 @@
     function handleWrong(wrongVal) {
       playWrongSound();
       
-      // ★ 只有在有提示的情況下，才剔除錯誤選項 (將選項存入 wrongOptions)
       if (hintEnabled && wrongVal !== undefined && !wrongOptions.includes(wrongVal)) {
         wrongOptions.push(wrongVal);
       }
@@ -1385,7 +1432,6 @@
       resetCurrentGame();
     }
 
-    // 無提示中高階付款用的提交按鈕邏輯
     function confirmPayment() {
       if (isAnsweredCorrectly) return;
       if (paidAmount === currentQuestionData.targetValue) {
@@ -1406,7 +1452,6 @@
           }
         }
         
-        // 答錯後重設投入的金額，讓學生重試
         setTimeout(() => {
           paidAmount = 0;
           if (currentQuestionData.insertedCoins) {
@@ -1416,24 +1461,6 @@
           renderHint();
         }, 2000);
       }
-    }
-
-    function getIconForToy(name) {
-      if (name.includes("糖果")) return "🍬";
-      if (name.includes("布丁")) return "🍮";
-      if (name.includes("冰淇淋")) return "🍦";
-      if (name.includes("小熊氣球")) return "🎈";
-      if (name.includes("小汽車")) return "🚗";
-      if (name.includes("可愛洋娃娃")) return "🧸";
-      if (name.includes("彩色蠟筆")) return "🖍️";
-      if (name.includes("橡皮擦")) return "🧼";
-      if (name.includes("童話故事書")) return "📖";
-      if (name.includes("水果棒棒糖")) return "🍭";
-      if (name.includes("積木城堡")) return "🧱";
-      if (name.includes("恐龍玩具")) return "🦖";
-      if (name.includes("美味甜甜圈")) return "🍩";
-      if (name.includes("神奇魔術方塊")) return "🧩";
-      return "🎁";
     }
   </script>
 </body>
