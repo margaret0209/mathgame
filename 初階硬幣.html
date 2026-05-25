@@ -127,7 +127,7 @@
 
   <!-- 頂部導覽列與模式切換 -->
   <header class="bg-[#FFF2E6] border-b-4 border-[#FFE0CC] py-4 px-6 sticky top-0 z-50">
-    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
       <!-- 標題 -->
       <div class="flex items-center gap-3">
         <span class="text-4xl">🪙</span>
@@ -168,7 +168,7 @@
   </header>
 
   <!-- 主遊戲視窗 -->
-  <main class="max-w-4xl mx-auto px-4 mt-8">
+  <main class="max-w-6xl mx-auto px-4 mt-8">
     
     <!-- 答對與提示反饋橫幅 -->
     <div id="feedbackContainer" class="hidden cute-card bg-[#FFFDF5] border-[#FFEAA7] p-4 mb-6 text-center text-[#B7950B] font-bold text-lg md:text-xl transition-all relative">
@@ -176,7 +176,7 @@
     </div>
 
     <!-- 遊戲工作區 -->
-    <div class="cute-card bg-white p-6 md:p-8 cute-shadow min-h-[450px] flex flex-col justify-between">
+    <div class="cute-card bg-white p-6 md:p-10 cute-shadow min-h-[550px] flex flex-col justify-between">
       
       <!-- 關卡標題與動態說明 -->
       <div class="mb-6 text-center">
@@ -504,21 +504,21 @@
     // -------------------------------------------------------------
     function renderMatchMode(container) {
       const questionDiv = document.createElement('div');
-      questionDiv.className = "flex flex-col items-center mb-4";
+      questionDiv.className = "flex flex-col items-center mb-6";
       questionDiv.innerHTML = `
-        <div class="bg-amber-50 p-4 rounded-3xl border-2 border-dashed border-amber-300 flex items-center justify-center w-40 h-40">
+        <div class="bg-amber-50 p-6 rounded-3xl border-2 border-dashed border-amber-300 flex items-center justify-center w-48 h-48">
           <img src="${COIN_IMAGES[currentQuestionData.targetValue]}" 
                id="draggableCoin" 
                draggable="true" 
-               class="w-28 h-28 cursor-grab active:cursor-grabbing coin-img filter drop-shadow-md"
+               class="w-32 h-32 cursor-grab active:cursor-grabbing coin-img filter drop-shadow-md"
                alt="${currentQuestionData.targetValue}元" />
         </div>
-        <p class="text-sm font-bold text-amber-600 mt-2">👈 快把我拖曳去下方配對吧！</p>
+        <p class="text-base font-bold text-amber-600 mt-3">👈 快把我拖曳去下方配對吧！</p>
       `;
       container.appendChild(questionDiv);
 
       const optionsContainer = document.createElement('div');
-      optionsContainer.className = "grid grid-cols-4 gap-4 w-full max-w-lg mt-4";
+      optionsContainer.className = "grid grid-cols-4 gap-6 w-full max-w-3xl mt-6";
       
       COIN_VALUES.forEach(val => {
         if (wrongOptions.includes(val)) {
@@ -605,7 +605,7 @@
     // -------------------------------------------------------------
     function renderClassifyMode(container) {
       const poolContainer = document.createElement('div');
-      poolContainer.className = "flex flex-wrap justify-center gap-3 p-4 bg-orange-50 border-2 border-dashed border-orange-200 rounded-2xl w-full min-h-[110px]";
+      poolContainer.className = "flex flex-wrap justify-center gap-4 p-6 bg-orange-50 border-2 border-dashed border-orange-200 rounded-2xl w-full max-w-4xl min-h-[120px]";
       
       const coinsLeft = currentQuestionData.coinPool.length;
 
@@ -653,7 +653,7 @@
       container.appendChild(poolContainer);
 
       const basketsContainer = document.createElement('div');
-      basketsContainer.className = "grid grid-cols-4 gap-4 w-full mt-4";
+      basketsContainer.className = "grid grid-cols-4 gap-6 w-full max-w-4xl mt-6";
 
       COIN_VALUES.forEach(val => {
         const basket = document.createElement('div');
@@ -732,16 +732,16 @@
     // -------------------------------------------------------------
     function renderValueMode(container) {
       const questionDiv = document.createElement('div');
-      questionDiv.className = "flex flex-col items-center mb-4";
+      questionDiv.className = "flex flex-col items-center mb-6";
       questionDiv.innerHTML = `
-        <div class="bg-amber-50 p-6 rounded-3xl border-2 border-dashed border-amber-300 flex items-center justify-center w-36 h-36">
-          <img src="${COIN_IMAGES[currentQuestionData.targetValue]}" class="w-24 h-24 filter drop-shadow-md" />
+        <div class="bg-amber-50 p-8 rounded-3xl border-2 border-dashed border-amber-300 flex items-center justify-center w-48 h-48">
+          <img src="${COIN_IMAGES[currentQuestionData.targetValue]}" class="w-32 h-32 filter drop-shadow-md" />
         </div>
       `;
       container.appendChild(questionDiv);
 
       const optionsContainer = document.createElement('div');
-      optionsContainer.className = "grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-lg mt-4";
+      optionsContainer.className = "grid grid-cols-2 md:grid-cols-4 gap-6 w-full max-w-3xl mt-6";
 
       COIN_VALUES.forEach(val => {
         if (wrongOptions.includes(val)) {
@@ -775,7 +775,7 @@
     // -------------------------------------------------------------
     function renderTotalMode(container) {
       const coinsArea = document.createElement('div');
-      coinsArea.className = "flex flex-wrap justify-center gap-4 p-6 bg-yellow-50/50 border-2 border-dashed border-yellow-200 rounded-2xl w-full max-w-xl min-h-[120px]";
+      coinsArea.className = "flex flex-wrap justify-center gap-4 p-8 bg-yellow-50/50 border-2 border-dashed border-yellow-200 rounded-2xl w-full max-w-3xl min-h-[140px]";
       
       for (let i = 0; i < currentQuestionData.targetValue; i++) {
         const coinWrapper = document.createElement('div');
@@ -825,7 +825,7 @@
       container.appendChild(coinsArea);
 
       const optionsContainer = document.createElement('div');
-      optionsContainer.className = "grid grid-cols-5 gap-2 w-full max-w-xl mt-4";
+      optionsContainer.className = "grid grid-cols-5 gap-4 w-full max-w-3xl mt-8";
 
       for (let v = 1; v <= 10; v++) {
         if (wrongOptions.includes(v)) {
@@ -859,17 +859,17 @@
     // -------------------------------------------------------------
     function renderPayEasyMode(container) {
       const showcase = document.createElement('div');
-      showcase.className = "flex flex-col items-center justify-center p-6 border-2 border-emerald-200 bg-emerald-50/50 rounded-3xl w-64 relative";
+      showcase.className = "flex flex-col items-center justify-center p-6 border-2 border-emerald-200 bg-emerald-50/50 rounded-3xl w-72 relative";
       showcase.innerHTML = `
         <div class="text-7xl mb-4">${getIconForToy(currentQuestionData.itemName)}</div>
-        <div class="font-bold text-gray-800 text-lg mb-2">${currentQuestionData.itemName}</div>
-        <div class="bg-[#FF9E79] text-white font-extrabold text-2xl px-6 py-2 rounded-full shadow-md border-2 border-white">
+        <div class="font-bold text-gray-800 text-xl mb-2">${currentQuestionData.itemName}</div>
+        <div class="bg-[#FF9E79] text-white font-extrabold text-2xl px-8 py-2 rounded-full shadow-md border-2 border-white">
           $${currentQuestionData.targetValue}
         </div>
       `;
 
       const payZone = document.createElement('div');
-      payZone.className = "cute-card border-dashed border-4 border-emerald-300 p-4 mt-4 w-56 min-h-[110px] flex flex-col items-center justify-center bg-white relative";
+      payZone.className = "cute-card border-dashed border-4 border-emerald-300 p-4 w-72 min-h-[160px] flex flex-col items-center justify-center bg-white relative";
       payZone.id = "payZone";
       payZone.innerHTML = `<span class="text-emerald-600 font-bold text-sm text-center">🚚 拖曳正確的硬幣到這裡付款</span>`;
 
@@ -892,13 +892,13 @@
       };
 
       const topSection = document.createElement('div');
-      topSection.className = "flex flex-col md:flex-row items-center gap-6";
+      topSection.className = "flex flex-col md:flex-row items-center justify-center gap-16 w-full";
       topSection.appendChild(showcase);
       topSection.appendChild(payZone);
       container.appendChild(topSection);
 
       const optionsContainer = document.createElement('div');
-      optionsContainer.className = "grid grid-cols-4 gap-4 w-full max-w-lg mt-6";
+      optionsContainer.className = "grid grid-cols-4 gap-8 w-full max-w-3xl mt-10";
 
       COIN_VALUES.forEach(val => {
         if (wrongOptions.includes(val)) {
@@ -963,17 +963,17 @@
     // -------------------------------------------------------------
     function renderPayMediumMode(container) {
       const showcase = document.createElement('div');
-      showcase.className = "flex flex-col items-center justify-center p-4 border-2 border-purple-200 bg-purple-50/50 rounded-3xl w-56";
+      showcase.className = "flex flex-col items-center justify-center p-6 border-2 border-purple-200 bg-purple-50/50 rounded-3xl w-72";
       showcase.innerHTML = `
-        <div class="text-6xl mb-2">${getIconForToy(currentQuestionData.itemName)}</div>
-        <div class="font-bold text-gray-800 text-sm mb-1">${currentQuestionData.itemName}</div>
-        <div class="bg-[#FF9E79] text-white font-extrabold text-xl px-5 py-1.5 rounded-full shadow-md border-2 border-white">
+        <div class="text-7xl mb-3">${getIconForToy(currentQuestionData.itemName)}</div>
+        <div class="font-bold text-gray-800 text-xl mb-2">${currentQuestionData.itemName}</div>
+        <div class="bg-[#FF9E79] text-white font-extrabold text-2xl px-8 py-2 rounded-full shadow-md border-2 border-white">
           $${currentQuestionData.targetValue}
         </div>
       `;
 
       const payZone = document.createElement('div');
-      payZone.className = "cute-card border-dashed border-4 border-purple-300 p-4 w-64 min-h-[160px] flex flex-col items-center justify-center bg-white relative";
+      payZone.className = "cute-card border-dashed border-4 border-purple-300 p-4 w-72 min-h-[180px] flex flex-col items-center justify-center bg-white relative";
       payZone.id = "payZone";
 
       let coinsHtml = "";
@@ -1026,10 +1026,10 @@
       };
 
       const topSection = document.createElement('div');
-      topSection.className = "flex flex-col md:flex-row items-center gap-6";
+      topSection.className = "flex flex-col md:flex-row items-center justify-center gap-16 w-full";
       
       const payZoneWrapper = document.createElement('div');
-      payZoneWrapper.className = "flex flex-col items-center gap-3 w-64";
+      payZoneWrapper.className = "flex flex-col items-center gap-4 w-72";
       payZoneWrapper.appendChild(payZone);
       
       // 無提示時，新增確認付款按鈕
@@ -1046,16 +1046,16 @@
       container.appendChild(topSection);
 
       const generatorArea = document.createElement('div');
-      generatorArea.className = "flex flex-col items-center mt-6 p-4 bg-purple-50/50 rounded-2xl border border-purple-100 w-full max-w-sm";
+      generatorArea.className = "flex flex-col items-center mt-10 p-6 bg-purple-50/50 rounded-2xl border border-purple-100 w-full max-w-lg";
       generatorArea.innerHTML = `
-        <div class="flex gap-4 items-center">
+        <div class="flex gap-6 items-center">
           <img src="${COIN_IMAGES[1]}" 
                id="unlimitedCoin" 
                draggable="true" 
-               class="w-16 h-16 cursor-grab active:cursor-grabbing filter drop-shadow-md coin-img" 
+               class="w-20 h-20 cursor-grab active:cursor-grabbing filter drop-shadow-md coin-img" 
                alt="1元" />
         </div>
-        <p class="text-xs font-bold text-purple-600 mt-2">👈 請拖曳 1 元進上方籃子付款</p>
+        <p class="text-sm font-bold text-purple-600 mt-3">👈 請拖曳 1 元進上方籃子付款</p>
       `;
 
       container.appendChild(generatorArea);
@@ -1122,11 +1122,11 @@
     // -------------------------------------------------------------
     function renderPayHardMode(container) {
       const showcase = document.createElement('div');
-      showcase.className = "flex flex-col items-center justify-center p-4 border-2 border-indigo-200 bg-indigo-50/50 rounded-3xl w-56";
+      showcase.className = "flex flex-col items-center justify-center p-6 border-2 border-indigo-200 bg-indigo-50/50 rounded-3xl w-72";
       showcase.innerHTML = `
-        <div class="text-6xl mb-2">${getIconForToy(currentQuestionData.itemName)}</div>
-        <div class="font-bold text-gray-800 text-sm mb-1">${currentQuestionData.itemName}</div>
-        <div class="bg-[#FF9E79] text-white font-extrabold text-xl px-5 py-1.5 rounded-full shadow-md border-2 border-white">
+        <div class="text-7xl mb-3">${getIconForToy(currentQuestionData.itemName)}</div>
+        <div class="font-bold text-gray-800 text-xl mb-2">${currentQuestionData.itemName}</div>
+        <div class="bg-[#FF9E79] text-white font-extrabold text-2xl px-8 py-2 rounded-full shadow-md border-2 border-white">
           $${currentQuestionData.targetValue}
         </div>
       `;
@@ -1136,7 +1136,7 @@
       }
 
       const payZone = document.createElement('div');
-      payZone.className = "cute-card border-dashed border-4 border-indigo-300 p-4 w-64 min-h-[160px] flex flex-col items-center justify-center bg-white relative";
+      payZone.className = "cute-card border-dashed border-4 border-indigo-300 p-4 w-72 min-h-[180px] flex flex-col items-center justify-center bg-white relative";
       payZone.id = "payZone";
 
       let coinsHtml = currentQuestionData.insertedCoins.map(val => {
@@ -1186,10 +1186,10 @@
       };
 
       const topSection = document.createElement('div');
-      topSection.className = "flex flex-col md:flex-row items-center gap-6";
+      topSection.className = "flex flex-col md:flex-row items-center justify-center gap-16 w-full";
       
       const payZoneWrapper = document.createElement('div');
-      payZoneWrapper.className = "flex flex-col items-center gap-3 w-64";
+      payZoneWrapper.className = "flex flex-col items-center gap-4 w-72";
       payZoneWrapper.appendChild(payZone);
       
       // 無提示時，新增確認付款按鈕
@@ -1206,7 +1206,7 @@
       container.appendChild(topSection);
 
       const optionsContainer = document.createElement('div');
-      optionsContainer.className = "grid grid-cols-4 gap-4 w-full max-w-lg mt-6 bg-indigo-50/30 p-4 rounded-2xl border border-indigo-100";
+      optionsContainer.className = "grid grid-cols-4 gap-8 w-full max-w-3xl mt-10 bg-indigo-50/30 p-6 rounded-2xl border border-indigo-100";
 
       COIN_VALUES.forEach(val => {
         const coinContainer = document.createElement('div');
