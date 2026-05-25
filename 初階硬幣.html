@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>硬幣總值互動遊戲 - 清新可愛風</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Noto Sans TC & Quicksand for a cute rounded look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+  <!-- Confetti.js for celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <style>
+    body {
+      font-family: 'Quicksand', 'Noto Sans TC', sans-serif;
+      background-color: #FFFDF9; /* 極柔和溫暖的馬卡龍底色 */
+      touch-action: manipulation; /* 優化雙擊縮放 */
+    }
+    .cute-shadow {
+      box-shadow: 0 8px 0px 0px #F9EBE0;
+    }
+    .cute-card {
+      border: 3px solid #FFD3BA; /* 柔和粉橘邊框 */
+      border-radius: 24px;
+      background: #FFFFFF;
+      transition: all 0.2s ease;
+    }
+    
+    /* 馬卡龍色系按鈕定義 */
+    .btn-macaron-yellow {
+      background-color: #FFF9E6;
+      border: 3px solid #F5CBA7;
+      box-shadow: 0 6px 0px 0px #F5CBA7;
+      color: #7E5109;
+      transition: all 0.1s ease;
+    }
+    .btn-macaron-yellow:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0px 0px #F5CBA7;
+    }
+    
+    .btn-macaron-green {
+      background-color: #E8F8F5;
+      border: 3px solid #A2D9CE;
+      box-shadow: 0 6px 0px 0px #A2D9CE;
+      color: #117864;
+      transition: all 0.1s ease;
+    }
+    .btn-macaron-green:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0px 0px #A2D9CE;
+    }
+
+    .btn-macaron-purple {
+      background-color: #F5EEF8;
+      border: 3px solid #D7BDE2;
+      box-shadow: 0 6px 0px 0px #D7BDE2;
+      color: #512E5F;
+      transition: all 0.1s ease;
+    }
+    .btn-macaron-purple:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0px 0px #D7BDE2;
+    }
+
+    .btn-macaron-pink {
+      background-color: #FDEDEC;
+      border: 3px solid #F5B7B1;
+      box-shadow: 0 6px 0px 0px #F5B7B1;
+      color: #78281F;
+      transition: all 0.1s ease;
+    }
+    .btn-macaron-pink:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0px 0px #F5B7B1;
+    }
+
+    .btn-macaron-cyan {
+      background-color: #EBF5FB;
+      border: 3px solid #AED6F1;
+      box-shadow: 0 6px 0px 0px #AED6F1;
+      color: #1B4F72;
+      transition: all 0.1s ease;
+    }
+    .btn-macaron-cyan:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0px 0px #AED6F1;
+    }
+
+    .coin-img {
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+    .coin-img:not(.dragging):hover {
+      transform: scale(1.1) rotate(5deg);
+    }
+    /* 拖曳時的樣式 */
+    .dragging {
+      opacity: 0.4 !important;
+      transform: scale(0.9) !important;
+    }
+    /* 分類框與置放區閃爍效果 */
+    .drop-zone-active {
+      border-color: #FFB37C !important;
+      background-color: #FFF5EE !important;
+      transform: scale(1.02);
+    }
+    /* 正確答案的閃亮發光外框特效 */
+    .glow-correct {
+      box-shadow: 0 0 0 4px #FFFFFF, 0 0 0 8px #4ade80, 0 8px 15px 8px rgba(74, 222, 128, 0.4) !important;
+      border-color: #4ade80 !important;
+      transform: scale(1.05) !important;
+      z-index: 10;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    /* 行動裝置拖拉中的實體殘影 style */
+    .touch-drag-clone {
+      pointer-events: none !important;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-12 select-none">
+
+  <!-- 頂部導覽列與模式切換 -->
+  <header class="bg-[#FFF2E6] border-b-4 border-[#FFE0CC] py-4 px-6 sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <!-- 標題 -->
+      <div class="flex items-center gap-3">
+        <span class="text-4xl">🪙</span>
+        <h1 class="text-2xl md:text-3xl font-bold text-[#8C5D3A] tracking-wider">硬幣大冒險！</h1>
+      </div>
+
+      <!-- 控制面板：模式與提示 -->
+      <div class="flex flex-wrap items-center justify-center gap-4">
+        <!-- 選擇模式 -->
+        <div class="flex items-center gap-2">
+          <label for="modeSelect" class="font-bold text-[#8C5D3A] text-sm md:text-base">選擇關卡：</label>
+          <select id="modeSelect" onchange="switchMode()" class="bg-white border-3 border-[#FFD3BA] rounded-full px-4 py-2 text-[#8C5D3A] font-bold focus:outline-none focus:ring-2 focus:ring-[#FFB37C] cursor-pointer text-sm md:text-base shadow-sm">
+            <option value="match">🧩 配對模式</option>
+            <option value="classify">🧺 分類模式</option>
+            <option value="value">📝 幣值模式</option>
+            <option value="total">🔢 總值模式</option>
+            <option value="pay_easy">🛒 簡易付款</option>
+            <option value="pay_medium">🛒 中階付款</option>
+            <option value="pay_hard">🛒 進階付款</option>
+          </select>
+        </div>
+
+        <!-- 提示開關 -->
+        <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-full border-2 border-[#FFD3BA]">
+          <span class="text-sm font-bold text-[#8C5D3A]">💡 提示</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="hintToggle" onchange="toggleHint()" class="sr-only peer" checked>
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FFB37C]"></div>
+          </label>
+        </div>
+
+        <!-- 得分板 -->
+        <div class="bg-[#FF9E79] text-white font-bold px-4 py-2 rounded-full shadow-md text-sm md:text-base">
+          得分: <span id="scoreText">0</span> 分
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主遊戲視窗 -->
+  <main class="max-w-4xl mx-auto px-4 mt-8">
+    
+    <!-- 答對與提示反饋橫幅 -->
+    <div id="feedbackContainer" class="hidden cute-card bg-[#FFFDF5] border-[#FFEAA7] p-4 mb-6 text-center text-[#B7950B] font-bold text-lg md:text-xl transition-all relative">
+      <span id="feedbackText">做得好！</span>
+    </div>
+
+    <!-- 遊戲工作區 -->
+    <div class="cute-card bg-white p-6 md:p-8 cute-shadow min-h-[450px] flex flex-col justify-between">
+      
+      <!-- 關卡標題與動態說明 -->
+      <div class="mb-6 text-center">
+        <h2 id="gameTitle" class="text-2xl font-bold text-[#FF8552] mb-2">關卡載入中...</h2>
+        <p id="gameDesc" class="text-gray-600 font-bold text-base"></p>
+      </div>
+
+      <!-- 核心互動區（根據模式動態載入） -->
+      <div id="interactionArea" class="flex-grow flex flex-col items-center justify-center gap-8 py-4">
+        <!-- 內容由 JS 動態生成 -->
+      </div>
+
+      <!-- 重來 / 下一題按鈕 -->
+      <div class="mt-8 flex justify-center gap-4">
+        <button onclick="resetCurrentGame()" class="btn-macaron-yellow text-lg font-bold py-3 px-6 rounded-full flex items-center gap-2">
+          🔄 重新挑戰
+        </button>
+        <button id="nextBtn" onclick="nextQuestion()" class="btn-macaron-green text-lg font-bold py-3 px-8 rounded-full flex items-center gap-2 hidden">
+          🌟 下一題 ✨
+        </button>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- 底部可愛宣告 -->
+  <footer class="text-center mt-12 text-[#8C5D3A]/60 font-bold text-sm">
+    🎈 專為小學一、二年級打造的硬幣學習樂園 🎈
+  </footer>
+
+  <!-- 音效與音頻模擬機制 (Web Audio API) -->
+  <script>
+    const COIN_IMAGES = {
+      1: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/1元正面.png",
+      2: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/2元正面.png",
+      5: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/5元正面.png",
+      10: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/10元正面.png"
+    };
+
+    const COIN_VALUES = [1, 2, 5, 10];
+
+    let currentMode = 'match';
+    let score = 0;
+    let hintEnabled = true;
+    let isAnsweredCorrectly = false; 
+
+    let currentQuestionData = {};
+    let wrongOptions = []; 
+    let paidAmount = 0;    
+    let selectedCount = 0; 
+    
+    let lastMatchVal = null;
+    let lastValueVal = null;
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(freq, type, duration) {
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playSuccessSound() {
+      playTone(523.25, 'triangle', 0.1); 
+      setTimeout(() => playTone(659.25, 'triangle', 0.15), 100); 
+      setTimeout(() => playTone(783.99, 'triangle', 0.2), 200); 
+    }
+
+    function playWrongSound() {
+      playTone(220, 'sawtooth', 0.2); 
+    }
+
+    function playCoinSound() {
+      playTone(987.77, 'sine', 0.05); 
+    }
+
+    window.onload = function() {
+      switchMode();
+    };
+
+    function toggleHint() {
+      hintEnabled = document.getElementById('hintToggle').checked;
+      renderHint();
+      
+      renderGame();
+      
+      // 中高階模式，切換提示時進行條件審核
+      if (hintEnabled && ['pay_medium', 'pay_hard'].includes(currentMode)) {
+        if (paidAmount === currentQuestionData.targetValue && !isAnsweredCorrectly) {
+          handleSuccess();
+        } else if (paidAmount > currentQuestionData.targetValue && !isAnsweredCorrectly) {
+          paidAmount = 0;
+          if (currentQuestionData.insertedCoins) currentQuestionData.insertedCoins = [];
+          renderGame();
+        }
+      }
+    }
+
+    function renderHint() {
+      const feedback = document.getElementById('feedbackContainer');
+      const textSpan = document.getElementById('feedbackText');
+      
+      if (!hintEnabled) {
+        if (feedback) feedback.classList.add('hidden');
+        return;
+      }
+
+      if (feedback) feedback.classList.remove('hidden');
+      if (!textSpan) return;
+      
+      if (currentMode === 'match') {
+        textSpan.innerHTML = `💡 提示：這個硬幣上面的數字寫著 <b>${currentQuestionData.targetValue}</b> 喔！請把它拖曳配對到下面一樣的硬幣。`;
+      } else if (currentMode === 'classify') {
+        textSpan.innerHTML = `💡 提示：請動動手指，把硬幣一個個拖曳放到對應的小籃子裡！`;
+      } else if (currentMode === 'value') {
+        textSpan.innerHTML = `💡 提示：這個硬幣的幣值是 <b>${currentQuestionData.targetValue}元</b>，選出對應的文字吧。`;
+      } else if (currentMode === 'total') {
+        textSpan.innerHTML = `💡 提示：用手指點點看硬幣，數一數這裡總共有幾枚 1 元呢？一共有 <b>${currentQuestionData.targetValue}元</b> 喔！`;
+      } else if (currentMode === 'pay_easy') {
+        textSpan.innerHTML = `💡 提示：貨品需要 <b>$${currentQuestionData.targetValue}</b>，正好有一枚硬幣是這個面額喔，請把它拖拉到上方的付款區！`;
+      } else if (currentMode === 'pay_medium') {
+        const remaining = currentQuestionData.targetValue - paidAmount;
+        textSpan.innerHTML = `💡 提示：還需要 <b>$${remaining}</b>。請重覆把下方的 1 元拖拉到上方的籃子裡付款！`;
+      } else if (currentMode === 'pay_hard') {
+        const remaining = currentQuestionData.targetValue - paidAmount;
+        textSpan.innerHTML = `💡 提示：還差 <b>$${remaining}元</b>。你可以自由搭配並拖曳 1元、2元、5元 或 10元 喔！`;
+      }
+    }
+
+    function switchMode() {
+      currentMode = document.getElementById('modeSelect').value;
+      wrongOptions = [];
+      document.getElementById('nextBtn').classList.add('hidden');
+      resetCurrentGame();
+    }
+
+    function resetCurrentGame() {
+      wrongOptions = [];
+      paidAmount = 0;
+      selectedCount = 0;
+      isAnsweredCorrectly = false; 
+      
+      const interactionArea = document.getElementById('interactionArea');
+      if (interactionArea) {
+        interactionArea.style.pointerEvents = 'auto';
+      }
+      
+      document.getElementById('nextBtn').classList.add('hidden');
+
+      if (currentMode === 'match') {
+        let val;
+        do { val = COIN_VALUES[Math.floor(Math.random() * COIN_VALUES.length)]; } while (val === lastMatchVal && COIN_VALUES.length > 1);
+        lastMatchVal = val;
+        currentQuestionData = { targetValue: val };
+      } else if (currentMode === 'value') {
+        let val;
+        do { val = COIN_VALUES[Math.floor(Math.random() * COIN_VALUES.length)]; } while (val === lastValueVal && COIN_VALUES.length > 1);
+        lastValueVal = val;
+        currentQuestionData = { targetValue: val };
+      } else if (currentMode === 'classify') {
+        let pool = [];
+        COIN_VALUES.forEach(val => {
+          const count = Math.floor(Math.random() * 2) + 2;
+          for (let i = 0; i < count; i++) pool.push(val);
+        });
+        pool.sort(() => Math.random() - 0.5);
+        currentQuestionData = { coinPool: pool, totalCount: pool.length, classified: {} };
+      } else if (currentMode === 'total') {
+        const count = Math.floor(Math.random() * 10) + 1;
+        currentQuestionData = { targetValue: count };
+      } else if (currentMode === 'pay_easy') {
+        const val = COIN_VALUES[Math.floor(Math.random() * COIN_VALUES.length)];
+        const items = [
+          { name: "糖果 🍬", price: 1 }, { name: "布丁 🍮", price: 2 },
+          { name: "冰淇淋 🍦", price: 5 }, { name: "小熊氣球 🎈", price: 10 }
+        ];
+        const item = items.find(i => i.price === val);
+        currentQuestionData = { targetValue: val, itemName: item.name };
+      } else if (currentMode === 'pay_medium' || currentMode === 'pay_hard') {
+        const price = Math.floor(Math.random() * 10) + 1;
+        const toyItems = ["小汽車 🚗", "可愛洋娃娃 🧸", "彩色蠟筆 🖍️", "橡皮擦 🧼", "童話故事書 📖", "水果棒棒糖 🍭", "積木城堡 🧱", "恐龍玩具 🦖", "美味甜甜圈 🍩", "神奇魔術方塊 🧩"];
+        const name = toyItems[price - 1];
+        currentQuestionData = { targetValue: price, itemName: name };
+      }
+
+      renderGame();
+      renderHint();
+    }
+
+    function makeElementTouchDraggable(el, getDragData, getDropZones, onDropSuccess) {
+      let activeClone = null;
+      let startX, startY;
+      let initialRect;
+
+      el.addEventListener('touchstart', function(e) {
+        if (isAnsweredCorrectly) return; 
+        e.preventDefault();
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        initialRect = el.getBoundingClientRect();
+
+        activeClone = el.cloneNode(true);
+        activeClone.classList.add('touch-drag-clone');
+        activeClone.style.position = 'fixed';
+        activeClone.style.left = `${initialRect.left}px`;
+        activeClone.style.top = `${initialRect.top}px`;
+        activeClone.style.width = `${initialRect.width}px`;
+        activeClone.style.height = `${initialRect.height}px`;
+        activeClone.style.opacity = '0.9';
+        activeClone.style.zIndex = '9999';
+        activeClone.style.pointerEvents = 'none';
+        document.body.appendChild(activeClone);
+        
+        el.classList.add('dragging');
+      }, { passive: false });
+
+      el.addEventListener('touchmove', function(e) {
+        if (!activeClone) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+        
+        activeClone.style.left = `${initialRect.left + dx}px`;
+        activeClone.style.top = `${initialRect.top + dy}px`;
+
+        const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+        const dropZones = getDropZones();
+        dropZones.forEach(zone => {
+          if (zone.el && (zone.el === targetEl || zone.el.contains(targetEl))) {
+            zone.el.classList.add('drop-zone-active');
+          } else if (zone.el) {
+            zone.el.classList.remove('drop-zone-active');
+          }
+        });
+      }, { passive: false });
+
+      el.addEventListener('touchend', function(e) {
+        if (!activeClone) return;
+        e.preventDefault();
+        el.classList.remove('dragging');
+        
+        const touch = e.changedTouches[0];
+        const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        document.body.removeChild(activeClone);
+        activeClone = null;
+
+        const dropZones = getDropZones();
+        dropZones.forEach(zone => { if (zone.el) zone.el.classList.remove('drop-zone-active'); });
+
+        if (!targetEl) return;
+
+        const dragData = getDragData();
+        for (let zone of dropZones) {
+          if (zone.el && (zone.el === targetEl || zone.el.contains(targetEl))) {
+            onDropSuccess(dragData, zone.value);
+            return;
+          }
+        }
+      }, { passive: false });
+    }
+
+    function renderGame() {
+      const area = document.getElementById('interactionArea');
+      const title = document.getElementById('gameTitle');
+      const desc = document.getElementById('gameDesc');
+      area.innerHTML = '';
+
+      switch (currentMode) {
+        case 'match':
+          title.textContent = "🧩 硬幣配對挑戰";
+          desc.textContent = "請把上方的硬幣【拖曳】放到下方對應數值的一顆硬幣上。";
+          renderMatchMode(area);
+          break;
+        case 'classify':
+          title.textContent = "🧺 繽紛分類小高手";
+          desc.textContent = "請把所有的硬幣，【拖曳】到下方對應面值的小籃子中！";
+          renderClassifyMode(area);
+          break;
+        case 'value':
+          title.textContent = "📝 硬幣找名字";
+          desc.textContent = "請看上方的硬幣，點選下方正確的幣值文字。";
+          renderValueMode(area);
+          break;
+        case 'total':
+          title.textContent = "🔢 數數 1 元硬幣";
+          desc.textContent = "由左至右點算 1 元硬幣，並在下方點選正確的總值。";
+          renderTotalMode(area);
+          break;
+        case 'pay_easy':
+          title.textContent = "🛒 買東西付零錢 (簡易)";
+          desc.textContent = `請將符合面額的硬幣【拖曳】到上方付款區，買下【${currentQuestionData.itemName}】！`;
+          renderPayEasyMode(area);
+          break;
+        case 'pay_medium':
+          title.textContent = "🛒 買東西付零錢 (中階)";
+          desc.textContent = hintEnabled ? 
+            `請將 1 元硬幣【拖曳】到籃子裡，累計付足 $${currentQuestionData.targetValue}！` : 
+            `無提示挑戰！請自行點算籃內硬幣，確認無誤後點擊「確認付款」。`;
+          renderPayMediumMode(area);
+          break;
+        case 'pay_hard':
+          title.textContent = "🛒 買東西付零錢 (進階)";
+          desc.textContent = hintEnabled ? 
+            `自由搭配不同的硬幣【拖曳】投入籃中，付足 $${currentQuestionData.targetValue}！` : 
+            `無提示挑戰！請自行搭配並點算硬幣，確認無誤後點擊「確認付款」。`;
+          renderPayHardMode(area);
+          break;
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 1. 配對模式渲染
+    // -------------------------------------------------------------
+    function renderMatchMode(container) {
+      const questionDiv = document.createElement('div');
+      questionDiv.className = "flex flex-col items-center mb-4";
+      questionDiv.innerHTML = `
+        <div class="bg-amber-50 p-4 rounded-3xl border-2 border-dashed border-amber-300 flex items-center justify-center w-40 h-40">
+          <img src="${COIN_IMAGES[currentQuestionData.targetValue]}" 
+               id="draggableCoin" 
+               draggable="true" 
+               class="w-28 h-28 cursor-grab active:cursor-grabbing coin-img filter drop-shadow-md"
+               alt="${currentQuestionData.targetValue}元" />
+        </div>
+        <p class="text-sm font-bold text-amber-600 mt-2">👈 快把我拖曳去下方配對吧！</p>
+      `;
+      container.appendChild(questionDiv);
+
+      const optionsContainer = document.createElement('div');
+      optionsContainer.className = "grid grid-cols-4 gap-4 w-full max-w-lg mt-4";
+      
+      COIN_VALUES.forEach(val => {
+        if (wrongOptions.includes(val)) {
+          const empty = document.createElement('div');
+          optionsContainer.appendChild(empty);
+          return;
+        }
+
+        const optionCard = document.createElement('div');
+        optionCard.className = "cute-card p-3 flex flex-col items-center justify-center hover:border-amber-400 hover:bg-amber-50 transition-all text-center relative";
+        optionCard.setAttribute('data-val', val);
+        optionCard.innerHTML = `
+          <img src="${COIN_IMAGES[val]}" class="w-16 h-16 mb-2 pointer-events-none" />
+          <span class="font-bold text-lg text-gray-700">${val}元</span>
+        `;
+
+        optionCard.ondragover = (e) => {
+          if (isAnsweredCorrectly) return;
+          e.preventDefault();
+          optionCard.classList.add('drop-zone-active');
+        };
+        optionCard.ondragleave = () => {
+          optionCard.classList.remove('drop-zone-active');
+        };
+        optionCard.ondrop = (e) => {
+          if (isAnsweredCorrectly) return;
+          e.preventDefault();
+          optionCard.classList.remove('drop-zone-active');
+          checkMatchAnswer(val);
+        };
+
+        optionsContainer.appendChild(optionCard);
+      });
+
+      container.appendChild(optionsContainer);
+
+      const dragCoin = document.getElementById('draggableCoin');
+      dragCoin.ondragstart = (e) => {
+        if (isAnsweredCorrectly) {
+          e.preventDefault();
+          return;
+        }
+        dragCoin.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', currentQuestionData.targetValue);
+      };
+      dragCoin.ondragend = () => {
+        dragCoin.classList.remove('dragging');
+      };
+
+      makeElementTouchDraggable(
+        dragCoin,
+        () => currentQuestionData.targetValue,
+        () => {
+          return Array.from(document.querySelectorAll('[data-val]')).map(el => ({
+            el: el,
+            value: parseInt(el.getAttribute('data-val'))
+          }));
+        },
+        (draggedVal, zoneVal) => {
+          checkMatchAnswer(zoneVal);
+        }
+      );
+    }
+
+    function checkMatchAnswer(chosenValue) {
+      if (isAnsweredCorrectly) return;
+      if (chosenValue === currentQuestionData.targetValue) {
+        // 發光回饋
+        const cards = document.querySelectorAll('[data-val]');
+        cards.forEach(card => {
+          if (parseInt(card.getAttribute('data-val')) === chosenValue) {
+            card.classList.add('glow-correct');
+          }
+        });
+        handleSuccess();
+      } else {
+        handleWrong(chosenValue);
+        renderGame();
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 2. 分類模式渲染
+    // -------------------------------------------------------------
+    function renderClassifyMode(container) {
+      const poolContainer = document.createElement('div');
+      poolContainer.className = "flex flex-wrap justify-center gap-3 p-4 bg-orange-50 border-2 border-dashed border-orange-200 rounded-2xl w-full min-h-[110px]";
+      
+      const coinsLeft = currentQuestionData.coinPool.length;
+
+      if (coinsLeft === 0) {
+        poolContainer.innerHTML = `<span class="text-emerald-500 font-bold text-lg py-4">🎉 太棒了！所有的硬幣都分類好了！</span>`;
+        document.getElementById('nextBtn').classList.remove('hidden');
+      } else {
+        currentQuestionData.coinPool.forEach((val, idx) => {
+          const coinImg = document.createElement('img');
+          coinImg.src = COIN_IMAGES[val];
+          coinImg.className = "w-14 h-14 cursor-grab active:cursor-grabbing filter drop-shadow-sm coin-img";
+          coinImg.draggable = true;
+          coinImg.id = `classify-coin-${idx}`;
+          
+          coinImg.ondragstart = (e) => {
+            if (isAnsweredCorrectly) {
+              e.preventDefault();
+              return;
+            }
+            e.dataTransfer.setData('text/plain', JSON.stringify({ val, idx }));
+            coinImg.classList.add('dragging');
+          };
+          coinImg.ondragend = () => {
+            coinImg.classList.remove('dragging');
+          };
+
+          poolContainer.appendChild(coinImg);
+
+          makeElementTouchDraggable(
+            coinImg,
+            () => ({ val, idx }),
+            () => {
+              return Array.from(document.querySelectorAll('[data-basket-val]')).map(el => ({
+                el: el,
+                value: parseInt(el.getAttribute('data-basket-val'))
+              }));
+            },
+            (dragData, basketVal) => {
+              processClassify(dragData.val, dragData.idx, basketVal);
+            }
+          );
+        });
+      }
+
+      container.appendChild(poolContainer);
+
+      const basketsContainer = document.createElement('div');
+      basketsContainer.className = "grid grid-cols-4 gap-4 w-full mt-4";
+
+      COIN_VALUES.forEach(val => {
+        const basket = document.createElement('div');
+        basket.className = "cute-card border-2 border-[#FFD3BA] p-3 min-h-[180px] flex flex-col items-center bg-[#FFF9F5] transition-all";
+        basket.setAttribute('data-basket-val', val);
+        
+        const count = currentQuestionData.classified[val] || 0;
+
+        const coinHintHtml = hintEnabled 
+          ? `<img src="${COIN_IMAGES[val]}" class="w-10 h-10 mb-1 filter drop-shadow-sm pointer-events-none" alt="${val}元硬幣提示" />` 
+          : ''; 
+
+        basket.innerHTML = `
+          <div class="flex flex-col items-center mb-2">
+            ${coinHintHtml}
+            <div class="font-bold text-[#8C5D3A] text-xs md:text-sm">${val}元籃子</div>
+          </div>
+          <div class="flex-grow w-full border border-dashed border-amber-200 rounded-xl p-2 flex flex-wrap justify-center items-center content-center gap-1 bg-white">
+            ${Array(count).fill(0).map(() => `<img src="${COIN_IMAGES[val]}" class="w-8 h-8 filter drop-shadow-sm" />`).join('')}
+            ${count === 0 ? `<span class="text-xs text-gray-400">放這裡</span>` : ''}
+          </div>
+          <div class="mt-2 text-xs font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">已分類: ${count}</div>
+        `;
+
+        basket.ondragover = (e) => {
+          if (isAnsweredCorrectly) return;
+          e.preventDefault();
+          basket.classList.add('drop-zone-active');
+        };
+        basket.ondragleave = () => {
+          basket.classList.remove('drop-zone-active');
+        };
+        basket.ondrop = (e) => {
+          if (isAnsweredCorrectly) return;
+          e.preventDefault();
+          basket.classList.remove('drop-zone-active');
+          try {
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            processClassify(data.val, data.idx, val);
+          } catch (err) {}
+        };
+
+        basketsContainer.appendChild(basket);
+      });
+
+      container.appendChild(basketsContainer);
+    }
+
+    function processClassify(coinVal, poolIndex, targetBasketVal) {
+      if (isAnsweredCorrectly) return;
+      if (coinVal === targetBasketVal) {
+        playCoinSound();
+        currentQuestionData.coinPool.splice(poolIndex, 1);
+        currentQuestionData.classified[coinVal] = (currentQuestionData.classified[coinVal] || 0) + 1;
+        
+        if (currentQuestionData.coinPool.length === 0) {
+          renderGame(); 
+          setTimeout(() => {
+            handleSuccess(false);
+            document.getElementById('nextBtn').classList.remove('hidden');
+          }, 300);
+        } else {
+          renderGame();
+        }
+      } else {
+        playWrongSound();
+        const feedback = document.getElementById('feedbackContainer');
+        feedback.classList.remove('hidden');
+        document.getElementById('feedbackText').innerHTML = `❌ 哎呀！那是 <b>${coinVal}元</b> 喔，不能放進 <b>${targetBasketVal}元籃子</b> 裡。`;
+        setTimeout(() => renderHint(), 2500);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 3. 幣值模式渲染
+    // -------------------------------------------------------------
+    function renderValueMode(container) {
+      const questionDiv = document.createElement('div');
+      questionDiv.className = "flex flex-col items-center mb-4";
+      questionDiv.innerHTML = `
+        <div class="bg-amber-50 p-6 rounded-3xl border-2 border-dashed border-amber-300 flex items-center justify-center w-36 h-36">
+          <img src="${COIN_IMAGES[currentQuestionData.targetValue]}" class="w-24 h-24 filter drop-shadow-md" />
+        </div>
+      `;
+      container.appendChild(questionDiv);
+
+      const optionsContainer = document.createElement('div');
+      optionsContainer.className = "grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-lg mt-4";
+
+      COIN_VALUES.forEach(val => {
+        if (wrongOptions.includes(val)) {
+          const empty = document.createElement('div');
+          optionsContainer.appendChild(empty);
+          return;
+        }
+
+        const btn = document.createElement('button');
+        btn.className = "btn-macaron-pink text-lg font-bold py-4 px-6 rounded-2xl transition-all relative";
+        btn.textContent = `${val}元`;
+        btn.onclick = () => {
+          if (isAnsweredCorrectly) return;
+          if (val === currentQuestionData.targetValue) {
+            btn.classList.add('glow-correct'); // 發光特效
+            handleSuccess();
+          } else {
+            handleWrong(val);
+            renderGame();
+          }
+        };
+
+        optionsContainer.appendChild(btn);
+      });
+
+      container.appendChild(optionsContainer);
+    }
+
+    // -------------------------------------------------------------
+    // 4. 總值模式渲染
+    // -------------------------------------------------------------
+    function renderTotalMode(container) {
+      const coinsArea = document.createElement('div');
+      coinsArea.className = "flex flex-wrap justify-center gap-4 p-6 bg-yellow-50/50 border-2 border-dashed border-yellow-200 rounded-2xl w-full max-w-xl min-h-[120px]";
+      
+      for (let i = 0; i < currentQuestionData.targetValue; i++) {
+        const coinWrapper = document.createElement('div');
+        coinWrapper.className = "relative flex flex-col items-center";
+
+        const img = document.createElement('img');
+        img.src = COIN_IMAGES[1];
+        img.className = "w-14 h-14 cursor-pointer filter drop-shadow-sm transition-all active:scale-95";
+        img.setAttribute('data-counted', 'false');
+
+        const countTag = document.createElement('span');
+        countTag.className = "absolute -top-6 bg-rose-400 text-white text-xs font-bold rounded-full px-2 py-0.5 opacity-0 transition-all pointer-events-none scale-0";
+        countTag.id = `count-tag-${i}`;
+
+        img.onclick = () => {
+          if (isAnsweredCorrectly) return;
+          
+          if (img.getAttribute('data-counted') === 'false') {
+            // 強制由左至右：只能點擊當前順序的下一個硬幣
+            if (i !== selectedCount) return;
+
+            playCoinSound();
+            img.setAttribute('data-counted', 'true');
+            img.classList.add('ring-4', 'ring-rose-200', 'rounded-full');
+            selectedCount++;
+            countTag.textContent = `${selectedCount}元`;
+            countTag.classList.remove('opacity-0', 'scale-0');
+            countTag.classList.add('opacity-100', 'scale-100');
+          } else {
+            // 強制由右至左取消：若要取消點算，只能點擊最後一個被點算過的硬幣
+            if (i !== selectedCount - 1) return;
+
+            playCoinSound();
+            img.setAttribute('data-counted', 'false');
+            img.classList.remove('ring-4', 'ring-rose-200', 'rounded-full');
+            countTag.classList.add('opacity-0', 'scale-0');
+            countTag.classList.remove('opacity-100', 'scale-100');
+            selectedCount--; // 確實扣除計數
+          }
+        };
+
+        coinWrapper.appendChild(countTag);
+        coinWrapper.appendChild(img);
+        coinsArea.appendChild(coinWrapper);
+      }
+
+      container.appendChild(coinsArea);
+
+      const optionsContainer = document.createElement('div');
+      optionsContainer.className = "grid grid-cols-5 gap-2 w-full max-w-xl mt-4";
+
+      for (let v = 1; v <= 10; v++) {
+        if (wrongOptions.includes(v)) {
+          const empty = document.createElement('div');
+          optionsContainer.appendChild(empty);
+          continue;
+        }
+
+        const btn = document.createElement('button');
+        btn.className = "btn-macaron-cyan text-lg font-bold py-3 px-1 rounded-xl transition-all relative";
+        btn.textContent = `${v}元`;
+        btn.onclick = () => {
+          if (isAnsweredCorrectly) return;
+          if (v === currentQuestionData.targetValue) {
+            btn.classList.add('glow-correct'); // 發光特效
+            handleSuccess();
+          } else {
+            handleWrong(v);
+            renderGame();
+          }
+        };
+
+        optionsContainer.appendChild(btn);
+      }
+
+      container.appendChild(optionsContainer);
+    }
+
+    // -------------------------------------------------------------
+    // 5. 簡易付款模式渲染
+    // -------------------------------------------------------------
+    function renderPayEasyMode(container) {
+      const showcase = document.createElement('div');
+      showcase.className = "flex flex-col items-center justify-center p-6 border-2 border-emerald-200 bg-emerald-50/50 rounded-3xl w-64 relative";
+      showcase.innerHTML = `
+        <div class="text-7xl mb-4">${getIconForToy(currentQuestionData.itemName)}</div>
+        <div class="font-bold text-gray-800 text-lg mb-2">${currentQuestionData.itemName}</div>
+        <div class="bg-[#FF9E79] text-white font-extrabold text-2xl px-6 py-2 rounded-full shadow-md border-2 border-white">
+          $${currentQuestionData.targetValue}
+        </div>
+      `;
+
+      const payZone = document.createElement('div');
+      payZone.className = "cute-card border-dashed border-4 border-emerald-300 p-4 mt-4 w-56 min-h-[110px] flex flex-col items-center justify-center bg-white relative";
+      payZone.id = "payZone";
+      payZone.innerHTML = `<span class="text-emerald-600 font-bold text-sm text-center">🚚 拖曳正確的硬幣到這裡付款</span>`;
+
+      payZone.ondragover = (e) => {
+        if (isAnsweredCorrectly) return;
+        e.preventDefault();
+        payZone.classList.add('drop-zone-active');
+      };
+      payZone.ondragleave = () => {
+        payZone.classList.remove('drop-zone-active');
+      };
+      payZone.ondrop = (e) => {
+        if (isAnsweredCorrectly) return;
+        e.preventDefault();
+        payZone.classList.remove('drop-zone-active');
+        try {
+          const coinVal = parseInt(e.dataTransfer.getData('text/plain'));
+          checkPayEasyAnswer(coinVal);
+        } catch(err) {}
+      };
+
+      const topSection = document.createElement('div');
+      topSection.className = "flex flex-col md:flex-row items-center gap-6";
+      topSection.appendChild(showcase);
+      topSection.appendChild(payZone);
+      container.appendChild(topSection);
+
+      const optionsContainer = document.createElement('div');
+      optionsContainer.className = "grid grid-cols-4 gap-4 w-full max-w-lg mt-6";
+
+      COIN_VALUES.forEach(val => {
+        if (wrongOptions.includes(val)) {
+          const empty = document.createElement('div');
+          optionsContainer.appendChild(empty);
+          return;
+        }
+
+        const coinContainer = document.createElement('div');
+        coinContainer.className = "flex flex-col items-center justify-center";
+        
+        const coinImg = document.createElement('img');
+        coinImg.src = COIN_IMAGES[val];
+        coinImg.className = "w-16 h-16 cursor-grab active:cursor-grabbing filter drop-shadow-sm coin-img";
+        coinImg.draggable = true;
+        coinImg.id = `pay-coin-${val}`;
+
+        coinImg.ondragstart = (e) => {
+          if (isAnsweredCorrectly) {
+            e.preventDefault();
+            return;
+          }
+          e.dataTransfer.setData('text/plain', val);
+          coinImg.classList.add('dragging');
+        };
+        coinImg.ondragend = () => {
+          coinImg.classList.remove('dragging');
+        };
+
+        coinContainer.appendChild(coinImg);
+        optionsContainer.appendChild(coinContainer);
+
+        makeElementTouchDraggable(
+          coinImg,
+          () => val,
+          () => [{ el: document.getElementById('payZone'), value: 'pay' }],
+          (draggedVal, zoneVal) => {
+            checkPayEasyAnswer(draggedVal);
+          }
+        );
+      });
+
+      container.appendChild(optionsContainer);
+    }
+
+    function checkPayEasyAnswer(coinVal) {
+      if (isAnsweredCorrectly) return;
+      if (coinVal === currentQuestionData.targetValue) {
+        const payZone = document.getElementById('payZone');
+        payZone.innerHTML = `<img src="${COIN_IMAGES[coinVal]}" class="w-16 h-16 filter drop-shadow-md animate-bounce glow-correct" style="border-radius: 50%;" />`;
+        setTimeout(() => {
+          handleSuccess();
+        }, 300);
+      } else {
+        handleWrong(coinVal);
+        renderGame();
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 6. 中階付款模式渲染 (無提示隱藏累計放入)
+    // -------------------------------------------------------------
+    function renderPayMediumMode(container) {
+      const showcase = document.createElement('div');
+      showcase.className = "flex flex-col items-center justify-center p-4 border-2 border-purple-200 bg-purple-50/50 rounded-3xl w-56";
+      showcase.innerHTML = `
+        <div class="text-6xl mb-2">${getIconForToy(currentQuestionData.itemName)}</div>
+        <div class="font-bold text-gray-800 text-sm mb-1">${currentQuestionData.itemName}</div>
+        <div class="bg-[#FF9E79] text-white font-extrabold text-xl px-5 py-1.5 rounded-full shadow-md border-2 border-white">
+          $${currentQuestionData.targetValue}
+        </div>
+      `;
+
+      const payZone = document.createElement('div');
+      payZone.className = "cute-card border-dashed border-4 border-purple-300 p-4 w-64 min-h-[160px] flex flex-col items-center justify-center bg-white relative";
+      payZone.id = "payZone";
+
+      let coinsHtml = "";
+      for (let i = 0; i < paidAmount; i++) {
+        coinsHtml += `<img src="${COIN_IMAGES[1]}" class="w-8 h-8 filter drop-shadow-sm -m-1 animate-ping-once" style="animation-duration: 0.3s" />`;
+      }
+
+      const progressPercent = (paidAmount / currentQuestionData.targetValue) * 100;
+      
+      // 有提示時才顯示進度條
+      const progressHtml = hintEnabled ? `
+        <div class="w-full bg-purple-50 rounded-full h-3 overflow-hidden border border-purple-100 mt-2">
+          <div id="inlineProgressBar" class="bg-[#FFD3BA] h-full transition-all duration-300" style="width: ${progressPercent}%"></div>
+        </div>
+      ` : '';
+
+      // 有提示時才顯示文字累計金額
+      const accumulatedHtml = hintEnabled ? `
+        <div class="text-xs font-bold text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
+          累計放入: $${paidAmount}
+        </div>
+      ` : '';
+
+      payZone.innerHTML = `
+        <div class="flex flex-wrap justify-center gap-1 mb-2">
+          ${coinsHtml || '<span class="text-purple-600 font-bold text-xs text-center">👛 請把 1元 拖曳進來</span>'}
+        </div>
+        <div class="flex flex-col items-center w-full">
+          ${accumulatedHtml}
+          ${progressHtml}
+        </div>
+      `;
+
+      payZone.ondragover = (e) => {
+        if (isAnsweredCorrectly) return;
+        e.preventDefault();
+        payZone.classList.add('drop-zone-active');
+      };
+      payZone.ondragleave = () => {
+        payZone.classList.remove('drop-zone-active');
+      };
+      payZone.ondrop = (e) => {
+        if (isAnsweredCorrectly) return;
+        e.preventDefault();
+        payZone.classList.remove('drop-zone-active');
+        try {
+          const coinVal = parseInt(e.dataTransfer.getData('text/plain'));
+          processMediumPay(coinVal);
+        } catch(err) {}
+      };
+
+      const topSection = document.createElement('div');
+      topSection.className = "flex flex-col md:flex-row items-center gap-6";
+      
+      const payZoneWrapper = document.createElement('div');
+      payZoneWrapper.className = "flex flex-col items-center gap-3 w-64";
+      payZoneWrapper.appendChild(payZone);
+      
+      // 無提示時，新增確認付款按鈕
+      if (!hintEnabled) {
+        const confirmBtn = document.createElement('button');
+        confirmBtn.className = "btn-macaron-green text-base font-bold py-2 px-8 rounded-full shadow-md transition-all";
+        confirmBtn.innerHTML = "✅ 確認付款";
+        confirmBtn.onclick = confirmPayment;
+        payZoneWrapper.appendChild(confirmBtn);
+      }
+
+      topSection.appendChild(showcase);
+      topSection.appendChild(payZoneWrapper);
+      container.appendChild(topSection);
+
+      const generatorArea = document.createElement('div');
+      generatorArea.className = "flex flex-col items-center mt-6 p-4 bg-purple-50/50 rounded-2xl border border-purple-100 w-full max-w-sm";
+      generatorArea.innerHTML = `
+        <div class="flex gap-4 items-center">
+          <img src="${COIN_IMAGES[1]}" 
+               id="unlimitedCoin" 
+               draggable="true" 
+               class="w-16 h-16 cursor-grab active:cursor-grabbing filter drop-shadow-md coin-img" 
+               alt="1元" />
+        </div>
+        <p class="text-xs font-bold text-purple-600 mt-2">👈 請拖曳 1 元進上方籃子付款</p>
+      `;
+
+      container.appendChild(generatorArea);
+
+      const dragCoin = document.getElementById('unlimitedCoin');
+      dragCoin.ondragstart = (e) => {
+        if (isAnsweredCorrectly) {
+          e.preventDefault();
+          return;
+        }
+        e.dataTransfer.setData('text/plain', 1);
+        dragCoin.classList.add('dragging');
+      };
+      dragCoin.ondragend = () => {
+        dragCoin.classList.remove('dragging');
+      };
+
+      makeElementTouchDraggable(
+        dragCoin,
+        () => 1,
+        () => [{ el: document.getElementById('payZone'), value: 'pay' }],
+        (draggedVal, zoneVal) => {
+          processMediumPay(draggedVal);
+        }
+      );
+    }
+
+    function processMediumPay(coinVal) {
+      if (isAnsweredCorrectly) return;
+      if (coinVal !== 1) return;
+
+      playCoinSound();
+      paidAmount += 1;
+      
+      // 若無提示，不自動判斷過關，只畫硬幣
+      if (!hintEnabled) {
+        renderGame();
+        return;
+      }
+      
+      // 有提示狀態的自動檢核與防呆
+      if (paidAmount === currentQuestionData.targetValue) {
+        renderGame();
+        setTimeout(() => {
+          handleSuccess();
+        }, 300);
+      } else if (paidAmount > currentQuestionData.targetValue) {
+        playWrongSound();
+        const feedback = document.getElementById('feedbackContainer');
+        const textSpan = document.getElementById('feedbackText');
+        if (feedback) feedback.classList.remove('hidden');
+        if (textSpan) {
+          textSpan.innerHTML = `⚠️ 哎呀！放太多了，總共只需要 $${currentQuestionData.targetValue} 喔。重來一次吧！`;
+        }
+        setTimeout(() => resetCurrentGame(), 2000);
+      } else {
+        renderGame();
+        renderHint();
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 7. 進階付款模式渲染 (無提示隱藏累計放入)
+    // -------------------------------------------------------------
+    function renderPayHardMode(container) {
+      const showcase = document.createElement('div');
+      showcase.className = "flex flex-col items-center justify-center p-4 border-2 border-indigo-200 bg-indigo-50/50 rounded-3xl w-56";
+      showcase.innerHTML = `
+        <div class="text-6xl mb-2">${getIconForToy(currentQuestionData.itemName)}</div>
+        <div class="font-bold text-gray-800 text-sm mb-1">${currentQuestionData.itemName}</div>
+        <div class="bg-[#FF9E79] text-white font-extrabold text-xl px-5 py-1.5 rounded-full shadow-md border-2 border-white">
+          $${currentQuestionData.targetValue}
+        </div>
+      `;
+
+      if (!currentQuestionData.insertedCoins) {
+        currentQuestionData.insertedCoins = [];
+      }
+
+      const payZone = document.createElement('div');
+      payZone.className = "cute-card border-dashed border-4 border-indigo-300 p-4 w-64 min-h-[160px] flex flex-col items-center justify-center bg-white relative";
+      payZone.id = "payZone";
+
+      let coinsHtml = currentQuestionData.insertedCoins.map(val => {
+        return `<img src="${COIN_IMAGES[val]}" class="w-8 h-8 filter drop-shadow-sm -m-1 animate-ping-once" style="animation-duration: 0.3s" />`;
+      }).join('');
+
+      const progressPercent = (paidAmount / currentQuestionData.targetValue) * 100;
+      
+      const progressHtml = hintEnabled ? `
+        <div class="w-full bg-indigo-50 rounded-full h-3 overflow-hidden border border-indigo-100 mt-2">
+          <div id="inlineProgressBar" class="bg-[#FFD3BA] h-full transition-all duration-300" style="width: ${progressPercent}%"></div>
+        </div>
+      ` : '';
+
+      const accumulatedHtml = hintEnabled ? `
+        <div class="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+          累計放入: $${paidAmount} / $${currentQuestionData.targetValue}
+        </div>
+      ` : '';
+
+      payZone.innerHTML = `
+        <div class="flex flex-wrap justify-center gap-1 mb-2">
+          ${coinsHtml || '<span class="text-indigo-600 font-bold text-xs text-center">👛 請拖曳硬幣到這裡付款</span>'}
+        </div>
+        <div class="flex flex-col items-center w-full">
+          ${accumulatedHtml}
+          ${progressHtml}
+        </div>
+      `;
+
+      payZone.ondragover = (e) => {
+        if (isAnsweredCorrectly) return;
+        e.preventDefault();
+        payZone.classList.add('drop-zone-active');
+      };
+      payZone.ondragleave = () => {
+        payZone.classList.remove('drop-zone-active');
+      };
+      payZone.ondrop = (e) => {
+        if (isAnsweredCorrectly) return;
+        e.preventDefault();
+        payZone.classList.remove('drop-zone-active');
+        try {
+          const coinVal = parseInt(e.dataTransfer.getData('text/plain'));
+          processHardPay(coinVal);
+        } catch(err) {}
+      };
+
+      const topSection = document.createElement('div');
+      topSection.className = "flex flex-col md:flex-row items-center gap-6";
+      
+      const payZoneWrapper = document.createElement('div');
+      payZoneWrapper.className = "flex flex-col items-center gap-3 w-64";
+      payZoneWrapper.appendChild(payZone);
+      
+      // 無提示時，新增確認付款按鈕
+      if (!hintEnabled) {
+        const confirmBtn = document.createElement('button');
+        confirmBtn.className = "btn-macaron-green text-base font-bold py-2 px-8 rounded-full shadow-md transition-all";
+        confirmBtn.innerHTML = "✅ 確認付款";
+        confirmBtn.onclick = confirmPayment;
+        payZoneWrapper.appendChild(confirmBtn);
+      }
+
+      topSection.appendChild(showcase);
+      topSection.appendChild(payZoneWrapper);
+      container.appendChild(topSection);
+
+      const optionsContainer = document.createElement('div');
+      optionsContainer.className = "grid grid-cols-4 gap-4 w-full max-w-lg mt-6 bg-indigo-50/30 p-4 rounded-2xl border border-indigo-100";
+
+      COIN_VALUES.forEach(val => {
+        const coinContainer = document.createElement('div');
+        coinContainer.className = "flex flex-col items-center justify-center";
+        
+        const coinImg = document.createElement('img');
+        coinImg.src = COIN_IMAGES[val];
+        coinImg.className = "w-14 h-14 cursor-grab active:cursor-grabbing filter drop-shadow-sm coin-img";
+        coinImg.draggable = true;
+        coinImg.id = `hard-coin-${val}`;
+
+        coinImg.ondragstart = (e) => {
+          if (isAnsweredCorrectly) {
+            e.preventDefault();
+            return;
+          }
+          e.dataTransfer.setData('text/plain', val);
+          coinImg.classList.add('dragging');
+        };
+        coinImg.ondragend = () => {
+          coinImg.classList.remove('dragging');
+        };
+
+        coinContainer.appendChild(coinImg);
+        coinContainer.innerHTML += `<span class="text-xs font-bold text-indigo-700 mt-1">${val}元</span>`;
+        
+        const imgEl = coinContainer.querySelector('img');
+        imgEl.ondragstart = (e) => {
+          if (isAnsweredCorrectly) {
+            e.preventDefault();
+            return;
+          }
+          e.dataTransfer.setData('text/plain', val);
+          imgEl.classList.add('dragging');
+        };
+        imgEl.ondragend = () => {
+          imgEl.classList.remove('dragging');
+        };
+
+        optionsContainer.appendChild(coinContainer);
+
+        makeElementTouchDraggable(
+          imgEl,
+          () => val,
+          () => [{ el: document.getElementById('payZone'), value: 'pay' }],
+          (draggedVal, zoneVal) => {
+            processHardPay(draggedVal);
+          }
+        );
+      });
+
+      container.appendChild(optionsContainer);
+    }
+
+    function processHardPay(coinVal) {
+      if (isAnsweredCorrectly) return;
+      
+      if (!hintEnabled) {
+        playCoinSound();
+        paidAmount += coinVal;
+        if (!currentQuestionData.insertedCoins) {
+          currentQuestionData.insertedCoins = [];
+        }
+        currentQuestionData.insertedCoins.push(coinVal);
+        renderGame();
+        return;
+      }
+
+      const testAmount = paidAmount + coinVal;
+      
+      if (testAmount <= currentQuestionData.targetValue) {
+        playCoinSound();
+        paidAmount += coinVal;
+        if (!currentQuestionData.insertedCoins) {
+          currentQuestionData.insertedCoins = [];
+        }
+        currentQuestionData.insertedCoins.push(coinVal);
+
+        if (paidAmount === currentQuestionData.targetValue) {
+          renderGame();
+          setTimeout(() => {
+            handleSuccess();
+          }, 300);
+        } else {
+          renderGame();
+          renderHint();
+        }
+      } else {
+        playWrongSound();
+        const feedback = document.getElementById('feedbackContainer');
+        const textSpan = document.getElementById('feedbackText');
+        if (feedback) feedback.classList.remove('hidden');
+        if (textSpan) {
+          textSpan.innerHTML = `⚠️ 哎呀！如果放 <b>${coinVal}元</b> 就總共 $${testAmount}元，超過需要的 $${currentQuestionData.targetValue}元 囉！換別的硬幣試試看。`;
+        }
+        setTimeout(() => renderHint(), 3000);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 共用遊戲反饋與得分邏輯
+    // -------------------------------------------------------------
+    function updateProgress(percent) {
+      const progressBar = document.getElementById('inlineProgressBar');
+      if (progressBar) {
+        progressBar.style.width = `${Math.min(percent, 100)}%`;
+      }
+    }
+
+    function handleSuccess(autoNext = true) {
+      playSuccessSound();
+      isAnsweredCorrectly = true; // 設置答對狀態
+
+      // 鎖定互動區不允許任何點擊或拖放
+      const interactionArea = document.getElementById('interactionArea');
+      if (interactionArea) {
+        interactionArea.style.pointerEvents = 'none';
+      }
+      
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+
+      score += 10;
+      document.getElementById('scoreText').textContent = score;
+
+      const feedback = document.getElementById('feedbackContainer');
+      const textSpan = document.getElementById('feedbackText');
+      if (feedback) {
+        feedback.classList.remove('hidden');
+        feedback.className = "cute-card bg-emerald-50 border-emerald-200 p-4 mb-6 text-center text-emerald-700 font-bold text-xl animate-bounce relative";
+      }
+      if (textSpan) {
+        textSpan.innerHTML = `🎉 太厲害了！你答對了！ ✨ <b>獲得 10 分</b>`;
+      }
+
+      if (autoNext) {
+        document.getElementById('nextBtn').classList.remove('hidden');
+      }
+    }
+
+    function handleWrong(wrongVal) {
+      playWrongSound();
+      
+      // ★ 只有在有提示的情況下，才剔除錯誤選項 (將選項存入 wrongOptions)
+      if (hintEnabled && wrongVal !== undefined && !wrongOptions.includes(wrongVal)) {
+        wrongOptions.push(wrongVal);
+      }
+
+      const feedback = document.getElementById('feedbackContainer');
+      const textSpan = document.getElementById('feedbackText');
+      if (feedback) {
+        feedback.classList.remove('hidden');
+        feedback.className = "cute-card bg-rose-50 border-rose-100 p-4 mb-6 text-center text-rose-600 font-bold text-xl relative";
+      }
+      if (textSpan) {
+        if (hintEnabled) {
+          textSpan.innerHTML = `💪 沒關係，再試一次！已經幫你拿掉不對的選項囉！`;
+        } else {
+          textSpan.innerHTML = `❌ 哎呀，不對喔！請仔細再試一次！`;
+        }
+      }
+      
+      setTimeout(() => {
+        renderHint();
+      }, 2000);
+    }
+
+    function nextQuestion() {
+      const feedback = document.getElementById('feedbackContainer');
+      if (feedback) {
+        feedback.className = "hidden cute-card bg-[#FFFDF5] border-[#FFEAA7] p-4 mb-6 text-center text-[#B7950B] font-bold text-lg transition-all relative";
+      }
+      resetCurrentGame();
+    }
+
+    // 無提示中高階付款用的提交按鈕邏輯
+    function confirmPayment() {
+      if (isAnsweredCorrectly) return;
+      if (paidAmount === currentQuestionData.targetValue) {
+        handleSuccess();
+      } else {
+        playWrongSound();
+        const feedback = document.getElementById('feedbackContainer');
+        const textSpan = document.getElementById('feedbackText');
+        if (feedback) {
+          feedback.classList.remove('hidden');
+          feedback.className = "cute-card bg-rose-50 border-rose-100 p-4 mb-6 text-center text-rose-600 font-bold text-xl relative";
+        }
+        if (textSpan) {
+          if (paidAmount > currentQuestionData.targetValue) {
+            textSpan.innerHTML = `❌ 付太多錢囉！請重新計算一下再付款。`;
+          } else {
+            textSpan.innerHTML = `❌ 錢不夠喔！請再確認一下金額。`;
+          }
+        }
+        
+        // 答錯後重設投入的金額，讓學生重試
+        setTimeout(() => {
+          paidAmount = 0;
+          if (currentQuestionData.insertedCoins) {
+            currentQuestionData.insertedCoins = [];
+          }
+          renderGame();
+          renderHint();
+        }, 2000);
+      }
+    }
+
+    function getIconForToy(name) {
+      if (name.includes("糖果")) return "🍬";
+      if (name.includes("布丁")) return "🍮";
+      if (name.includes("冰淇淋")) return "🍦";
+      if (name.includes("小熊氣球")) return "🎈";
+      if (name.includes("小汽車")) return "🚗";
+      if (name.includes("可愛洋娃娃")) return "🧸";
+      if (name.includes("彩色蠟筆")) return "🖍️";
+      if (name.includes("橡皮擦")) return "🧼";
+      if (name.includes("童話故事書")) return "📖";
+      if (name.includes("水果棒棒糖")) return "🍭";
+      if (name.includes("積木城堡")) return "🧱";
+      if (name.includes("恐龍玩具")) return "🦖";
+      if (name.includes("美味甜甜圈")) return "🍩";
+      if (name.includes("神奇魔術方塊")) return "🧩";
+      return "🎁";
+    }
+  </script>
+</body>
+</html>
