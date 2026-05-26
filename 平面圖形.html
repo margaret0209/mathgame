@@ -1,691 +1,1335 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>互動平面圖形遊戲</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動形狀學習樂園</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome (用於可愛圖標) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
-            touch-action: none;
-            background-color: #f0fdf4;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-            /* 網格背景 */
-            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-            background-size: 24px 24px;
+            font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+            background-color: #F7F5FC; /* 溫柔薰衣草淺底色 */
+        }
+        /* 馬卡龍主題色 */
+        .bg-macaron-pink { background-color: #FFDFDF; }
+        .bg-macaron-yellow { background-color: #FFF3CD; }
+        .bg-macaron-green { background-color: #D1E7DD; }
+        .bg-macaron-blue { background-color: #CFE2FF; }
+        .bg-macaron-purple { background-color: #E8DBFC; }
+        
+        .border-macaron-pink { border-color: #FFC5C5; }
+        .border-macaron-yellow { border-color: #FFE69C; }
+        .border-macaron-green { border-color: #A3CFBB; }
+        .border-macaron-blue { border-color: #9EC5FE; }
+        .border-macaron-purple { border-color: #D6BCFB; }
+
+        .text-macaron-pink-dark { color: #851C1C; }
+        .text-macaron-yellow-dark { color: #664D03; }
+        .text-macaron-green-dark { color: #0F5132; }
+        .text-macaron-blue-dark { color: #084298; }
+        .text-macaron-purple-dark { color: #4B277F; }
+
+        /* 可愛漂浮動畫 */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
         }
         
-        .shape-container {
-            transition: transform 0.2s;
-            cursor: pointer;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        .shape-container:active {
-            transform: scale(0.95);
-        }
-
-        .dragging {
-            position: fixed !important;
-            z-index: 1000 !important;
+        /* 粒子煙火特效 */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: confetti-fall 1.5s ease-out forwards;
             pointer-events: none;
-            transform: scale(1.15) rotate(4deg) !important;
-            filter: drop-shadow(0 20px 25px rgba(0,0,0,0.2));
+            z-index: 100;
         }
-
-        /* 移除半透明，改為純色實體 */
-        .drop-zone {
-            border: 4px dashed #cbd5e1;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background-color: #ffffff;
-        }
-
-        .drop-zone.active {
-            background-color: #f0fdfa;
-            border-color: #10b981;
-            transform: scale(1.05);
-            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.2);
-        }
-
-        .drop-zone.matched {
-            border: 4px solid #10b981;
-            background-color: #d1fae5;
-            transform: scale(1);
-        }
-
-        .drop-zone svg {
-            opacity: 0.3;
-            filter: grayscale(100%);
-        }
-
-        .scene-shape:hover {
-            transform: scale(1.1) rotate(5deg);
-        }
-
-        .nav-btn {
-            @apply flex flex-col items-center justify-center transition-all duration-300 rounded-2xl p-2 text-center border-2 border-transparent bg-white shadow-sm hover:shadow-md hover:-translate-y-1 relative overflow-hidden;
+        @keyframes confetti-fall {
+            0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(300px) rotate(360deg); opacity: 0; }
         }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col text-slate-800">
+<body class="min-h-screen flex flex-col overflow-x-hidden">
 
-    <!-- 頂部設定選單區 (移除玻璃擬物，改為實體純白背景) -->
-    <header id="main-menu" class="w-full bg-white shadow-md border-b border-slate-200 p-3 z-20 sticky top-0">
-        <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-4 md:gap-8">
-            <h1 class="text-3xl font-extrabold text-emerald-600 shrink-0 drop-shadow-sm tracking-tight flex items-center gap-2">
-                <span class="text-4xl drop-shadow-md">🏆</span> 幾何大挑戰
-            </h1>
-            
-            <div class="flex-1 flex flex-col md:flex-row gap-4 w-full bg-slate-50 p-2 rounded-3xl border border-slate-200 shadow-inner">
-                <!-- 步驟 1：模式 -->
-                <div class="flex-1 px-2">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="bg-emerald-100 text-emerald-700 text-[10px] font-black px-2 py-0.5 rounded-full tracking-widest">STEP 1</span>
-                        <span class="text-xs font-bold text-slate-500">選擇模式</span>
-                    </div>
-                    <div class="grid grid-cols-4 gap-2" id="mode-selectors">
-                        <button class="mode-btn nav-btn text-emerald-700 sound-click" data-mode="1" title="拖拉配對">
-                            <span class="text-2xl drop-shadow-sm mb-1 pointer-events-none">🧩</span>
-                            <span class="text-[11px] font-bold pointer-events-none">配對</span>
-                        </button>
-                        <button class="mode-btn nav-btn text-emerald-700 sound-click" data-mode="2" title="圖形分類">
-                            <span class="text-2xl drop-shadow-sm mb-1 pointer-events-none">🗂️</span>
-                            <span class="text-[11px] font-bold pointer-events-none">分類</span>
-                        </button>
-                        <button class="mode-btn nav-btn text-emerald-700 sound-click" data-mode="3" title="選擇指定形狀">
-                            <span class="text-2xl drop-shadow-sm mb-1 pointer-events-none">🎯</span>
-                            <span class="text-[11px] font-bold pointer-events-none">選擇</span>
-                        </button>
-                        <button class="mode-btn nav-btn text-emerald-700 sound-click" data-mode="4" title="圖片尋寶">
-                            <span class="text-2xl drop-shadow-sm mb-1 pointer-events-none">🔍</span>
-                            <span class="text-[11px] font-bold pointer-events-none">尋寶</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="w-px bg-slate-200 hidden md:block my-2"></div>
-
-                <!-- 步驟 2：難度 -->
-                <div class="flex-1 px-2">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="bg-amber-100 text-amber-700 text-[10px] font-black px-2 py-0.5 rounded-full tracking-widest">STEP 2</span>
-                        <span class="text-xs font-bold text-slate-500">選擇難度</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 h-[calc(100%-24px)]" id="diff-selectors">
-                        <button class="diff-btn nav-btn text-amber-700 sound-click" data-diff="1">
-                            <span class="text-xl drop-shadow-sm mb-1 pointer-events-none">⭐</span>
-                            <span class="text-[11px] font-bold pointer-events-none">易</span>
-                        </button>
-                        <button class="diff-btn nav-btn text-amber-700 sound-click" data-diff="2">
-                            <span class="text-xl drop-shadow-sm mb-1 pointer-events-none">⭐⭐</span>
-                            <span class="text-[11px] font-bold pointer-events-none">中</span>
-                        </button>
-                        <button class="diff-btn nav-btn text-amber-700 sound-click" data-diff="3">
-                            <span class="text-xl drop-shadow-sm mb-1 pointer-events-none">⭐⭐⭐</span>
-                            <span class="text-[11px] font-bold pointer-events-none">難</span>
-                        </button>
-                    </div>
+    <!-- 頂部導航/標題區 -->
+    <header class="bg-white shadow-sm border-b-4 border-dashed border-purple-200 py-4 px-6 sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <span class="text-4xl">🎨</span>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-800 tracking-wide">互動形狀學習樂園</h1>
+                    <p class="text-xs md:text-sm text-gray-500 font-medium">專為教師與幼兒設計的形狀探索教材</p>
                 </div>
             </div>
-
-            <!-- 開始按鈕 -->
-            <button id="start-btn" class="shrink-0 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-lg py-4 px-8 rounded-2xl shadow-lg transition-all disabled:opacity-40 disabled:grayscale hover:-translate-y-1 active:translate-y-0 sound-click" disabled>
-                開始遊戲 <span class="text-2xl ml-1 align-middle">▶</span>
-            </button>
+            <!-- 教學關卡快速切換 -->
+            <nav class="flex flex-wrap gap-2 justify-center">
+                <button onclick="switchTab('explore')" id="btn-explore" class="tab-btn px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shadow-sm border bg-macaron-pink text-macaron-pink-dark border-macaron-pink scale-105">
+                    1. 探索邊界
+                </button>
+                <button onclick="switchTab('match')" id="btn-match" class="tab-btn px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shadow-sm border bg-white text-gray-600 border-gray-200">
+                    2. 形狀配對
+                </button>
+                <button onclick="switchTab('identify')" id="btn-identify" class="tab-btn px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shadow-sm border bg-white text-gray-600 border-gray-200">
+                    3. 形狀分辨
+                </button>
+                <button onclick="switchTab('classify')" id="btn-classify" class="tab-btn px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shadow-sm border bg-white text-gray-600 border-gray-200">
+                    4. 分類方框
+                </button>
+                <button onclick="switchTab('naming')" id="btn-naming" class="tab-btn px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shadow-sm border bg-white text-gray-600 border-gray-200">
+                    5. 隨機命名
+                </button>
+            </nav>
         </div>
     </header>
 
-    <!-- 遊戲畫面區域 -->
-    <main id="game-screen" class="flex-1 hidden flex-col overflow-hidden relative z-10">
-        <div class="bg-white border-b border-emerald-100 p-2 flex justify-between items-center px-4 md:px-8 shadow-sm">
-            <button id="back-btn" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors sound-click">
-                <span class="text-lg">↺</span> 重設
-            </button>
-            <div class="flex-1 text-center">
-                <h2 id="game-instruction" class="text-lg md:text-2xl font-black text-emerald-700 drop-shadow-sm">請在上方選好模式後按開始</h2>
-            </div>
-            <div class="text-emerald-700 font-black bg-emerald-100 px-5 py-2 rounded-xl border border-emerald-200 text-lg flex items-center gap-2">
-                🏆 <span id="score-display">0</span>
-            </div>
+    <!-- 主要內容區 -->
+    <main class="flex-grow max-w-6xl w-full mx-auto p-4 md:p-6 flex flex-col justify-center relative">
+        
+        <!-- 成功反饋浮窗 -->
+        <div id="success-alert" class="hidden fixed top-24 left-1/2 transform -translate-x-1/2 z-50 bg-green-100 border-4 border-green-400 text-green-800 px-8 py-4 rounded-2xl shadow-xl flex items-center gap-3 text-lg font-bold float-animation">
+            <span class="text-3xl">🎉</span>
+            <span id="success-message">做得太棒了！答對囉！</span>
         </div>
 
-        <div id="game-area" class="flex-1 relative flex items-center justify-center p-4 overflow-y-auto">
-            <div id="empty-state" class="text-slate-400 flex flex-col items-center opacity-70">
-                <div class="text-9xl mb-6 filter drop-shadow-lg animate-bounce" style="animation-duration: 3s;">🎮</div>
-                <p class="text-2xl font-extrabold text-slate-500">請選擇模式與難度</p>
-                <p class="text-md font-bold mt-2 text-slate-400">然後點擊右上角的「開始遊戲」</p>
-            </div>
+        <!-- 錯誤反饋浮窗 -->
+        <div id="error-alert" class="hidden fixed top-24 left-1/2 transform -translate-x-1/2 z-50 bg-red-100 border-4 border-red-300 text-red-800 px-8 py-4 rounded-2xl shadow-xl flex items-center gap-3 text-lg font-bold">
+            <span class="text-3xl">💡</span>
+            <span id="error-message">再試一次看看，加油！</span>
         </div>
+
+        <!-- ==================== 1. 探索邊界 (吃隨機食物) ==================== -->
+        <section id="section-explore" class="tab-content block">
+            <div class="bg-white rounded-3xl p-6 shadow-md border-4 border-macaron-pink-dark/10">
+                <div class="text-center mb-4">
+                    <h2 class="text-2xl font-bold text-macaron-pink-dark flex items-center justify-center gap-2">
+                        <span id="explore-title-emoji">🍎</span> 關卡 1：沿邊收集<span id="explore-target-food-name">食物</span>
+                    </h2>
+                    <p class="text-gray-600 text-sm mt-1">請教師協助選取形狀，學生可以「觸控拖曳」或「滑鼠拖曳」甲蟲，沿著形狀軌跡收集完所有的食物吧！</p>
+                </div>
+
+                <!-- 教師控制面板 (選取形狀) -->
+                <div class="flex justify-center gap-3 mb-6 flex-wrap">
+                    <button onclick="initExploreGame('circle')" class="shape-select-btn px-6 py-2 rounded-2xl border-2 font-bold transition-all bg-red-100 border-red-300 text-red-800 shadow-sm" id="btn-exp-circle">🔴 圓形</button>
+                    <button onclick="initExploreGame('triangle')" class="shape-select-btn px-6 py-2 rounded-2xl border-2 font-bold transition-all bg-yellow-50 border-yellow-200 text-yellow-800 shadow-sm" id="btn-exp-triangle">🔺 三角形</button>
+                    <button onclick="initExploreGame('square')" class="shape-select-btn px-6 py-2 rounded-2xl border-2 font-bold transition-all bg-blue-50 border-blue-200 text-blue-800 shadow-sm" id="btn-exp-square">🟦 正方形</button>
+                    <button onclick="initExploreGame('rectangle')" class="shape-select-btn px-6 py-2 rounded-2xl border-2 font-bold transition-all bg-green-50 border-green-200 text-green-800 shadow-sm" id="btn-exp-rectangle">🟩 長方形</button>
+                </div>
+
+                <!-- 遊戲主畫布 -->
+                <div class="relative w-full max-w-lg mx-auto bg-slate-50 rounded-2xl border-4 border-dashed border-slate-200 overflow-hidden" style="aspect-ratio: 1/1;">
+                    <canvas id="explore-canvas" class="w-full h-full cursor-pointer"></canvas>
+                    
+                    <!-- 完成提示 -->
+                    <div id="explore-finish" class="hidden absolute inset-0 bg-white/90 flex flex-col items-center justify-center text-center p-6 transition-all">
+                        <span class="text-7xl float-animation" id="explore-finish-emoji">🏆</span>
+                        <h3 class="text-3xl font-extrabold text-macaron-pink-dark mt-4">你把食物都收集完了！</h3>
+                        <p class="text-gray-600 mt-2">這就是 <span id="explore-shape-name" class="font-bold text-red-500">圓形</span> 的邊界喔！</p>
+                        <button onclick="replayExplore()" class="mt-6 px-8 py-3 bg-green-400 hover:bg-green-500 text-white font-bold rounded-full shadow-lg transition-transform active:scale-95 flex items-center gap-2 justify-center">
+                            <span>再玩一次</span> <span id="explore-btn-food-emoji">🍎</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-3 text-xs text-gray-400">
+                    提示：可以直接按住甲蟲進行「觸控拖拉」或「滑鼠拖曳」。收集完所有美味食物即可過關！
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 2. 形狀配對 ==================== -->
+        <section id="section-match" class="tab-content hidden">
+            <div class="bg-white rounded-3xl p-6 shadow-md border-4 border-macaron-yellow-dark/10">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-macaron-yellow-dark flex items-center justify-center gap-2">
+                        🌟 關卡 2：形狀配對
+                    </h2>
+                    <p class="text-gray-600 text-sm mt-1">請教師協助挑選目標形狀，學生需要將中間的亮彩色形狀，拖拉至下方符合形狀的陰影底座中。</p>
+                </div>
+
+                <!-- 教師選擇形狀 -->
+                <div class="flex justify-center gap-3 mb-8 flex-wrap">
+                    <button onclick="initMatchGame('circle')" class="match-select-btn px-5 py-2 rounded-2xl border-2 font-bold bg-pink-100 border-pink-300 text-pink-800" id="btn-match-circle">圓形 🔴</button>
+                    <button onclick="initMatchGame('triangle')" class="match-select-btn px-5 py-2 rounded-2xl border-2 font-bold bg-amber-50 border-amber-200 text-amber-800" id="btn-match-triangle">三角形 🔺</button>
+                    <button onclick="initMatchGame('square')" class="match-select-btn px-5 py-2 rounded-2xl border-2 font-bold bg-blue-50 border-blue-200 text-blue-800" id="btn-match-square">正方形 🟦</button>
+                    <button onclick="initMatchGame('rectangle')" class="match-select-btn px-5 py-2 rounded-2xl border-2 font-bold bg-teal-50 border-teal-200 text-teal-800" id="btn-match-rectangle">長方形 🟩</button>
+                </div>
+
+                <!-- 遊戲操作區 -->
+                <div class="flex flex-col items-center gap-12 py-6">
+                    <!-- 上方：待拖曳的彩色目標 -->
+                    <div class="relative flex items-center justify-center h-48 w-full">
+                        <div id="drag-item" draggable="true" ondragstart="drag(event)" ontouchstart="touchStart(event)" ontouchmove="touchMove(event)" ontouchend="touchEnd(event)" class="cursor-grab active:cursor-grabbing transform transition-transform hover:scale-110 flex items-center justify-center" style="width: 140px; height: 140px; touch-action: none; position: relative; z-index: 10;">
+                            <!-- SVG 動態生成 -->
+                            <svg id="drag-svg" width="140" height="140" viewBox="0 0 100 100"></svg>
+                        </div>
+                    </div>
+
+                    <!-- 下方：四個灰色目標方框 -->
+                    <div id="match-drop-container" class="grid grid-cols-2 md:grid-cols-4 gap-6 w-full max-w-4xl px-4">
+                        <!-- 圓形目標 -->
+                        <div ondragover="allowDrop(event)" ondrop="drop(event, 'circle')" id="drop-circle" class="drop-zone border-4 border-dashed border-gray-300 rounded-2xl p-4 flex flex-col items-center justify-center bg-gray-50 h-36 transition-colors duration-300">
+                            <svg width="60" height="60" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="40" fill="#E2E8F0" stroke="#94A3B8" stroke-width="4" stroke-dasharray="6"/>
+                            </svg>
+                            <span class="mt-2 text-sm font-bold text-gray-500">圓形</span>
+                        </div>
+                        <!-- 三角形目標 -->
+                        <div ondragover="allowDrop(event)" ondrop="drop(event, 'triangle')" id="drop-triangle" class="drop-zone border-4 border-dashed border-gray-300 rounded-2xl p-4 flex flex-col items-center justify-center bg-gray-50 h-36 transition-colors duration-300">
+                            <svg width="60" height="60" viewBox="0 0 100 100">
+                                <polygon points="50,10 90,85 10,85" fill="#E2E8F0" stroke="#94A3B8" stroke-width="4" stroke-dasharray="6"/>
+                            </svg>
+                            <span class="mt-2 text-sm font-bold text-gray-500">三角形</span>
+                        </div>
+                        <!-- 正方形目標 -->
+                        <div ondragover="allowDrop(event)" ondrop="drop(event, 'square')" id="drop-square" class="drop-zone border-4 border-dashed border-gray-300 rounded-2xl p-4 flex flex-col items-center justify-center bg-gray-50 h-36 transition-colors duration-300">
+                            <svg width="60" height="60" viewBox="0 0 100 100">
+                                <rect x="15" y="15" width="70" height="70" fill="#E2E8F0" stroke="#94A3B8" stroke-width="4" stroke-dasharray="6" rx="4"/>
+                            </svg>
+                            <span class="mt-2 text-sm font-bold text-gray-500">正方形</span>
+                        </div>
+                        <!-- 長方形目標 -->
+                        <div ondragover="allowDrop(event)" ondrop="drop(event, 'rectangle')" id="drop-rectangle" class="drop-zone border-4 border-dashed border-gray-300 rounded-2xl p-4 flex flex-col items-center justify-center bg-gray-50 h-36 transition-colors duration-300">
+                            <svg width="70" height="60" viewBox="0 0 120 100">
+                                <rect x="10" y="20" width="100" height="60" fill="#E2E8F0" stroke="#94A3B8" stroke-width="4" stroke-dasharray="6" rx="4"/>
+                            </svg>
+                            <span class="mt-2 text-sm font-bold text-gray-500">長方形</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center text-xs text-gray-400 mt-4">
+                    提示：可用滑鼠拖曳或以手指直接在螢幕上滑動形狀至下方目標框。
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 3. 形狀分辨 ==================== -->
+        <section id="section-identify" class="tab-content hidden">
+            <div class="bg-white rounded-3xl p-6 shadow-md border-4 border-macaron-blue-dark/10">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-macaron-blue-dark flex items-center justify-center gap-2">
+                        🔍 關卡 3：形狀分辨
+                    </h2>
+                    <p class="text-gray-600 text-sm mt-1">請根據上方顯示的指定名稱，從下方四個不同大小、不同顏色的選項中，找出正確的形狀！</p>
+                </div>
+
+                <!-- 目標名稱顯示 -->
+                <div class="flex flex-col items-center justify-center bg-macaron-blue p-6 rounded-2xl border-4 border-dashed border-macaron-blue-dark/20 w-full max-w-md mx-auto mb-8">
+                    <span class="text-sm font-bold text-macaron-blue-dark tracking-widest">請找出：</span>
+                    <span id="identify-target-name" class="text-4xl font-extrabold text-blue-800 mt-2 tracking-wider">正方形</span>
+                </div>
+
+                <!-- 四個選項 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto px-4">
+                    <!-- 卡片 1 -->
+                    <button onclick="checkIdentifyAnswer(0)" id="id-card-0" class="bg-white border-4 border-gray-100 hover:border-blue-300 hover:bg-blue-50/30 rounded-3xl p-6 flex flex-col items-center justify-center h-48 shadow-sm hover:shadow-md transition-all transform hover:scale-105">
+                        <svg id="id-svg-0" width="100" height="100" viewBox="0 0 100 100"></svg>
+                    </button>
+                    <!-- 卡片 2 -->
+                    <button onclick="checkIdentifyAnswer(1)" id="id-card-1" class="bg-white border-4 border-gray-100 hover:border-blue-300 hover:bg-blue-50/30 rounded-3xl p-6 flex flex-col items-center justify-center h-48 shadow-sm hover:shadow-md transition-all transform hover:scale-105">
+                        <svg id="id-svg-1" width="100" height="100" viewBox="0 0 100 100"></svg>
+                    </button>
+                    <!-- 卡片 3 -->
+                    <button onclick="checkIdentifyAnswer(2)" id="id-card-2" class="bg-white border-4 border-gray-100 hover:border-blue-300 hover:bg-blue-50/30 rounded-3xl p-6 flex flex-col items-center justify-center h-48 shadow-sm hover:shadow-md transition-all transform hover:scale-105">
+                        <svg id="id-svg-2" width="100" height="100" viewBox="0 0 100 100"></svg>
+                    </button>
+                    <!-- 卡片 4 -->
+                    <button onclick="checkIdentifyAnswer(3)" id="id-card-3" class="bg-white border-4 border-gray-100 hover:border-blue-300 hover:bg-blue-50/30 rounded-3xl p-6 flex flex-col items-center justify-center h-48 shadow-sm hover:shadow-md transition-all transform hover:scale-105">
+                        <svg id="id-svg-3" width="100" height="100" viewBox="0 0 100 100"></svg>
+                    </button>
+                </div>
+
+                <div class="flex justify-center mt-8">
+                    <button onclick="nextIdentifyGame()" class="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-full shadow-md transition-transform active:scale-95 flex items-center gap-2">
+                        <span>換一個題目</span> <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 4. 分類方框 ==================== -->
+        <section id="section-classify" class="tab-content hidden">
+            <div class="bg-white rounded-3xl p-6 shadow-md border-4 border-macaron-green-dark/10">
+                <div class="text-center mb-4">
+                    <h2 class="text-2xl font-bold text-macaron-green-dark flex items-center justify-center gap-2">
+                        📥 關卡 4：分類到方框中
+                    </h2>
+                    <p class="text-gray-600 text-sm mt-1">畫面上出現了各種大小和顏色的形狀！請把它們拖曳到對應的彩色方框內，將它們分類整齊吧！</p>
+                </div>
+
+                <!-- 待分類的形狀池 -->
+                <div class="bg-slate-50 border-4 border-dashed border-slate-200 rounded-3xl p-4 min-h-[160px] relative mb-8 flex flex-wrap items-center justify-center gap-6" id="classify-pool">
+                    <!-- 形狀將由 JavaScript 動態生成並漂浮在此 -->
+                </div>
+
+                <!-- 下方四個方框 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-4">
+                    <!-- 圓形分類盒 -->
+                    <div ondragover="allowDrop(event)" ondrop="dropClassify(event, 'circle')" id="box-circle" class="border-4 border-rose-300 bg-rose-50/50 rounded-2xl p-4 flex flex-col items-center min-h-[180px] transition-all duration-300">
+                        <div class="bg-rose-100 text-rose-800 px-4 py-1 rounded-full font-bold text-sm mb-3 shadow-sm">圓形 🔴</div>
+                        <div class="flex flex-wrap gap-2 justify-center content-start w-full h-full" id="box-items-circle"></div>
+                    </div>
+                    <!-- 三角形分類盒 -->
+                    <div ondragover="allowDrop(event)" ondrop="dropClassify(event, 'triangle')" id="box-triangle" class="border-4 border-amber-300 bg-amber-50/50 rounded-2xl p-4 flex flex-col items-center min-h-[180px] transition-all duration-300">
+                        <div class="bg-amber-100 text-amber-800 px-4 py-1 rounded-full font-bold text-sm mb-3 shadow-sm">三角形 🔺</div>
+                        <div class="flex flex-wrap gap-2 justify-center content-start w-full h-full" id="box-items-triangle"></div>
+                    </div>
+                    <!-- 正方形分類盒 -->
+                    <div ondragover="allowDrop(event)" ondrop="dropClassify(event, 'square')" id="box-square" class="border-4 border-blue-300 bg-blue-50/50 rounded-2xl p-4 flex flex-col items-center min-h-[180px] transition-all duration-300">
+                        <div class="bg-blue-100 text-blue-800 px-4 py-1 rounded-full font-bold text-sm mb-3 shadow-sm">正方形 🟦</div>
+                        <div class="flex flex-wrap gap-2 justify-center content-start w-full h-full" id="box-items-square"></div>
+                    </div>
+                    <!-- 長方形分類盒 -->
+                    <div ondragover="allowDrop(event)" ondrop="dropClassify(event, 'rectangle')" id="box-rectangle" class="border-4 border-emerald-300 bg-emerald-50/50 rounded-2xl p-4 flex flex-col items-center min-h-[180px] transition-all duration-300">
+                        <div class="bg-emerald-100 text-emerald-800 px-4 py-1 rounded-full font-bold text-sm mb-3 shadow-sm">長方形 🟩</div>
+                        <div class="flex flex-wrap gap-2 justify-center content-start w-full h-full" id="box-items-rectangle"></div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center mt-8 gap-4">
+                    <button onclick="initClassifyGame()" class="px-8 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-full shadow-md transition-transform active:scale-95 flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-left"></i> <span>重置分類</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 5. 隨機命名 ==================== -->
+        <section id="section-naming" class="tab-content hidden">
+            <div class="bg-white rounded-3xl p-6 shadow-md border-4 border-macaron-purple-dark/10">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-macaron-purple-dark flex items-center justify-center gap-2">
+                        🗣️ 關卡 5：形狀認一認、讀一讀
+                    </h2>
+                    <p class="text-gray-600 text-sm mt-1">大螢幕上出現了這個形狀，請大聲唸出它的名字，並點選正確的答案按鈕！</p>
+                </div>
+
+                <!-- 隨機形狀顯示器 -->
+                <div class="flex justify-center items-center py-6 mb-8">
+                    <div class="bg-macaron-purple border-4 border-dashed border-macaron-purple-dark/20 rounded-3xl p-8 flex items-center justify-center float-animation" style="width: 240px; height: 240px;">
+                        <svg id="naming-svg" width="180" height="180" viewBox="0 0 100 100"></svg>
+                    </div>
+                </div>
+
+                <!-- 選項按鈕 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto px-4">
+                    <button onclick="checkNamingAnswer('circle')" class="py-4 bg-red-100 hover:bg-red-200 border-2 border-red-300 text-red-800 font-extrabold text-xl rounded-2xl transition-all shadow-sm active:scale-95">
+                        圓形 🔴
+                    </button>
+                    <button onclick="checkNamingAnswer('triangle')" class="py-4 bg-amber-100 hover:bg-amber-200 border-2 border-amber-300 text-amber-800 font-extrabold text-xl rounded-2xl transition-all shadow-sm active:scale-95">
+                        三角形 🔺
+                    </button>
+                    <button onclick="checkNamingAnswer('square')" class="py-4 bg-blue-100 hover:bg-blue-200 border-2 border-blue-300 text-blue-800 font-extrabold text-xl rounded-2xl transition-all shadow-sm active:scale-95">
+                        正方形 🟦
+                    </button>
+                    <button onclick="checkNamingAnswer('rectangle')" class="py-4 bg-emerald-100 hover:bg-emerald-200 border-2 border-emerald-300 text-emerald-800 font-extrabold text-xl rounded-2xl transition-all shadow-sm active:scale-95">
+                        長方形 🟩
+                    </button>
+                </div>
+
+                <div class="flex justify-center mt-8">
+                    <button onclick="nextNamingGame()" class="px-8 py-3 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-full shadow-md transition-transform active:scale-95 flex items-center gap-2">
+                        <span>換下一個形狀</span> <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
     </main>
 
-    <!-- 回饋視窗 (實體背景) -->
-    <div id="feedback-modal" class="fixed inset-0 bg-slate-900/70 hidden items-center justify-center z-50">
-        <div id="feedback-content" class="bg-white p-10 rounded-[2rem] shadow-2xl flex flex-col items-center transform scale-0 transition-transform duration-300 border-4 border-emerald-400">
-            <div id="feedback-icon" class="text-7xl mb-4 filter drop-shadow-md">✨</div>
-            <h2 id="feedback-text" class="text-4xl font-black mb-8 text-emerald-500">答對了！</h2>
-            <button id="next-round-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-10 rounded-2xl shadow-lg text-xl transition-all hover:-translate-y-1 active:translate-y-0 sound-click">
-                下一關 ➔
-            </button>
-        </div>
-    </div>
+    <!-- 底部資訊與發聲提示 -->
+    <footer class="bg-white text-center py-4 border-t border-gray-100 text-xs text-gray-400">
+        互動形狀學習樂園 © 2026 數位幼兒教育平台 ｜ 建議使用平板或觸控螢幕，效果更佳
+    </footer>
 
+    <!-- JavaScript 邏輯控制 -->
     <script>
-        // --- 音效系統 (利用 Web Audio API 合成，無須外部檔案) ---
-        const SoundBox = {
-            ctx: null,
-            init: function() {
-                if (!this.ctx) {
-                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (this.ctx.state === 'suspended') {
-                    this.ctx.resume();
-                }
-            },
-            playTone: function(freq, type, duration, vol=0.1, startTime=0) {
-                if (!this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime + startTime);
-                gain.gain.setValueAtTime(vol, this.ctx.currentTime + startTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + startTime + duration);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start(this.ctx.currentTime + startTime);
-                osc.stop(this.ctx.currentTime + startTime + duration);
-            },
-            click: function() {
-                this.init();
-                this.playTone(600, 'sine', 0.1, 0.05);
-            },
-            success: function() {
-                this.init();
-                this.playTone(800, 'sine', 0.1, 0.05);
-                this.playTone(1200, 'sine', 0.15, 0.05, 0.1);
-            },
-            error: function() {
-                this.init();
-                this.playTone(200, 'sawtooth', 0.3, 0.05);
-            },
-            win: function() {
-                this.init();
-                this.playTone(523.25, 'sine', 0.15, 0.1, 0);       // C5
-                this.playTone(659.25, 'sine', 0.15, 0.1, 0.15);    // E5
-                this.playTone(783.99, 'sine', 0.15, 0.1, 0.3);     // G5
-                this.playTone(1046.50, 'sine', 0.4, 0.1, 0.45);    // C6
-            }
+        // --- 核心全局狀態 ---
+        let currentTab = 'explore';
+        const shapes = ['circle', 'triangle', 'square', 'rectangle'];
+        const shapeNamesZh = {
+            'circle': '圓形',
+            'triangle': '三角形',
+            'square': '正方形',
+            'rectangle': '長方形'
         };
 
-        // --- 核心資料 ---
-        const SHAPES = {
-            circle: { id: 'circle', name: '圓形', category: '圓形', type: 'circle' },
-            square: { id: 'square', name: '正方形', category: '正方形', type: 'square' },
-            triangle: { id: 'triangle', name: '三角形', category: '三角形', type: 'polygon', sides: 3 },
-            rectangle: { id: 'rectangle', name: '長方形', category: '長方形', type: 'rect' },
-            quadrilateral: { id: 'quadrilateral', name: '四邊形', category: '多邊形', type: 'polygon', sides: 4, irregular: true },
-            pentagon: { id: 'pentagon', name: '五邊形', category: '多邊形', type: 'polygon', sides: 5 },
-            hexagon: { id: 'hexagon', name: '六邊形', category: '多邊形', type: 'polygon', sides: 6 },
-            heptagon: { id: 'heptagon', name: '七邊形', category: '多邊形', type: 'polygon', sides: 7 },
-            octagon: { id: 'octagon', name: '八邊形', category: '多邊形', type: 'polygon', sides: 8 },
-            nonagon: { id: 'nonagon', name: '九邊形', category: '多邊形', type: 'polygon', sides: 9 },
-            decagon: { id: 'decagon', name: '十邊形', category: '多邊形', type: 'polygon', sides: 10 }
+        // 配色方案（馬卡龍可愛色）
+        const shapeColors = {
+            'circle': '#FF8A8A',      // 柔紅
+            'triangle': '#FFD166',    // 柔黃
+            'square': '#06D6A0',      // 柔綠
+            'rectangle': '#118AB2'    // 柔藍
         };
 
-        const DIFFICULTY_LEVELS = {
-            1: ['circle', 'square', 'rectangle', 'triangle'], // 基礎集合
-            2: ['circle', 'square', 'rectangle', 'triangle'], 
-            3: ['circle', 'triangle', 'quadrilateral', 'pentagon', 'hexagon', 'heptagon', 'octagon', 'nonagon', 'decagon']
-        };
+        // 50種美味可愛食物資料庫庫
+        const foodDatabase = [
+            { emoji: "🍎", name: "蘋果" }, { emoji: "🍌", name: "香蕉" }, { emoji: "🍇", name: "葡萄" }, 
+            { emoji: "🍉", name: "西瓜" }, { emoji: "🍓", name: "草莓" }, { emoji: "🍊", name: "橘子" }, 
+            { emoji: "🍋", name: "檸檬" }, { emoji: "🍍", name: "鳳梨" }, { emoji: "🍑", name: "桃子" }, 
+            { emoji: "🍒", name: "櫻桃" }, { emoji: "🍈", name: "哈密瓜" }, { emoji: "🥝", name: "奇異果" }, 
+            { emoji: "🍐", name: "梨子" }, { emoji: "🥭", name: "芒果" }, { emoji: "🥥", name: "椰子" }, 
+            { emoji: "🍅", name: "番茄" }, { emoji: "🥕", name: "胡蘿蔔" }, { emoji: "🌽", name: "玉米" }, 
+            { emoji: " Broccoli 🥦", name: "西蘭花" }, { emoji: "🥑", name: "酪梨" }, { emoji: "🍆", name: "茄子" }, 
+            { emoji: "🥔", name: "馬鈴薯" }, { emoji: "🧅", name: "洋蔥" }, { emoji: "🍄", name: "蘑菇" }, 
+            { emoji: "🥜", name: "花生" }, { emoji: "🌰", name: "栗子" }, { emoji: "🍞", name: "麵包" }, 
+            { emoji: " croissants 🥐", name: "可頌" }, { emoji: "🥞", name: "鬆餅" }, { emoji: "🧀", name: "起司" }, 
+            { emoji: "🍖", name: "肉骨頭" }, { emoji: "🍔", name: "漢堡" }, { emoji: "🍟", name: "薯條" }, 
+            { emoji: "🍕", name: "披薩" }, { emoji: "🌭", name: "熱狗" }, { emoji: "🌮", name: "塔可" }, 
+            { emoji: "🍿", name: "爆米花" }, { emoji: "🍙", name: "飯糰" }, { emoji: "🍜", name: "拉麵" }, 
+            { emoji: "🍣", name: "壽司" }, { emoji: "🧁", name: "杯子蛋糕" }, { emoji: "🍩", name: "甜甜圈" }, 
+            { emoji: "🍪", name: "餅乾" }, { emoji: "🍫", name: "巧克力" }, { emoji: "🍬", name: "糖果" }, 
+            { emoji: "🍭", name: "棒棒糖" }, { emoji: "🍮", name: "布丁" }, { emoji: "🍯", name: "蜂蜜" }, 
+            { emoji: "🍦", name: "冰淇淋" }, { emoji: "🍧", name: "刨冰" }
+        ];
 
-        const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e'];
+        // 整理防錯：確保無任何乾淨的前置空白或奇怪符號
+        foodDatabase.forEach(f => {
+            f.emoji = f.emoji.replace(/[a-zA-Z]/g, '').trim();
+        });
 
-        let selectedMode = null;
-        let selectedDifficulty = null;
-        let currentScore = 0;
-        let activeShapes = [];
-        let targetShapeId = null;
+        let currentFood = { emoji: "🍎", name: "蘋果" }; // 當前選取的食物
 
-        let dragState = { element: null, originalParent: null, startX: 0, startY: 0, initialLeft: 0, initialTop: 0 };
-        let itemsToMatch = 0;
-        let itemsMatched = 0;
-        let mode1RemainingShapes = [];
-        let nextShapeBtn = null;
-
-        const ui = {
-            mainMenu: document.getElementById('main-menu'),
-            gameScreen: document.getElementById('game-screen'),
-            modeBtns: document.querySelectorAll('.mode-btn'),
-            diffBtns: document.querySelectorAll('.diff-btn'),
-            startBtn: document.getElementById('start-btn'),
-            backBtn: document.getElementById('back-btn'),
-            gameArea: document.getElementById('game-area'),
-            gameInstruction: document.getElementById('game-instruction'),
-            scoreDisplay: document.getElementById('score-display'),
-            feedbackModal: document.getElementById('feedback-modal'),
-            feedbackContent: document.getElementById('feedback-content'),
-            feedbackIcon: document.getElementById('feedback-icon'),
-            feedbackText: document.getElementById('feedback-text'),
-            nextRoundBtn: document.getElementById('next-round-btn')
-        };
-
-        function init() {
-            // 初始化全域點擊以啟用音效
-            document.body.addEventListener('click', () => SoundBox.init(), { once: true });
-            document.body.addEventListener('touchstart', () => SoundBox.init(), { once: true });
-
-            // 綁定音效按鈕
-            document.querySelectorAll('.sound-click').forEach(btn => {
-                btn.addEventListener('click', () => SoundBox.click());
-            });
-
-            ui.modeBtns.forEach(btn => btn.addEventListener('click', () => selectOption('mode', btn)));
-            ui.diffBtns.forEach(btn => btn.addEventListener('click', () => selectOption('diff', btn)));
-            ui.startBtn.addEventListener('click', startGame);
-            ui.backBtn.addEventListener('click', () => {
-                ui.gameArea.innerHTML = '<div id="empty-state" class="text-slate-400 flex flex-col items-center opacity-70"><div class="text-9xl mb-6 filter drop-shadow-lg animate-bounce" style="animation-duration: 3s;">🎮</div><p class="text-2xl font-extrabold text-slate-500">請選擇模式與難度</p><p class="text-md font-bold mt-2 text-slate-400">然後點擊右上角的「開始遊戲」</p></div>';
-                ui.gameInstruction.textContent = '請在上方選好模式後按開始';
-            });
-            ui.nextRoundBtn.addEventListener('click', () => {
-                hideFeedback();
-                startRound();
-            });
-
-            document.addEventListener('mousedown', onDragStart, {passive: false});
-            document.addEventListener('mousemove', onDragMove, {passive: false});
-            document.addEventListener('mouseup', onDragEnd, {passive: false});
-            document.addEventListener('touchstart', onDragStart, {passive: false});
-            document.addEventListener('touchmove', onDragMove, {passive: false});
-            document.addEventListener('touchend', onDragEnd, {passive: false});
-
-            ui.gameScreen.classList.remove('hidden');
-            ui.gameScreen.classList.add('flex');
+        // --- 音效系統 (取代語音) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTone(freq, type, duration, vol=0.1) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
         }
 
-        function selectOption(type, button) {
-            const btns = type === 'mode' ? ui.modeBtns : ui.diffBtns;
-            const activeClass = type === 'mode' 
-                ? 'bg-emerald-500 border-emerald-600 text-white shadow-md scale-[1.03]' 
-                : 'bg-amber-500 border-amber-600 text-white shadow-md scale-[1.03]';
-            const inactiveClass = 'bg-white border-transparent text-slate-600 hover:bg-slate-50 hover:border-slate-200';
-
-            btns.forEach(btn => {
-                btn.className = 'mode-btn nav-btn sound-click ' + inactiveClass;
-                if(type==='diff') btn.className = 'diff-btn nav-btn sound-click ' + inactiveClass;
-            });
-
-            button.className = (type === 'mode' ? 'mode-btn ' : 'diff-btn ') + 'nav-btn sound-click ' + activeClass;
-
-            if (type === 'mode') selectedMode = button.dataset.mode;
-            if (type === 'diff') selectedDifficulty = button.dataset.diff;
-
-            if (selectedMode && selectedDifficulty) {
-                ui.startBtn.disabled = false;
-            }
+        function playClick() { playTone(600, 'sine', 0.1, 0.05); }
+        
+        function playSuccess() {
+            playTone(400, 'sine', 0.1, 0.1);
+            setTimeout(() => playTone(500, 'sine', 0.1, 0.1), 100);
+            setTimeout(() => playTone(600, 'sine', 0.2, 0.1), 200);
+        }
+        
+        function playError() {
+            playTone(300, 'sawtooth', 0.15, 0.1);
+            setTimeout(() => playTone(250, 'sawtooth', 0.2, 0.1), 150);
         }
 
-        function startGame() {
-            if (!selectedMode || !selectedDifficulty) return;
-            activeShapes = DIFFICULTY_LEVELS[selectedDifficulty];
-            startRound();
-        }
+        // 全局按鈕點擊音效
+        document.addEventListener('click', (e) => {
+            if(e.target.closest('button')) playClick();
+        });
 
-        function startRound() {
-            ui.gameArea.innerHTML = '';
-            const mode = parseInt(selectedMode);
-            if (mode === 1) renderMode1();
-            else if (mode === 2) renderMode2();
-            else if (mode === 3) renderMode3();
-            else if (mode === 4) renderMode4();
-        }
-
-        function getShapeSVG(shapeId, color, size = 100) {
-            const s = SHAPES[shapeId];
-            const half = size / 2;
-            let svgContent = '';
-            if (s.type === 'circle') svgContent = `<circle cx="${half}" cy="${half}" r="${half - 4}" fill="${color}" stroke="#334155" stroke-width="4"/>`;
-            else if (s.type === 'square') svgContent = `<rect x="4" y="4" width="${size - 8}" height="${size - 8}" rx="4" fill="${color}" stroke="#334155" stroke-width="4"/>`;
-            else if (s.type === 'rect') svgContent = `<rect x="4" y="${(size - size * 0.6) / 2}" width="${size - 8}" height="${size * 0.6}" rx="4" fill="${color}" stroke="#334155" stroke-width="4"/>`;
-            else {
-                let points = [];
-                for (let i = 0; i < s.sides; i++) {
-                    let angle = (i * 2 * Math.PI / s.sides) - Math.PI / 2;
-                    let r = half - 4;
-                    if (s.irregular && i % 2 === 0) r *= 0.7;
-                    let yOffset = (s.sides === 3) ? (r * 0.25) : 0;
-                    points.push(`${half + r * Math.cos(angle)},${half + r * Math.sin(angle) + yOffset}`);
-                }
-                svgContent = `<polygon points="${points.join(' ')}" fill="${color}" stroke="#334155" stroke-width="4" stroke-linejoin="round"/>`;
-            }
-            return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="drop-shadow-sm overflow-visible">${svgContent}</svg>`;
-        }
-
-        function getRandomColor() { return COLORS[Math.floor(Math.random() * COLORS.length)]; }
-        function shuffleArray(arr) { return arr.sort(() => Math.random() - 0.5); }
-
-        function renderMode1() {
-            ui.gameInstruction.textContent = '🧩 拖拉上方隨機出現的圖形到對應框中';
-            
-            // 邏輯優化：簡單難度下僅使用圓形、三角形、正方形 (排除長方形)
-            let roundShapes = [...activeShapes];
-            if (parseInt(selectedDifficulty) === 1) {
-                roundShapes = roundShapes.filter(id => id !== 'rectangle');
-            }
-            roundShapes = shuffleArray(roundShapes).slice(0, 4);
-            
-            itemsToMatch = roundShapes.length;
-            itemsMatched = 0;
-            mode1RemainingShapes = shuffleArray([...roundShapes]);
-
-            const container = document.createElement('div');
-            container.className = 'w-full h-full flex flex-col justify-around items-center max-w-4xl mx-auto';
-
-            const topArea = document.createElement('div');
-            topArea.id = 'mode1-top-area';
-            topArea.className = 'w-full flex justify-center min-h-[120px]';
-
-            const bottomArea = document.createElement('div');
-            bottomArea.className = 'w-full flex justify-center gap-8 flex-wrap';
-
-            roundShapes.forEach(shapeId => {
-                const zone = document.createElement('div');
-                zone.className = 'drop-zone w-32 h-40 rounded-2xl flex flex-col items-center justify-center gap-2 bg-white shadow-sm';
-                zone.dataset.targetId = shapeId;
-                zone.innerHTML = `<div class="pointer-events-none">${getShapeSVG(shapeId, '#f1f5f9', 80)}</div><span class="text-xs font-bold text-slate-400">${SHAPES[shapeId].name}</span>`;
-                bottomArea.appendChild(zone);
-            });
-
-            const btnArea = document.createElement('div');
-            btnArea.className = 'h-16 flex items-center justify-center w-full';
-            nextShapeBtn = document.createElement('button');
-            nextShapeBtn.className = 'hidden bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-8 rounded-xl shadow-md animate-pop sound-click';
-            nextShapeBtn.textContent = '全部完成！下一關 ➔';
-            nextShapeBtn.onclick = () => { SoundBox.click(); handleWin(); };
-            btnArea.appendChild(nextShapeBtn);
-
-            container.appendChild(topArea);
-            container.appendChild(bottomArea);
-            container.appendChild(btnArea);
-            ui.gameArea.appendChild(container);
-            showNextDraggable();
-        }
-
-        function showNextDraggable() {
-            const topArea = document.getElementById('mode1-top-area');
-            if (!topArea || mode1RemainingShapes.length === 0) return;
-            topArea.innerHTML = '';
-            const shapeId = mode1RemainingShapes.pop();
-            const item = document.createElement('div');
-            item.className = 'shape-container draggable animate-pop';
-            item.dataset.shapeId = shapeId;
-            item.innerHTML = getShapeSVG(shapeId, getRandomColor(), 100);
-            topArea.appendChild(item);
-        }
-
-        function getClientCoords(e) {
-            if (e.changedTouches) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
-            if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            return { x: e.clientX, y: e.clientY };
-        }
-
-        function onDragStart(e) {
-            const target = e.target.closest('.draggable');
-            if (!target) return;
-            e.preventDefault();
-            const coords = getClientCoords(e);
-            dragState.element = target;
-            dragState.originalParent = target.parentElement;
-            const rect = target.getBoundingClientRect();
-            dragState.initialLeft = rect.left;
-            dragState.initialTop = rect.top;
-            dragState.startX = coords.x;
-            dragState.startY = coords.y;
-            target.classList.add('dragging');
-            target.style.left = `${rect.left}px`;
-            target.style.top = `${rect.top}px`;
-            document.body.appendChild(target);
-        }
-
-        function onDragMove(e) {
-            if (!dragState.element) return;
-            e.preventDefault();
-            const coords = getClientCoords(e);
-            dragState.element.style.left = `${dragState.initialLeft + coords.x - dragState.startX}px`;
-            dragState.element.style.top = `${dragState.initialTop + coords.y - dragState.startY}px`;
-            const elemBelow = document.elementFromPoint(coords.x, coords.y);
-            document.querySelectorAll('.drop-zone').forEach(z => z.classList.remove('active'));
-            if (elemBelow) {
-                const zone = elemBelow.closest('.drop-zone');
-                if (zone && !zone.classList.contains('matched')) zone.classList.add('active');
-            }
-        }
-
-        function onDragEnd(e) {
-            if (!dragState.element) return;
-            const el = dragState.element;
-            const id = el.dataset.shapeId;
-            let dropped = false;
-            el.style.display = 'none';
-            const coords = getClientCoords(e);
-            const elemBelow = document.elementFromPoint(coords.x, coords.y);
-            el.style.display = 'block';
-
-            if (elemBelow) {
-                const zone = elemBelow.closest('.drop-zone');
-                if (parseInt(selectedMode) === 1 && zone && !zone.classList.contains('matched') && zone.dataset.targetId === id) {
-                    dropped = true;
-                    SoundBox.success(); // 播放正確音效
-                    zone.classList.add('matched', 'animate-pop');
-                    zone.querySelector('div').innerHTML = el.innerHTML;
-                    el.remove();
-                    itemsMatched++;
-                    if (itemsMatched >= itemsToMatch) {
-                        setTimeout(() => nextShapeBtn.classList.remove('hidden'), 400);
-                    } else {
-                        setTimeout(showNextDraggable, 400);
-                    }
-                } else if (parseInt(selectedMode) === 2 && zone) {
-                    const targetCat = zone.dataset.targetCategory;
-                    const itemCat = SHAPES[id].category;
-                    const isSimpleDiff = parseInt(selectedDifficulty) === 1;
-                    
-                    const match = (targetCat === itemCat) || 
-                                (isSimpleDiff && targetCat === '方形' && (itemCat === '正方形' || itemCat === '長方形'));
-
-                    if (match) {
-                        dropped = true;
-                        SoundBox.success(); // 播放正確音效
-                        el.style.position = 'static';
-                        el.classList.remove('dragging', 'draggable');
-                        el.style.transform = 'scale(0.6)';
-                        zone.querySelector('.collection-area').appendChild(el);
-                        itemsMatched++;
-                        if (itemsMatched >= itemsToMatch) setTimeout(handleWin, 400);
-                    } else {
-                        SoundBox.error(); // 分類錯誤
-                        zone.classList.add('animate-shake');
-                        setTimeout(() => zone.classList.remove('animate-shake'), 400);
-                    }
-                } else if (zone && !zone.classList.contains('matched')) {
-                    SoundBox.error(); // 配對錯誤
-                    zone.classList.add('animate-shake');
-                    setTimeout(() => zone.classList.remove('animate-shake'), 400);
-                }
-            }
-            if (!dropped) {
-                el.classList.remove('dragging');
-                if(dragState.originalParent) dragState.originalParent.appendChild(el);
-            }
-            dragState.element = null;
-        }
-
-        function renderMode2() {
-            ui.gameInstruction.textContent = '🗂️ 將圖形拖拉到正確的分類箱中';
-            
-            let roundCategories = [];
-            if (parseInt(selectedDifficulty) === 1) {
-                roundCategories = ['圓形', '三角形', '方形'];
-            } else {
-                roundCategories = [...new Set(activeShapes.map(id => SHAPES[id].category))];
-            }
-            
-            roundCategories = shuffleArray(roundCategories);
-            
-            let items = [];
-            
-            // 針對每一個分類，隨機產生 2-3 個圖形
-            roundCategories.forEach(cat => {
-                let idsInCat = [];
-                
-                // 簡單難度下，「方形」包含正方形與長方形
-                if (parseInt(selectedDifficulty) === 1 && cat === '方形') {
-                    idsInCat = activeShapes.filter(id => SHAPES[id].category === '正方形' || SHAPES[id].category === '長方形');
-                } else {
-                    idsInCat = activeShapes.filter(id => SHAPES[id].category === cat);
-                }
-                
-                if (idsInCat.length > 0) {
-                    // 隨機決定該類別要有 2 還是 3 個
-                    let count = Math.floor(Math.random() * 2) + 2; 
-                    for (let i = 0; i < count; i++) {
-                        items.push(idsInCat[Math.floor(Math.random() * idsInCat.length)]);
-                    }
-                }
-            });
-
-            items = shuffleArray(items);
-            itemsToMatch = items.length; 
-            itemsMatched = 0; 
-
-            const container = document.createElement('div');
-            container.className = 'w-full h-full flex flex-col justify-between items-center max-w-5xl mx-auto pb-4';
-            
-            const topArea = document.createElement('div'); 
-            topArea.className = 'w-full flex justify-center gap-4 flex-wrap min-h-[160px] p-4 bg-slate-100 rounded-2xl shadow-inner';
-            
-            items.forEach(id => {
-                const item = document.createElement('div');
-                item.className = 'shape-container draggable animate-pop';
-                item.dataset.shapeId = id;
-                item.innerHTML = getShapeSVG(id, getRandomColor(), 70);
-                topArea.appendChild(item);
-            });
-
-            const bottomArea = document.createElement('div'); 
-            bottomArea.className = 'w-full flex justify-center gap-6 px-4 mt-6 overflow-x-auto';
-            
-            roundCategories.forEach(cat => {
-                const zone = document.createElement('div');
-                zone.className = 'drop-zone min-w-[140px] flex-1 min-h-[200px] rounded-2xl flex flex-col items-center p-3 shadow-sm';
-                zone.dataset.targetCategory = cat;
-                zone.innerHTML = `<div class="text-sm font-bold text-slate-500 mb-2 border-b w-full text-center pb-1">${cat}</div><div class="collection-area flex flex-wrap justify-center gap-1"></div>`;
-                bottomArea.appendChild(zone);
-            });
-
-            container.appendChild(topArea); 
-            container.appendChild(bottomArea); 
-            ui.gameArea.appendChild(container);
-        }
-
-        function renderMode3() {
-            targetShapeId = activeShapes[Math.floor(Math.random() * activeShapes.length)];
-            ui.gameInstruction.innerHTML = `🎯 請找出：<span class="text-3xl text-emerald-600 font-black ml-2">${SHAPES[targetShapeId].name}</span>`;
-            
-            let options = [targetShapeId];
-            let pool = activeShapes.filter(id => id !== targetShapeId);
-            pool = shuffleArray(pool);
-            
-            while(options.length < 6) {
-                if(pool.length > 0) options.push(pool.pop());
-                else {
-                    const fallback = Object.keys(SHAPES).filter(id => id !== targetShapeId);
-                    options.push(fallback[Math.floor(Math.random() * fallback.length)]);
-                }
-            }
-            
-            options = shuffleArray(options);
-            const grid = document.createElement('div');
-            grid.className = 'grid grid-cols-3 gap-8 p-4';
-            options.forEach(id => {
-                const btn = document.createElement('button');
-                btn.className = 'shape-container bg-white p-8 rounded-3xl shadow-md border-4 border-transparent hover:border-emerald-300 animate-pop';
-                btn.innerHTML = getShapeSVG(id, getRandomColor(), 100);
-                btn.onclick = () => {
-                    if (id === targetShapeId) {
-                        handleWin();
-                    } else { 
-                        SoundBox.error(); // 錯誤音效
-                        btn.classList.add('animate-shake'); 
-                        setTimeout(() => btn.classList.remove('animate-shake'), 400); 
-                    }
-                };
-                grid.appendChild(btn);
-            });
-            ui.gameArea.appendChild(grid);
-        }
-
-        function renderMode4() {
-            targetShapeId = activeShapes[Math.floor(Math.random() * activeShapes.length)];
-            ui.gameInstruction.innerHTML = `🔍 尋找圖中的：<span class="text-3xl text-red-600 font-black ml-2">${SHAPES[targetShapeId].name}</span>`;
-            const scene = document.createElement('div');
-            scene.id = 'scene-container';
-            scene.className = 'w-full max-w-4xl h-[60vh] rounded-3xl relative overflow-hidden shadow-lg border-4 border-slate-200';
-            
-            for(let i=0; i<30; i++) {
-                const randomId = Object.keys(SHAPES)[Math.floor(Math.random() * Object.keys(SHAPES).length)];
-                if (randomId !== targetShapeId) {
-                    createSceneShape(scene, randomId, false);
-                }
-            }
-            createSceneShape(scene, targetShapeId, true);
-            ui.gameArea.appendChild(scene);
-        }
-
-        function createSceneShape(container, id, isTarget) {
-            const div = document.createElement('div');
-            div.className = 'scene-shape animate-pop';
-            const size = 50 + Math.random() * 30;
-            div.style.left = `${Math.random() * 90}%`;
-            div.style.top = `${Math.random() * 90}%`;
-            div.style.transform = `rotate(${Math.random() * 360}deg)`;
-            div.innerHTML = getShapeSVG(id, getRandomColor(), size);
-            div.onclick = (e) => {
-                e.stopPropagation();
-                if (isTarget) {
-                    handleWin();
-                } else { 
-                    SoundBox.error(); // 錯誤音效
-                    div.classList.add('animate-shake'); 
-                    setTimeout(() => div.classList.remove('animate-shake'), 400); 
-                }
-            };
-            container.appendChild(div);
-        }
-
-        function handleWin() {
-            SoundBox.win(); // 過關音效
-            currentScore += parseInt(selectedDifficulty) * 10;
-            ui.scoreDisplay.textContent = currentScore;
-            showFeedback(true);
-        }
-
-        function showFeedback(isWin) {
-            ui.feedbackModal.classList.remove('hidden');
-            ui.feedbackModal.classList.add('flex');
+        // 彈出成功提示
+        function triggerSuccess(msg = "太棒了！答對囉！") {
+            const alertBox = document.getElementById('success-alert');
+            const alertMsg = document.getElementById('success-message');
+            alertMsg.innerText = msg;
+            alertBox.classList.remove('hidden');
+            createConfetti();
+            playSuccess();
             setTimeout(() => {
-                ui.feedbackContent.classList.remove('scale-0');
-                ui.feedbackContent.classList.add('scale-100');
-            }, 50);
+                alertBox.classList.add('hidden');
+            }, 2000);
         }
 
-        function hideFeedback() {
-            ui.feedbackContent.classList.remove('scale-100');
-            ui.feedbackContent.classList.add('scale-0');
-            setTimeout(() => ui.feedbackModal.classList.add('hidden'), 300);
+        // 彈出錯誤提示
+        function triggerError(msg = "不對喔，再試試看！") {
+            const alertBox = document.getElementById('error-alert');
+            const alertMsg = document.getElementById('error-message');
+            alertMsg.innerText = msg;
+            alertBox.classList.remove('hidden');
+            playError();
+            setTimeout(() => {
+                alertBox.classList.add('hidden');
+            }, 1500);
         }
 
-        init();
+        // 煙火五彩粒子效果
+        function createConfetti() {
+            const main = document.querySelector('main');
+            for(let i=0; i<30; i++) {
+                const conf = document.createElement('div');
+                conf.classList.add('confetti');
+                conf.style.left = (Math.random() * 80 + 10) + '%';
+                conf.style.top = (Math.random() * 40 + 20) + '%';
+                
+                const colors = ['#FF8A8A', '#FFD166', '#06D6A0', '#118AB2', '#FFC5C5', '#D6BCFB'];
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // 隨機風向與大小
+                conf.style.transform = `scale(${Math.random() * 0.8 + 0.4})`;
+                main.appendChild(conf);
+                
+                // 動畫結束自動移除
+                setTimeout(() => conf.remove(), 1500);
+            }
+        }
+
+        // --- 分頁切換 ---
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+
+            // 按鈕狀態重置
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shadow-sm border bg-white text-gray-600 border-gray-200";
+            });
+
+            // 為選中的按鈕套用高亮色彩
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            if (tabId === 'explore') {
+                activeBtn.className = "tab-btn px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shadow-sm border bg-macaron-pink text-macaron-pink-dark border-macaron-pink scale-105";
+                initExploreGame('circle');
+            } else if (tabId === 'match') {
+                activeBtn.className = "tab-btn px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shadow-sm border bg-macaron-yellow text-macaron-yellow-dark border-macaron-yellow scale-105";
+                initMatchGame('circle');
+            } else if (tabId === 'identify') {
+                activeBtn.className = "tab-btn px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shadow-sm border bg-macaron-blue text-macaron-blue-dark border-macaron-blue scale-105";
+                initIdentifyGame();
+            } else if (tabId === 'classify') {
+                activeBtn.className = "tab-btn px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shadow-sm border bg-macaron-green text-macaron-green-dark border-macaron-green scale-105";
+                initClassifyGame();
+            } else if (tabId === 'naming') {
+                activeBtn.className = "tab-btn px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shadow-sm border bg-macaron-purple text-macaron-purple-dark border-macaron-purple scale-105";
+                initNamingGame();
+            }
+        }
+
+
+        // ==================== 1. 探索邊界邏輯 ====================
+        let canvas, ctx;
+        let exploreShape = 'circle';
+        let apples = [];
+        let player = { x: 0, y: 0, size: 22, color: '#9D4EDD' };
+        let pointsPath = []; // 形狀路徑點，用來生成食物收集點
+        let isDraggingPlayer = false;
+
+        function initExploreGame(shapeType) {
+            exploreShape = shapeType;
+
+            // 1. 每次初始化時，隨機挑選 50 種食物中的一種
+            currentFood = foodDatabase[Math.floor(Math.random() * foodDatabase.length)];
+            
+            // 更新 UI 中的文字與表情符號
+            document.getElementById('explore-title-emoji').innerText = currentFood.emoji;
+            document.getElementById('explore-target-food-name').innerText = currentFood.name;
+            document.getElementById('explore-finish-emoji').innerText = currentFood.emoji;
+            document.getElementById('explore-btn-food-emoji').innerText = currentFood.emoji;
+            
+            // 更換按鈕樣式
+            document.querySelectorAll('.shape-select-btn').forEach(btn => {
+                btn.className = btn.className.replace('ring-4 ring-offset-2 ring-purple-400 scale-105', '').trim();
+                btn.classList.add('opacity-70');
+            });
+            const activeBtn = document.getElementById(`btn-exp-${shapeType}`);
+            activeBtn.classList.remove('opacity-70');
+            activeBtn.classList.add('ring-4', 'ring-offset-2', 'ring-purple-400', 'scale-105');
+
+            canvas = document.getElementById('explore-canvas');
+            ctx = canvas.getContext('2d');
+            
+            // 響應式：將 canvas 的內部解析度設置為 500x500
+            canvas.width = 500;
+            canvas.height = 500;
+
+            document.getElementById('explore-finish').classList.add('hidden');
+
+            generateShapePath(shapeType);
+            generateApples();
+            
+            // 玩家放置於第一個點上
+            if (pointsPath.length > 0) {
+                player.x = pointsPath[0].x;
+                player.y = pointsPath[0].y;
+            }
+
+            drawExplore();
+        }
+
+        // 根據形狀類型產生一組等距的路徑點
+        function generateShapePath(shape) {
+            pointsPath = [];
+            const centerX = 250;
+            const centerY = 250;
+            const steps = 36; // 點的密度
+
+            if (shape === 'circle') {
+                const radius = 150;
+                for (let i = 0; i < steps; i++) {
+                    const angle = (i / steps) * Math.PI * 2;
+                    pointsPath.push({
+                        x: centerX + Math.cos(angle) * radius,
+                        y: centerY + Math.sin(angle) * radius
+                    });
+                }
+            } else if (shape === 'triangle') {
+                // 等邊三角形
+                const size = 160;
+                const p1 = { x: centerX, y: centerY - size + 30 };
+                const p2 = { x: centerX - size * 1.1, y: centerY + size * 0.7 };
+                const p3 = { x: centerX + size * 1.1, y: centerY + size * 0.7 };
+                interpolatePoints(p1, p2, 12);
+                interpolatePoints(p2, p3, 12);
+                interpolatePoints(p3, p1, 12);
+            } else if (shape === 'square') {
+                const size = 130;
+                const topL = { x: centerX - size, y: centerY - size };
+                const topR = { x: centerX + size, y: centerY - size };
+                const botR = { x: centerX + size, y: centerY + size };
+                const botL = { x: centerX - size, y: centerY + size };
+                interpolatePoints(topL, topR, 9);
+                interpolatePoints(topR, botR, 9);
+                interpolatePoints(botR, botL, 9);
+                interpolatePoints(botL, topL, 9);
+            } else if (shape === 'rectangle') {
+                const w = 170;
+                const h = 100;
+                const topL = { x: centerX - w, y: centerY - h };
+                const topR = { x: centerX + w, y: centerY - h };
+                const botR = { x: centerX + w, y: centerY + h };
+                const botL = { x: centerX - w, y: centerY + h };
+                interpolatePoints(topL, topR, 12);
+                interpolatePoints(topR, botR, 8);
+                interpolatePoints(botR, botL, 12);
+                interpolatePoints(botL, topL, 8);
+            }
+        }
+
+        // 兩點之間線性插值，加入點陣列
+        function interpolatePoints(p1, p2, count) {
+            for (let i = 0; i < count; i++) {
+                const t = i / count;
+                pointsPath.push({
+                    x: p1.x + (p2.x - p1.x) * t,
+                    y: p1.y + (p2.y - p1.y) * t
+                });
+            }
+        }
+
+        // 把路徑點全部鋪滿小食物
+        function generateApples() {
+            apples = pointsPath.map(pt => ({
+                x: pt.x,
+                y: pt.y,
+                collected: false
+            }));
+        }
+
+        // 繪圖循環
+        function drawExplore() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. 繪製精緻的半透明底軌跡線
+            ctx.beginPath();
+            ctx.strokeStyle = '#E2E8F0';
+            ctx.lineWidth = 14;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            if (exploreShape === 'circle') {
+                ctx.arc(250, 250, 150, 0, Math.PI * 2);
+            } else if (exploreShape === 'triangle') {
+                ctx.moveTo(250, 250 - 160 + 30);
+                ctx.lineTo(250 - 160 * 1.1, 250 + 160 * 0.7);
+                ctx.lineTo(250 + 160 * 1.1, 250 + 160 * 0.7);
+                ctx.closePath();
+            } else if (exploreShape === 'square') {
+                ctx.rect(250 - 130, 250 - 130, 260, 260);
+            } else if (exploreShape === 'rectangle') {
+                ctx.rect(250 - 170, 250 - 100, 340, 200);
+            }
+            ctx.stroke();
+
+            // 2. 繪製隨機食物 🍒 (未收集的)
+            apples.forEach(apple => {
+                if (!apple.collected) {
+                    ctx.save();
+                    ctx.font = "24px sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    // 繪製當前選中的隨機食物
+                    ctx.fillText(currentFood.emoji, apple.x, apple.y);
+                    ctx.restore();
+                }
+            });
+
+            // 3. 繪製玩家角色 (可愛的小蜜蜂/瓢蟲 🐞)
+            ctx.save();
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = 'rgba(0,0,0,0.2)';
+            
+            // 甲蟲身體
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.size, 0, Math.PI*2);
+            ctx.fillStyle = player.color;
+            ctx.fill();
+            
+            // 甲蟲頭部
+            ctx.beginPath();
+            ctx.arc(player.x, player.y - player.size + 4, player.size * 0.5, 0, Math.PI*2);
+            ctx.fillStyle = '#222';
+            ctx.fill();
+
+            // 甲蟲觸角
+            ctx.beginPath();
+            ctx.moveTo(player.x - 4, player.y - player.size);
+            ctx.quadraticCurveTo(player.x - 8, player.y - player.size - 6, player.x - 10, player.y - player.size - 4);
+            ctx.moveTo(player.x + 4, player.y - player.size);
+            ctx.quadraticCurveTo(player.x + 8, player.y - player.size - 6, player.x + 10, player.y - player.size - 4);
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 可愛小眼睛
+            ctx.beginPath();
+            ctx.arc(player.x - 3, player.y - player.size + 3, 2, 0, Math.PI*2);
+            ctx.arc(player.x + 3, player.y - player.size + 3, 2, 0, Math.PI*2);
+            ctx.fillStyle = '#FFF';
+            ctx.fill();
+
+            // 背上的斑點
+            ctx.beginPath();
+            ctx.arc(player.x - 5, player.y + 3, 3, 0, Math.PI*2);
+            ctx.arc(player.x + 5, player.y + 3, 3, 0, Math.PI*2);
+            ctx.arc(player.x, player.y - 4, 3.5, 0, Math.PI*2);
+            ctx.fillStyle = '#FEEAFA';
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // 移動玩家及碰撞檢測
+        function movePlayer(direction) {
+            const step = 15;
+            let targetX = player.x;
+            let targetY = player.y;
+
+            if (direction === 'up') targetY -= step;
+            if (direction === 'down') targetY += step;
+            if (direction === 'left') targetX -= step;
+            if (direction === 'right') targetX += step;
+
+            // 將玩家位置限制在畫布內
+            player.x = Math.max(player.size, Math.min(500 - player.size, targetX));
+            player.y = Math.max(player.size, Math.min(500 - player.size, targetY));
+
+            checkAppleCollision();
+            drawExplore();
+        }
+
+        // 鼠標或觸控拖曳移動
+        let isMoving = false;
+        
+        function handleMoveStart(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            // 對齊 canvas 的 500x500 比例
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const clickX = (clientX - rect.left) * scaleX;
+            const clickY = (clientY - rect.top) * scaleY;
+
+            // 判斷是否點中瓢蟲
+            const dist = Math.hypot(clickX - player.x, clickY - player.y);
+            if (dist < player.size * 2) {
+                isMoving = true;
+            }
+        }
+
+        function handleMoveProgress(clientX, clientY) {
+            if (!isMoving) return;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const moveX = (clientX - rect.left) * scaleX;
+            const moveY = (clientY - rect.top) * scaleY;
+
+            player.x = Math.max(player.size, Math.min(500 - player.size, moveX));
+            player.y = Math.max(player.size, Math.min(500 - player.size, moveY));
+
+            checkAppleCollision();
+            drawExplore();
+        }
+
+        function handleMoveEnd() {
+            isMoving = false;
+        }
+
+        // 綁定 Canvas 事件（觸摸與鼠標）
+        setTimeout(() => {
+            const c = document.getElementById('explore-canvas');
+            if (c) {
+                c.addEventListener('mousedown', (e) => handleMoveStart(e.clientX, e.clientY));
+                window.addEventListener('mousemove', (e) => handleMoveProgress(e.clientX, e.clientY));
+                window.addEventListener('mouseup', handleMoveEnd);
+
+                c.addEventListener('touchstart', (e) => {
+                    if (e.touches.length > 0) handleMoveStart(e.touches[0].clientX, e.touches[0].clientY);
+                }, { passive: false });
+                c.addEventListener('touchmove', (e) => {
+                    if (isMoving) e.preventDefault(); // 防止滾動
+                    if (e.touches.length > 0) handleMoveProgress(e.touches[0].clientX, e.touches[0].clientY);
+                }, { passive: false });
+                c.addEventListener('touchend', handleMoveEnd);
+            }
+        }, 100);
+
+        // 吃食物判定
+        function checkAppleCollision() {
+            let newlyCollected = false;
+            apples.forEach(apple => {
+                if (!apple.collected) {
+                    const dist = Math.hypot(player.x - apple.x, player.y - apple.y);
+                    if (dist < player.size + 14) { // 適度放大判定邊界
+                        apple.collected = true;
+                        newlyCollected = true;
+                    }
+                }
+            });
+
+            if (newlyCollected) {
+                playTone(800, 'sine', 0.05, 0.03); // 收集時輕微的點擊回饋音效
+                const remaining = apples.filter(a => !a.collected).length;
+                if (remaining === 0) {
+                    // 全吃光了，贏得這關！
+                    document.getElementById('explore-shape-name').innerText = shapeNamesZh[exploreShape];
+                    document.getElementById('explore-finish').classList.remove('hidden');
+                    triggerSuccess(`好厲害！你沿著邊邊收集了所有${currentFood.emoji}${currentFood.name}，認識了${shapeNamesZh[exploreShape]}！`);
+                }
+            }
+        }
+
+        function replayExplore() {
+            initExploreGame(exploreShape);
+        }
+
+
+        // ==================== 2. 形狀配對邏輯 ====================
+        let matchTargetShape = 'circle';
+        // 用於行動端觸控拖曳的全局定位變量
+        let touchTarget = null;
+        let startX, startY, currentX, currentY;
+
+        function initMatchGame(shape) {
+            matchTargetShape = shape;
+
+            // 教師選擇的高亮狀態
+            document.querySelectorAll('.match-select-btn').forEach(btn => {
+                btn.className = btn.className.replace('ring-4 ring-offset-2 ring-amber-400 scale-105', '').trim();
+                btn.classList.add('opacity-70');
+            });
+            const activeBtn = document.getElementById(`btn-match-${shape}`);
+            activeBtn.classList.remove('opacity-70');
+            activeBtn.classList.add('ring-4', 'ring-offset-2', 'ring-amber-400', 'scale-105');
+
+            // 繪製彩色 SVG 拖曳源
+            const dragSvg = document.getElementById('drag-svg');
+            dragSvg.innerHTML = generateShapeSVGMarkup(shape, shapeColors[shape]);
+
+            // 重置所有目標底框樣式與 SVG
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                zone.className = "drop-zone border-4 border-dashed border-gray-300 rounded-2xl p-4 flex flex-col items-center justify-center bg-gray-50 h-36 transition-colors duration-300";
+                const shapeType = zone.id.replace('drop-', '');
+                zone.innerHTML = getPlaceholderSVG(shapeType) + `<span class="mt-2 text-sm font-bold text-gray-500">${shapeNamesZh[shapeType]}</span>`;
+            });
+
+            // 隨機打亂下方選項次序
+            const dropContainer = document.getElementById('match-drop-container');
+            for (let i = dropContainer.children.length; i >= 0; i--) {
+                dropContainer.appendChild(dropContainer.children[Math.random() * i | 0]);
+            }
+
+            // 重置拖曳元素位置
+            const dragItem = document.getElementById('drag-item');
+            dragItem.style.transform = 'translate(0px, 0px)';
+            dragItem.style.opacity = '1';
+        }
+
+        // 取得灰色虛線佔位 SVG
+        function getPlaceholderSVG(shape) {
+            if (shape === 'circle') return `<svg width="60" height="60" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#E2E8F0" stroke="#94A3B8" stroke-width="4" stroke-dasharray="6"/></svg>`;
+            if (shape === 'triangle') return `<svg width="60" height="60" viewBox="0 0 100 100"><polygon points="50,10 90,85 10,85" fill="#E2E8F0" stroke="#94A3B8" stroke-width="4" stroke-dasharray="6"/></svg>`;
+            if (shape === 'square') return `<svg width="60" height="60" viewBox="0 0 100 100"><rect x="15" y="15" width="70" height="70" fill="#E2E8F0" stroke="#94A3B8" stroke-width="4" stroke-dasharray="6" rx="4"/></svg>`;
+            if (shape === 'rectangle') return `<svg width="70" height="60" viewBox="0 0 120 100"><rect x="10" y="20" width="100" height="60" fill="#E2E8F0" stroke="#94A3B8" stroke-width="4" stroke-dasharray="6" rx="4"/></svg>`;
+        }
+
+        // 動態生成精緻可愛的 SVG 形狀 (帶表情)
+        function generateShapeSVGMarkup(shape, color) {
+            let shapeMarkup = '';
+            if (shape === 'circle') {
+                shapeMarkup = `<circle cx="50" cy="50" r="40" fill="${color}" stroke="#333" stroke-width="3" />`;
+            } else if (shape === 'triangle') {
+                shapeMarkup = `<polygon points="50,10 90,85 10,85" fill="${color}" stroke="#333" stroke-width="3" />`;
+            } else if (shape === 'square') {
+                shapeMarkup = `<rect x="15" y="15" width="70" height="70" fill="${color}" stroke="#333" stroke-width="3" rx="8" />`;
+            } else if (shape === 'rectangle') {
+                shapeMarkup = `<rect x="5" y="25" width="90" height="50" fill="${color}" stroke="#333" stroke-width="3" rx="6" />`;
+            }
+
+            // 可愛眼睛、嘴巴與腮紅 SVG
+            const faceMarkup = `
+                <!-- 腮紅 -->
+                <circle cx="38" cy="56" r="4" fill="#FFB3B3" opacity="0.8" />
+                <circle cx="62" cy="56" r="4" fill="#FFB3B3" opacity="0.8" />
+                <!-- 眼睛 -->
+                <circle cx="42" cy="50" r="3.5" fill="#222" />
+                <circle cx="58" cy="50" r="3.5" fill="#222" />
+                <circle cx="41" cy="48" r="1" fill="#FFF" />
+                <circle cx="57" cy="48" r="1" fill="#FFF" />
+                <!-- 嘴巴 -->
+                <path d="M 47 57 Q 50 61 53 57" stroke="#222" stroke-width="2.5" fill="none" stroke-linecap="round" />
+            `;
+
+            return shapeMarkup + faceMarkup;
+        }
+
+        // 拖放 API (電腦滑鼠)
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", matchTargetShape);
+        }
+
+        function drop(ev, dropShape) {
+            ev.preventDefault();
+            if (dropShape === matchTargetShape) {
+                // 配對成功！
+                const targetZone = document.getElementById(`drop-${dropShape}`);
+                targetZone.classList.remove('border-gray-300', 'bg-gray-50');
+                targetZone.classList.add('border-green-400', 'bg-green-100');
+                
+                // 把彩色形狀放入框內取代原本的灰色虛線
+                targetZone.querySelector('svg').outerHTML = document.getElementById('drag-svg').outerHTML;
+                document.getElementById('drag-item').style.opacity = '0';
+                
+                triggerSuccess(`恭喜！把${shapeNamesZh[matchTargetShape]}放進了正確的箱子裡！`);
+            } else {
+                // 配對失敗
+                const targetZone = document.getElementById(`drop-${dropShape}`);
+                targetZone.classList.add('border-red-300', 'bg-red-50');
+                triggerError(`那不是${shapeNamesZh[matchTargetShape]}喔，再看看它的特徵！`);
+                setTimeout(() => {
+                    targetZone.classList.remove('border-red-300', 'bg-red-50');
+                }, 1000);
+            }
+        }
+
+        // --- 行動端 Touch 觸控拖曳支持 ---
+        function touchStart(e) {
+            touchTarget = e.currentTarget;
+            const touch = e.touches[0];
+            startX = touch.clientX;
+            startY = touch.clientY;
+            touchTarget.style.transition = 'none';
+        }
+
+        function touchMove(e) {
+            if (!touchTarget) return;
+            const touch = e.touches[0];
+            currentX = touch.clientX - startX;
+            currentY = touch.clientY - startY;
+            touchTarget.style.transform = `translate(${currentX}px, ${currentY}px)`;
+        }
+
+        function touchEnd(e) {
+            if (!touchTarget) return;
+            
+            // 獲取觸控釋放點的元素
+            const touch = e.changedTouches[0];
+            touchTarget.style.transition = 'transform 0.2s';
+            
+            // 檢測是否釋放在某個 Drop Zone 範圍內
+            const dropZones = document.querySelectorAll('.drop-zone');
+            let droppedOn = null;
+
+            dropZones.forEach(zone => {
+                const rect = zone.getBoundingClientRect();
+                if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                    touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+                    droppedOn = zone;
+                }
+            });
+
+            if (droppedOn) {
+                // 提取綁定的形狀
+                const dropShape = droppedOn.id.replace('drop-', '');
+                if (dropShape === matchTargetShape) {
+                    droppedOn.classList.remove('border-gray-300', 'bg-gray-50');
+                    droppedOn.classList.add('border-green-400', 'bg-green-100');
+                    
+                    // 把彩色形狀放入框內取代原本的灰色虛線
+                    droppedOn.querySelector('svg').outerHTML = document.getElementById('drag-svg').outerHTML;
+                    touchTarget.style.opacity = '0';
+                    touchTarget.style.transform = 'translate(0px, 0px)';
+                    
+                    triggerSuccess(`配對成功！那是${shapeNamesZh[matchTargetShape]}！`);
+                } else {
+                    droppedOn.classList.add('border-red-300', 'bg-red-50');
+                    touchTarget.style.transform = 'translate(0px, 0px)';
+                    triggerError(`不對喔，再努力試一下！`);
+                    setTimeout(() => {
+                        droppedOn.classList.remove('border-red-300', 'bg-red-50');
+                    }, 1000);
+                }
+            } else {
+                // 沒拖到任何目標，彈回原位
+                touchTarget.style.transform = 'translate(0px, 0px)';
+            }
+            touchTarget = null;
+        }
+
+
+        // ==================== 3. 形狀分辨邏輯 ====================
+        let identifyAnswerIndex = 0;
+        let identifyTargetType = 'circle';
+
+        function initIdentifyGame() {
+            // 隨機選出一個正確答案的形狀
+            identifyTargetType = shapes[Math.floor(Math.random() * shapes.length)];
+            document.getElementById('identify-target-name').innerText = shapeNamesZh[identifyTargetType];
+
+            // 產生 4 個卡片選項，其中至少包含 1 個正確形狀
+            const choices = [];
+            
+            // 放入正確答案
+            choices.push({
+                shape: identifyTargetType,
+                color: shapeColors[identifyTargetType],
+                size: Math.random() * 20 + 60 // 隨機尺寸
+            });
+
+            // 放入 3 個隨機錯誤答案
+            const otherShapes = shapes.filter(s => s !== identifyTargetType);
+            for(let i=0; i<3; i++) {
+                const randomShape = otherShapes[Math.floor(Math.random() * otherShapes.length)];
+                // 選不同顏色增添干擾度
+                const randomColor = shapeColors[shapes[Math.floor(Math.random() * shapes.length)]];
+                choices.push({
+                    shape: randomShape,
+                    color: randomColor,
+                    size: Math.random() * 30 + 50
+                });
+            }
+
+            // 打亂陣列順序
+            choices.sort(() => Math.random() - 0.5);
+
+            // 紀錄正確答案落在第幾個卡片
+            identifyAnswerIndex = choices.findIndex(c => c.shape === identifyTargetType);
+
+            // 渲染至四個卡片中
+            choices.forEach((choice, index) => {
+                const card = document.getElementById(`id-card-${index}`);
+                const svg = document.getElementById(`id-svg-${index}`);
+                
+                // 重置卡片背景與邊框
+                card.className = "bg-white border-4 border-gray-100 hover:border-blue-300 hover:bg-blue-50/30 rounded-3xl p-6 flex flex-col items-center justify-center h-48 shadow-sm hover:shadow-md transition-all transform hover:scale-105";
+
+                // 根據比例在 100x100 的 canvas 內畫出 SVG 形狀
+                svg.innerHTML = generateRandomShapeSVG(choice.shape, choice.color, choice.size);
+            });
+        }
+
+        // 產生不同大小、隨機色與特製表情的 SVG
+        function generateRandomShapeSVG(shape, color, scaleSize) {
+            const size = scaleSize; // 基值 50-90
+            const offset = (100 - size) / 2;
+            let shapeMarkup = '';
+
+            if (shape === 'circle') {
+                const r = size / 2;
+                shapeMarkup = `<circle cx="50" cy="50" r="${r}" fill="${color}" stroke="#333" stroke-width="3" />`;
+            } else if (shape === 'triangle') {
+                // 在限定矩形邊界內繪製三角形
+                const topY = offset;
+                const botY = 100 - offset;
+                const leftX = offset;
+                const rightX = 100 - offset;
+                shapeMarkup = `<polygon points="50,${topY} ${rightX},${botY} ${leftX},${botY}" fill="${color}" stroke="#333" stroke-width="3" />`;
+            } else if (shape === 'square') {
+                shapeMarkup = `<rect x="${offset}" y="${offset}" width="${size}" height="${size}" fill="${color}" stroke="#333" stroke-width="3" rx="6" />`;
+            } else if (shape === 'rectangle') {
+                const w = size;
+                const h = size * 0.6;
+                const offX = (100 - w) / 2;
+                const offY = (100 - h) / 2;
+                shapeMarkup = `<rect x="${offX}" y="${offY}" width="${w}" height="${h}" fill="${color}" stroke="#333" stroke-width="3" rx="6" />`;
+            }
+
+            // 加一個可愛的眨眼表情
+            const eyes = `
+                <circle cx="44" cy="50" r="3" fill="#222" />
+                <path d="M 52 50 Q 56 46 60 50" stroke="#222" stroke-width="2" fill="none" />
+                <path d="M 46 56 Q 50 59 54 56" stroke="#222" stroke-width="2" fill="none" />
+            `;
+
+            return shapeMarkup + eyes;
+        }
+
+        function checkIdentifyAnswer(cardIndex) {
+            const selectedCard = document.getElementById(`id-card-${cardIndex}`);
+            
+            if (cardIndex === identifyAnswerIndex) {
+                selectedCard.classList.add('border-green-400', 'bg-green-50');
+                triggerSuccess(`答對了！這就是${shapeNamesZh[identifyTargetType]}！`);
+                
+                // 2 秒後自動下一題
+                setTimeout(() => {
+                    initIdentifyGame();
+                }, 2000);
+            } else {
+                selectedCard.classList.add('border-red-300', 'bg-red-50');
+                triggerError(`那不是${shapeNamesZh[identifyTargetType]}喔，再試試別張！`);
+                setTimeout(() => {
+                    selectedCard.classList.remove('border-red-300', 'bg-red-50');
+                }, 1200);
+            }
+        }
+
+        function nextIdentifyGame() {
+            initIdentifyGame();
+        }
+
+
+        // ==================== 4. 分類方框邏輯 ====================
+        let classifyItems = [];
+
+        function initClassifyGame() {
+            const pool = document.getElementById('classify-pool');
+            pool.innerHTML = '';
+            classifyItems = [];
+
+            // 清空每個分類盒
+            document.getElementById('box-items-circle').innerHTML = '';
+            document.getElementById('box-items-triangle').innerHTML = '';
+            document.getElementById('box-items-square').innerHTML = '';
+            document.getElementById('box-items-rectangle').innerHTML = '';
+
+            // 生成共 12 個隨機彩色形狀 (每款形狀 3 個)
+            const itemShapes = [];
+            shapes.forEach(s => {
+                for(let i=0; i<3; i++) {
+                    itemShapes.push(s);
+                }
+            });
+
+            // 隨機打亂
+            itemShapes.sort(() => Math.random() - 0.5);
+
+            itemShapes.forEach((shape, index) => {
+                const itemId = `classify-item-${index}`;
+                const size = Math.random() * 15 + 40; // 可愛適中的小尺寸
+                const randomColor = shapeColors[shapes[Math.floor(Math.random() * shapes.length)]];
+
+                const itemDiv = document.createElement('div');
+                itemDiv.id = itemId;
+                itemDiv.className = "cursor-grab active:cursor-grabbing hover:scale-110 transition-transform p-1 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center";
+                itemDiv.setAttribute('draggable', 'true');
+                itemDiv.style.width = '64px';
+                itemDiv.style.height = '64px';
+                
+                // 存入屬性以便判定
+                itemDiv.setAttribute('data-shape', shape);
+
+                // 綁定拖曳事件
+                itemDiv.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData("itemId", itemId);
+                });
+
+                // 行動端觸控事件綁定，passive 設為 false 以允許 preventDefault 防止滾動干擾
+                itemDiv.addEventListener('touchstart', touchStartClassify, { passive: false });
+                itemDiv.addEventListener('touchmove', touchMoveClassify, { passive: false });
+                itemDiv.addEventListener('touchend', touchEndClassify, { passive: false });
+
+                const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svgElement.setAttribute('width', '54');
+                svgElement.setAttribute('height', '54');
+                svgElement.setAttribute('viewBox', '0 0 100 100');
+                svgElement.innerHTML = generateSimpleSVGMarkup(shape, randomColor);
+
+                itemDiv.appendChild(svgElement);
+                pool.appendChild(itemDiv);
+
+                classifyItems.push({
+                    id: itemId,
+                    shape: shape,
+                    classified: false
+                });
+            });
+        }
+
+        // 生成簡單無表情但彩色的形狀
+        function generateSimpleSVGMarkup(shape, color) {
+            if (shape === 'circle') return `<circle cx="50" cy="50" r="40" fill="${color}" stroke="#333" stroke-width="4" />`;
+            if (shape === 'triangle') return `<polygon points="50,10 90,85 10,85" fill="${color}" stroke="#333" stroke-width="4" />`;
+            if (shape === 'square') return `<rect x="15" y="15" width="70" height="70" fill="${color}" stroke="#333" stroke-width="4" rx="8" />`;
+            if (shape === 'rectangle') return `<rect x="5" y="25" width="90" height="50" fill="${color}" stroke="#333" stroke-width="4" rx="6" />`;
+        }
+
+        // 分類盒的 Drop 判定
+        function dropClassify(ev, targetBoxShape) {
+            ev.preventDefault();
+            const itemId = ev.dataTransfer.getData("itemId");
+            const draggedElement = document.getElementById(itemId);
+            if (!draggedElement) return;
+
+            const elementShape = draggedElement.getAttribute('data-shape');
+
+            if (elementShape === targetBoxShape) {
+                // 正確歸類
+                const boxContainer = document.getElementById(`box-items-${targetBoxShape}`);
+                // 縮小一下丟進盒子
+                draggedElement.style.transform = 'none'; // 修正拖放後位置偏移
+                draggedElement.style.margin = '2px';
+                draggedElement.setAttribute('draggable', 'false'); // 歸類完就不可再拖
+                boxContainer.appendChild(draggedElement);
+
+                // 更新狀態
+                const item = classifyItems.find(i => i.id === itemId);
+                if (item) item.classified = true;
+
+                // 檢查是否所有都分類完畢
+                checkClassifyCompletion();
+            } else {
+                triggerError(`這個不是${shapeNamesZh[targetBoxShape]}喔，請放回對應的格子！`);
+            }
+        }
+
+        // 分類行動端 Touch 處理
+        let touchItemClassify = null;
+        let startXCls, startYCls;
+
+        function touchStartClassify(e) {
+            touchItemClassify = e.currentTarget;
+            const touch = e.touches[0];
+            startXCls = touch.clientX;
+            startYCls = touch.clientY;
+            touchItemClassify.style.zIndex = '50';
+            touchItemClassify.style.transition = 'none';
+        }
+
+        function touchMoveClassify(e) {
+            if (!touchItemClassify) return;
+            e.preventDefault(); // 防止畫面滾動，修正拖拉錯誤
+            const touch = e.touches[0];
+            const dx = touch.clientX - startXCls;
+            const dy = touch.clientY - startYCls;
+            touchItemClassify.style.transform = `translate(${dx}px, ${dy}px) scale(1.1)`;
+        }
+
+        function touchEndClassify(e) {
+            if (!touchItemClassify) return;
+            const touch = e.changedTouches[0];
+            touchItemClassify.style.transition = 'transform 0.2s';
+
+            // 檢測投遞到了哪個盒子
+            const boxes = ['circle', 'triangle', 'square', 'rectangle'];
+            let targetBox = null;
+
+            boxes.forEach(sh => {
+                const boxEl = document.getElementById(`box-${sh}`);
+                const rect = boxEl.getBoundingClientRect();
+                if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                    touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+                    targetBox = sh;
+                }
+            });
+
+            const elementShape = touchItemClassify.getAttribute('data-shape');
+
+            if (targetBox) {
+                if (elementShape === targetBox) {
+                    // 正確分類
+                    const boxContainer = document.getElementById(`box-items-${targetBox}`);
+                    touchItemClassify.style.transform = 'none'; // 重置位置
+                    touchItemClassify.style.margin = '2px';
+                    touchItemClassify.style.zIndex = '1';
+                    
+                    // 移除觸控監聽
+                    touchItemClassify.removeEventListener('touchstart', touchStartClassify);
+                    touchItemClassify.removeEventListener('touchmove', touchMoveClassify);
+                    touchItemClassify.removeEventListener('touchend', touchEndClassify);
+                    
+                    boxContainer.appendChild(touchItemClassify);
+
+                    const item = classifyItems.find(i => i.id === touchItemClassify.id);
+                    if (item) item.classified = true;
+
+                    checkClassifyCompletion();
+                } else {
+                    touchItemClassify.style.transform = 'translate(0px, 0px) scale(1)';
+                    triggerError(`不對喔，那個盒子是裝${shapeNamesZh[targetBox]}的！`);
+                }
+            } else {
+                // 沒拖到任何盒子，回彈
+                touchItemClassify.style.transform = 'translate(0px, 0px) scale(1)';
+            }
+            touchItemClassify = null;
+        }
+
+        function checkClassifyCompletion() {
+            const allDone = classifyItems.every(i => i.classified);
+            if (allDone) {
+                triggerSuccess("恭喜你！所有彩色的形狀都被你分類整理好囉！");
+            }
+        }
+
+
+        // ==================== 5. 隨機命名邏輯 ====================
+        let currentNamingShape = 'circle';
+
+        function initNamingGame() {
+            // 隨機選一個
+            currentNamingShape = shapes[Math.floor(Math.random() * shapes.length)];
+            const namingSvg = document.getElementById('naming-svg');
+            
+            // 使用可愛形狀產生
+            const randColor = shapeColors[currentNamingShape];
+            namingSvg.innerHTML = generateShapeSVGMarkup(currentNamingShape, randColor);
+        }
+
+        function checkNamingAnswer(selectedShape) {
+            if (selectedShape === currentNamingShape) {
+                triggerSuccess(`沒錯！這就是【${shapeNamesZh[currentNamingShape]}】，大聲讀出「${shapeNamesZh[currentNamingShape]}」！`);
+                
+                // 2.5 秒後換下一題
+                setTimeout(() => {
+                    initNamingGame();
+                }, 2500);
+            } else {
+                triggerError(`不對喔，仔細看。它有幾個邊、幾隻角？再想一下！`);
+            }
+        }
+
+        function nextNamingGame() {
+            initNamingGame();
+        }
+
+        // --- 初始化頁面 ---
+        window.onload = function() {
+            switchTab('explore');
+        }
     </script>
 </body>
 </html>
