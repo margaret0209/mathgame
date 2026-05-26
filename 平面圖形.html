@@ -154,15 +154,16 @@
                     <h2 class="text-2xl font-bold text-macaron-yellow-dark flex items-center justify-center gap-2">
                         🌟 關卡 2：形狀配對
                     </h2>
-                    <p class="text-gray-600 text-sm mt-1">請教師協助挑選目標形狀，學生需要將中間的亮彩色形狀，拖拉至下方符合形狀的陰影底座中。</p>
+                    <p class="text-gray-600 text-sm mt-1">請教師協助挑選目標形狀（或隨機），學生需要將中間的亮彩色形狀，拖拉至下方符合形狀的陰影底座中。</p>
                 </div>
 
                 <!-- 教師選擇形狀 -->
                 <div class="flex justify-center gap-3 mb-8 flex-wrap">
-                    <button onclick="initMatchGame('circle')" class="match-select-btn px-5 py-2 rounded-2xl border-2 font-bold bg-pink-100 border-pink-300 text-pink-800" id="btn-match-circle">圓形 🔴</button>
-                    <button onclick="initMatchGame('triangle')" class="match-select-btn px-5 py-2 rounded-2xl border-2 font-bold bg-amber-50 border-amber-200 text-amber-800" id="btn-match-triangle">三角形 🔺</button>
-                    <button onclick="initMatchGame('square')" class="match-select-btn px-5 py-2 rounded-2xl border-2 font-bold bg-blue-50 border-blue-200 text-blue-800" id="btn-match-square">正方形 🟦</button>
-                    <button onclick="initMatchGame('rectangle')" class="match-select-btn px-5 py-2 rounded-2xl border-2 font-bold bg-teal-50 border-teal-200 text-teal-800" id="btn-match-rectangle">長方形 🟩</button>
+                    <button onclick="initMatchGame('circle')" class="match-select-btn px-5 py-2 rounded-2xl border-2 font-bold bg-pink-100 border-pink-300 text-pink-800 transition-all shadow-sm" id="btn-match-circle">圓形 🔴</button>
+                    <button onclick="initMatchGame('triangle')" class="match-select-btn px-5 py-2 rounded-2xl border-2 font-bold bg-amber-50 border-amber-200 text-amber-800 transition-all shadow-sm" id="btn-match-triangle">三角形 🔺</button>
+                    <button onclick="initMatchGame('square')" class="match-select-btn px-5 py-2 rounded-2xl border-2 font-bold bg-blue-50 border-blue-200 text-blue-800 transition-all shadow-sm" id="btn-match-square">正方形 🟦</button>
+                    <button onclick="initMatchGame('rectangle')" class="match-select-btn px-5 py-2 rounded-2xl border-2 font-bold bg-teal-50 border-teal-200 text-teal-800 transition-all shadow-sm" id="btn-match-rectangle">長方形 🟩</button>
+                    <button onclick="initMatchGame('random')" class="match-select-btn px-5 py-2 rounded-2xl border-2 font-bold bg-purple-50 border-purple-200 text-purple-800 transition-all shadow-sm" id="btn-match-random">隨機 🎲</button>
                 </div>
 
                 <!-- 遊戲操作區 -->
@@ -208,8 +209,15 @@
                     </div>
                 </div>
 
+                <!-- 手動換題按鈕 -->
+                <div class="flex justify-center mt-8">
+                    <button onclick="nextMatchGame()" class="px-8 py-3 bg-amber-100 hover:bg-amber-200 text-amber-800 border-2 border-amber-300 font-bold rounded-full shadow-md transition-transform active:scale-95 flex items-center gap-2">
+                        <span>換一個題目</span> <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
                 <div class="text-center text-xs text-gray-400 mt-4">
-                    提示：可用滑鼠拖曳或以手指直接在螢幕上滑動形狀至下方目標框。
+                    提示：可用滑鼠拖曳或以手指直接在螢幕上滑動形狀至下方目標框。可手動點擊「換一個題目」產生相同形狀但不同顏色大小的圖案進行多重練習。
                 </div>
             </div>
         </section>
@@ -221,7 +229,16 @@
                     <h2 class="text-2xl font-bold text-macaron-blue-dark flex items-center justify-center gap-2">
                         🔍 關卡 3：形狀分辨
                     </h2>
-                    <p class="text-gray-600 text-sm mt-1">請根據上方顯示的指定名稱，從下方四個不同大小、不同顏色的選項中，找出正確的形狀！</p>
+                    <p class="text-gray-600 text-sm mt-1">請教師協助選取指定的形狀名稱（或隨機），讓學生從下方四個不同大小、顏色的選項中，找出正確的形狀！</p>
+                </div>
+
+                <!-- 教師選擇形狀 -->
+                <div class="flex justify-center gap-3 mb-6 flex-wrap">
+                    <button onclick="initIdentifyGame('circle')" class="id-select-btn px-5 py-2 rounded-2xl border-2 font-bold transition-all bg-red-100 border-red-300 text-red-800 shadow-sm" id="btn-id-circle">🔴 圓形</button>
+                    <button onclick="initIdentifyGame('triangle')" class="id-select-btn px-5 py-2 rounded-2xl border-2 font-bold transition-all bg-amber-50 border-amber-200 text-amber-800 shadow-sm" id="btn-id-triangle">🔺 三角形</button>
+                    <button onclick="initIdentifyGame('square')" class="id-select-btn px-5 py-2 rounded-2xl border-2 font-bold transition-all bg-blue-50 border-blue-200 text-blue-800 shadow-sm" id="btn-id-square">🟦 正方形</button>
+                    <button onclick="initIdentifyGame('rectangle')" class="id-select-btn px-5 py-2 rounded-2xl border-2 font-bold transition-all bg-emerald-50 border-emerald-200 text-emerald-800 shadow-sm" id="btn-id-rectangle">🟩 長方形</button>
+                    <button onclick="initIdentifyGame('random')" class="id-select-btn px-5 py-2 rounded-2xl border-2 font-bold transition-all bg-purple-50 border-purple-200 text-purple-800 shadow-sm" id="btn-id-random">🎲 隨機</button>
                 </div>
 
                 <!-- 目標名稱顯示 -->
@@ -373,7 +390,7 @@
             'rectangle': '#118AB2'    // 柔藍
         };
 
-        // 50種美味可愛食物資料庫庫
+        // 50種美味可愛食物資料庫
         const foodDatabase = [
             { emoji: "🍎", name: "蘋果" }, { emoji: "🍌", name: "香蕉" }, { emoji: "🍇", name: "葡萄" }, 
             { emoji: "🍉", name: "西瓜" }, { emoji: "🍓", name: "草莓" }, { emoji: "🍊", name: "橘子" }, 
@@ -381,10 +398,10 @@
             { emoji: "🍒", name: "櫻桃" }, { emoji: "🍈", name: "哈密瓜" }, { emoji: "🥝", name: "奇異果" }, 
             { emoji: "🍐", name: "梨子" }, { emoji: "🥭", name: "芒果" }, { emoji: "🥥", name: "椰子" }, 
             { emoji: "🍅", name: "番茄" }, { emoji: "🥕", name: "胡蘿蔔" }, { emoji: "🌽", name: "玉米" }, 
-            { emoji: " Broccoli 🥦", name: "西蘭花" }, { emoji: "🥑", name: "酪梨" }, { emoji: "🍆", name: "茄子" }, 
+            { emoji: "🥦", name: "青花菜" }, { emoji: "🥑", name: "酪梨" }, { emoji: "茄子", emoji: "🍆" }, 
             { emoji: "🥔", name: "馬鈴薯" }, { emoji: "🧅", name: "洋蔥" }, { emoji: "🍄", name: "蘑菇" }, 
             { emoji: "🥜", name: "花生" }, { emoji: "🌰", name: "栗子" }, { emoji: "🍞", name: "麵包" }, 
-            { emoji: " croissants 🥐", name: "可頌" }, { emoji: "🥞", name: "鬆餅" }, { emoji: "🧀", name: "起司" }, 
+            { emoji: "🥐", name: "可頌" }, { emoji: "🥞", name: "鬆餅" }, { emoji: "🧀", name: "起司" }, 
             { emoji: "🍖", name: "肉骨頭" }, { emoji: "🍔", name: "漢堡" }, { emoji: "🍟", name: "薯條" }, 
             { emoji: "🍕", name: "披薩" }, { emoji: "🌭", name: "熱狗" }, { emoji: "🌮", name: "塔可" }, 
             { emoji: "🍿", name: "爆米花" }, { emoji: "🍙", name: "飯糰" }, { emoji: "🍜", name: "拉麵" }, 
@@ -396,7 +413,9 @@
 
         // 整理防錯：確保無任何乾淨的前置空白或奇怪符號
         foodDatabase.forEach(f => {
-            f.emoji = f.emoji.replace(/[a-zA-Z]/g, '').trim();
+            if (f.emoji) {
+                f.emoji = f.emoji.replace(/[a-zA-Z]/g, '').trim();
+            }
         });
 
         let currentFood = { emoji: "🍎", name: "蘋果" }; // 當前選取的食物
@@ -502,10 +521,10 @@
                 initExploreGame('circle');
             } else if (tabId === 'match') {
                 activeBtn.className = "tab-btn px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shadow-sm border bg-macaron-yellow text-macaron-yellow-dark border-macaron-yellow scale-105";
-                initMatchGame('circle');
+                initMatchGame(matchMode);
             } else if (tabId === 'identify') {
                 activeBtn.className = "tab-btn px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shadow-sm border bg-macaron-blue text-macaron-blue-dark border-macaron-blue scale-105";
-                initIdentifyGame();
+                initIdentifyGame(identifyMode);
             } else if (tabId === 'classify') {
                 activeBtn.className = "tab-btn px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shadow-sm border bg-macaron-green text-macaron-green-dark border-macaron-green scale-105";
                 initClassifyGame();
@@ -825,25 +844,45 @@
 
         // ==================== 2. 形狀配對邏輯 ====================
         let matchTargetShape = 'circle';
+        let matchMode = 'random'; // 新增：記錄目前是指定形狀還是隨機
         // 用於行動端觸控拖曳的全局定位變量
         let touchTarget = null;
         let startX, startY, currentX, currentY;
 
-        function initMatchGame(shape) {
-            matchTargetShape = shape;
+        function initMatchGame(mode = null, color = null, scale = 1) {
+            if (mode) {
+                matchMode = mode;
+            }
+
+            // 決定本次的目標形狀
+            if (matchMode === 'random') {
+                if (color) {
+                    // 若是點擊「換題」進來的，確保隨機出不一樣的形狀
+                    const otherShapes = shapes.filter(s => s !== matchTargetShape);
+                    matchTargetShape = otherShapes[Math.floor(Math.random() * otherShapes.length)];
+                } else {
+                    matchTargetShape = shapes[Math.floor(Math.random() * shapes.length)];
+                }
+            } else {
+                matchTargetShape = matchMode;
+            }
+
+            const useColor = color || shapeColors[matchTargetShape];
 
             // 教師選擇的高亮狀態
             document.querySelectorAll('.match-select-btn').forEach(btn => {
                 btn.className = btn.className.replace('ring-4 ring-offset-2 ring-amber-400 scale-105', '').trim();
                 btn.classList.add('opacity-70');
             });
-            const activeBtn = document.getElementById(`btn-match-${shape}`);
-            activeBtn.classList.remove('opacity-70');
-            activeBtn.classList.add('ring-4', 'ring-offset-2', 'ring-amber-400', 'scale-105');
+            const activeBtn = document.getElementById(`btn-match-${matchMode}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('opacity-70');
+                activeBtn.classList.add('ring-4', 'ring-offset-2', 'ring-amber-400', 'scale-105');
+            }
 
             // 繪製彩色 SVG 拖曳源
             const dragSvg = document.getElementById('drag-svg');
-            dragSvg.innerHTML = generateShapeSVGMarkup(shape, shapeColors[shape]);
+            dragSvg.innerHTML = generateShapeSVGMarkup(matchTargetShape, useColor, scale);
 
             // 重置所有目標底框樣式與 SVG
             document.querySelectorAll('.drop-zone').forEach(zone => {
@@ -864,6 +903,14 @@
             dragItem.style.opacity = '1';
         }
 
+        // 切換下一個題目 (根據模式決定是否換形狀，並改變顏色大小)
+        function nextMatchGame() {
+            const palette = ['#FF8A8A', '#FFD166', '#06D6A0', '#118AB2', '#D6BCFB', '#FF9F1C', '#2EC4B6', '#E71D36', '#9D4EDD', '#F4A261'];
+            const randomColor = palette[Math.floor(Math.random() * palette.length)];
+            const randomScale = (Math.random() * 0.5) + 0.6; // 縮放比例 0.6 ~ 1.1 之間
+            initMatchGame(matchMode, randomColor, randomScale);
+        }
+
         // 取得灰色虛線佔位 SVG
         function getPlaceholderSVG(shape) {
             if (shape === 'circle') return `<svg width="60" height="60" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#E2E8F0" stroke="#94A3B8" stroke-width="4" stroke-dasharray="6"/></svg>`;
@@ -873,7 +920,7 @@
         }
 
         // 動態生成精緻可愛的 SVG 形狀 (帶表情)
-        function generateShapeSVGMarkup(shape, color) {
+        function generateShapeSVGMarkup(shape, color, scale = 1) {
             let shapeMarkup = '';
             if (shape === 'circle') {
                 shapeMarkup = `<circle cx="50" cy="50" r="40" fill="${color}" stroke="#333" stroke-width="3" />`;
@@ -899,7 +946,8 @@
                 <path d="M 47 57 Q 50 61 53 57" stroke="#222" stroke-width="2.5" fill="none" stroke-linecap="round" />
             `;
 
-            return shapeMarkup + faceMarkup;
+            const content = shapeMarkup + faceMarkup;
+            return `<g transform="translate(50, 50) scale(${scale}) translate(-50, -50)">${content}</g>`;
         }
 
         // 拖放 API (電腦滑鼠)
@@ -1003,10 +1051,31 @@
         // ==================== 3. 形狀分辨邏輯 ====================
         let identifyAnswerIndex = 0;
         let identifyTargetType = 'circle';
+        let identifyMode = 'random'; // 新增：記錄目前是指定形狀還是隨機
 
-        function initIdentifyGame() {
-            // 隨機選出一個正確答案的形狀
-            identifyTargetType = shapes[Math.floor(Math.random() * shapes.length)];
+        function initIdentifyGame(mode = null) {
+            if (mode) {
+                identifyMode = mode;
+            }
+
+            // 更新教師選擇按鈕高亮狀態
+            document.querySelectorAll('.id-select-btn').forEach(btn => {
+                btn.className = btn.className.replace('ring-4 ring-offset-2 ring-blue-400 scale-105', '').trim();
+                btn.classList.add('opacity-70');
+            });
+            const activeBtn = document.getElementById(`btn-id-${identifyMode}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('opacity-70');
+                activeBtn.classList.add('ring-4', 'ring-offset-2', 'ring-blue-400', 'scale-105');
+            }
+
+            // 決定本次的目標形狀
+            if (identifyMode === 'random') {
+                identifyTargetType = shapes[Math.floor(Math.random() * shapes.length)];
+            } else {
+                identifyTargetType = identifyMode;
+            }
+
             document.getElementById('identify-target-name').innerText = shapeNamesZh[identifyTargetType];
 
             // 產生 4 個卡片選項，其中至少包含 1 個正確形狀
@@ -1094,9 +1163,9 @@
                 selectedCard.classList.add('border-green-400', 'bg-green-50');
                 triggerSuccess(`答對了！這就是${shapeNamesZh[identifyTargetType]}！`);
                 
-                // 2 秒後自動下一題
+                // 2 秒後自動下一題 (保持相同的模式)
                 setTimeout(() => {
-                    initIdentifyGame();
+                    initIdentifyGame(identifyMode);
                 }, 2000);
             } else {
                 selectedCard.classList.add('border-red-300', 'bg-red-50');
@@ -1108,7 +1177,7 @@
         }
 
         function nextIdentifyGame() {
-            initIdentifyGame();
+            initIdentifyGame(identifyMode);
         }
 
 
