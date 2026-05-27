@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>乘法大冒險 🌟 快樂學乘法</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts 引入可愛圓體字 -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome 圖標 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans TC', 'Fredoka One', sans-serif;
+            background-color: #fef9f3;
+            background-image: radial-gradient(#fed7aa 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .bubble-btn {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .bubble-btn:hover {
+            transform: scale(1.08) translateY(-2px);
+        }
+        .bubble-btn:active {
+            transform: scale(0.95) translateY(0);
+        }
+        /* 糖果盒子動畫 */
+        @keyframes popIn {
+            0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+            70% { transform: scale(1.1) rotate(3deg); }
+            100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
+        .box-animate {
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        /* 糖果閃爍 */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-5px) rotate(5deg); }
+        }
+        .candy-animate {
+            animation: float 3s ease-in-out infinite;
+        }
+        /* 自訂滾動條 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #fcd34d;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 sm:p-6 text-gray-700">
+
+    <!-- 頂部標題與吉祥物 -->
+    <header class="text-center my-6 max-w-2xl w-full">
+        <div class="inline-flex items-center gap-3 bg-white px-6 py-3 rounded-full shadow-md border-4 border-yellow-300 mb-2">
+            <span class="text-3xl">🐱</span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-amber-600 tracking-wider">乘法大冒險</h1>
+            <span class="text-3xl">🦁</span>
+        </div>
+        <p class="text-amber-800 font-medium text-sm sm:text-base">搭配可愛糖果盒，和動物小夥伴一起快樂學乘法吧！✨</p>
+    </header>
+
+    <!-- 主選單切換（頁籤） -->
+    <nav class="flex justify-center gap-2 sm:gap-4 mb-8 max-w-2xl w-full">
+        <button onclick="switchTab('tab-study')" id="btn-tab-study" class="bubble-btn px-4 py-3 sm:px-6 rounded-2xl font-bold text-sm sm:text-lg shadow-md bg-amber-400 text-white border-b-4 border-amber-600 flex items-center gap-2">
+            <i class="fa-solid fa-box-open"></i> 1) 乘數盒探索
+        </button>
+        <button onclick="switchTab('tab-practice')" id="btn-tab-practice" class="bubble-btn px-4 py-3 sm:px-6 rounded-2xl font-bold text-sm sm:text-lg shadow-md bg-white text-gray-600 border-b-4 border-gray-300 flex items-center gap-2">
+            <i class="fa-solid fa-star"></i> 2) 指定挑戰
+        </button>
+        <button onclick="switchTab('tab-random')" id="btn-tab-random" class="bubble-btn px-4 py-3 sm:px-6 rounded-2xl font-bold text-sm sm:text-lg shadow-md bg-white text-gray-600 border-b-4 border-gray-300 flex items-center gap-2">
+            <i class="fa-solid fa-shuffle"></i> 3) 隨機挑戰
+        </button>
+    </nav>
+
+    <!-- 主內容區 -->
+    <main class="w-full max-w-5xl bg-white rounded-3xl shadow-xl border-8 border-amber-100 p-4 sm:p-8 relative overflow-hidden">
+        
+        <!-- ==================== 頁籤一：乘數盒探索 ==================== -->
+        <section id="tab-study" class="space-y-6">
+            <div class="bg-amber-50 p-4 rounded-2xl border-2 border-dashed border-amber-300 text-center">
+                <span class="text-lg font-bold text-amber-800">第一步：選一個你想學習的乘數吧！</span>
+                <div class="flex flex-wrap justify-center gap-2 mt-3">
+                    <!-- 1-10 數字按鈕 -->
+                    <script>
+                        for (let i = 1; i <= 10; i++) {
+                            document.write(`
+                                <button onclick="selectStudyNum(${i})" id="btn-num-${i}" class="study-num-btn bubble-btn w-12 h-12 rounded-full font-bold text-xl bg-white text-amber-600 border-2 border-amber-300 hover:bg-amber-100 flex items-center justify-center shadow-sm">
+                                    ${i}
+                                </button>
+                            `);
+                        }
+                    </script>
+                </div>
+            </div>
+
+            <!-- 核心操作區：左邊糖果盒，右邊算式與鍵盤 -->
+            <div id="study-workspace" class="hidden grid grid-cols-1 md:grid-cols-12 gap-6 pt-4">
+                
+                <!-- 左側：糖果盒子展示區 (佔 5 格) -->
+                <div class="md:col-span-5 bg-orange-50/50 rounded-2xl p-4 border-2 border-orange-100 flex flex-col items-center">
+                    <h3 class="font-bold text-orange-800 mb-3 flex items-center gap-2">
+                        <span>🍬</span> <span id="candy-title">糖果盒子儲藏室</span>
+                    </h3>
+                    
+                    <!-- 滾動盒子容器 -->
+                    <div id="candy-boxes-container" class="w-full max-h-[500px] overflow-y-auto space-y-4 p-2 custom-scrollbar">
+                        <!-- 動態生成盒子 -->
+                    </div>
+                </div>
+
+                <!-- 右側：算式輸入與九宮格鍵盤 + 歷史算式 (佔 7 格) -->
+                <div class="md:col-span-7 flex flex-col md:flex-row gap-4 bg-emerald-50/40 rounded-2xl p-4 border-2 border-emerald-100">
+                    
+                    <!-- 左半：當前算式與鍵盤 -->
+                    <div class="flex-1 flex flex-col items-center justify-between">
+                        <div class="w-full text-center">
+                            <span class="bg-emerald-200 text-emerald-800 px-4 py-1.5 rounded-full font-bold text-sm">請填滿當前算式！</span>
+                        </div>
+
+                        <!-- 算式顯示區 -->
+                        <div class="my-6 p-4 bg-white rounded-2xl border-4 border-emerald-200 shadow-inner flex items-center justify-center gap-2 text-2xl font-extrabold text-gray-800 w-full">
+                            <!-- 第一個數 -->
+                            <div onclick="setActiveInput('study-val1')" id="study-val1-box" class="formula-box min-w-[45px] h-12 bg-emerald-50 rounded-xl border-2 border-emerald-300 flex items-center justify-center cursor-pointer text-emerald-600 transition-all hover:bg-emerald-100">?</div>
+                            
+                            <div class="text-gray-400">×</div>
+                            
+                            <!-- 第二個數 -->
+                            <div onclick="setActiveInput('study-val2')" id="study-val2-box" class="formula-box min-w-[45px] h-12 bg-emerald-50 rounded-xl border-2 border-emerald-300 flex items-center justify-center cursor-pointer text-emerald-600 transition-all hover:bg-emerald-100">?</div>
+                            
+                            <div class="text-gray-400">=</div>
+                            
+                            <!-- 答案 -->
+                            <div onclick="setActiveInput('study-ans')" id="study-ans-box" class="formula-box min-w-[60px] h-12 bg-emerald-50 rounded-xl border-2 border-emerald-300 flex items-center justify-center cursor-pointer text-emerald-600 transition-all hover:bg-emerald-100">?</div>
+                        </div>
+
+                        <!-- 狀態與提示 -->
+                        <div id="study-feedback" class="h-8 text-center font-bold text-sm mb-2 text-gray-600"></div>
+
+                        <!-- 專屬九宮格數字鍵盤 -->
+                        <div class="w-full max-w-[240px]">
+                            <div class="grid grid-cols-3 gap-2">
+                                <button onclick="pressKey(1)" class="bubble-btn h-11 bg-white rounded-xl border-2 border-emerald-200 font-bold text-lg hover:bg-emerald-50 active:scale-95 shadow-sm">1</button>
+                                <button onclick="pressKey(2)" class="bubble-btn h-11 bg-white rounded-xl border-2 border-emerald-200 font-bold text-lg hover:bg-emerald-50 active:scale-95 shadow-sm">2</button>
+                                <button onclick="pressKey(3)" class="bubble-btn h-11 bg-white rounded-xl border-2 border-emerald-200 font-bold text-lg hover:bg-emerald-50 active:scale-95 shadow-sm">3</button>
+                                <button onclick="pressKey(4)" class="bubble-btn h-11 bg-white rounded-xl border-2 border-emerald-200 font-bold text-lg hover:bg-emerald-50 active:scale-95 shadow-sm">4</button>
+                                <button onclick="pressKey(5)" class="bubble-btn h-11 bg-white rounded-xl border-2 border-emerald-200 font-bold text-lg hover:bg-emerald-50 active:scale-95 shadow-sm">5</button>
+                                <button onclick="pressKey(6)" class="bubble-btn h-11 bg-white rounded-xl border-2 border-emerald-200 font-bold text-lg hover:bg-emerald-50 active:scale-95 shadow-sm">6</button>
+                                <button onclick="pressKey(7)" class="bubble-btn h-11 bg-white rounded-xl border-2 border-emerald-200 font-bold text-lg hover:bg-emerald-50 active:scale-95 shadow-sm">7</button>
+                                <button onclick="pressKey(8)" class="bubble-btn h-11 bg-white rounded-xl border-2 border-emerald-200 font-bold text-lg hover:bg-emerald-50 active:scale-95 shadow-sm">8</button>
+                                <button onclick="pressKey(9)" class="bubble-btn h-11 bg-white rounded-xl border-2 border-emerald-200 font-bold text-lg hover:bg-emerald-50 active:scale-95 shadow-sm">9</button>
+                                <button onclick="pressKey('C')" class="bubble-btn h-11 bg-red-100 text-red-600 rounded-xl border-2 border-red-200 font-bold text-sm hover:bg-red-200 active:scale-95 shadow-sm">清除</button>
+                                <button onclick="pressKey(0)" class="bubble-btn h-11 bg-white rounded-xl border-2 border-emerald-200 font-bold text-lg hover:bg-emerald-50 active:scale-95 shadow-sm">0</button>
+                                <button onclick="checkStudyAnswer()" class="bubble-btn h-11 bg-emerald-500 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 active:scale-95 shadow-md flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-circle-check"></i> 確認
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右半：歷史算式保留區（呈現完整乘數表） -->
+                    <div class="w-full md:w-[180px] bg-white rounded-2xl p-3 border-2 border-emerald-100 flex flex-col items-center">
+                        <span class="font-bold text-emerald-800 text-xs mb-2 flex items-center gap-1">
+                            <i class="fa-solid fa-list-ol"></i> 你的乘數表
+                        </span>
+                        <!-- 滾動歷史區 -->
+                        <div id="study-history-container" class="w-full flex-1 max-h-[180px] md:max-h-[380px] overflow-y-auto space-y-1.5 p-1 custom-scrollbar text-center">
+                            <!-- 歷史對齊好的算式會存在這裡 -->
+                            <div class="text-xs text-gray-400 py-10" id="history-placeholder">尚未完成算式</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 未選擇狀態提示 -->
+            <div id="study-placeholder" class="py-20 text-center text-gray-400">
+                <p class="text-4xl mb-4">🍭</p>
+                <p class="text-lg font-medium">請在上方點選一個數字，開啟奇幻乘法盒冒險！</p>
+            </div>
+        </section>
+
+
+        <!-- ==================== 頁籤二：指定乘數挑戰 ==================== -->
+        <section id="tab-practice" class="hidden space-y-6">
+            <div class="bg-sky-50 p-4 rounded-2xl border-2 border-dashed border-sky-300 text-center">
+                <span class="text-lg font-bold text-sky-800">請選一個你要挑戰的乘數：</span>
+                <div class="flex flex-wrap justify-center gap-2 mt-3">
+                    <script>
+                        for (let i = 1; i <= 10; i++) {
+                            document.write(`
+                                <button onclick="selectPracticeNum(${i})" id="btn-practice-${i}" class="practice-num-btn bubble-btn w-11 h-11 rounded-full font-bold text-lg bg-white text-sky-600 border-2 border-sky-300 hover:bg-sky-100 flex items-center justify-center shadow-sm">
+                                    ${i}
+                                </button>
+                            `);
+                        }
+                    </script>
+                </div>
+            </div>
+
+            <div id="practice-game-area" class="hidden max-w-md mx-auto bg-sky-50/50 p-6 rounded-3xl border-2 border-sky-100 flex flex-col items-center">
+                <!-- 進度條 -->
+                <div class="w-full flex justify-between text-xs font-bold text-sky-700 mb-1">
+                    <span>挑戰進度</span>
+                    <span id="practice-score-text">已答對：0 題</span>
+                </div>
+                
+                <!-- 算式展現 -->
+                <div class="w-full py-8 my-4 bg-white rounded-2xl border-4 border-sky-200 shadow-md text-center text-4xl font-extrabold text-gray-800 flex items-center justify-center gap-3">
+                    <span id="practice-q-num1" class="text-sky-600">5</span>
+                    <span class="text-gray-400">×</span>
+                    <span id="practice-q-num2">3</span>
+                    <span class="text-gray-400">=</span>
+                    <span id="practice-ans-box" class="min-w-[80px] h-14 bg-sky-50 rounded-xl border-2 border-sky-300 flex items-center justify-center text-sky-600">?</span>
+                </div>
+
+                <div id="practice-feedback" class="h-8 text-center font-bold text-lg mb-2"></div>
+
+                <!-- 鍵盤區 -->
+                <div class="w-full max-w-[280px] mt-2">
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="pressPracticeKey(1)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-sky-200 font-bold text-xl hover:bg-sky-50 shadow-sm">1</button>
+                        <button onclick="pressPracticeKey(2)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-sky-200 font-bold text-xl hover:bg-sky-50 shadow-sm">2</button>
+                        <button onclick="pressPracticeKey(3)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-sky-200 font-bold text-xl hover:bg-sky-50 shadow-sm">3</button>
+                        <button onclick="pressPracticeKey(4)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-sky-200 font-bold text-xl hover:bg-sky-50 shadow-sm">4</button>
+                        <button onclick="pressPracticeKey(5)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-sky-200 font-bold text-xl hover:bg-sky-50 shadow-sm">5</button>
+                        <button onclick="pressPracticeKey(6)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-sky-200 font-bold text-xl hover:bg-sky-50 shadow-sm">6</button>
+                        <button onclick="pressPracticeKey(7)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-sky-200 font-bold text-xl hover:bg-sky-50 shadow-sm">7</button>
+                        <button onclick="pressPracticeKey(8)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-sky-200 font-bold text-xl hover:bg-sky-50 shadow-sm">8</button>
+                        <button onclick="pressPracticeKey(9)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-sky-200 font-bold text-xl hover:bg-sky-50 shadow-sm">9</button>
+                        <button onclick="pressPracticeKey('C')" class="bubble-btn h-12 bg-red-100 text-red-600 rounded-xl border-2 border-red-200 font-bold text-lg hover:bg-red-200 shadow-sm">清除</button>
+                        <button onclick="pressPracticeKey(0)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-sky-200 font-bold text-xl hover:bg-sky-50 shadow-sm">0</button>
+                        <button onclick="checkPracticeAnswer()" class="bubble-btn h-12 bg-sky-500 text-white rounded-xl font-bold text-lg hover:bg-sky-600 shadow-md flex items-center justify-center">確認</button>
+                    </div>
+                </div>
+
+                <!-- 下一題按鈕 (預設隱藏，答對後出現) -->
+                <button id="btn-practice-next" onclick="generatePracticeQuestion()" class="hidden mt-6 w-full max-w-[280px] bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-2xl font-bold text-lg shadow-md bubble-btn flex items-center justify-center gap-2">
+                    下一題 <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- 未選擇狀態提示 -->
+            <div id="practice-placeholder" class="py-20 text-center text-gray-400">
+                <p class="text-4xl mb-4">🎯</p>
+                <p class="text-lg font-medium">請在上方點選一個數字，開啟指定乘法大作戰！</p>
+            </div>
+        </section>
+
+
+        <!-- ==================== 頁籤三：隨機挑戰 ==================== -->
+        <section id="tab-random" class="hidden space-y-6">
+            <div class="max-w-md mx-auto bg-purple-50/70 p-6 rounded-3xl border-2 border-purple-100 flex flex-col items-center">
+                <div class="text-center mb-4">
+                    <span class="bg-purple-200 text-purple-800 px-4 py-1.5 rounded-full font-bold text-sm">🌟 終極挑戰：1 到 10 隨機大考驗</span>
+                </div>
+
+                <!-- 進度與計分 -->
+                <div class="w-full flex justify-between text-xs font-bold text-purple-700 mb-1">
+                    <span>隨機冒險</span>
+                    <span id="random-score-text">已答對：0 題</span>
+                </div>
+
+                <!-- 算式展現 -->
+                <div class="w-full py-8 my-4 bg-white rounded-2xl border-4 border-purple-200 shadow-md text-center text-4xl font-extrabold text-gray-800 flex items-center justify-center gap-3">
+                    <span id="random-q-num1" class="text-purple-600">?</span>
+                    <span class="text-gray-400">×</span>
+                    <span id="random-q-num2" class="text-indigo-600">?</span>
+                    <span class="text-gray-400">=</span>
+                    <span id="random-ans-box" class="min-w-[80px] h-14 bg-purple-50 rounded-xl border-2 border-purple-300 flex items-center justify-center text-purple-600">?</span>
+                </div>
+
+                <div id="random-feedback" class="h-8 text-center font-bold text-lg mb-2"></div>
+
+                <!-- 鍵盤區 -->
+                <div class="w-full max-w-[280px] mt-2">
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="pressRandomKey(1)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-purple-200 font-bold text-xl hover:bg-purple-50 shadow-sm">1</button>
+                        <button onclick="pressRandomKey(2)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-purple-200 font-bold text-xl hover:bg-purple-50 shadow-sm">2</button>
+                        <button onclick="pressRandomKey(3)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-purple-200 font-bold text-xl hover:bg-purple-50 shadow-sm">3</button>
+                        <button onclick="pressRandomKey(4)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-purple-200 font-bold text-xl hover:bg-purple-50 shadow-sm">4</button>
+                        <button onclick="pressRandomKey(5)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-purple-200 font-bold text-xl hover:bg-purple-50 shadow-sm">5</button>
+                        <button onclick="pressRandomKey(6)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-purple-200 font-bold text-xl hover:bg-purple-50 shadow-sm">6</button>
+                        <button onclick="pressRandomKey(7)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-purple-200 font-bold text-xl hover:bg-purple-50 shadow-sm">7</button>
+                        <button onclick="pressRandomKey(8)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-purple-200 font-bold text-xl hover:bg-purple-50 shadow-sm">8</button>
+                        <button onclick="pressRandomKey(9)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-purple-200 font-bold text-xl hover:bg-purple-50 shadow-sm">9</button>
+                        <button onclick="pressRandomKey('C')" class="bubble-btn h-12 bg-red-100 text-red-600 rounded-xl border-2 border-red-200 font-bold text-lg hover:bg-red-200 shadow-sm">清除</button>
+                        <button onclick="pressRandomKey(0)" class="bubble-btn h-12 bg-white rounded-xl border-2 border-purple-200 font-bold text-xl hover:bg-purple-50 shadow-sm">0</button>
+                        <button onclick="checkRandomAnswer()" class="bubble-btn h-12 bg-purple-500 text-white rounded-xl font-bold text-lg hover:bg-purple-600 shadow-md flex items-center justify-center">確認</button>
+                    </div>
+                </div>
+
+                <!-- 下一題按鈕 (預設隱藏，答對後出現) -->
+                <button id="btn-random-next" onclick="generateRandomQuestion()" class="hidden mt-6 w-full max-w-[280px] bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-2xl font-bold text-lg shadow-md bubble-btn flex items-center justify-center gap-2">
+                    下一題 <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 底部資訊 -->
+    <footer class="mt-8 text-amber-700/60 text-xs text-center font-medium">
+        🌈 快樂學習，天天進步！Made with ❤️ for kids
+    </footer>
+
+    <!-- 答對時的可愛煙火音效特效遮罩 (不影響操作) -->
+    <div id="celebration-overlay" class="fixed inset-0 pointer-events-none z-50 flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white/90 border-4 border-yellow-400 rounded-3xl p-6 shadow-2xl text-center transform scale-90 transition-transform duration-300">
+            <div class="text-6xl mb-2">🎉</div>
+            <div class="text-2xl font-black text-amber-600">答對了！太棒了！</div>
+        </div>
+    </div>
+
+    <!-- 核心互動邏輯 JavaScript -->
+    <script>
+        // ----------------- 音效系統 (Web Audio API) -----------------
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playTone(freq, type, duration, vol=0.1) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
+        // 短促的點擊聲
+        function playClickSound() { playTone(600, 'sine', 0.1, 0.05); }
+        // 盒子彈出的清脆聲
+        function playPopSound() { playTone(800, 'triangle', 0.15, 0.05); }
+        // 答對的升階慶祝聲 (Do-Mi-Sol-Do)
+        function playCorrectSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            playTone(523.25, 'sine', 0.1, 0.1); 
+            setTimeout(() => playTone(659.25, 'sine', 0.1, 0.1), 100); 
+            setTimeout(() => playTone(783.99, 'sine', 0.2, 0.1), 200); 
+            setTimeout(() => playTone(1046.50, 'sine', 0.4, 0.1), 300); 
+        }
+        // 答錯的嘟嘟聲
+        function playWrongSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            playTone(300, 'sawtooth', 0.2, 0.08);
+            setTimeout(() => playTone(250, 'sawtooth', 0.3, 0.08), 150);
+        }
+
+        // ----------------- 通用與頁籤切換邏輯 -----------------
+        function switchTab(tabId) {
+            playClickSound();
+            // 隱藏所有頁籤內容
+            document.getElementById('tab-study').classList.add('hidden');
+            document.getElementById('tab-practice').classList.add('hidden');
+            document.getElementById('tab-random').classList.add('hidden');
+            
+            // 顯示當前選中的頁籤內容
+            document.getElementById(tabId).classList.remove('hidden');
+
+            // 還原按鈕樣式
+            const buttons = {
+                'tab-study': 'btn-tab-study',
+                'tab-practice': 'btn-tab-practice',
+                'tab-random': 'btn-tab-random'
+            };
+
+            for (const [id, btnId] of Object.entries(buttons)) {
+                const btn = document.getElementById(btnId);
+                if (id === tabId) {
+                    btn.className = btn.className.replace('bg-white text-gray-600 border-gray-300', getThemeBtnClass(id));
+                } else {
+                    btn.className = btn.className.replace(/bg-(amber|sky|purple)-400 text-white border-(amber|sky|purple)-600/, 'bg-white text-gray-600 border-gray-300');
+                }
+            }
+
+            // 若切換到隨機挑戰，直接初始化
+            if (tabId === 'tab-random' && randomQuestionNum1 === null) {
+                initRandomGame();
+            }
+        }
+
+        function getThemeBtnClass(tabId) {
+            if (tabId === 'tab-study') return 'bg-amber-400 text-white border-amber-600';
+            if (tabId === 'tab-practice') return 'bg-sky-400 text-white border-sky-600';
+            return 'bg-purple-400 text-white border-purple-600';
+        }
+
+
+        // ----------------- 慶舉動畫與提示輔助 -----------------
+        function triggerCelebration() {
+            playCorrectSound();
+            const overlay = document.getElementById('celebration-overlay');
+            const box = overlay.querySelector('div');
+            
+            // 隨機鼓勵詞
+            const words = ['太厲害了！🌟', '答對囉！👍', '你真棒！🧁', '無懈可擊！🎈', '超級小天才！🌈'];
+            box.querySelector('.text-2xl').innerText = words[Math.floor(Math.random() * words.length)];
+
+            overlay.classList.remove('pointer-events-none');
+            overlay.classList.add('opacity-100');
+            box.classList.remove('scale-90');
+            box.classList.add('scale-100');
+
+            setTimeout(() => {
+                overlay.classList.add('pointer-events-none');
+                overlay.classList.remove('opacity-100');
+                box.classList.remove('scale-100');
+                box.classList.add('scale-90');
+            }, 800);
+        }
+
+
+        // ----------------- 頁籤一：乘數盒探索 邏輯 -----------------
+        let selectedStudyBase = null;     // 當前選擇的乘數 (如 3)
+        let studyStep = 1;                // 目前進行到的步驟 (1 到 10)
+        let activeInputId = 'study-val1'; // 當前焦點輸入格
+
+        // 可愛的糖果樣式
+        const candyEmojis = ['🍬', '🍭', '🍩', '🍪', '🧁', '🍓', '🍇', '🍒', '🍋', '🍎'];
+        let currentCandy = '🍬';
+
+        function selectStudyNum(num) {
+            playClickSound();
+            selectedStudyBase = num;
+            studyStep = 1;
+            currentCandy = candyEmojis[num - 1] || '🍬';
+
+            // 更新按鈕高亮樣式
+            document.querySelectorAll('.study-num-btn').forEach(btn => {
+                btn.classList.remove('bg-amber-400', 'text-white', 'border-amber-600');
+                btn.classList.add('bg-white', 'text-amber-600', 'border-amber-300');
+            });
+            const activeBtn = document.getElementById(`btn-num-${num}`);
+            activeBtn.classList.add('bg-amber-400', 'text-white', 'border-amber-600');
+            activeBtn.classList.remove('bg-white', 'text-amber-600', 'border-amber-300');
+
+            // 顯示工作區
+            document.getElementById('study-placeholder').classList.add('hidden');
+            document.getElementById('study-workspace').classList.remove('hidden');
+
+            // 清空盒子容器與歷史紀錄
+            document.getElementById('candy-boxes-container').innerHTML = '';
+            document.getElementById('candy-title').innerText = `已收集的 ${selectedStudyBase} 顆裝糖果盒`;
+            
+            const historyContainer = document.getElementById('study-history-container');
+            historyContainer.innerHTML = '';
+
+            // 初始化第一個算式與提示
+            resetStudyFormula();
+            appendCandyBox(1); // 預先生成第一個盒子（等待輸入）
+        }
+
+        // 動態添加一個糖果盒子
+        function appendCandyBox(stepNum) {
+            const container = document.getElementById('candy-boxes-container');
+            
+            // 創建盒子容器
+            const boxDiv = document.createElement('div');
+            boxDiv.className = "bg-white border-4 border-amber-200 rounded-2xl p-3 shadow-sm box-animate relative";
+            
+            // 標題與標籤
+            let boxHtml = `
+                <div class="flex justify-between items-center mb-2">
+                    <span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-bold">
+                        第 ${stepNum} 個盒子
+                    </span>
+                    <span class="text-xs text-gray-400">裝著 ${selectedStudyBase} 顆糖果</span>
+                </div>
+                <div class="grid grid-cols-5 gap-2 justify-items-center bg-amber-50/50 p-2 rounded-xl">
+            `;
+
+            // 生成糖果
+            for (let i = 0; i < selectedStudyBase; i++) {
+                boxHtml += `
+                    <div class="text-2xl candy-animate" style="animation-delay: ${i * 0.1}s">
+                        ${currentCandy}
+                    </div>
+                `;
+            }
+
+            boxHtml += `</div>`;
+            boxDiv.innerHTML = boxHtml;
+            container.appendChild(boxDiv);
+            playPopSound();
+
+            // 自動滾動到最底部
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 100);
+        }
+
+        // 將正確答對的算式，累積在右側「完整乘數表歷史區」
+        function addFormulaToHistory(val1, val2, ans) {
+            const historyContainer = document.getElementById('study-history-container');
+            
+            // 移除佔位提示字
+            const placeholder = document.getElementById('history-placeholder');
+            if (placeholder) {
+                placeholder.remove();
+            }
+
+            // 建立一筆精美的歷史算式
+            const item = document.createElement('div');
+            item.className = "bg-emerald-100/70 border border-emerald-300 text-emerald-800 rounded-lg py-1 px-3 text-sm font-bold flex justify-between items-center animate-pulse";
+            item.innerHTML = `
+                <span>${val1} × ${val2}</span>
+                <span class="text-emerald-900 font-extrabold">= ${ans}</span>
+            `;
+
+            historyContainer.appendChild(item);
+
+            // 閃爍一下表示加入，之後取消閃爍
+            setTimeout(() => {
+                item.classList.remove('animate-pulse');
+            }, 800);
+
+            // 滾動歷史欄至最底
+            setTimeout(() => {
+                historyContainer.scrollTop = historyContainer.scrollHeight;
+            }, 100);
+        }
+
+        // 初始化/還原算式輸入狀態
+        function resetStudyFormula() {
+            // 三個填空重置為 "?" 狀態
+            document.getElementById('study-val1-box').innerText = '?';
+            document.getElementById('study-val2-box').innerText = '?';
+            document.getElementById('study-ans-box').innerText = '?';
+
+            // 重置輸入焦點到第一格
+            setActiveInput('study-val1');
+
+            // 清空回饋資訊
+            document.getElementById('study-feedback').innerHTML = '';
+        }
+
+        // 設定輸入焦點
+        function setActiveInput(id) {
+            activeInputId = id;
+            // 移除所有填空的高亮，高亮目前的焦點
+            document.querySelectorAll('.formula-box').forEach(box => {
+                box.classList.remove('border-emerald-500', 'bg-emerald-100/50', 'ring-4', 'ring-emerald-200');
+                box.classList.add('border-emerald-300', 'bg-emerald-50');
+            });
+
+            const activeBox = document.getElementById(`${id}-box`);
+            if (activeBox) {
+                activeBox.classList.remove('border-emerald-300', 'bg-emerald-50');
+                activeBox.classList.add('border-emerald-500', 'bg-emerald-100/50', 'ring-4', 'ring-emerald-200');
+            }
+        }
+
+        // 按鍵盤輸入數字 +【自動跳格邏輯】
+        function pressKey(val) {
+            playClickSound();
+            const activeBox = document.getElementById(`${activeInputId}-box`);
+            if (!activeBox) return;
+
+            if (val === 'C') {
+                activeBox.innerText = '?';
+                return;
+            }
+
+            let currentVal = activeBox.innerText;
+            if (currentVal === '?') {
+                currentVal = '';
+            }
+
+            // 輸入數字
+            if (currentVal.length < 3) {
+                activeBox.innerText = currentVal + val;
+            }
+
+            // --- 核心：自動檢測並自動跳到下一格 ---
+            const newVal = parseInt(activeBox.innerText);
+
+            if (activeInputId === 'study-val1') {
+                // 如果第一格正確輸入了所選的乘數
+                if (newVal === selectedStudyBase) {
+                    document.getElementById('study-feedback').innerHTML = `<span class="text-emerald-600">✨ 第一格對了！</span>`;
+                    // 自動跳到第二格
+                    setTimeout(() => {
+                        setActiveInput('study-val2');
+                    }, 150);
+                }
+            } else if (activeInputId === 'study-val2') {
+                // 如果第二格正確輸入了當前的乘數 (步驟數)
+                if (newVal === studyStep) {
+                    document.getElementById('study-feedback').innerHTML = `<span class="text-emerald-600">✨ 第二格對了！來填答案吧！</span>`;
+                    // 自動跳到第三格答案
+                    setTimeout(() => {
+                        setActiveInput('study-ans');
+                    }, 150);
+                }
+            }
+        }
+
+        // 檢查乘數探索算式答案
+        function checkStudyAnswer() {
+            const val1 = parseInt(document.getElementById('study-val1-box').innerText);
+            const val2 = parseInt(document.getElementById('study-val2-box').innerText);
+            const ans = parseInt(document.getElementById('study-ans-box').innerText);
+
+            const feedback = document.getElementById('study-feedback');
+
+            // 檢查是否皆已輸入
+            if (isNaN(val1) || isNaN(val2) || isNaN(ans)) {
+                feedback.innerHTML = `<span class="text-red-500">❌ 還有算式格沒填滿唷！</span>`;
+                return;
+            }
+
+            // 正確答案條件
+            const correctVal1 = selectedStudyBase;
+            const correctVal2 = studyStep;
+            const correctAns = correctVal1 * correctVal2;
+
+            if (val1 === correctVal1 && val2 === correctVal2 && ans === correctAns) {
+                triggerCelebration();
+                feedback.innerHTML = `<span class="text-emerald-600">🎉 答對了！太棒了！</span>`;
+
+                // 【保留算式】：將答對的這一題存入右側乘數表歷史
+                addFormulaToHistory(val1, val2, ans);
+
+                if (studyStep < 10) {
+                    studyStep++;
+                    // 延遲一下再開啟下一題，並累積長出下一個糖果盒子
+                    setTimeout(() => {
+                        resetStudyFormula();
+                        appendCandyBox(studyStep);
+                    }, 1200);
+                } else {
+                    // 完成全部 1-10 關卡
+                    setTimeout(() => {
+                        document.getElementById('study-feedback').innerHTML = `
+                            <div class="text-amber-600 font-extrabold text-base animate-bounce">
+                                🏆 恭喜！完成了整個 ${selectedStudyBase} 的完整乘數表！
+                            </div>
+                        `;
+                    }, 1000);
+                }
+            } else {
+                // 答錯提示
+                playWrongSound();
+                let errMsg = "❌ 算式不對唷，再檢查一下！";
+                if (val1 !== correctVal1) {
+                    errMsg = `❌ 這盒是 ${selectedStudyBase} 顆糖果，第一個數要輸入 ${selectedStudyBase} 喔！`;
+                } else if (val2 !== correctVal2) {
+                    errMsg = `❌ 現在是第 ${correctVal2} 個盒子，第二個數要輸入 ${correctVal2} 喔！`;
+                } else if (ans !== correctAns) {
+                    errMsg = `❌ 答案不對喔，快數數看左邊總共有幾顆糖果！`;
+                }
+                feedback.innerHTML = `<span class="text-red-500">${errMsg}</span>`;
+            }
+        }
+
+
+        // ----------------- 頁籤二：指定乘數挑戰 邏輯 -----------------
+        let selectedPracticeBase = null;
+        let practiceCurrentMultiplier = null;
+        let practiceCorrectAns = null;
+        let practiceCorrectCount = 0;
+
+        function selectPracticeNum(num) {
+            playClickSound();
+            selectedPracticeBase = num;
+            practiceCorrectCount = 0;
+            document.getElementById('practice-score-text').innerText = `已答對：0 題`;
+
+            // 更新按鈕樣式
+            document.querySelectorAll('.practice-num-btn').forEach(btn => {
+                btn.classList.remove('bg-sky-400', 'text-white', 'border-sky-600');
+                btn.classList.add('bg-white', 'text-sky-600', 'border-sky-300');
+            });
+            const activeBtn = document.getElementById(`btn-practice-${num}`);
+            activeBtn.classList.add('bg-sky-400', 'text-white', 'border-sky-600');
+            activeBtn.classList.remove('bg-white', 'text-sky-600', 'border-sky-300');
+
+            document.getElementById('practice-placeholder').classList.add('hidden');
+            document.getElementById('practice-game-area').classList.remove('hidden');
+
+            generatePracticeQuestion(true);
+        }
+
+        function generatePracticeQuestion(isAuto) {
+            if (isAuto !== true) playClickSound();
+            document.getElementById('btn-practice-next').classList.add('hidden');
+            document.getElementById('practice-feedback').innerHTML = '';
+            document.getElementById('practice-ans-box').innerText = '?';
+
+            practiceCurrentMultiplier = Math.floor(Math.random() * 10) + 1;
+            practiceCorrectAns = selectedPracticeBase * practiceCurrentMultiplier;
+
+            document.getElementById('practice-q-num1').innerText = selectedPracticeBase;
+            document.getElementById('practice-q-num2').innerText = practiceCurrentMultiplier;
+        }
+
+        function pressPracticeKey(val) {
+            playClickSound();
+            if (!document.getElementById('btn-practice-next').classList.contains('hidden')) return;
+
+            const ansBox = document.getElementById('practice-ans-box');
+            if (val === 'C') {
+                ansBox.innerText = '?';
+                return;
+            }
+
+            let currentVal = ansBox.innerText;
+            if (currentVal === '?') {
+                currentVal = '';
+            }
+
+            if (currentVal.length < 3) {
+                ansBox.innerText = currentVal + val;
+            }
+        }
+
+        function checkPracticeAnswer() {
+            if (!document.getElementById('btn-practice-next').classList.contains('hidden')) return;
+
+            const ansBox = document.getElementById('practice-ans-box');
+            const userAns = parseInt(ansBox.innerText);
+            const feedback = document.getElementById('practice-feedback');
+
+            if (isNaN(userAns)) {
+                feedback.innerHTML = `<span class="text-red-500">❌ 請先輸入答案喔！</span>`;
+                return;
+            }
+
+            if (userAns === practiceCorrectAns) {
+                triggerCelebration();
+                feedback.innerHTML = `<span class="text-emerald-600">🎉 答對了！太厲害了！</span>`;
+                practiceCorrectCount++;
+                document.getElementById('practice-score-text').innerText = `已答對：${practiceCorrectCount} 題`;
+                
+                document.getElementById('btn-practice-next').classList.remove('hidden');
+            } else {
+                playWrongSound();
+                feedback.innerHTML = `<span class="text-red-500">❌ 算錯囉，再想一想、重新輸入試試！</span>`;
+            }
+        }
+
+
+        // ----------------- 頁籤三：隨機挑戰 邏輯 -----------------
+        let randomQuestionNum1 = null;
+        let randomQuestionNum2 = null;
+        let randomCorrectAns = null;
+        let randomCorrectCount = 0;
+
+        function initRandomGame() {
+            randomCorrectCount = 0;
+            document.getElementById('random-score-text').innerText = `已答對：0 題`;
+            generateRandomQuestion(true);
+        }
+
+        function generateRandomQuestion(isAuto) {
+            if (isAuto !== true) playClickSound();
+            document.getElementById('btn-random-next').classList.add('hidden');
+            document.getElementById('random-feedback').innerHTML = '';
+            document.getElementById('random-ans-box').innerText = '?';
+
+            randomQuestionNum1 = Math.floor(Math.random() * 10) + 1;
+            randomQuestionNum2 = Math.floor(Math.random() * 10) + 1;
+            randomCorrectAns = randomQuestionNum1 * randomQuestionNum2;
+
+            document.getElementById('random-q-num1').innerText = randomQuestionNum1;
+            document.getElementById('random-q-num2').innerText = randomQuestionNum2;
+        }
+
+        function pressRandomKey(val) {
+            playClickSound();
+            if (!document.getElementById('btn-random-next').classList.contains('hidden')) return;
+
+            const ansBox = document.getElementById('random-ans-box');
+            if (val === 'C') {
+                ansBox.innerText = '?';
+                return;
+            }
+
+            let currentVal = ansBox.innerText;
+            if (currentVal === '?') {
+                currentVal = '';
+            }
+
+            if (currentVal.length < 3) {
+                ansBox.innerText = currentVal + val;
+            }
+        }
+
+        function checkRandomAnswer() {
+            if (!document.getElementById('btn-random-next').classList.contains('hidden')) return;
+
+            const ansBox = document.getElementById('random-ans-box');
+            const userAns = parseInt(ansBox.innerText);
+            const feedback = document.getElementById('random-feedback');
+
+            if (isNaN(userAns)) {
+                feedback.innerHTML = `<span class="text-red-500">❌ 請先輸入答案喔！</span>`;
+                return;
+            }
+
+            if (userAns === randomCorrectAns) {
+                triggerCelebration();
+                feedback.innerHTML = `<span class="text-emerald-600">🎉 答對了！你超級厲害！</span>`;
+                randomCorrectCount++;
+                document.getElementById('random-score-text').innerText = `已答對：${randomCorrectCount} 題`;
+                
+                document.getElementById('btn-random-next').classList.remove('hidden');
+            } else {
+                playWrongSound();
+                feedback.innerHTML = `<span class="text-red-500">❌ 差一點點！重新算算看！</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
