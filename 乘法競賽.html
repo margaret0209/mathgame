@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬卡龍可愛互動乘法遊戲</title>
+    <!-- 引入 Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind 自定義配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        macaron: {
+                            pink: '#ffb3c1',
+                            blue: '#98c1d9',
+                            green: '#95d5b2',
+                            purple: '#d8b4e2'
+                        }
+                    },
+                    keyframes: {
+                        shake: {
+                            '0%, 100%': { transform: 'translateX(0)' },
+                            '25%': { transform: 'translateX(-5px)' },
+                            '75%': { transform: 'translateX(5px)' }
+                        },
+                        pop: {
+                            '0%': { transform: 'scale(0.8)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        },
+                        floatUp: {
+                            '0%': { transform: 'translateY(0) scale(1)', opacity: '1' },
+                            '100%': { transform: 'translateY(-30px) scale(1.5)', opacity: '0' }
+                        }
+                    },
+                    animation: {
+                        shake: 'shake 0.3s ease-in-out',
+                        pop: 'pop 0.3s ease-out',
+                        floatUp: 'floatUp 0.8s ease-out forwards'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #fff0f3;
+        }
+        /* 自定義捲軸 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #ffb3c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ff8fa3; }
+    </style>
+</head>
+<body>
+    <div id="app" class="min-h-screen p-4 md:p-8 text-gray-700">
+        <!-- 頂部控制面板 -->
+        <div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-6 mb-8 border-4 border-[#ffb3c1] relative overflow-hidden">
+            <div class="absolute top-[-20px] right-[-20px] text-8xl opacity-10">🍬</div>
+            <div class="absolute bottom-[-20px] left-[-20px] text-8xl opacity-10">🧁</div>
+            
+            <h1 class="text-3xl md:text-4xl font-black text-center text-[#ff758f] mb-6 tracking-wide drop-shadow-sm">
+                ✨ 鬧快乘法遊戲 ✨
+            </h1>
+            
+            <div class="flex flex-col md:flex-row flex-wrap justify-center items-center gap-6 relative z-10">
+                <!-- 人數選擇 -->
+                <div class="flex items-center gap-3 bg-[#ffe5ec] px-4 py-2 rounded-2xl border-2 border-[#ffb3c1] shadow-sm">
+                    <label class="font-bold text-[#fb6f92] text-lg">人數：</label>
+                    <select v-model="playersCount" :disabled="gameState === 'playing'" @change="resetGame" class="bg-transparent text-gray-700 font-bold text-lg focus:outline-none cursor-pointer disabled:opacity-50">
+                        <option :value="1">1 人模式</option>
+                        <option :value="2">2 人模式</option>
+                        <option :value="3">3 人模式</option>
+                        <option :value="4">4 人模式</option>
+                    </select>
+                </div>
+                
+                <!-- 難度選擇 -->
+                <div class="flex items-center gap-3 bg-[#ffe5ec] px-4 py-2 rounded-2xl border-2 border-[#ffb3c1] shadow-sm">
+                    <label class="font-bold text-[#fb6f92] text-lg">關卡：</label>
+                    <select v-model="level" :disabled="gameState === 'playing'" @change="resetGame" class="bg-transparent text-gray-700 font-bold text-lg focus:outline-none cursor-pointer disabled:opacity-50">
+                        <option :value="1">Level 1 (單位 × 單位)</option>
+                        <option :value="2">Level 2 (雙位 × 單位)</option>
+                        <option :value="3">Level 3 (雙位 × 雙位)</option>
+                    </select>
+                </div>
+
+                <!-- 時間選擇 -->
+                <div v-if="gameState !== 'playing'" class="flex items-center gap-3 bg-[#ffe5ec] px-4 py-2 rounded-2xl border-2 border-[#ffb3c1] shadow-sm">
+                    <label class="font-bold text-[#fb6f92] text-lg">時間：</label>
+                    <select v-model="timeLimit" class="bg-transparent text-gray-700 font-bold text-lg focus:outline-none cursor-pointer">
+                        <option :value="1">1 分鐘</option>
+                        <option :value="3">3 分鐘</option>
+                        <option :value="5">5 分鐘</option>
+                    </select>
+                </div>
+
+                <!-- 倒數計時顯示 -->
+                <div v-if="gameState === 'playing'" class="flex items-center gap-3 bg-[#ffb3c1] text-white px-6 py-2 rounded-2xl border-2 border-[#fb6f92] shadow-sm font-black text-2xl animate-pulse">
+                    ⏱️ {{ formatTime(timeLeft) }}
+                </div>
+                
+                <!-- 開始/結束按鈕 -->
+                <button v-if="gameState !== 'playing'" @click="startGame" class="bg-[#ffb3c1] text-white px-8 py-3 rounded-2xl font-black text-lg hover:bg-[#ff8fa3] transition transform hover:-translate-y-1 hover:shadow-lg active:translate-y-0 active:shadow-md shadow-md border-b-4 border-[#fb6f92]">
+                    開始 🚀
+                </button>
+                <button v-else @click="stopGame" class="bg-gray-300 text-gray-700 px-8 py-3 rounded-2xl font-black text-lg hover:bg-gray-400 transition transform hover:-translate-y-1 hover:shadow-lg active:translate-y-0 active:shadow-md shadow-md border-b-4 border-gray-400">
+                    結束 🛑
+                </button>
+            </div>
+        </div>
+
+        <!-- 遊戲主畫面 (依人數分區) -->
+        <div class="max-w-7xl mx-auto grid gap-6 md:gap-8" :class="gridClass">
+            <div v-for="(board, index) in boards" :key="index" 
+                 class="rounded-3xl shadow-xl p-4 md:p-6 border-4 flex flex-col items-center relative transition-all duration-300"
+                 :class="[getMacaronTheme(index).bg, getMacaronTheme(index).border, board.errorState ? 'animate-shake' : '']">
+                
+                <!-- 玩家標籤 -->
+                <div class="absolute -top-5 -left-5 w-14 h-14 rounded-full flex items-center justify-center text-white font-black text-2xl shadow-lg border-4 border-white z-20" 
+                     :class="getMacaronTheme(index).badge">
+                    P{{ index + 1 }}
+                </div>
+
+                <!-- 分數標籤 -->
+                <div class="absolute -top-5 -right-5 w-16 h-16 rounded-full flex flex-col items-center justify-center text-white font-black shadow-lg border-4 border-white z-20" 
+                     :class="getMacaronTheme(index).badge">
+                    <span class="text-[10px] leading-tight">得分</span>
+                    <span class="text-xl leading-none">{{ scores[index] }}</span>
+                    <!-- 扣分特效 -->
+                    <div v-if="board.showDeduction" class="absolute -top-4 -left-6 text-red-500 font-black text-xl bg-white px-2 py-0.5 rounded-full border-2 border-red-400 shadow-md animate-floatUp z-50 pointer-events-none">
+                        -1
+                    </div>
+                </div>
+
+                <!-- 遊戲狀態特效 -->
+                <div v-if="gameState === 'idle'" class="absolute inset-0 z-30 bg-white/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center">
+                    <div class="text-2xl font-bold text-gray-500">點擊開始...</div>
+                </div>
+                <div v-else-if="gameState === 'finished'" class="absolute inset-0 z-30 bg-white/90 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center animate-pop">
+                    <div class="text-7xl mb-4">🏆</div>
+                    <div class="text-4xl font-black mb-2" :class="getMacaronTheme(index).text">時間到！</div>
+                    <div class="text-2xl font-bold text-gray-600">總得分：<span class="text-5xl ml-2" :class="getMacaronTheme(index).text">{{ scores[index] }}</span></div>
+                </div>
+                <div v-else-if="board.showSuccess" class="absolute inset-0 z-30 bg-white/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center animate-pop">
+                    <div class="text-7xl mb-4 animate-bounce">✨</div>
+                    <div class="text-4xl font-black" :class="getMacaronTheme(index).text">+10 分！</div>
+                </div>
+
+                <!-- 直式運算區 -->
+                <div class="bg-white p-4 md:p-6 rounded-2xl shadow-inner mb-6 w-full flex justify-center overflow-x-auto relative min-h-[300px] border-2 border-dashed" :class="getMacaronTheme(index).border">
+                    <div class="grid gap-x-1 gap-y-2 items-center" :style="{ gridTemplateColumns: `repeat(${board.maxCols + 1}, minmax(44px, 1fr))` }">
+                        
+                        <!-- Row 0: 被乘數 a -->
+                        <div class="col-span-1 text-center font-bold text-xl text-gray-400"></div>
+                        <div v-for="c in board.maxCols" :key="'a'+c" class="flex items-center justify-center text-4xl font-black text-gray-700 h-14 w-12 tracking-tighter">
+                            {{ getOperandDigit(board.problem.a, board.maxCols - c) }}
+                        </div>
+
+                        <!-- Row 1: 乘數 b -->
+                        <div class="col-span-1 flex items-center justify-center font-black text-3xl" :class="getMacaronTheme(index).text">×</div>
+                        <div v-for="c in board.maxCols" :key="'b'+c" class="flex items-center justify-center text-4xl font-black text-gray-700 h-14 w-12 tracking-tighter">
+                            {{ getOperandDigit(board.problem.b, board.maxCols - c) }}
+                        </div>
+
+                        <!-- 橫線 1 -->
+                        <div class="col-span-full border-b-4 my-2 rounded-full opacity-50" :class="getMacaronTheme(index).border"></div>
+
+                        <!-- Partial & Sum Rows -->
+                        <template v-for="(row, rIdx) in board.rows" :key="'row'+rIdx">
+                            
+                            <!-- 符號列 ( + ) -->
+                            <div class="col-span-1 flex items-center justify-center font-black text-3xl" :class="getMacaronTheme(index).text">
+                                {{ row.symbol }}
+                            </div>
+
+                            <!-- 數字方格 -->
+                            <div v-for="c in board.maxCols" :key="'r'+rIdx+'c'+c" class="relative flex items-center justify-center h-14 w-12">
+                                <template v-if="getCell(row, board.maxCols - c)">
+                                    <div :class="[
+                                        'w-full h-full border-2 rounded-xl flex items-center justify-center text-3xl font-black transition-all duration-200 relative',
+                                        getCellStyle(board, rIdx + 2, board.maxCols - c)
+                                    ]">
+                                        <!-- 主數字 -->
+                                        <span>{{ getCell(row, board.maxCols - c).valMain !== null ? getCell(row, board.maxCols - c).valMain : '' }}</span>
+
+                                        <!-- 進位小圓框 -->
+                                        <div v-if="getCell(row, board.maxCols - c).expectedCarry !== undefined"
+                                             v-show="getCell(row, board.maxCols - c).valCarry !== null || isCarryActive(board, rIdx + 2, board.maxCols - c)"
+                                             :class="[
+                                                 'absolute -top-3 -left-3 w-7 h-7 rounded-full flex items-center justify-center text-[15px] font-black border-2 border-white shadow-md z-10 transition-all duration-300',
+                                                 getCell(row, board.maxCols - c).carryType === 'mult' ? 'bg-[#ff758f] text-white' : 'bg-[#4ea8de] text-white',
+                                                 isCarryActive(board, rIdx + 2, board.maxCols - c) ? 'scale-125 ring-4 ring-yellow-400 animate-pulse' : ''
+                                             ]">
+                                            {{ getCell(row, board.maxCols - c).valCarry !== null ? getCell(row, board.maxCols - c).valCarry : '?' }}
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- 加法前的橫線 2 -->
+                            <div v-if="rIdx === board.rows.length - 2 && board.rows[board.rows.length-1].type === 'sum'" 
+                                 class="col-span-full border-b-4 my-2 rounded-full opacity-50" :class="getMacaronTheme(index).border"></div>
+                        </template>
+
+                    </div>
+                </div>
+
+                <!-- 數字鍵盤 -->
+                <div class="grid grid-cols-3 gap-3 w-full max-w-[220px] mt-auto" :class="{ 'opacity-40 pointer-events-none': gameState !== 'playing' || board.isComplete }">
+                    <button v-for="n in [1,2,3,4,5,6,7,8,9]" :key="n" 
+                            @click="handleInput(index, n)"
+                            class="bg-white border-b-4 rounded-2xl py-3 text-3xl font-black text-gray-600 hover:bg-gray-50 active:translate-y-1 active:border-b-0 transition-all shadow-sm"
+                            :class="getMacaronTheme(index).btn">
+                        {{ n }}
+                    </button>
+                    <div class="col-span-1"></div>
+                    <button @click="handleInput(index, 0)" 
+                            class="bg-white border-b-4 rounded-2xl py-3 text-3xl font-black text-gray-600 hover:bg-gray-50 active:translate-y-1 active:border-b-0 transition-all shadow-sm" 
+                            :class="getMacaronTheme(index).btn">
+                        0
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        // 全域音效 Context
+        let audioCtx = null;
+
+        createApp({
+            data() {
+                return {
+                    playersCount: 1,
+                    level: 2,
+                    timeLimit: 1,
+                    timeLeft: 0,
+                    timerInterval: null,
+                    gameState: 'idle', // 'idle', 'playing', 'finished'
+                    scores: [0, 0, 0, 0],
+                    boards: [],
+                    themes: [
+                        // P1: 粉色
+                        { bg: 'bg-[#fff0f3]', border: 'border-[#ffb3c1]', badge: 'bg-[#ff758f]', btn: 'border-[#ffb3c1] text-[#ff758f]', text: 'text-[#ff758f]' }, 
+                        // P2: 藍色
+                        { bg: 'bg-[#e0fbfc]', border: 'border-[#98c1d9]', badge: 'bg-[#3d5a80]', btn: 'border-[#98c1d9] text-[#3d5a80]', text: 'text-[#3d5a80]' }, 
+                        // P3: 綠色
+                        { bg: 'bg-[#d8f3dc]', border: 'border-[#95d5b2]', badge: 'bg-[#40916c]', btn: 'border-[#95d5b2] text-[#40916c]', text: 'text-[#40916c]' }, 
+                        // P4: 紫色
+                        { bg: 'bg-[#f3e8ff]', border: 'border-[#d8b4e2]', badge: 'bg-[#9d4edd]', btn: 'border-[#d8b4e2] text-[#9d4edd]', text: 'text-[#9d4edd]' }  
+                    ]
+                }
+            },
+            computed: {
+                gridClass() {
+                    if (this.playersCount === 1) return 'grid-cols-1 max-w-lg place-items-center';
+                    if (this.playersCount === 2) return 'grid-cols-1 md:grid-cols-2';
+                    if (this.playersCount === 3) return 'grid-cols-1 md:grid-cols-3';
+                    return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 max-w-full';
+                }
+            },
+            mounted() {
+                this.resetGame();
+                window.addEventListener('keydown', this.handleKeydown);
+            },
+            unmounted() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                window.removeEventListener('keydown', this.handleKeydown);
+            },
+            methods: {
+                getMacaronTheme(index) {
+                    return this.themes[index % this.themes.length];
+                },
+                initAudio() {
+                    // 初始化瀏覽器音效引擎 (需由使用者互動觸發)
+                    if (!audioCtx) {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    if (audioCtx.state === 'suspended') {
+                        audioCtx.resume();
+                    }
+                },
+                playSound(type) {
+                    this.initAudio();
+                    if (!audioCtx) return;
+                    
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    // 防爆音包絡線
+                    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                    
+                    if (type === 'click') {
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                        gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.01);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                        osc.start(audioCtx.currentTime);
+                        osc.stop(audioCtx.currentTime + 0.1);
+                    } else if (type === 'wrong') {
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                        gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.01);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                        osc.start(audioCtx.currentTime);
+                        osc.stop(audioCtx.currentTime + 0.3);
+                        
+                        // 第二個不和諧音疊加
+                        setTimeout(() => {
+                            const osc2 = audioCtx.createOscillator();
+                            const gain2 = audioCtx.createGain();
+                            osc2.type = 'sawtooth';
+                            osc2.frequency.setValueAtTime(150, audioCtx.currentTime);
+                            gain2.gain.setValueAtTime(0, audioCtx.currentTime);
+                            gain2.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.01);
+                            gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                            osc2.connect(gain2);
+                            gain2.connect(audioCtx.destination);
+                            osc2.start(audioCtx.currentTime);
+                            osc2.stop(audioCtx.currentTime + 0.3);
+                        }, 80);
+                    } else if (type === 'success') {
+                        // 歡樂琶音 C5 E5 G5 C6
+                        const freqs = [523.25, 659.25, 783.99, 1046.50];
+                        freqs.forEach((f, i) => {
+                            const oscArp = audioCtx.createOscillator();
+                            const gainArp = audioCtx.createGain();
+                            oscArp.type = 'sine';
+                            oscArp.frequency.setValueAtTime(f, audioCtx.currentTime + i * 0.1);
+                            gainArp.gain.setValueAtTime(0, audioCtx.currentTime + i * 0.1);
+                            gainArp.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + i * 0.1 + 0.01);
+                            gainArp.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.1 + 0.3);
+                            oscArp.connect(gainArp);
+                            gainArp.connect(audioCtx.destination);
+                            oscArp.start(audioCtx.currentTime + i * 0.1);
+                            oscArp.stop(audioCtx.currentTime + i * 0.1 + 0.3);
+                        });
+                        return; // 獨立連接處理完畢
+                    } else if (type === 'start') {
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime); // E5
+                        gain.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 0.05);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+                        osc.start(audioCtx.currentTime);
+                        osc.stop(audioCtx.currentTime + 0.4);
+                    } else if (type === 'finish') {
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                        gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.01);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+                        osc.start(audioCtx.currentTime);
+                        osc.stop(audioCtx.currentTime + 0.6);
+                    }
+                    
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                },
+                resetGame() {
+                    this.gameState = 'idle';
+                    this.scores = Array(4).fill(0);
+                    if (this.timerInterval) {
+                        clearInterval(this.timerInterval);
+                        this.timerInterval = null;
+                    }
+                    this.boards = [];
+                    for (let i = 0; i < this.playersCount; i++) {
+                        this.boards.push(this.generateBoard());
+                    }
+                },
+                startGame() {
+                    this.initAudio();
+                    this.playSound('start');
+                    this.resetGame();
+                    this.gameState = 'playing';
+                    this.timeLeft = this.timeLimit * 60;
+                    this.timerInterval = setInterval(this.tick, 1000);
+                },
+                stopGame() {
+                    this.gameState = 'finished';
+                    this.playSound('finish');
+                    if (this.timerInterval) {
+                        clearInterval(this.timerInterval);
+                        this.timerInterval = null;
+                    }
+                },
+                tick() {
+                    if (this.timeLeft > 0) {
+                        this.timeLeft--;
+                    } else {
+                        this.stopGame();
+                    }
+                },
+                formatTime(seconds) {
+                    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+                    const s = (seconds % 60).toString().padStart(2, '0');
+                    return `${m}:${s}`;
+                },
+                generateBoard() {
+                    let a, b;
+                    // 根據題目設定生成數字
+                    if (this.level === 1) {
+                        a = Math.floor(Math.random() * 9) + 2; // 2-10 (避免1太簡單，但符合10以內)
+                        if (Math.random() > 0.5 && a < 10) a = Math.floor(Math.random() * 10) + 1; 
+                        b = Math.floor(Math.random() * 9) + 1; // 1-9
+                    } else if (this.level === 2) {
+                        a = Math.floor(Math.random() * 89) + 11; // 11-99
+                        b = Math.floor(Math.random() * 9) + 1;   // 1-9
+                    } else {
+                        a = Math.floor(Math.random() * 89) + 11; // 11-99
+                        b = Math.floor(Math.random() * 89) + 11; // 11-99
+                    }
+
+                    let a_str = a.toString();
+                    let b_str = b.toString();
+                    
+                    let rows = []; // 包含 partials 和 sum
+                    let partials = [];
+                    let steps = [];
+                    let rowIdxCounter = 2; // 0 是 a, 1 是 b
+
+                    // 生成乘法步驟（從左至右處理乘數的位數，符合「先運算34*40，下一行+運算34*2」的要求）
+                    for (let i = 0; i < b_str.length; i++) {
+                        let d = parseInt(b_str[i]);
+                        let p = b_str.length - 1 - i; // 10的次方位置 (0=個位)
+                        
+                        let rowCells = [];
+                        let carry = 0;
+
+                        // 補 0
+                        for (let z = 0; z < p; z++) {
+                            rowCells.push({ col: z, expectedMain: 0, valMain: null });
+                        }
+
+                        // 從右至左乘被乘數
+                        for (let j = 0; j < a_str.length; j++) {
+                            let a_digit = parseInt(a_str[a_str.length - 1 - j]);
+                            let prod = a_digit * d + carry;
+                            let mainDigit = prod % 10;
+                            let newCarry = Math.floor(prod / 10);
+                            let col = p + j;
+
+                            let cell = { col: col, expectedMain: mainDigit, valMain: null };
+                            if (newCarry > 0) {
+                                cell.expectedCarry = newCarry;
+                                cell.valCarry = null;
+                                cell.carryType = 'mult'; // 乘法產生的進位
+                            }
+                            rowCells.push(cell);
+                            carry = newCarry;
+                        }
+
+                        // 最後的進位
+                        if (carry > 0) {
+                            rowCells.push({ col: p + a_str.length, expectedMain: carry, valMain: null });
+                        }
+
+                        // 建立步驟序列 (由右至左: col=0, col=1...)
+                        for (let cell of rowCells) {
+                            if (cell.expectedCarry !== undefined) {
+                                steps.push({ rowIdx: rowIdxCounter, colIdx: cell.col, type: 'carry', value: cell.expectedCarry });
+                            }
+                            steps.push({ rowIdx: rowIdxCounter, colIdx: cell.col, type: 'main', value: cell.expectedMain });
+                        }
+
+                        rows.push({ 
+                            type: 'partial', 
+                            cells: rowCells, 
+                            symbol: (rowIdxCounter > 2) ? '+' : '' // 第二行開始加號
+                        });
+                        partials.push(rowCells);
+                        rowIdxCounter++;
+                    }
+
+                    // 如果有多行部分乘積，需要加法總和行
+                    if (partials.length > 1) {
+                        let sumCells = [];
+                        let add_carry = 0;
+                        let max_col = 0;
+                        partials.forEach(r => { if(r.length > max_col) max_col = r.length; });
+
+                        for (let c = 0; c < max_col; c++) {
+                            let colSum = add_carry;
+                            partials.forEach(r => {
+                                let cell = r.find(x => x.col === c);
+                                if (cell) colSum += cell.expectedMain;
+                            });
+                            let mainDigit = colSum % 10;
+                            let newCarry = Math.floor(colSum / 10);
+                            
+                            let cell = { col: c, expectedMain: mainDigit, valMain: null };
+                            if (newCarry > 0) {
+                                cell.expectedCarry = newCarry;
+                                cell.valCarry = null;
+                                cell.carryType = 'add'; // 加法產生的進位
+                            }
+                            sumCells.push(cell);
+                            add_carry = newCarry;
+                        }
+                        if (add_carry > 0) {
+                            sumCells.push({ col: max_col, expectedMain: add_carry, valMain: null });
+                        }
+
+                        // 加入加法步驟
+                        for (let cell of sumCells) {
+                            if (cell.expectedCarry !== undefined) {
+                                steps.push({ rowIdx: rowIdxCounter, colIdx: cell.col, type: 'carry', value: cell.expectedCarry });
+                            }
+                            steps.push({ rowIdx: rowIdxCounter, colIdx: cell.col, type: 'main', value: cell.expectedMain });
+                        }
+                        
+                        rows.push({ type: 'sum', cells: sumCells, symbol: '' });
+                    }
+
+                    // 計算所需最大行數 (為了排版)
+                    let maxCols = a_str.length + b_str.length; // 絕對夠放的最大寬度
+                    // 根據實際生成的資料微調
+                    let maxDataCol = 0;
+                    rows.forEach(r => r.cells.forEach(c => { if(c.col > maxDataCol) maxDataCol = c.col; }));
+                    maxCols = Math.max(maxCols, maxDataCol + 1);
+
+                    return {
+                        problem: { a, b },
+                        rows: rows,
+                        steps: steps,
+                        currentStepIdx: 0,
+                        maxCols: maxCols,
+                        isComplete: false,
+                        showSuccess: false,
+                        showDeduction: false, // 扣分狀態
+                        errorState: false
+                    };
+                },
+                getOperandDigit(num, pos) {
+                    let str = num.toString();
+                    let idx = str.length - 1 - pos;
+                    return (idx >= 0 && idx < str.length) ? str[idx] : '';
+                },
+                getCell(row, col) {
+                    return row.cells.find(c => c.col === col);
+                },
+                getCellStyle(board, absoluteRowIdx, col) {
+                    let step = board.steps[board.currentStepIdx];
+                    if (!step) return 'bg-gray-100 border-gray-200'; // 完成
+
+                    // 當前需要的步驟就是這個格子
+                    if (step.rowIdx === absoluteRowIdx && step.colIdx === col) {
+                        if (step.type === 'main') {
+                            // 提示輸入主數字
+                            return 'bg-yellow-50 border-yellow-400 ring-4 ring-yellow-300 ring-opacity-60 z-10 shadow-lg scale-[1.05] shadow-yellow-200';
+                        } else {
+                            // 提示輸入進位小圓框 (主格子保持白色)
+                            return 'bg-white border-gray-300';
+                        }
+                    }
+                    
+                    let cell = this.getCell(board.rows[absoluteRowIdx - 2], col);
+                    if (cell && cell.valMain !== null) {
+                        return 'bg-white border-gray-300 text-gray-800 shadow-sm'; // 已填寫
+                    }
+                    return 'bg-gray-50 border-gray-200 text-transparent'; // 等待填寫
+                },
+                isCarryActive(board, absoluteRowIdx, col) {
+                    let step = board.steps[board.currentStepIdx];
+                    if (!step) return false;
+                    return (step.rowIdx === absoluteRowIdx && step.colIdx === col && step.type === 'carry');
+                },
+                handleInput(playerIndex, val) {
+                    let board = this.boards[playerIndex];
+                    if (this.gameState !== 'playing' || board.isComplete || board.errorState) return;
+
+                    let step = board.steps[board.currentStepIdx];
+                    if (!step) return;
+
+                    if (val === step.value) {
+                        // 正確
+                        this.playSound('click');
+                        let rowObj = board.rows[step.rowIdx - 2];
+                        let cell = this.getCell(rowObj, step.colIdx);
+                        
+                        if (step.type === 'carry') {
+                            cell.valCarry = val;
+                        } else {
+                            cell.valMain = val;
+                        }
+
+                        board.currentStepIdx++;
+                        
+                        if (board.currentStepIdx >= board.steps.length) {
+                            board.isComplete = true;
+                            board.showSuccess = true;
+                            this.scores[playerIndex] += 10; // 成功加 10 分
+                            this.playSound('success');
+                            
+                            // 等待 800ms 動畫結束後自動刷新下一題
+                            setTimeout(() => {
+                                if (this.gameState === 'playing') {
+                                    this.boards[playerIndex] = this.generateBoard();
+                                }
+                            }, 800);
+                        }
+                    } else {
+                        // 錯誤 - 扣分、震動提示與錯誤音效
+                        this.playSound('wrong');
+                        board.errorState = true;
+                        board.showDeduction = true; // 觸發扣分浮動動畫
+                        
+                        // 扣 1 分，最低為 0 分
+                        this.scores[playerIndex] = Math.max(0, this.scores[playerIndex] - 1);
+                        
+                        setTimeout(() => {
+                            board.errorState = false;
+                            board.showDeduction = false;
+                        }, 500);
+                    }
+                },
+                handleKeydown(e) {
+                    // 如果只有1人模式，允許使用實體鍵盤 (僅限遊戲進行中)
+                    if (this.playersCount === 1 && this.gameState === 'playing') {
+                        if (e.key >= '0' && e.key <= '9') {
+                            this.handleInput(0, parseInt(e.key));
+                        }
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
