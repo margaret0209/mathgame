@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可愛立體圖形挑戰</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&family=Noto+Sans+TC:wght@500;700&display=swap');
+
+        :root {
+            --bg-color: #FDF6E3; /* 奶油底色 */
+            --panel-bg: #FFFFFF;
+            --text-color: #5D4037;
+            --pink: #FFB7B2;
+            --green: #E2F0CB;
+            --mint: #B5EAD7;
+            --purple: #C7CEEA;
+            --blue: #AEC6CF;
+            --yellow: #FDFD96;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            font-family: 'Nunito', 'Noto Sans TC', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            /* 背景加上可愛的小圓點 */
+            background-image: radial-gradient(var(--pink) 10%, transparent 11%), radial-gradient(var(--mint) 10%, transparent 11%);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+        }
+
+        /* 主佈局：左邊畫布，右邊控制面板 (橫向平板比例) */
+        .game-container {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* 左側 3D 畫布區域 */
+        .canvas-area {
+            flex: 6;
+            background-color: var(--panel-bg);
+            border-radius: 30px;
+            box-shadow: 0 10px 25px var(--shadow);
+            position: relative;
+            overflow: hidden;
+            border: 4px solid white;
+        }
+
+        #webgl-container {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* 旋轉提示 */
+        .hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 16px;
+            color: #888;
+            pointer-events: none;
+        }
+
+        /* 右側控制面板 */
+        .control-panel {
+            flex: 4;
+            max-width: 450px;
+            background-color: var(--panel-bg);
+            border-radius: 30px;
+            box-shadow: 0 10px 25px var(--shadow);
+            display: flex;
+            flex-direction: column;
+            padding: 25px;
+            border: 4px solid white;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+            color: #ff8b94;
+        }
+
+        .score-board {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--blue);
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+
+        /* 難度選擇區 */
+        .level-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            justify-content: center;
+        }
+
+        .level-btn {
+            flex: 1;
+            padding: 12px 5px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #eee;
+            color: #888;
+            transition: all 0.2s;
+            box-shadow: 0 4px 0 #ccc;
+        }
+
+        .level-btn.active {
+            background-color: var(--pink);
+            color: white;
+            box-shadow: 0 4px 0 #e67e88;
+            transform: translateY(2px);
+        }
+
+        /* 題目與選項區 */
+        .question-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .question-text {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* UI 切換容器 */
+        .ui-container {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .ui-container.active {
+            display: flex;
+        }
+
+        /* 共用按鈕樣式 */
+        .ans-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #555;
+            background-color: var(--mint);
+            box-shadow: 0 5px 0 #8cc7b5;
+            transition: all 0.1s;
+        }
+
+        .ans-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 0 0 #8cc7b5;
+        }
+
+        /* Level 3 特製 UI */
+        .l3-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .l3-type-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .l3-btn {
+            padding: 12px;
+            border: 3px solid transparent;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            color: #555;
+            transition: all 0.2s;
+        }
+
+        .l3-btn.selected {
+            border-color: var(--text-color);
+            background-color: var(--yellow);
+            transform: scale(1.05);
+        }
+
+        .submit-btn {
+            margin-top: 15px;
+            background-color: var(--pink);
+            color: white;
+            box-shadow: 0 5px 0 #e67e88;
+        }
+        .submit-btn:active {
+            box-shadow: 0 0 0 #e67e88;
+        }
+        .submit-btn:disabled {
+            background-color: #ccc;
+            box-shadow: 0 5px 0 #aaa;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 回饋訊息 */
+        .feedback {
+            height: 40px;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            margin-top: 15px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feedback.show {
+            opacity: 1;
+        }
+
+        .feedback.correct {
+            color: #2e7d32;
+            background-color: #c8e6c9;
+        }
+
+        .feedback.wrong {
+            color: #c62828;
+            background-color: #ffcdd2;
+        }
+
+        /* 響應式 - 針對較小螢幕或直向平板 */
+        @media (max-width: 900px) {
+            .game-container {
+                flex-direction: column;
+            }
+            .canvas-area {
+                flex: 1;
+                min-height: 40vh;
+            }
+            .control-panel {
+                flex: none;
+                max-width: 100%;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="canvas-area">
+        <div id="webgl-container"></div>
+        <div class="hint">⭐ 拖曳或滑動可以自由旋轉圖形喔 ⭐</div>
+    </div>
+
+    <div class="control-panel">
+        <div class="header">
+            <h1>🎨 立體圖形挑戰</h1>
+            <div class="score-board">分數: <span id="score">0</span></div>
+        </div>
+
+        <div class="level-tabs">
+            <button class="level-btn active" onclick="setLevel(1)">Level 1<br><small>基本分類</small></button>
+            <button class="level-btn" onclick="setLevel(2)">Level 2<br><small>圓與角</small></button>
+            <button class="level-btn" onclick="setLevel(3)">Level 3<br><small>進階命名</small></button>
+        </div>
+
+        <div class="question-area">
+            <div class="question-text">這是什麼圖形？</div>
+
+            <!-- Level 1 UI -->
+            <div id="ui-level1" class="ui-container active">
+                <button class="ans-btn" style="background-color: var(--pink);" onclick="checkAnswer('柱體')">柱體</button>
+                <button class="ans-btn" style="background-color: var(--mint);" onclick="checkAnswer('錐體')">錐體</button>
+                <button class="ans-btn" style="background-color: var(--blue);" onclick="checkAnswer('球體')">球體</button>
+            </div>
+
+            <!-- Level 2 UI -->
+            <div id="ui-level2" class="ui-container">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; height: 100%;">
+                    <button class="ans-btn" style="background-color: var(--pink);" onclick="checkAnswer('圓柱')">圓柱</button>
+                    <button class="ans-btn" style="background-color: var(--purple);" onclick="checkAnswer('角柱')">角柱</button>
+                    <button class="ans-btn" style="background-color: var(--mint);" onclick="checkAnswer('圓錐')">圓錐</button>
+                    <button class="ans-btn" style="background-color: var(--yellow);" onclick="checkAnswer('角錐')">角錐</button>
+                </div>
+            </div>
+
+            <!-- Level 3 UI -->
+            <div id="ui-level3" class="ui-container">
+                <div style="text-align: center; font-weight: bold; color: #888; margin-bottom: 5px;">1. 選擇底面邊數</div>
+                <div class="l3-grid">
+                    <button class="l3-btn num-btn" onclick="selectL3Num('三', this)">三角</button>
+                    <button class="l3-btn num-btn" onclick="selectL3Num('四', this)">四角</button>
+                    <button class="l3-btn num-btn" onclick="selectL3Num('五', this)">五角</button>
+                    <button class="l3-btn num-btn" onclick="selectL3Num('六', this)">六角</button>
+                    <button class="l3-btn num-btn" onclick="selectL3Num('七', this)">七角</button>
+                    <button class="l3-btn num-btn" onclick="selectL3Num('八', this)">八角</button>
+                </div>
+                <div style="text-align: center; font-weight: bold; color: #888; margin-bottom: 5px;">2. 選擇形狀</div>
+                <div class="l3-type-grid">
+                    <button class="l3-btn type-btn" onclick="selectL3Type('柱', this)">柱體</button>
+                    <button class="l3-btn type-btn" onclick="selectL3Type('錐', this)">錐體</button>
+                </div>
+                <button class="ans-btn submit-btn" id="l3-submit" onclick="submitL3Answer()" disabled>確定送出</button>
+            </div>
+
+            <div id="feedback" class="feedback">答對了！</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --------------------------------------------------------
+    // 1. Three.js 初始化與場景設定
+    // --------------------------------------------------------
+    const container = document.getElementById('webgl-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xFFFFFF); // 畫布背景色
+
+    // 攝影機
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.set(0, 5, 12);
+    camera.lookAt(0, 0, 0);
+
+    // 渲染器
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    // 柔和陰影
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    // 燈光
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    dirLight.position.set(10, 15, 10);
+    dirLight.castShadow = true;
+    dirLight.shadow.camera.top = 10;
+    dirLight.shadow.camera.bottom = -10;
+    dirLight.shadow.camera.left = -10;
+    dirLight.shadow.camera.right = 10;
+    scene.add(dirLight);
+
+    const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+    dirLight2.position.set(-10, 10, -10);
+    scene.add(dirLight2);
+
+    // 建立一個群組來放置當前圖形，方便旋轉
+    const shapeGroup = new THREE.Group();
+    scene.add(shapeGroup);
+
+    // 視窗縮放處理
+    window.addEventListener('resize', () => {
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+
+    // --------------------------------------------------------
+    // 2. 遊戲邏輯變數
+    // --------------------------------------------------------
+    let currentLevel = 1;
+    let score = 0;
+    let currentAnswer = "";
+    let isAnimatingResult = false;
+    let isUserInteracting = false; // 追蹤學生是否正在觸控旋轉
+
+    // --------------------------------------------------------
+    // Web Audio API 音效引擎 (內建合成音效，無需外部檔案)
+    // --------------------------------------------------------
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new AudioContextClass();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    // 第一次點擊畫面時初始化音效 (解除瀏覽器自動播放限制)
+    document.addEventListener('click', () => { if(!audioCtx) initAudio(); }, {once:true});
+
+    function playTone(freq, type, duration, vol=0.1, slideFreq=null) {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.type = type;
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        const now = audioCtx.currentTime;
+        osc.frequency.setValueAtTime(freq, now);
+        if (slideFreq) osc.frequency.exponentialRampToValueAtTime(slideFreq, now + duration);
+        
+        gainNode.gain.setValueAtTime(vol, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration); // 淡出避免爆音
+        
+        osc.start(now);
+        osc.stop(now + duration);
+    }
+
+    function playClickSound() {
+        initAudio();
+        playTone(600, 'sine', 0.1, 0.1, 400); // 俏皮的波波聲
+    }
+
+    function playCorrectSound() {
+        initAudio();
+        // 開心的雙音符 (叮咚)
+        playTone(523.25, 'sine', 0.15, 0.15); // C5
+        setTimeout(() => playTone(659.25, 'sine', 0.3, 0.15), 100); // E5
+    }
+
+    function playWrongSound() {
+        initAudio();
+        // 答錯的下沉聲
+        playTone(300, 'triangle', 0.3, 0.1, 150);
+    }
+
+    // 馬卡龍色系供隨機選取
+    const macaronColors = [
+        0xFFB7B2, // 粉紅
+        0xFFDAC1, // 蜜桃
+        0xE2F0CB, // 淺綠
+        0xB5EAD7, // 薄荷
+        0xC7CEEA, // 淺紫
+        0xFDFD96, // 淺黃
+        0xAEC6CF  // 淺藍
+    ];
+
+    // Level 3 選擇狀態
+    let l3SelectedNum = "";
+    let l3SelectedType = "";
+
+    // --------------------------------------------------------
+    // 3. 圖形生成函數
+    // --------------------------------------------------------
+    
+    // 清除當前圖形
+    function clearShape() {
+        while(shapeGroup.children.length > 0){ 
+            const obj = shapeGroup.children[0];
+            shapeGroup.remove(obj); 
+            if(obj.geometry) obj.geometry.dispose();
+            if(obj.material) {
+                if(Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+                else obj.material.dispose();
+            }
+        }
+    }
+
+    // 建立圖形並加入場景
+    function createShapeMesh(geometry, colorHex) {
+        // 主材質
+        const material = new THREE.MeshStandardMaterial({ 
+            color: colorHex,
+            roughness: 0.3,
+            metalness: 0.1,
+            flatShading: true // 讓角柱/角錐的邊緣反光更明顯
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+
+        // 邊線材質 (讓角柱/角錐的線條明顯，方便數邊)
+        const edges = new THREE.EdgesGeometry(geometry, 15); // 15度以上的角才會畫線 (避免圓柱畫太多線)
+        const lineMaterial = new THREE.LineBasicMaterial({ color: 0x555555, linewidth: 2 });
+        const line = new THREE.LineSegments(edges, lineMaterial);
+        
+        mesh.add(line);
+        shapeGroup.add(mesh);
+        
+        // 稍微重置角度
+        shapeGroup.rotation.set(0.2, 0, 0); 
+    }
+
+    // --------------------------------------------------------
+    // 4. 題庫與難度邏輯
+    // --------------------------------------------------------
+    
+    // 取得隨機整數 [min, max]
+    function getRand(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // 取得隨機顏色
+    function getRandColor() {
+        return macaronColors[Math.floor(Math.random() * macaronColors.length)];
+    }
+
+    function generateQuestion() {
+        if(isAnimatingResult) return;
+        clearShape();
+        
+        isUserInteracting = false; // 換新題目時重置互動狀態
+
+        const color = getRandColor();
+        let geo;
+
+        if (currentLevel === 1) {
+            // Level 1: 柱體、錐體、球體
+            const type = getRand(0, 2);
+            if (type === 0) {
+                // 柱體 (隨機圓柱或3~8角柱)
+                const isCylinder = Math.random() > 0.5;
+                const sides = isCylinder ? 32 : getRand(3, 8);
+                geo = new THREE.CylinderGeometry(2, 2, 4, sides);
+                currentAnswer = '柱體';
+            } else if (type === 1) {
+                // 錐體 (隨機圓錐或3~8角錐)
+                const isCone = Math.random() > 0.5;
+                const sides = isCone ? 32 : getRand(3, 8);
+                geo = new THREE.ConeGeometry(2.5, 4, sides);
+                currentAnswer = '錐體';
+            } else {
+                // 球體
+                geo = new THREE.SphereGeometry(2.5, 32, 32);
+                currentAnswer = '球體';
+            }
+        } 
+        else if (currentLevel === 2) {
+            // Level 2: 圓柱、角柱、圓錐、角錐
+            const type = getRand(0, 3);
+            if (type === 0) {
+                geo = new THREE.CylinderGeometry(2, 2, 4, 32);
+                currentAnswer = '圓柱';
+            } else if (type === 1) {
+                geo = new THREE.CylinderGeometry(2, 2, 4, getRand(3, 8));
+                currentAnswer = '角柱';
+            } else if (type === 2) {
+                geo = new THREE.ConeGeometry(2.5, 4, 32);
+                currentAnswer = '圓錐';
+            } else {
+                geo = new THREE.ConeGeometry(2.5, 4, getRand(3, 8));
+                currentAnswer = '角錐';
+            }
+        }
+        else if (currentLevel === 3) {
+            // Level 3: [三~八] + [角柱/角錐]
+            const sides = getRand(3, 8);
+            const isPrism = Math.random() > 0.5; // true=角柱, false=角錐
+            
+            const numMap = {3:'三', 4:'四', 5:'五', 6:'六', 7:'七', 8:'八'};
+            const numStr = numMap[sides];
+            const typeStr = isPrism ? '柱' : '錐';
+            
+            currentAnswer = numStr + typeStr; // e.g., "三角柱" (代碼比對用)
+
+            if (isPrism) {
+                geo = new THREE.CylinderGeometry(2, 2, 4, sides);
+            } else {
+                geo = new THREE.ConeGeometry(2.5, 4, sides);
+            }
+            
+            // 重置 L3 的按鈕狀態
+            resetL3UI();
+        }
+
+        createShapeMesh(geo, color);
+    }
+
+    // --------------------------------------------------------
+    // 5. UI 與互動邏輯
+    // --------------------------------------------------------
+
+    function setLevel(lvl) {
+        if(isAnimatingResult) return;
+        playClickSound(); // 播放點擊音效
+        currentLevel = lvl;
+        score = 0;
+        document.getElementById('score').innerText = score;
+
+        // 更新 Tab 樣式
+        document.querySelectorAll('.level-btn').forEach((btn, idx) => {
+            if (idx + 1 === lvl) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+
+        // 更新 UI 面板
+        document.querySelectorAll('.ui-container').forEach(el => el.classList.remove('active'));
+        document.getElementById(`ui-level${lvl}`).classList.add('active');
+
+        generateQuestion();
+    }
+
+    function showFeedback(isCorrect) {
+        const fb = document.getElementById('feedback');
+        isAnimatingResult = true;
+        
+        if (isCorrect) {
+            playCorrectSound(); // 播放答對音效
+            fb.innerText = "⭐ 答對了！ ⭐";
+            fb.className = "feedback show correct";
+            score += 10;
+            document.getElementById('score').innerText = score;
+            
+            // 答對動畫：轉得更快
+            let fastSpin = setInterval(() => {
+                shapeGroup.rotation.y += 0.1;
+            }, 16);
+
+            setTimeout(() => {
+                clearInterval(fastSpin);
+                fb.classList.remove('show');
+                isAnimatingResult = false;
+                generateQuestion();
+            }, 1000);
+        } else {
+            playWrongSound(); // 播放答錯音效
+            fb.innerText = "再看清楚一點喔！";
+            fb.className = "feedback show wrong";
+            
+            // 答錯動畫：左右搖晃
+            const startX = shapeGroup.rotation.z;
+            let tick = 0;
+            let shake = setInterval(() => {
+                tick++;
+                shapeGroup.rotation.z = startX + Math.sin(tick * 0.5) * 0.2;
+                if(tick > 20) {
+                    clearInterval(shake);
+                    shapeGroup.rotation.z = startX;
+                }
+            }, 16);
+
+            setTimeout(() => {
+                fb.classList.remove('show');
+                isAnimatingResult = false;
+            }, 1200);
+        }
+    }
+
+    // Level 1 & 2 按鈕點擊
+    function checkAnswer(ans) {
+        if(isAnimatingResult) return;
+        if (ans === currentAnswer) {
+            showFeedback(true);
+        } else {
+            showFeedback(false);
+        }
+    }
+
+    // Level 3 特定邏輯
+    function selectL3Num(numStr, btn) {
+        if(isAnimatingResult) return;
+        playClickSound(); // 播放點擊音效
+        l3SelectedNum = numStr;
+        document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        checkL3SubmitReady();
+    }
+
+    function selectL3Type(typeStr, btn) {
+        if(isAnimatingResult) return;
+        playClickSound(); // 播放點擊音效
+        l3SelectedType = typeStr;
+        document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        checkL3SubmitReady();
+    }
+
+    function checkL3SubmitReady() {
+        const submitBtn = document.getElementById('l3-submit');
+        if (l3SelectedNum !== "" && l3SelectedType !== "") {
+            submitBtn.disabled = false;
+        } else {
+            submitBtn.disabled = true;
+        }
+    }
+
+    function submitL3Answer() {
+        if(isAnimatingResult) return;
+        const combinedAns = l3SelectedNum + l3SelectedType;
+        if (combinedAns === currentAnswer) {
+            showFeedback(true);
+        } else {
+            showFeedback(false);
+            // 答錯時清除選擇，讓學生重選
+            resetL3UI();
+        }
+    }
+
+    function resetL3UI() {
+        l3SelectedNum = "";
+        l3SelectedType = "";
+        document.querySelectorAll('.l3-btn').forEach(b => b.classList.remove('selected'));
+        document.getElementById('l3-submit').disabled = true;
+    }
+
+    // --------------------------------------------------------
+    // 6. 動畫迴圈與觸控互動 (持續旋轉或手動旋轉圖形)
+    // --------------------------------------------------------
+    
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+    let autoRotateTimeout = null;
+
+    const canvasEl = document.getElementById('webgl-container');
+
+    // 滑鼠事件
+    canvasEl.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        isUserInteracting = true;
+        previousMousePosition = { x: e.offsetX, y: e.offsetY };
+    });
+
+    canvasEl.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            const deltaMove = { x: e.offsetX - previousMousePosition.x, y: e.offsetY - previousMousePosition.y };
+            shapeGroup.rotation.y += deltaMove.x * 0.01;
+            shapeGroup.rotation.x += deltaMove.y * 0.01;
+            previousMousePosition = { x: e.offsetX, y: e.offsetY };
+        }
+    });
+
+    const stopDrag = () => {
+        isDragging = false;
+        clearTimeout(autoRotateTimeout);
+        // 停止互動 3 秒後恢復預設的自動旋轉與浮動
+        autoRotateTimeout = setTimeout(() => { isUserInteracting = false; }, 3000);
+    };
+
+    canvasEl.addEventListener('mouseup', stopDrag);
+    canvasEl.addEventListener('mouseleave', stopDrag);
+
+    // 觸控事件 (平板/手機適用)
+    canvasEl.addEventListener('touchstart', (e) => {
+        isDragging = true;
+        isUserInteracting = true;
+        e.preventDefault(); // 防止螢幕跟著滾動
+        const touch = e.touches[0];
+        const rect = canvasEl.getBoundingClientRect();
+        previousMousePosition = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+    }, { passive: false });
+
+    canvasEl.addEventListener('touchmove', (e) => {
+        if (isDragging) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvasEl.getBoundingClientRect();
+            const currentPos = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+            const deltaMove = { x: currentPos.x - previousMousePosition.x, y: currentPos.y - previousMousePosition.y };
+            
+            shapeGroup.rotation.y += deltaMove.x * 0.01;
+            shapeGroup.rotation.x += deltaMove.y * 0.01;
+            previousMousePosition = currentPos;
+        }
+    }, { passive: false });
+
+    canvasEl.addEventListener('touchend', stopDrag);
+
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        if (!isAnimatingResult && shapeGroup.children.length > 0) {
+            if (!isDragging && !isUserInteracting) {
+                shapeGroup.rotation.y += 0.01; // 緩慢自轉
+                shapeGroup.rotation.x = 0.2 + Math.sin(Date.now() * 0.001) * 0.1; // 輕微上下浮動
+            } else if (!isDragging && isUserInteracting) {
+                // 放開手後，保留使用者的 X 軸視角 (方便看底面)，但 Y 軸繼續緩慢自轉
+                shapeGroup.rotation.y += 0.005;
+            }
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    // 啟動遊戲
+    generateQuestion();
+    animate();
+
+</script>
+</body>
+</html>
