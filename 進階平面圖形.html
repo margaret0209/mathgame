@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>平面圖形遊戲</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&family=Varela+Round&display=swap');
+
+        :root {
+            --bg-color: #F8F1F1;
+            --panel-bg: #FFFFFF;
+            --text-main: #5D5D5D;
+            --macaron-pink: #FFB7B2;
+            --macaron-orange: #FFDAC1;
+            --macaron-green: #E2F0CB;
+            --macaron-mint: #B5EAD7;
+            --macaron-purple: #C7CEEA;
+            --macaron-yellow: #FFF5BA;
+            --shadow: 0 8px 24px rgba(200, 180, 180, 0.25);
+            --btn-shadow: 0 4px 0px rgba(0,0,0,0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none; /* Prevent text selection on tablet */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Varela Round', 'Nunito', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header & Level Tabs */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: var(--panel-bg);
+            box-shadow: var(--shadow);
+            z-index: 10;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+            color: #FF9AA2;
+            text-shadow: 1px 1px 0 #FFF;
+        }
+
+        .level-tabs {
+            display: flex;
+            gap: 15px;
+        }
+
+        .tab-btn {
+            background: #F0F0F0;
+            border: none;
+            padding: 10px 25px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            color: #888;
+            transition: all 0.2s;
+            box-shadow: var(--btn-shadow);
+        }
+
+        .tab-btn.active {
+            background: var(--macaron-green);
+            color: #5D5D5D;
+            transform: translateY(-2px);
+        }
+
+        /* Main Game Area */
+        main {
+            flex: 1;
+            display: flex;
+            padding: 20px 30px;
+            gap: 30px;
+            height: calc(100vh - 75px);
+        }
+
+        /* Left: Canvas Area */
+        .canvas-section {
+            flex: 1;
+            background: var(--panel-bg);
+            border-radius: 30px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            max-width: 500px;
+            max-height: 500px;
+            overflow: visible;
+        }
+
+        /* Right: Controls Area */
+        .controls-section {
+            flex: 1;
+            background: var(--panel-bg);
+            border-radius: 30px;
+            box-shadow: var(--shadow);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .instruction {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #FF9AA2;
+        }
+
+        /* Buttons Grid (Level 1 & 3) */
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .answer-btn {
+            background: var(--macaron-pink);
+            border: none;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            color: #5D5D5D;
+            box-shadow: 0 6px 0px #E5A5A0;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .answer-btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 0px 0px #E5A5A0;
+        }
+
+        /* Level 2 Specific UI */
+        .level2-controls {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .sentence {
+            font-size: 26px;
+            line-height: 1.6;
+            text-align: center;
+            background: #FDF6E3;
+            padding: 20px;
+            border-radius: 20px;
+            border: 3px dashed var(--macaron-mint);
+        }
+
+        .pill-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .pill {
+            background: #EEE;
+            border: 2px solid transparent;
+            padding: 10px 15px;
+            font-size: 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .pill.selected {
+            background: var(--macaron-purple);
+            border-color: #A6AFCD;
+            color: #333;
+        }
+
+        .submit-btn {
+            background: var(--macaron-green);
+            border: none;
+            padding: 15px 30px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            color: #5D5D5D;
+            box-shadow: 0 6px 0px #C9D9B2;
+            align-self: center;
+            margin-top: 10px;
+        }
+        
+        .submit-btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 0px 0px #C9D9B2;
+        }
+
+        /* SVG Interactive styles */
+        .clickable-edge {
+            cursor: pointer;
+            stroke-linecap: round;
+        }
+        .edge-text {
+            font-size: 24px;
+            font-weight: 900;
+            fill: #FF6B6B;
+            user-select: none;
+            text-anchor: middle;
+            dominant-baseline: central;
+        }
+
+        /* Feedback Modal */
+        #feedback-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(255,255,255,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .feedback-box {
+            background: var(--panel-bg);
+            padding: 40px 60px;
+            border-radius: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            text-align: center;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .feedback-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        .feedback-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #5D5D5D;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Message Box */
+        #message-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(255,255,255,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+        .msg-content {
+            background: var(--macaron-yellow);
+            padding: 30px 50px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #5D5D5D;
+            border: 4px solid var(--macaron-orange);
+            animation: popIn 0.3s ease-out;
+        }
+        .msg-btn {
+            margin-top: 20px;
+            background: var(--macaron-orange);
+            border: none;
+            padding: 10px 30px;
+            font-size: 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #5D5D5D;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🎀 圖形世界</h1>
+        <div class="level-tabs">
+            <button class="tab-btn active" onclick="setLevel(1)">Level 1</button>
+            <button class="tab-btn" onclick="setLevel(2)">Level 2</button>
+            <button class="tab-btn" onclick="setLevel(3)">Level 3</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Canvas Area -->
+        <div class="canvas-section">
+            <svg id="game-svg" viewBox="0 0 400 400"></svg>
+        </div>
+
+        <!-- Controls Area -->
+        <div class="controls-section">
+            <div class="instruction" id="instruction-text">請選擇正確的圖形名稱：</div>
+            
+            <!-- Level 1 & 3 Buttons -->
+            <div class="btn-grid" id="btn-grid">
+                <!-- Buttons injected via JS -->
+            </div>
+
+            <!-- Level 2 Controls -->
+            <div class="level2-controls" id="level2-controls">
+                <div class="sentence">
+                    這個閉合圖形有 <span id="ans-sides" style="color:#FF9AA2; font-weight:bold;">[ ? ]</span> 條邊，<br>
+                    是 <span id="ans-name" style="color:#B5EAD7; font-weight:bold;">[ ? ]</span>。
+                </div>
+                
+                <div style="font-weight:bold; color:#888; text-align:center;">選擇邊數：</div>
+                <div class="pill-group" id="pill-group-sides">
+                    <!-- Pills injected via JS -->
+                </div>
+
+                <div style="font-weight:bold; color:#888; text-align:center;">選擇形狀：</div>
+                <div class="pill-group" id="pill-group-names">
+                    <!-- Pills injected via JS -->
+                </div>
+
+                <button class="submit-btn" onclick="checkLevel2Answer()">確定送出</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Feedback Modal -->
+    <div id="feedback-overlay">
+        <div class="feedback-box">
+            <div class="feedback-icon" id="feedback-icon">🎉</div>
+            <div class="feedback-title" id="feedback-title">答對了！好棒！</div>
+        </div>
+    </div>
+
+    <!-- Message Overlay (Replaces alert) -->
+    <div id="message-overlay">
+        <div class="msg-content">
+            <div id="msg-text">請完成上面的句子喔！</div>
+            <button class="msg-btn" onclick="document.getElementById('message-overlay').style.display='none'; playClick();">知道囉</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Sound Setup (Tone.js) ---
+        let isAudioReady = false;
+        let clickSynth, successSynth, errorSynth;
+
+        async function initAudio() {
+            if (isAudioReady) return;
+            await Tone.start();
+            
+            clickSynth = new Tone.Synth({
+                oscillator: { type: 'sine' },
+                envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 }
+            }).toDestination();
+            clickSynth.volume.value = -10;
+
+            successSynth = new Tone.PolySynth(Tone.Synth).toDestination();
+            successSynth.set({
+                envelope: { attack: 0.05, decay: 0.2, sustain: 0.2, release: 1 }
+            });
+            successSynth.volume.value = -5;
+
+            errorSynth = new Tone.Synth({
+                oscillator: { type: 'triangle' },
+                envelope: { attack: 0.1, decay: 0.2, sustain: 0.1, release: 0.5 }
+            }).toDestination();
+            errorSynth.volume.value = -5;
+
+            isAudioReady = true;
+        }
+
+        function playClick() {
+            if (isAudioReady && clickSynth) clickSynth.triggerAttackRelease('C6', '32n');
+        }
+
+        function playSuccess() {
+            if (isAudioReady && successSynth) {
+                const now = Tone.now();
+                successSynth.triggerAttackRelease(['C5', 'E5', 'G5'], '8n', now);
+                successSynth.triggerAttackRelease('C6', '4n', now + 0.15);
+            }
+        }
+
+        function playError() {
+            if (isAudioReady && errorSynth) {
+                const now = Tone.now();
+                errorSynth.triggerAttackRelease('D3', '8n', now);
+                errorSynth.triggerAttackRelease('C#3', '4n', now + 0.15);
+            }
+        }
+
+        // Initialize audio on first user interaction
+        document.body.addEventListener('pointerdown', initAudio, { once: true });
+
+        // --- Game State & Data ---
+        let currentLevel = 1;
+        let currentShapeData = {};
+        let level2ClickedEdges = [];
+        
+        const colors = ['#FFB7B2', '#FFDAC1', '#E2F0CB', '#B5EAD7', '#C7CEEA', '#FFF5BA'];
+        const shadowColors = ['#E5A5A0', '#E5C4AE', '#CBD8B6', '#A3D2C1', '#B3B9D2', '#E5DCA7'];
+
+        const level1Shapes = ['圓形', '三角形', '正方形', '長方形'];
+        const level2Names = {
+            3: '三角形', 4: '四邊形', 5: '五邊形', 6: '六邊形', 
+            7: '七邊形', 8: '八邊形', 9: '九邊形', 10: '十邊形'
+        };
+        // 修正原需求的「不行四邊形」為「平行四邊形」
+        const level3Shapes = ['正方形', '長方形', '平行四邊形', '菱形', '梯形', '鷂形'];
+
+        // --- DOM Elements ---
+        const svg = document.getElementById('game-svg');
+        const instructionText = document.getElementById('instruction-text');
+        const btnGrid = document.getElementById('btn-grid');
+        const level2Controls = document.getElementById('level2-controls');
+        const ansSidesSpan = document.getElementById('ans-sides');
+        const ansNameSpan = document.getElementById('ans-name');
+        
+        // --- Initialization ---
+        window.onload = () => {
+            setLevel(1);
+        };
+
+        // --- Core Functions ---
+        function setLevel(level) {
+            playClick();
+            currentLevel = level;
+            
+            // Update Tabs
+            document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+                if(idx + 1 === level) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+
+            // Switch UI
+            if (level === 2) {
+                btnGrid.style.display = 'none';
+                level2Controls.style.display = 'flex';
+                instructionText.innerHTML = '先點擊圖形的邊數一數，<br>再完成下方的句子！';
+                setupLevel2Pills();
+            } else {
+                btnGrid.style.display = 'grid';
+                level2Controls.style.display = 'none';
+                instructionText.textContent = level === 1 ? '這是什麼圖形呢？' : '這是哪一種四邊形呢？';
+                setupLevelButtons();
+            }
+
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            svg.innerHTML = '';
+            level2ClickedEdges = [];
+            resetLevel2Answers();
+            
+            let colorIdx = Math.floor(Math.random() * colors.length);
+            let mainColor = colors[colorIdx];
+            let shadowColor = shadowColors[colorIdx];
+
+            if (currentLevel === 1) {
+                generateLevel1Shape(mainColor, shadowColor);
+            } else if (currentLevel === 2) {
+                generateLevel2Shape(mainColor);
+            } else if (currentLevel === 3) {
+                generateLevel3Shape(mainColor, shadowColor);
+            }
+        }
+
+        function getRandomItem(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+
+        // --- Shape Generators ---
+        
+        function generateLevel1Shape(color, shadowColor) {
+            let shapeName = getRandomItem(level1Shapes);
+            currentShapeData = { name: shapeName };
+            
+            // Draw 3D effect: Shadow layer first, then Main layer
+            let gShadow = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            gShadow.setAttribute("transform", "translate(10, 15)");
+            gShadow.setAttribute("fill", shadowColor);
+            
+            let gMain = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            gMain.setAttribute("fill", color);
+
+            let pathStr = "";
+            let isCircle = false;
+
+            switch(shapeName) {
+                case '圓形': isCircle = true; break;
+                case '三角形': pathStr = "M200 60 L320 280 L80 280 Z"; break;
+                case '正方形': pathStr = "M100 100 L300 100 L300 300 L100 300 Z"; break;
+                case '長方形': pathStr = "M60 120 L340 120 L340 280 L60 280 Z"; break;
+            }
+
+            if (isCircle) {
+                gShadow.innerHTML = `<circle cx="200" cy="200" r="120" />`;
+                gMain.innerHTML = `<circle cx="200" cy="200" r="120" />`;
+            } else {
+                gShadow.innerHTML = `<path d="${pathStr}" stroke="${shadowColor}" stroke-width="10" stroke-linejoin="round"/>`;
+                gMain.innerHTML = `<path d="${pathStr}" stroke="${color}" stroke-width="10" stroke-linejoin="round"/>`;
+            }
+
+            svg.appendChild(gShadow);
+            svg.appendChild(gMain);
+        }
+
+        function generateLevel2Shape(color) {
+            let sides = Math.floor(Math.random() * 8) + 3; // 3 to 10
+            currentShapeData = { sides: sides, name: level2Names[sides] };
+            
+            let cx = 200, cy = 200, r = 130;
+            let vertices = [];
+            
+            // Randomize starting angle slightly so they aren't always perfectly upright
+            let startAngle = Math.random() * Math.PI;
+
+            for (let i = 0; i < sides; i++) {
+                let angle = startAngle + (i * 2 * Math.PI / sides);
+                vertices.push({
+                    x: cx + r * Math.cos(angle),
+                    y: cy + r * Math.sin(angle)
+                });
+            }
+
+            // Draw inner polygon fill
+            let pointsStr = vertices.map(v => `${v.x},${v.y}`).join(' ');
+            let polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+            polygon.setAttribute("points", pointsStr);
+            polygon.setAttribute("fill", color);
+            svg.appendChild(polygon);
+
+            // Draw clickable edges
+            for (let i = 0; i < sides; i++) {
+                let p1 = vertices[i];
+                let p2 = vertices[(i + 1) % sides];
+
+                // Visible stroke
+                let lineBg = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                lineBg.setAttribute("x1", p1.x); lineBg.setAttribute("y1", p1.y);
+                lineBg.setAttribute("x2", p2.x); lineBg.setAttribute("y2", p2.y);
+                lineBg.setAttribute("stroke", "#FFFFFF");
+                lineBg.setAttribute("stroke-width", "8");
+                lineBg.setAttribute("id", `edge-bg-${i}`);
+                svg.appendChild(lineBg);
+
+                // Invisible thick stroke for easy clicking
+                let lineHit = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                lineHit.setAttribute("x1", p1.x); lineHit.setAttribute("y1", p1.y);
+                lineHit.setAttribute("x2", p2.x); lineHit.setAttribute("y2", p2.y);
+                lineHit.setAttribute("stroke", "transparent");
+                lineHit.setAttribute("stroke-width", "40");
+                lineHit.setAttribute("class", "clickable-edge");
+                
+                lineHit.onclick = () => handleEdgeClick(i, p1, p2, cx, cy);
+                svg.appendChild(lineHit);
+            }
+        }
+
+        function generateLevel3Shape(color, shadowColor) {
+            let shapeName = getRandomItem(level3Shapes);
+            currentShapeData = { name: shapeName };
+
+            let gShadow = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            gShadow.setAttribute("transform", "translate(10, 15)");
+            gShadow.setAttribute("fill", shadowColor);
+            
+            let gMain = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            gMain.setAttribute("fill", color);
+
+            let pathStr = "";
+
+            switch(shapeName) {
+                case '正方形': pathStr = "M100 100 L300 100 L300 300 L100 300 Z"; break;
+                case '長方形': pathStr = "M60 120 L340 120 L340 280 L60 280 Z"; break;
+                case '平行四邊形': pathStr = "M120 120 L340 120 L280 280 L60 280 Z"; break; // Slanted
+                case '菱形': pathStr = "M200 60 L320 200 L200 340 L80 200 Z"; break; // Diamond
+                case '梯形': pathStr = "M140 120 L260 120 L340 280 L60 280 Z"; break;
+                case '鷂形': pathStr = "M200 60 L280 160 L200 340 L120 160 Z"; break; // Kite
+            }
+
+            gShadow.innerHTML = `<path d="${pathStr}" stroke="${shadowColor}" stroke-width="10" stroke-linejoin="round"/>`;
+            gMain.innerHTML = `<path d="${pathStr}" stroke="${color}" stroke-width="10" stroke-linejoin="round"/>`;
+
+            svg.appendChild(gShadow);
+            svg.appendChild(gMain);
+        }
+
+        // --- Interaction Handlers ---
+
+        function setupLevelButtons() {
+            btnGrid.innerHTML = '';
+            let options = currentLevel === 1 ? level1Shapes : level3Shapes;
+            
+            options.forEach(shape => {
+                let btn = document.createElement('button');
+                btn.className = 'answer-btn';
+                btn.textContent = shape;
+                // Randomize button color
+                let colIdx = Math.floor(Math.random() * colors.length);
+                btn.style.backgroundColor = colors[colIdx];
+                btn.style.boxShadow = `0 6px 0px ${shadowColors[colIdx]}`;
+                
+                btn.onclick = () => {
+                    if(shape === currentShapeData.name) {
+                        showFeedback(true);
+                    } else {
+                        showFeedback(false);
+                    }
+                };
+                btnGrid.appendChild(btn);
+            });
+        }
+
+        function setupLevel2Pills() {
+            const groupSides = document.getElementById('pill-group-sides');
+            const groupNames = document.getElementById('pill-group-names');
+            groupSides.innerHTML = '';
+            groupNames.innerHTML = '';
+
+            // 3 to 10 sides
+            for(let i=3; i<=10; i++) {
+                let pill = document.createElement('div');
+                pill.className = 'pill';
+                pill.textContent = i;
+                pill.onclick = () => selectPill('sides', i, pill);
+                groupSides.appendChild(pill);
+            }
+
+            // Names
+            Object.values(level2Names).forEach(name => {
+                let pill = document.createElement('div');
+                pill.className = 'pill';
+                pill.textContent = name;
+                pill.onclick = () => selectPill('name', name, pill);
+                groupNames.appendChild(pill);
+            });
+        }
+
+        let l2SelectedSides = null;
+        let l2SelectedName = null;
+
+        function selectPill(type, value, element) {
+            playClick();
+            let siblings = element.parentNode.children;
+            for(let el of siblings) el.classList.remove('selected');
+            element.classList.add('selected');
+
+            if (type === 'sides') {
+                l2SelectedSides = value;
+                ansSidesSpan.textContent = value;
+            } else {
+                l2SelectedName = value;
+                ansNameSpan.textContent = value;
+            }
+        }
+
+        function resetLevel2Answers() {
+            l2SelectedSides = null;
+            l2SelectedName = null;
+            ansSidesSpan.textContent = '[ ? ]';
+            ansNameSpan.textContent = '[ ? ]';
+            document.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+        }
+
+        function handleEdgeClick(index, p1, p2, cx, cy) {
+            if (level2ClickedEdges.includes(index)) return;
+            
+            playClick();
+            level2ClickedEdges.push(index);
+            let count = level2ClickedEdges.length;
+
+            // Highlight edge
+            let edgeBg = document.getElementById(`edge-bg-${index}`);
+            edgeBg.setAttribute('stroke', '#FF6B6B');
+            edgeBg.setAttribute('stroke-width', '12');
+
+            // Calculate text position (midpoint, pushed outwards)
+            let mx = (p1.x + p2.x) / 2;
+            let my = (p1.y + p2.y) / 2;
+            
+            // Vector from center to midpoint
+            let dx = mx - cx;
+            let dy = my - cy;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            
+            // Normalize and multiply by offset distance
+            let offset = 25; 
+            let textX = mx + (dx/dist) * offset;
+            let textY = my + (dy/dist) * offset;
+
+            let text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", textX);
+            text.setAttribute("y", textY);
+            text.setAttribute("class", "edge-text");
+            text.textContent = count;
+            svg.appendChild(text);
+        }
+
+        function checkLevel2Answer() {
+            if (!l2SelectedSides || !l2SelectedName) {
+                playError();
+                document.getElementById('msg-text').textContent = "請完成上面的句子喔！";
+                document.getElementById('message-overlay').style.display = 'flex';
+                return;
+            }
+
+            let correctSides = currentShapeData.sides;
+            let correctName = currentShapeData.name;
+
+            if (l2SelectedSides === correctSides && l2SelectedName === correctName) {
+                showFeedback(true);
+            } else {
+                showFeedback(false);
+            }
+        }
+
+        // --- Feedback Modal ---
+        function showFeedback(isCorrect) {
+            const overlay = document.getElementById('feedback-overlay');
+            const icon = document.getElementById('feedback-icon');
+            const title = document.getElementById('feedback-title');
+
+            overlay.style.display = 'flex';
+
+            if (isCorrect) {
+                playSuccess();
+                icon.textContent = '🎉';
+                title.textContent = '答對了！好棒！';
+                title.style.color = '#72C29B'; // Green
+                
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    nextQuestion();
+                }, 1500);
+
+            } else {
+                playError();
+                icon.textContent = '🤔';
+                title.textContent = '哎呀，再試一次看看！';
+                title.style.color = '#FF9AA2'; // Pink
+
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 1500);
+            }
+        }
+
+    </script>
+</body>
+</html>
