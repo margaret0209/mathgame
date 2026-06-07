@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>方向學習互動遊戲</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+
+        body {
+            font-family: 'Nunito', 'Microsoft JhengHei', sans-serif;
+            background-color: #F9F6F0; /* 溫和的背景色 */
+            user-select: none; /* 防止反白文字 */
+            overflow: hidden; /* 全域防止滾動 */
+            touch-action: none; /* 鎖定瀏覽器預設手勢，全權交給網頁拖拉 */
+        }
+
+        /* 馬卡龍色系定義 */
+        .bg-macaron-pink { background-color: #FFB7B2; }
+        .bg-macaron-orange { background-color: #FFDAC1; }
+        .bg-macaron-yellow { background-color: #E2F0CB; }
+        .bg-macaron-green { background-color: #B5EAD7; }
+        .bg-macaron-blue { background-color: #C7CEEA; }
+        .bg-macaron-purple { background-color: #E0BBE4; }
+
+        .btn-press:active {
+            transform: scale(0.95);
+        }
+
+        /* 動畫 */
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(-3%); }
+            50% { transform: translateY(0); }
+        }
+        .animate-bounce-slow {
+            animation: bounce-slow 2s infinite;
+        }
+
+        @keyframes pop-in {
+            0% { transform: scale(0); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop-in {
+            animation: pop-in 0.4s ease-out forwards;
+        }
+
+        @keyframes pulse-fast {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.03); opacity: 0.9; }
+        }
+        .animate-pulse-fast {
+            animation: pulse-fast 1s infinite;
+        }
+
+        /* 遊戲區域專用樣式 */
+        .drop-zone {
+            border: 4px dashed rgba(0,0,0,0.2);
+            border-radius: 24px;
+            transition: all 0.2s;
+        }
+
+        /* 前後疊加特效 - 配合橫向平板縮減位移與比例 */
+        .layer-behind {
+            z-index: 10;
+            transform: scale(0.75) translateY(-15px);
+            filter: brightness(0.9);
+        }
+        .layer-middle {
+            z-index: 20;
+            position: relative;
+        }
+        .layer-front {
+            z-index: 30;
+            transform: scale(1.1) translateY(20px);
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex items-center justify-center p-0 md:p-3 overflow-hidden">
+
+    <!-- 頁面容器：最大化並鎖定在橫向平板黃金比例 -->
+    <div id="app" class="w-full h-full max-w-[1024px] max-h-[768px] bg-white rounded-none md:rounded-3xl shadow-2xl relative overflow-hidden flex flex-col">
+        
+        <!-- 音效解鎖畫面 -->
+        <div id="start-screen" class="absolute inset-0 z-50 bg-[#F9F6F0] flex flex-col items-center justify-center p-6">
+            <div class="text-8xl mb-4 animate-bounce-slow">🌟</div>
+            <h1 class="text-4xl md:text-5xl font-black text-gray-700 mb-8 text-center">快樂學方向</h1>
+            <button onclick="initApp()" class="bg-macaron-pink text-gray-800 text-3xl font-bold py-5 px-12 rounded-full shadow-lg border-4 border-white hover:bg-pink-300 btn-press transition-colors">
+                開始學習 ▶️
+            </button>
+            <p class="mt-6 text-lg text-gray-500">※ 請開啟喇叭以聆聽音效回饋</p>
+        </div>
+
+        <!-- 頂部導覽列 -->
+        <div id="header" class="hidden w-full h-16 bg-gray-100 flex items-center justify-between px-6 border-b-4 border-gray-200 flex-shrink-0">
+            <button onclick="goHome()" class="text-xl font-bold bg-white px-4 py-1.5 rounded-xl shadow btn-press flex items-center gap-2">
+                🏠 <span>回首頁</span>
+            </button>
+            <h2 id="header-title" class="text-2xl font-black text-gray-700">選擇模式</h2>
+            <div class="w-24"></div> <!-- 平衡版面 -->
+        </div>
+
+        <!-- 主要內容區 -->
+        <div id="content" class="flex-1 min-h-0 relative">
+            
+            <!-- 1. 主畫面 (選擇上下/左右/前後) -->
+            <div id="home-screen" class="hidden absolute inset-0 flex flex-col items-center justify-center p-4 space-y-4">
+                <h2 class="text-3xl md:text-4xl font-black text-gray-700 mb-4 text-center">你想學什麼方向呢？</h2>
+                
+                <button onclick="selectCategory('upDown')" class="w-full max-w-md bg-macaron-yellow border-4 border-white shadow-lg rounded-2xl p-4 flex items-center btn-press">
+                    <span class="text-5xl mr-6">↕️</span>
+                    <span class="text-4xl font-bold text-gray-700 tracking-wider">上 下</span>
+                </button>
+                
+                <button onclick="selectCategory('leftRight')" class="w-full max-w-md bg-macaron-blue border-4 border-white shadow-lg rounded-2xl p-4 flex items-center btn-press">
+                    <span class="text-5xl mr-6">↔️</span>
+                    <span class="text-4xl font-bold text-gray-700 tracking-wider">左 右</span>
+                </button>
+
+                <button onclick="selectCategory('frontBack')" class="w-full max-w-md bg-macaron-green border-4 border-white shadow-lg rounded-2xl p-4 flex items-center btn-press">
+                    <span class="text-5xl mr-6">🔄</span>
+                    <span class="text-4xl font-bold text-gray-700 tracking-wider">前 後</span>
+                </button>
+            </div>
+
+            <!-- 2. 模式選擇畫面 -->
+            <div id="mode-screen" class="hidden absolute inset-0 flex flex-col items-center justify-center p-4 space-y-4">
+                <div class="text-center mb-2">
+                    <span id="mode-icon" class="text-6xl inline-block mb-1 animate-bounce-slow">🤔</span>
+                    <h2 class="text-3xl md:text-4xl font-black text-gray-700">選擇一種遊戲</h2>
+                </div>
+                
+                <div class="flex flex-col md:flex-row gap-4 w-full max-w-4xl justify-center px-4">
+                    <!-- 模式一 -->
+                    <button onclick="startGame('place')" class="flex-1 bg-macaron-pink border-4 border-white shadow-md rounded-2xl p-4 flex flex-col items-center btn-press">
+                        <span class="text-5xl mb-2">🖐️</span>
+                        <span class="text-2xl font-bold text-gray-700">放東西</span>
+                        <span class="text-lg text-gray-600 mt-0.5">動手拖拉</span>
+                    </button>
+                    
+                    <!-- 模式二 -->
+                    <button onclick="startGame('judge')" class="flex-1 bg-macaron-purple border-4 border-white shadow-md rounded-2xl p-4 flex flex-col items-center btn-press">
+                        <span class="text-5xl mb-2">👀</span>
+                        <span class="text-2xl font-bold text-gray-700">找找看</span>
+                        <span class="text-lg text-gray-600 mt-0.5">在哪裡呢？</span>
+                    </button>
+
+                    <!-- 模式三 -->
+                    <button onclick="startGame('adventure')" class="flex-1 bg-macaron-orange border-4 border-white shadow-md rounded-2xl p-4 flex flex-col items-center btn-press">
+                        <span class="text-5xl mb-2">🚀</span>
+                        <span class="text-2xl font-bold text-gray-700">大冒險</span>
+                        <span class="text-lg text-gray-600 mt-0.5">好玩情境題</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. 遊戲畫面 -->
+            <div id="game-screen" class="hidden absolute inset-0 flex flex-col h-full">
+                <!-- 指示與控制區 -->
+                <div class="w-full bg-white/95 py-2 px-6 text-center shadow-md z-40 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-gray-200 flex-shrink-0">
+                    <h3 id="instruction-text" class="text-2xl md:text-3xl font-bold text-gray-800 leading-tight flex-1"></h3>
+                    
+                    <!-- 提示切換器 -->
+                    <div class="flex items-center gap-3 bg-white px-4 py-1.5 rounded-full shadow-inner border-2 border-gray-300">
+                        <span class="text-lg font-black text-gray-600">💡 提示助手</span>
+                        <button id="hint-toggle-btn" onclick="toggleHint()" class="bg-gray-300 text-gray-700 text-lg font-black py-0.5 px-4 rounded-full transition-all duration-300 transform active:scale-95 shadow">
+                            關閉 ❌
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 互動區域：設為可彈性收縮 -->
+                <div id="interactive-area" class="flex-1 min-h-0 w-full flex items-center justify-center relative bg-gray-50 overflow-hidden">
+                    <!-- 動態內容將由 JS 注入 -->
+                </div>
+
+                <!-- 選擇題按鈕區 -->
+                <div id="judge-buttons" class="hidden h-28 bg-gray-100 flex items-center justify-center gap-6 p-4 border-t-4 border-gray-200 z-40 flex-shrink-0">
+                    <!-- 按鈕將由 JS 注入 -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 回饋覆蓋層 (答對/答錯) - 小型視窗彈出 -->
+        <div id="feedback-overlay" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
+            <div id="feedback-content" class="bg-white max-w-sm w-full p-6 rounded-[28px] shadow-2xl border-4 border-white animate-pop-in flex flex-col items-center justify-center">
+                <span id="feedback-icon" class="text-7xl"></span>
+                <h2 id="feedback-text" class="text-4xl font-black mt-3 text-center"></h2>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 遊戲邏輯與音效 -->
+    <script>
+        // ==========================================
+        // 音效系統 (使用 Web Audio API)
+        // ==========================================
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTone(freq, type, duration, vol = 0.1) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playClickSound() {
+            initAudio();
+            playTone(800, 'sine', 0.1, 0.05);
+        }
+
+        function playCorrectSound() {
+            initAudio();
+            playTone(523.25, 'sine', 0.15, 0.1); // C5
+            setTimeout(() => playTone(659.25, 'sine', 0.15, 0.1), 150); // E5
+            setTimeout(() => playTone(783.99, 'sine', 0.4, 0.15), 300); // G5
+        }
+
+        function playWrongSound() {
+            initAudio();
+            playTone(300, 'triangle', 0.2, 0.1);
+            setTimeout(() => playTone(250, 'triangle', 0.4, 0.15), 200);
+        }
+
+        function playChompSound() {
+            initAudio();
+            playTone(150, 'triangle', 0.08, 0.15);
+            setTimeout(() => playTone(120, 'triangle', 0.08, 0.15), 100);
+            setTimeout(() => playTone(160, 'triangle', 0.08, 0.15), 200);
+            setTimeout(() => playTone(130, 'triangle', 0.15, 0.15), 300);
+        }
+
+        // 小汽車的嗶嗶喇叭聲
+        function playCarHornSound() {
+            initAudio();
+            playTone(600, 'sine', 0.15, 0.1);
+            setTimeout(() => {
+                playTone(600, 'sine', 0.15, 0.1);
+            }, 180);
+        }
+
+        function playCameraShutterSound() {
+            initAudio();
+            playTone(1200, 'triangle', 0.03, 0.2);
+            setTimeout(() => {
+                playTone(800, 'triangle', 0.05, 0.15);
+            }, 40);
+        }
+
+        // ==========================================
+        // 遊戲資料題庫
+        // ==========================================
+        const hl = (text, colorClass) => `<span class="${colorClass} text-4xl md:text-5xl px-1.5 font-extrabold">【${text}】</span>`;
+        const hlNoun = (text) => `<span class="text-red-500 text-5xl md:text-6xl font-black underline mx-1">${text}</span>`;
+
+        const gameData = {
+            upDown: {
+                title: "上下練習",
+                color: "bg-macaron-yellow",
+                place: [
+                    { item: '🍎', ref: '🪑', instruction: `請把蘋果放在椅子的 ${hl('上面', 'text-red-500')}`, target: 'top' },
+                    { item: '⚽', ref: '🪑', instruction: `請把足球放在椅子的 ${hl('下面', 'text-blue-500')}`, target: 'bottom' },
+                    { item: '🐦', ref: '🌳', instruction: `請把小鳥放在樹的 ${hl('上面', 'text-red-500')}`, target: 'top' },
+                    { item: '🎁', ref: '🛏️', instruction: `請把禮物放在床的 ${hl('下面', 'text-blue-500')}`, target: 'bottom' }
+                ],
+                judge: [
+                    { ref: '☁️', item: '🦅', position: 'top', instruction: `${hlNoun('老鷹')}在雲的哪裡？`, options: ['上面', '下面'], correct: 0 },
+                    { ref: '🌳', item: '🍄', position: 'bottom', instruction: `${hlNoun('蘑菇')}在樹的哪裡？`, options: ['上面', '下面'], correct: 1 },
+                    { ref: '桌', item: '🐱', position: 'top', textRef: true, instruction: `${hlNoun('貓咪')}在桌子的哪裡？`, options: ['上面', '下面'], correct: 0 },
+                    { ref: '床', item: '👟', position: 'bottom', textRef: true, instruction: `${hlNoun('鞋子')}在床的哪裡？`, options: ['上面', '下面'], correct: 1 }
+                ],
+                adventure: [
+                    {
+                        instruction: `小熊肚子餓了，想吃 ${hl('下面', 'text-red-500')} 的草莓蛋糕，請幫牠開氣球！`,
+                        target: 'down'
+                    }
+                ]
+            },
+            leftRight: {
+                title: "左右練習",
+                color: "bg-macaron-blue",
+                place: [
+                    { item: '🐶', ref: '🏠', instruction: `請把狗狗放在房子的 ${hl('左邊', 'text-green-600')}`, target: 'left' },
+                    { item: '🚗', ref: '🏠', instruction: `請把車子放在房子的 ${hl('右邊', 'text-purple-600')}`, target: 'right' },
+                    { item: '🌺', ref: '🌳', instruction: `請把花放在樹的 ${hl('左邊', 'text-green-600')}`, target: 'left' },
+                    { item: '🐰', ref: '🌳', instruction: `請把兔子放在樹的 ${hl('右邊', 'text-purple-600')}`, target: 'right' }
+                ],
+                judge: [
+                    { ref: '👦', item: '🎈', position: 'left', instruction: `${hlNoun('氣球')}在男孩的哪裡？`, options: ['左邊', '右邊'], correct: 0 },
+                    { ref: '👧', item: '🐕', position: 'right', instruction: `${hlNoun('小狗')}在女孩的哪裡？`, options: ['左邊', '右邊'], correct: 1 },
+                    { ref: '車', item: '🐻', position: 'left', textRef: true, instruction: `${hlNoun('熊熊')}在車子的哪裡？`, options: ['左邊', '右邊'], correct: 0 },
+                    { ref: '屋', item: '🚲', position: 'right', textRef: true, instruction: `${hlNoun('腳踏車')}在房子的哪裡？`, options: ['左邊', '右邊'], correct: 1 }
+                ],
+                adventure: [
+                    {
+                        instruction: `小汽車要出發去 ${hl('左邊', 'text-green-600')} 的草莓城堡囉！請幫牠！`,
+                        target: 'left'
+                    }
+                ]
+            },
+            frontBack: {
+                title: "前後練習",
+                color: "bg-macaron-green",
+                place: [
+                    { item: '🐱', ref: '🌳', instruction: `請把貓咪放在樹的 ${hl('前面', 'text-orange-500')}`, target: 'front' },
+                    { item: '👦', ref: '🚗', instruction: `請把弟弟放在車子的 ${hl('後面', 'text-teal-600')}`, target: 'back' },
+                    { item: '🎁', ref: '🪑', instruction: `請把禮物放在椅子的 ${hl('前面', 'text-orange-500')}`, target: 'front' },
+                    { item: '🐶', ref: '🏠', instruction: `請把狗狗放在房子的 ${hl('後面', 'text-teal-600')}`, target: 'back' }
+                ],
+                judge: [
+                    { ref: '🎁', item: '🐰', position: 'front', instruction: `${hlNoun('兔子')}在禮物盒的哪裡？`, options: ['前面', '後面'], correct: 0 },
+                    { ref: '🌳', item: '🐻', position: 'back', instruction: `${hlNoun('熊熊')}在樹的哪裡？`, options: ['前面', '後面'], correct: 1 },
+                    { ref: '牆', item: '👦', position: 'front', textRef: true, instruction: `${hlNoun('男孩')}在牆壁的哪裡？`, options: ['前面', '後面'], correct: 0 },
+                    { ref: '沙發', item: '🐱', position: 'back', textRef: true, instruction: `${hlNoun('貓咪')}在沙發的哪裡？`, options: ['前面', '後面'], correct: 1 }
+                ],
+                adventure: [
+                    {
+                        instruction: `小兔子被擋住了！請把小兔子放到大狗的 ${hl('前面', 'text-orange-500')}，大家才看得到喔！`,
+                        target: 'front'
+                    }
+                ]
+            }
+        };
+
+        // ==========================================
+        // 狀態管理與流程控制
+        // ==========================================
+        let currentCategory = '';
+        let currentMode = '';
+        let currentQuestions = [];
+        let questionIndex = 0;
+        let showHint = false; // 提示狀態開關
+
+        const el = (id) => document.getElementById(id);
+        const screens = ['start-screen', 'home-screen', 'mode-screen', 'game-screen'];
+
+        function showScreen(screenId) {
+            screens.forEach(id => {
+                const element = el(id);
+                if (element) {
+                    element.classList.add('hidden');
+                }
+            });
+            
+            const targetScreen = el(screenId);
+            if (targetScreen) {
+                targetScreen.classList.remove('hidden');
+            }
+            
+            const header = el('header');
+            if (header) {
+                if (screenId === 'home-screen' || screenId === 'start-screen') {
+                    header.classList.add('hidden');
+                } else {
+                    header.classList.remove('hidden');
+                    header.classList.add('flex');
+                }
+            }
+        }
+
+        function initApp() {
+            playClickSound();
+            showScreen('home-screen');
+        }
+
+        function goHome() {
+            playClickSound();
+            showScreen('home-screen');
+        }
+
+        function selectCategory(cat) {
+            playClickSound();
+            currentCategory = cat;
+            
+            const headerTitle = el('header-title');
+            if (headerTitle) {
+                headerTitle.innerText = gameData[cat].title;
+            }
+            
+            const contentArea = el('content');
+            if (contentArea) {
+                contentArea.className = `flex-1 relative min-h-0 ${gameData[cat].color}`;
+            }
+            
+            const modeIcon = el('mode-icon');
+            if (modeIcon) {
+                const iconMap = { upDown: '↕️', leftRight: '↔️', frontBack: '🔄' };
+                modeIcon.innerText = iconMap[cat];
+            }
+
+            showScreen('mode-screen');
+        }
+
+        function startGame(mode) {
+            playClickSound();
+            currentMode = mode;
+            currentQuestions = [...gameData[currentCategory][mode]];
+            questionIndex = 0;
+            
+            showHint = false;
+            updateHintButtonUI();
+
+            showScreen('game-screen');
+            loadQuestion();
+        }
+
+        function toggleHint() {
+            playClickSound();
+            showHint = !showHint;
+            updateHintButtonUI();
+            loadQuestion();
+        }
+
+        function updateHintButtonUI() {
+            const btn = el('hint-toggle-btn');
+            if (btn) {
+                if (showHint) {
+                    btn.innerText = '開啟 ✅';
+                    btn.className = 'bg-green-400 text-white text-lg font-black py-0.5 px-4 rounded-full transition-all duration-300 transform active:scale-95 shadow-md shadow-green-200';
+                } else {
+                    btn.innerText = '關閉 ❌';
+                    btn.className = 'bg-gray-300 text-gray-700 text-lg font-black py-0.5 px-4 rounded-full transition-all duration-300 transform active:scale-95';
+                }
+            }
+        }
+
+        function loadQuestion() {
+            if (questionIndex >= currentQuestions.length) {
+                questionIndex = 0;
+                if (currentMode !== 'adventure') {
+                    currentQuestions = currentQuestions.sort(() => Math.random() - 0.5);
+                }
+            }
+
+            const q = currentQuestions[questionIndex];
+            let instructionText = q.instruction;
+            
+            // 提示開啟時，給予最上方題目對應的位置圖案提示
+            if (showHint) {
+                instructionText = instructionText
+                    .replace('上面', '上面 ⬆️')
+                    .replace('下面', '下面 ⬇️')
+                    .replace('左邊', '左邊 ⬅️')
+                    .replace('右邊', '右邊 ➡️')
+                    .replace('前面', '前面 ⬇️')
+                    .replace('後面', '後面 ⬆️');
+            }
+
+            const instTextEl = el('instruction-text');
+            if (instTextEl) {
+                instTextEl.innerHTML = instructionText;
+            }
+            
+            const interactiveArea = el('interactive-area');
+            if (interactiveArea) {
+                interactiveArea.innerHTML = '';
+            }
+            
+            const judgeButtons = el('judge-buttons');
+            if (judgeButtons) judgeButtons.classList.add('hidden');
+
+            if (currentMode === 'place') {
+                renderPlaceGame(q);
+            } else if (currentMode === 'judge') {
+                if (judgeButtons) judgeButtons.classList.remove('hidden');
+                renderJudgeGame(q);
+            } else if (currentMode === 'adventure') {
+                renderAdventureGame(q);
+            }
+        }
+
+        // ==========================================
+        // 通用手勢與拖拉核心邏輯 (支援平板 Touch 與 Mouse)
+        // ==========================================
+        function initDragAndDrop(draggableEl, checkDropFn) {
+            if (!draggableEl) return;
+            draggableEl.style.cursor = 'grab';
+            draggableEl.style.touchAction = 'none';
+
+            let active = false;
+            let startX = 0;
+            let startY = 0;
+
+            draggableEl.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                initAudio();
+                active = true;
+                draggableEl.style.cursor = 'grabbing';
+                draggableEl.style.transition = 'none';
+
+                startX = e.clientX;
+                startY = e.clientY;
+
+                document.querySelectorAll('.drop-zone').forEach(zone => {
+                    zone.classList.add('border-amber-400', 'bg-amber-50/40');
+                });
+
+                window.addEventListener('pointermove', onPointerMove);
+                window.addEventListener('pointerup', onPointerUp);
+            });
+
+            function onPointerMove(moveEvent) {
+                if (!active) return;
+                const dx = moveEvent.clientX - startX;
+                const dy = moveEvent.clientY - startY;
+                draggableEl.style.transform = `translate(${dx}px, ${dy}px) scale(1.1)`;
+                draggableEl.style.zIndex = '100';
+            }
+
+            function onPointerUp(upEvent) {
+                if (!active) return;
+                active = false;
+                draggableEl.style.cursor = 'grab';
+
+                document.querySelectorAll('.drop-zone').forEach(zone => {
+                    zone.classList.remove('border-amber-400', 'bg-amber-50/40');
+                });
+
+                window.removeEventListener('pointermove', onPointerMove);
+                window.removeEventListener('pointerup', onPointerUp);
+
+                const pointerX = upEvent.clientX;
+                const pointerY = upEvent.clientY;
+                let droppedZoneId = null;
+
+                const zones = document.querySelectorAll('.drop-zone');
+                zones.forEach(zone => {
+                    const r = zone.getBoundingClientRect();
+                    if (pointerX >= r.left && pointerX <= r.right && pointerY >= r.top && pointerY <= r.bottom) {
+                        droppedZoneId = zone.id;
+                    }
+                });
+
+                if (droppedZoneId) {
+                    const zoneName = droppedZoneId.replace('zone-', '').replace('drop-', '');
+                    const isSuccess = checkDropFn(zoneName);
+
+                    if (isSuccess) {
+                        draggableEl.style.transform = 'translate(0px, 0px)';
+                        draggableEl.style.display = 'none';
+                    } else {
+                        animateBack();
+                    }
+                } else {
+                    animateBack();
+                }
+            }
+
+            function animateBack() {
+                playTone(220, 'sine', 0.15, 0.05);
+                draggableEl.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                draggableEl.style.transform = 'translate(0px, 0px) scale(1)';
+                setTimeout(() => {
+                    draggableEl.style.transition = 'none';
+                    draggableEl.style.zIndex = '';
+                }, 300);
+            }
+        }
+
+        // ==========================================
+        // 渲染: 放置遊戲
+        // ==========================================
+        function renderPlaceGame(q) {
+            const area = el('interactive-area');
+            if (!area) return;
+            area.className = "flex-1 flex flex-row items-center justify-around relative bg-white/50 w-full h-full p-4 min-h-0 overflow-hidden";
+
+            const mainContent = document.createElement('div');
+            mainContent.className = "flex-1 flex items-center justify-center h-full min-h-0";
+
+            if (currentCategory === 'upDown') {
+                mainContent.className = "flex flex-col items-center justify-center gap-3 h-full min-h-0";
+                const zoneClass = "drop-zone w-40 h-28 flex items-center justify-center bg-white/90 text-gray-400 border-4 border-dashed border-gray-300 rounded-[20px] transition-all duration-300 flex-shrink-0";
+
+                mainContent.innerHTML = `
+                    <div id="zone-top" class="${zoneClass}">
+                        <span class="text-xl font-bold"></span>
+                    </div>
+                    <div class="text-[12vh] md:text-[100px] leading-none select-none flex-shrink-0">${q.ref}</div>
+                    <div id="zone-bottom" class="${zoneClass}">
+                        <span class="text-xl font-bold"></span>
+                    </div>
+                `;
+            } 
+            else if (currentCategory === 'leftRight') {
+                mainContent.className = "flex flex-row items-center justify-center gap-6 w-full h-full min-h-0";
+                const zoneClass = "drop-zone w-36 h-36 flex items-center justify-center bg-white/90 text-gray-400 border-4 border-dashed border-gray-300 rounded-[20px] transition-all duration-300 flex-shrink-0";
+
+                mainContent.innerHTML = `
+                    <div id="zone-left" class="${zoneClass}">
+                        <span class="text-xl font-bold"></span>
+                    </div>
+                    <div class="text-[12vh] md:text-[100px] leading-none select-none flex-shrink-0">${q.ref}</div>
+                    <div id="zone-right" class="${zoneClass}">
+                        <span class="text-xl font-bold"></span>
+                    </div>
+                `;
+            }
+            else if (currentCategory === 'frontBack') {
+                mainContent.className = "relative w-[280px] h-[340px] flex items-center justify-center flex-shrink-0";
+                const backZoneClass = "drop-zone absolute top-2 w-36 h-36 flex items-center justify-center bg-white/90 layer-behind text-gray-500 border-4 border-dashed border-gray-300 rounded-[20px] transition-all duration-300";
+                const refObj = `<div class="text-[120px] layer-middle drop-shadow-xl select-none leading-none">${q.ref}</div>`;
+                const frontZoneClass = "drop-zone absolute bottom-2 w-40 h-40 flex items-center justify-center bg-white/95 layer-front text-gray-600 border-4 border-dashed border-gray-300 rounded-[20px] shadow-lg transition-all duration-300";
+                
+                mainContent.innerHTML = `
+                    <div id="zone-back" class="${backZoneClass}">
+                        <span class="text-xl font-bold"></span>
+                    </div>
+                    ${refObj}
+                    <div id="zone-front" class="${frontZoneClass}">
+                        <span class="text-2xl font-bold"></span>
+                    </div>
+                `;
+            }
+
+            const tray = document.createElement('div');
+            tray.className = "w-52 bg-white/90 p-4 rounded-[28px] shadow-lg border-4 border-dashed border-amber-300 flex flex-col items-center justify-center flex-shrink-0";
+            tray.innerHTML = `
+                <div class="text-lg font-extrabold text-amber-600 mb-2 flex items-center gap-1 select-none animate-bounce-slow">👇 請拖拉這個</div>
+                <div id="draggable-item" class="text-7xl select-none active:scale-105 cursor-grab transition-transform duration-100 flex items-center justify-center w-24 h-24 bg-amber-50 rounded-full shadow-inner border border-amber-200">
+                    ${q.item}
+                </div>
+            `;
+
+            area.appendChild(mainContent);
+            area.appendChild(tray);
+
+            const dragEl = el('draggable-item');
+            if (dragEl) {
+                initDragAndDrop(dragEl, (droppedZone) => {
+                    if (droppedZone === q.target) {
+                        const zone = el(`zone-${droppedZone}`);
+                        if (zone) {
+                            zone.innerHTML = `<span class="text-[75px] animate-pop-in">${q.item}</span>`;
+                            zone.classList.remove('border-dashed', 'text-gray-400');
+                            zone.classList.add('bg-green-100', 'border-green-500', 'border-8');
+                        }
+                        showFeedback(true);
+                        return true;
+                    } else {
+                        showFeedback(false);
+                        return false;
+                    }
+                });
+            }
+        }
+
+        // ==========================================
+        // 渲染: 判斷遊戲
+        // ==========================================
+        function renderJudgeGame(q) {
+            const area = el('interactive-area');
+            if (!area) return;
+            area.className = "flex-1 flex items-center justify-center relative bg-white/50 w-full h-full p-4 min-h-0 overflow-hidden";
+
+            const container = document.createElement('div');
+            
+            let refHtml = q.textRef ? `<div class="w-52 h-52 bg-gray-300 rounded-3xl flex items-center justify-center shadow-inner border-8 border-gray-400"><span class="text-5xl font-black text-gray-600">${q.ref}</span></div>` 
+                                    : `<div class="text-[130px] leading-none drop-shadow-xl select-none">${q.ref}</div>`;
+            
+            if (currentCategory === 'upDown') {
+                container.className = "flex flex-col items-center justify-center gap-3 relative";
+                if (q.position === 'top') {
+                    container.innerHTML = `
+                        <div class="text-[90px] leading-none select-none">${q.item}</div>
+                        ${refHtml}
+                    `;
+                } else {
+                    container.innerHTML = `
+                        ${refHtml}
+                        <div class="text-[90px] leading-none select-none">${q.item}</div>
+                    `;
+                }
+            }
+            else if (currentCategory === 'leftRight') {
+                container.className = "flex flex-row items-center justify-center gap-6 relative";
+                if (q.position === 'left') {
+                    container.innerHTML = `
+                        <div class="text-[90px] leading-none select-none">${q.item}</div>
+                        ${refHtml}
+                    `;
+                } else {
+                    container.innerHTML = `
+                        ${refHtml}
+                        <div class="text-[90px] leading-none select-none">${q.item}</div>
+                    `;
+                }
+            }
+            else if (currentCategory === 'frontBack') {
+                container.className = "relative flex items-center justify-center w-[300px] h-[300px]";
+                if (q.position === 'back') {
+                    container.innerHTML = `
+                        <div class="absolute top-6 ml-16 text-[90px] layer-behind select-none">
+                            ${q.item}
+                        </div>
+                        <div class="layer-middle">${refHtml}</div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="layer-middle">${refHtml}</div>
+                        <div class="absolute bottom-3 -ml-8 text-[110px] layer-front drop-shadow-xl select-none">
+                            ${q.item}
+                        </div>
+                    `;
+                }
+            }
+            area.appendChild(container);
+
+            const btnArea = el('judge-buttons');
+            if (btnArea) {
+                btnArea.innerHTML = '';
+                
+                q.options.forEach((optText, index) => {
+                    const btn = document.createElement('button');
+                    
+                    let hintIcon = '';
+                    if (showHint) {
+                        if (optText === '上面') hintIcon = ' ⬆️';
+                        if (optText === '下面') hintIcon = ' ⬇️';
+                        if (optText === '左邊') hintIcon = ' ⬅️';
+                        if (optText === '右邊') hintIcon = ' ➡️';
+                        if (optText === '前面') hintIcon = ' 🫵';
+                        if (optText === '後面') hintIcon = ' 👤';
+                    }
+
+                    const btnColorClass = index === 0 ? 'bg-orange-300 border-white' : 'bg-teal-300 border-white';
+
+                    btn.className = `${btnColorClass} text-4xl font-black text-gray-800 py-3 px-10 rounded-2xl shadow-md border-4 btn-press transition-all w-full max-w-xs flex items-center justify-center gap-2`;
+                    
+                    btn.innerHTML = `${optText}${hintIcon}`;
+                    btn.onclick = () => checkJudgeAnswer(index, q.correct);
+                    btnArea.appendChild(btn);
+                });
+            }
+        }
+
+        // ==========================================
+        // 渲染: 模式三 大冒險情境遊戲
+        // ==========================================
+        function renderAdventureGame(q) {
+            const area = el('interactive-area');
+            if (!area) return;
+
+            if (currentCategory === 'upDown') {
+                // 雲朵熱氣球升降機
+                area.className = "flex-1 flex flex-col items-center justify-between p-4 relative bg-sky-100 w-full h-full min-h-0 overflow-hidden";
+                
+                area.innerHTML = `
+                    <div class="absolute left-10 top-10 text-4xl opacity-30 select-none">☁️</div>
+                    <div class="absolute right-12 top-20 text-5xl opacity-25 select-none">☁️</div>
+                    
+                    <!-- 上：星星 -->
+                    <div class="text-center select-none flex-shrink-0">
+                        <div class="text-5xl">⭐</div>
+                    </div>
+
+                    <!-- 中央：馬卡龍小熊熱氣球 -->
+                    <div id="balloon-container" class="transition-all duration-[1500ms] ease-out transform translate-y-0 relative z-20 select-none flex-shrink-0">
+                        <div class="flex flex-col items-center">
+                            <span class="text-7xl leading-none">🎈</span>
+                            <span class="text-5xl -mt-5 leading-none">🐻</span>
+                        </div>
+                    </div>
+
+                    <!-- 下：大草莓蛋糕 -->
+                    <div class="text-center relative z-10 select-none flex-shrink-0">
+                        <div id="strawberry-cake" class="text-7xl leading-none mt-0.5">🍰</div>
+                    </div>
+
+                    <!-- 控制按鈕 -->
+                    <div class="w-full max-w-sm flex gap-4 mt-2 z-30 flex-shrink-0">
+                        <button onclick="moveBalloon('up')" class="flex-1 bg-[#FFB7B2] text-gray-800 text-2xl font-black p-2.5 rounded-2xl border-4 border-white shadow-md btn-press flex flex-col items-center">
+                            <span>⬆️</span>
+                            <span class="text-lg">向上</span>
+                        </button>
+                        <button onclick="moveBalloon('down')" class="flex-1 bg-[#B5EAD7] text-gray-800 text-2xl font-black p-2.5 rounded-2xl border-4 border-white shadow-md btn-press flex flex-col items-center">
+                            <span>⬇️</span>
+                            <span class="text-lg">向下</span>
+                        </button>
+                    </div>
+                `;
+            }
+            else if (currentCategory === 'leftRight') {
+                // 糖果小汽車冒險：全新水平道路與獨立車頭旋轉結構
+                area.className = "flex-1 flex flex-col items-center justify-between p-4 relative bg-[#FFF9E6] w-full h-full min-h-0 overflow-hidden";
+
+                area.innerHTML = `
+                    <!-- 水平道路與建築場景 -->
+                    <div class="relative w-full flex-1 flex items-center justify-between px-12 min-h-0">
+                        
+                        <!-- 左邊終點：草莓城堡 -->
+                        <div class="text-center z-10 flex flex-col items-center select-none">
+                            <div class="text-8xl filter drop-shadow-md">🏰</div>
+                        </div>
+
+                        <!-- 橫向道路（中央背景） -->
+                        <div class="absolute inset-x-12 h-14 bg-amber-200/80 rounded-full border-t-4 border-b-4 border-dashed border-amber-800/40 flex items-center z-0">
+                            <div class="w-full h-1 bg-amber-800/20"></div>
+                        </div>
+
+                        <!-- 中央平移動畫汽車 (內外雙層：外平移、內旋轉) -->
+                        <div class="absolute left-0 right-0 mx-auto flex justify-center z-20 pointer-events-none">
+                            <div id="car-container" class="transition-all duration-[1500ms] ease-out transform translate-x-0 select-none">
+                                <div id="car-emoji" class="text-8xl transition-all duration-[400ms] ease-out transform select-none" style="transform: rotate(90deg);">
+                                    🚗
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 右邊終點：藍莓小屋 -->
+                        <div class="text-center z-10 flex flex-col items-center select-none">
+                            <div class="text-8xl filter drop-shadow-md">🏡</div>
+                        </div>
+
+                    </div>
+
+                    <!-- 控制按鈕：修改為汽車語法 -->
+                    <div class="w-full max-w-xl flex gap-6 px-4 z-30 flex-shrink-0">
+                        <button onclick="turnCar('left')" class="flex-1 bg-[#FFDAC1] text-gray-800 text-2xl font-black p-3.5 rounded-2xl border-4 border-white shadow-md btn-press flex items-center justify-center gap-3">
+                            <span class="text-3xl">⬅️</span>
+                            <span>向左開</span>
+                        </button>
+                        <button onclick="turnCar('right')" class="flex-1 bg-[#C7CEEA] text-gray-800 text-2xl font-black p-3.5 rounded-2xl border-4 border-white shadow-md btn-press flex items-center justify-center gap-3">
+                            <span>向右開</span>
+                            <span class="text-3xl">➡️</span>
+                        </button>
+                    </div>
+                `;
+            }
+            else if (currentCategory === 'frontBack') {
+                // 萌寵拍照排排站
+                area.className = "flex-1 flex flex-col items-center justify-between p-4 relative bg-[#F5EEF8] w-full h-full min-h-0 overflow-hidden";
+
+                area.innerHTML = `
+                    <div class="absolute top-2 left-4 bg-white/80 px-2.5 py-0.5 rounded-xl text-md font-bold text-purple-600 select-none">
+                        📷 拍照舞台
+                    </div>
+
+                    <!-- 舞台中央排隊區 -->
+                    <div class="relative w-full flex-1 flex items-center justify-center min-h-0">
+                        
+                        <!-- 位置框: 後面 -->
+                        <div id="drop-back" class="absolute transform -translate-y-16 scale-80 drop-zone w-32 h-32 bg-white/70 flex items-center justify-center z-10">
+                        </div>
+
+                        <!-- 參考物: 大狗 -->
+                        <div class="absolute text-[120px] leading-none z-20 select-none">🐶</div>
+
+                        <!-- 位置框: 前面 -->
+                        <div id="drop-front" class="absolute transform translate-y-16 scale-100 drop-zone w-36 h-36 bg-white/80 flex items-center justify-center z-30 shadow-sm">
+                        </div>
+
+                        <!-- 待拖曳的小兔子托盤 -->
+                        <div id="rabbit-source" class="absolute right-4 bottom-2 bg-white p-3 rounded-2xl shadow-md border-4 border-dashed border-purple-300 z-40 text-center flex flex-col items-center">
+                            <div class="text-sm font-bold text-gray-500 mb-1 select-none">👉 拖拉兔子</div>
+                            <div id="rabbit-source-item" class="text-5xl cursor-grab select-none active:scale-105 flex items-center justify-center w-16 h-16 bg-purple-50 rounded-full shadow-inner border border-purple-200">
+                                🐰
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // 綁定兔子拖拉邏輯
+                const rabbitItem = el('rabbit-source-item');
+                if (rabbitItem) {
+                    initDragAndDrop(rabbitItem, (droppedZone) => {
+                        if (droppedZone === 'front') {
+                            placePet('front');
+                            return true;
+                        } else if (droppedZone === 'back') {
+                            placePet('back');
+                            return false;
+                        }
+                        return false;
+                    });
+                }
+            }
+        }
+
+        // ==========================================
+        // 模式三 情境互動邏輯
+        // ==========================================
+
+        // 1. 雲朵熱氣球升降機
+        function moveBalloon(dir) {
+            playClickSound();
+            const balloon = el('balloon-container');
+            const cake = el('strawberry-cake');
+            
+            if (dir === 'down') {
+                balloon.style.transform = 'translateY(110px)';
+                
+                setTimeout(() => {
+                    playChompSound();
+                    if (cake) cake.innerText = '😋🍰';
+                    
+                    setTimeout(() => {
+                        showFeedback(true);
+                    }, 800);
+                }, 1500);
+            } else {
+                balloon.style.transform = 'translateY(-100px)';
+                setTimeout(() => {
+                    showFeedback(false);
+                    balloon.style.transform = 'translateY(0)';
+                }, 1600);
+            }
+        }
+
+        // 2. 糖果小汽車轉彎處 (車頭旋轉後再緩緩開過去，精準判定)
+        function turnCar(dir) {
+            playClickSound();
+            const carContainer = el('car-container');
+            const carEmoji = el('car-emoji');
+            
+            if (dir === 'left') {
+                // 1. 先將車頭旋轉朝向左邊 (0度)
+                if (carEmoji) {
+                    carEmoji.style.transform = 'rotate(0deg)';
+                }
+                
+                // 2. 旋轉啟動後緩緩往左平移 180px 直達草莓城堡
+                setTimeout(() => {
+                    if (carContainer) {
+                        carContainer.style.transform = 'translateX(-180px)';
+                    }
+                }, 150);
+
+                // 3. 抵達終點後播放「嗶嗶」喇叭聲並彈出答對反饋
+                setTimeout(() => {
+                    playCarHornSound();
+                    showFeedback(true);
+                }, 1650);
+            } else {
+                // 1. 先將車頭旋轉朝向右邊 (180度)
+                if (carEmoji) {
+                    carEmoji.style.transform = 'rotate(180deg)';
+                }
+                
+                // 2. 緩緩往右平移 180px 直達藍莓小屋 (方向選錯)
+                setTimeout(() => {
+                    if (carContainer) {
+                        carContainer.style.transform = 'translateX(180px)';
+                    }
+                }, 150);
+
+                // 3. 抵達後播放失敗音效與反饋，並重置位置
+                setTimeout(() => {
+                    showFeedback(false);
+                    
+                    // 隔一秒等遮罩消失或在空檔時將車子默默退回
+                    setTimeout(() => {
+                        if (carContainer) {
+                            carContainer.style.transform = 'translateX(0px)';
+                        }
+                        if (carEmoji) {
+                            carEmoji.style.transform = 'rotate(90deg)'; // 恢復成朝上
+                        }
+                    }, 1000);
+                }, 1650);
+            }
+        }
+
+        // 3. 萌寵拍照排排站
+        function placePet(pos) {
+            playClickSound();
+            const dropFront = el('drop-front');
+            const dropBack = el('drop-back');
+            const rabbitSource = el('rabbit-source');
+
+            if (pos === 'front') {
+                if (dropFront) {
+                    dropFront.innerHTML = '<span class="text-7xl animate-pop-in select-none">🐰</span>';
+                    dropFront.className = 'absolute transform translate-y-16 scale-100 w-36 h-36 flex items-center justify-center z-30 bg-green-100 border-8 border-green-500 rounded-full';
+                }
+                if (rabbitSource) {
+                    rabbitSource.classList.add('hidden');
+                }
+
+                setTimeout(() => {
+                    playCameraShutterSound();
+                    const flash = document.createElement('div');
+                    flash.className = 'absolute inset-0 bg-white z-[60] opacity-100 transition-opacity duration-300';
+                    const interactiveArea = el('interactive-area');
+                    if (interactiveArea) interactiveArea.appendChild(flash);
+                    setTimeout(() => {
+                        flash.style.opacity = '0';
+                        setTimeout(() => flash.remove(), 300);
+                    }, 100);
+
+                    setTimeout(() => {
+                        showFeedback(true);
+                    }, 600);
+                }, 1200);
+
+            } else {
+                if (dropBack) {
+                    dropBack.innerHTML = '<span class="text-5xl animate-pop-in select-none">🐰</span>';
+                    dropBack.className = 'absolute transform -translate-y-16 scale-80 w-32 h-32 bg-red-100 border-8 border-red-500 rounded-full flex items-center justify-center z-10';
+                }
+                setTimeout(() => {
+                    showFeedback(false);
+                    if (dropBack) {
+                        dropBack.innerHTML = '';
+                        dropBack.className = 'absolute transform -translate-y-16 scale-80 drop-zone w-32 h-32 bg-white/70 flex items-center justify-center z-10';
+                    }
+                }, 1200);
+            }
+        }
+
+        // ==========================================
+        // 答案檢查與回饋
+        // ==========================================
+        function checkPlaceAnswer(selectedZone, correctZone) {
+            if (selectedZone === correctZone) {
+                const zone = el(`zone-${selectedZone}`);
+                if (zone) {
+                    zone.innerHTML = `<span class="text-[75px] animate-pop-in">${currentQuestions[questionIndex].item}</span>`;
+                    zone.classList.remove('border-dashed', 'animate-pulse-fast', 'border-amber-400', 'border-blue-400', 'border-green-500', 'border-purple-500', 'border-teal-500', 'border-orange-500');
+                    zone.classList.add('bg-green-100', 'border-green-500', 'border-8');
+                }
+                showFeedback(true);
+            } else {
+                showFeedback(false);
+            }
+        }
+
+        function checkJudgeAnswer(selectedIndex, correctIndex) {
+            if (selectedIndex === correctIndex) {
+                showFeedback(true);
+            } else {
+                showFeedback(false);
+            }
+        }
+
+        function showFeedback(isCorrect) {
+            const overlay = el('feedback-overlay');
+            const icon = el('feedback-icon');
+            const text = el('feedback-text');
+
+            if (overlay) overlay.classList.remove('hidden');
+
+            if (isCorrect) {
+                playCorrectSound();
+                if (icon) icon.innerText = '✅';
+                if (text) {
+                    text.innerText = '好棒！答對了！';
+                    text.className = 'text-4xl font-black mt-3 text-green-600 drop-shadow-md text-center';
+                }
+                
+                setTimeout(() => {
+                    if (overlay) overlay.classList.add('hidden');
+                    questionIndex++;
+                    loadQuestion();
+                }, 2000);
+            } else {
+                playWrongSound();
+                if (icon) icon.innerText = '❌';
+                if (text) {
+                    text.innerText = '再試一次喔！';
+                    text.className = 'text-4xl font-black mt-3 text-red-500 drop-shadow-md text-center';
+                }
+                
+                setTimeout(() => {
+                    if (overlay) overlay.classList.add('hidden');
+                }, 1500);
+            }
+        }
+
+    </script>
+</body>
+</html>
