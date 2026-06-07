@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <!-- 設定 viewport 強制橫向體驗較佳，限制縮放 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
+    <title>閉合圖形迷宮 🌸</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Mali', 'Comic Sans MS', cursive, sans-serif;
+            background-color: #FFF0F5; /* 馬卡龍淺粉背景 */
+            background-image: radial-gradient(#FFE4E1 2px, transparent 2px);
+            background-size: 30px 30px; /* 可愛點點背景 */
+            touch-action: none; /* 防止任何不預期的頁面滑動 */
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden; /* 防止出現捲軸 */
+        }
+
+        #gameCanvas {
+            touch-action: none;
+            box-shadow: 0 15px 35px -10px rgba(255, 156, 150, 0.4);
+            background-color: #FFFFFF;
+            border-radius: 32px;
+            cursor: grab;
+            /* 讓畫布有可愛的邊框 */
+            border: 8px solid #FFF; 
+            outline: 4px dashed #FFD1DC;
+            outline-offset: -12px;
+        }
+
+        #gameCanvas:active {
+            cursor: grabbing;
+        }
+
+        .macaron-btn {
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 8px 0 rgba(0,0,0,0.06);
+            position: relative;
+            top: 0;
+        }
+
+        .macaron-btn:active {
+            top: 6px;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.06);
+        }
+
+        /* 彈出視窗動畫 */
+        .modal-enter {
+            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* 標題動畫 */
+        .wobble-title {
+            animation: wobble 3s ease-in-out infinite;
+        }
+        @keyframes wobble {
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex items-center justify-center p-4 text-gray-700">
+
+    <!-- 主容器：使用 Flex row 讓畫布在左，控制面板在右 (適合 iPad 橫向) -->
+    <div class="flex flex-row w-full max-w-[1024px] h-[90vh] max-h-[768px] gap-8 items-stretch justify-center">
+
+        <!-- 左側：遊戲畫布區 -->
+        <div class="relative w-[65%] h-full flex flex-col items-center justify-center">
+            
+            <div class="relative w-full aspect-square max-h-full">
+                <canvas id="gameCanvas" class="w-full h-full"></canvas>
+                
+                <!-- 結果彈跳視窗 (預設隱藏) -->
+                <div id="resultModal" class="absolute inset-0 bg-white/90 backdrop-blur-md rounded-[32px] flex flex-col items-center justify-center p-8 hidden modal-enter z-10 border-4 border-[#FFB7B2]">
+                    <div id="modalIcon" class="text-6xl mb-2"></div>
+                    <h2 id="modalTitle" class="text-3xl font-bold mb-4 tracking-wide"></h2>
+                    <p id="modalDesc" class="text-center text-xl mb-8 leading-relaxed text-[#7A5B44] font-semibold"></p>
+                    <button onclick="nextLevel()" class="macaron-btn bg-[#FFB7B2] hover:bg-[#FF9C96] text-white font-bold py-4 px-10 rounded-full text-2xl tracking-widest">
+                        再玩一次！ 🌟
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 畫布下方的小提示 -->
+            <p class="mt-4 text-[#A892C6] font-bold text-lg animate-pulse">
+                👇 動動小手，拖曳裡面的小動物試試看！
+            </p>
+        </div>
+
+        <!-- 右側：標題與問答區 -->
+        <div class="w-[35%] h-full flex flex-col justify-center bg-white/80 backdrop-blur-sm p-8 rounded-[40px] shadow-xl border-4 border-white">
+            
+            <div class="text-center mb-10 wobble-title">
+                <h1 class="text-4xl font-bold text-[#FF9C96] mb-3 tracking-wide leading-tight">
+                    🎀 <br> 圖形大迷宮 🎀
+                </h1>
+                <p class="text-[#88B0A5] font-semibold text-lg">
+                    看一看，小動物能跑出來嗎？
+                </p>
+            </div>
+
+            <div class="text-center bg-[#FFF5F8] p-6 rounded-3xl border-2 border-[#FFE4E1]">
+                <h2 class="text-2xl font-bold text-[#A892C6] mb-6">這是一個...？🤔</h2>
+                
+                <div class="flex flex-col gap-5">
+                    <button onclick="checkAnswer(true)" class="macaron-btn w-full bg-[#FFB7B2] hover:bg-[#FF9C96] text-white font-bold py-4 px-6 rounded-2xl text-xl flex items-center justify-center gap-2">
+                        <span class="text-2xl">💖</span> 
+                        <span>閉合圖形</span>
+                        <span class="text-2xl">🔒</span>
+                    </button>
+                    
+                    <button onclick="checkAnswer(false)" class="macaron-btn w-full bg-[#B5EAD7] hover:bg-[#95D6C0] text-[#4A6559] font-bold py-4 px-6 rounded-2xl text-xl flex items-center justify-center gap-2">
+                        <span class="text-2xl">✨</span>
+                        <span>不閉合圖形</span>
+                        <span class="text-2xl">🔓</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 小裝飾 -->
+            <div class="mt-auto text-center opacity-70 text-4xl">
+                🌸 🌼 🌷
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 邏輯畫布大小 (提供高解析度基準)
+    const LOGIC_SIZE = 800; 
+    
+    // 夢幻馬卡龍色系
+    const lineColors = ['#FFB7B2', '#FFDAC1', '#E2F0CB', '#B5EAD7', '#C7CEEA', '#F1CBFF'];
+    // 超可愛小動物
+    const emojis = ['🐹', '🐰', '🐱', '🐶', '🦊', '🐻', '🐼', '🐷', '🐸', '🐣', '🦄', '🦦'];
+    
+    // 遊戲狀態
+    let isClosed = true;
+    let currentColor = '';
+    let vertices = []; 
+    let edges = [];    // 牆壁線段 {a: point, b: point}
+    let pointsToDraw = []; 
+    
+    // 小動物狀態 (加大尺寸適應大畫布)
+    let animal = { x: 400, y: 400, r: 40, emoji: '🐹' };
+    const LINE_WIDTH = 45; // 線條變粗
+    
+    // 互動狀態
+    let isDragging = false;
+    let dragOffset = { x: 0, y: 0 };
+    let hasAnswered = false;
+
+    // --- 音效系統 (使用 Tone.js 生成) ---
+    let audioInitialized = false;
+    let mainSynth, bumpSynth, winSynth;
+    let lastBumpTime = 0;
+
+    async function initAudio() {
+        if (audioInitialized) return;
+        await Tone.start();
+        
+        // 主音效合成器 (用於點擊、抓取)
+        mainSynth = new Tone.Synth({
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 }
+        }).toDestination();
+        mainSynth.volume.value = -5;
+
+        // 碰撞音效合成器 (低沉的啵啵聲)
+        bumpSynth = new Tone.MembraneSynth().toDestination();
+        bumpSynth.volume.value = -10;
+
+        // 勝利音效合成器 (開心的和弦)
+        winSynth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: 'triangle' }
+        }).toDestination();
+        winSynth.volume.value = -8;
+
+        audioInitialized = true;
+    }
+
+    function playGrabSound() { if (audioInitialized) mainSynth.triggerAttackRelease("C5", "16n"); }
+    function playDropSound() { if (audioInitialized) mainSynth.triggerAttackRelease("G4", "16n"); }
+    function playBumpSound() {
+        if (!audioInitialized) return;
+        const now = Tone.now();
+        if (now - lastBumpTime > 0.15) { // 防連續觸發導致雜音
+            bumpSynth.triggerAttackRelease("C2", "8n");
+            lastBumpTime = now;
+        }
+    }
+    function playWinSound() {
+        if (audioInitialized) winSynth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "4n", Tone.now());
+    }
+    function playLoseSound() {
+        if (!audioInitialized) return;
+        const now = Tone.now();
+        mainSynth.triggerAttackRelease("D3", "8n", now);
+        mainSynth.triggerAttackRelease("Db3", "8n", now + 0.2);
+        mainSynth.triggerAttackRelease("C3", "4n", now + 0.4);
+    }
+    function playBtnSound() { if (audioInitialized) mainSynth.triggerAttackRelease("A4", "32n"); }
+
+    function init() {
+        // 設定 Canvas 解析度以保持清晰
+        canvas.width = LOGIC_SIZE;
+        canvas.height = LOGIC_SIZE;
+        
+        setupEvents();
+        generateLevel();
+    }
+
+    function generateLevel() {
+        hasAnswered = false;
+        document.getElementById('resultModal').classList.add('hidden');
+        
+        // 50% 機率閉合或不閉合
+        isClosed = Math.random() > 0.5;
+        
+        currentColor = lineColors[Math.floor(Math.random() * lineColors.length)];
+        animal.emoji = emojis[Math.floor(Math.random() * emojis.length)];
+        
+        // 小動物置中
+        animal.x = LOGIC_SIZE / 2;
+        animal.y = LOGIC_SIZE / 2;
+
+        generateShape();
+        draw();
+    }
+
+    function generateShape() {
+        const cx = LOGIC_SIZE / 2;
+        const cy = LOGIC_SIZE / 2;
+        const R = 280; // 大半徑
+        const N = 12;  // 多邊形頂點數
+        
+        vertices = [];
+        for (let i = 0; i < N; i++) {
+            const angle = (i / N) * Math.PI * 2;
+            const variance = R + (Math.random() - 0.5) * 80; // 製造形狀不規則感
+            vertices.push({
+                x: cx + variance * Math.cos(angle),
+                y: cy + variance * Math.sin(angle)
+            });
+        }
+
+        pointsToDraw = [];
+        edges = [];
+        
+        // 不閉合時，隨機選起始點，並丟棄後面幾個點製造大缺口
+        const startIndex = isClosed ? 0 : Math.floor(Math.random() * N);
+        // 不閉合時，畫 N-2 個點，會少掉一段線，形成一個明確的缺口
+        const numPoints = isClosed ? N : N - 2; 
+
+        for (let i = 0; i < numPoints; i++) {
+            pointsToDraw.push(vertices[(startIndex + i) % N]);
+        }
+
+        // 建立嚴格的物理邊界線段
+        for (let i = 0; i < pointsToDraw.length - 1; i++) {
+            edges.push({ a: pointsToDraw[i], b: pointsToDraw[i + 1] });
+        }
+        if (isClosed) {
+            edges.push({ a: pointsToDraw[pointsToDraw.length - 1], b: pointsToDraw[0] });
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, LOGIC_SIZE, LOGIC_SIZE);
+
+        // --- 畫圖形的線條 ---
+        ctx.beginPath();
+        ctx.moveTo(pointsToDraw[0].x, pointsToDraw[0].y);
+        for (let i = 1; i < pointsToDraw.length; i++) {
+            ctx.lineTo(pointsToDraw[i].x, pointsToDraw[i].y);
+        }
+        if (isClosed) ctx.closePath();
+
+        // 外層陰影發光
+        ctx.shadowColor = currentColor;
+        ctx.shadowBlur = 20;
+        ctx.strokeStyle = currentColor;
+        ctx.lineWidth = LINE_WIDTH;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+        ctx.shadowBlur = 0; // 重置陰影
+
+        // 內側亮麵 (製造立體圓潤感)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = LINE_WIDTH - 15;
+        ctx.stroke();
+
+        // 核心高光
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = LINE_WIDTH - 30;
+        ctx.stroke();
+
+        // --- 畫小動物 ---
+        ctx.font = '70px Arial'; // 加大動物 emoji
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // 讓小動物有一點點跳躍的感覺
+        const bounceY = isDragging ? -5 : 0; 
+        
+        ctx.fillText(animal.emoji, animal.x, animal.y + bounceY);
+    }
+
+    
+    // 向量運算輔助
+    function distSq(p1, p2) {
+        return (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2;
+    }
+
+    // 取得點到線段的最短距離平方與最近點
+    function pointToSegmentSq(p, v, w) {
+        let l2 = distSq(v, w);
+        if (l2 == 0) return { d2: distSq(p, v), closest: v };
+        let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+        t = Math.max(0, Math.min(1, t));
+        let closest = { x: v.x + t * (w.x - v.x), y: v.y + t * (w.y - v.y) };
+        return { d2: distSq(p, closest), closest: closest };
+    }
+
+    // 將線段加粗變成膠囊體 (Capsule)，判斷圓形與膠囊體碰撞
+    // 使用 CCD (Continuous Collision Detection) 概念分段移動
+    function moveAnimal(startX, startY, targetX, targetY) {
+        const steps = 10; // 將一次移動切成 10 等分，防止鼠標瞬間移動過快穿牆
+        let currentX = startX;
+        let currentY = startY;
+        const dx = (targetX - startX) / steps;
+        const dy = (targetY - startY) / steps;
+        
+        // 碰撞半徑 = 動物半徑 + 線條寬度的一半
+        const collisionRadius = animal.r + LINE_WIDTH / 2;
+        const colRadSq = collisionRadius * collisionRadius;
+
+        let hasBumped = false; // 紀錄是否撞到牆壁
+
+        for (let i = 0; i < steps; i++) {
+            let nextX = currentX + dx;
+            let nextY = currentY + dy;
+            let collided = false;
+
+            // 檢查每一條邊界
+            for (let edge of edges) {
+                let info = pointToSegmentSq({x: nextX, y: nextY}, edge.a, edge.b);
+                
+                if (info.d2 < colRadSq) {
+                    collided = true;
+                    hasBumped = true; // 發生碰撞
+                    // 發生碰撞，計算推擠向量 (Normal)
+                    let d = Math.sqrt(info.d2);
+                    if (d === 0) continue; // 避免除以 0
+                    
+                    let nx = (nextX - info.closest.x) / d;
+                    let ny = (nextY - info.closest.y) / d;
+                    
+                    // 將座標推回邊界外
+                    let pushDist = collisionRadius - d + 0.1; // +0.1 給一點緩衝
+                    nextX += nx * pushDist;
+                    nextY += ny * pushDist;
+                }
+            }
+            
+            // 更新目前位置
+            currentX = nextX;
+            currentY = nextY;
+        }
+        
+        if (hasBumped) playBumpSound(); // 撞到牆壁時播放音效
+
+        return { x: currentX, y: currentY };
+    }
+
+    function getPointerPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        // 將畫面點擊位置映射到內部 800x800 的邏輯座標
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return {
+            x: (e.clientX - rect.left) * scaleX,
+            y: (e.clientY - rect.top) * scaleY
+        };
+    }
+
+    function setupEvents() {
+        canvas.addEventListener('pointerdown', async (e) => {
+            if (!audioInitialized) await initAudio(); // 確保使用者互動後開啟音效
+            if (hasAnswered) return;
+            const pos = getPointerPos(e);
+            
+            // 判斷是否點擊到小動物 (放寬點擊範圍)
+            const dx = pos.x - animal.x;
+            const dy = pos.y - animal.y;
+            if (dx * dx + dy * dy <= (animal.r * 3) * (animal.r * 3)) {
+                isDragging = true;
+                dragOffset = { x: dx, y: dy };
+                canvas.setPointerCapture(e.pointerId);
+                playGrabSound(); // 播放抓取音效
+                draw(); // 重繪以顯示跳躍效果
+            }
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            if (!isDragging || hasAnswered) return;
+            
+            const pos = getPointerPos(e);
+            let targetX = pos.x - dragOffset.x;
+            let targetY = pos.y - dragOffset.y;
+
+            // 使用嚴格物理移動計算新位置
+            const newPos = moveAnimal(animal.x, animal.y, targetX, targetY);
+            
+            // 限制在畫布範圍內 (不讓動物掉出螢幕邊緣)
+            animal.x = Math.max(animal.r, Math.min(LOGIC_SIZE - animal.r, newPos.x));
+            animal.y = Math.max(animal.r, Math.min(LOGIC_SIZE - animal.r, newPos.y));
+
+            draw();
+        });
+
+        canvas.addEventListener('pointerup', () => {
+            if (isDragging) playDropSound(); // 播放放下音效
+            isDragging = false;
+            draw(); // 放開時重繪，取消跳躍效果
+        });
+        
+        // 阻止預設行為
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+    }
+
+    async function checkAnswer(guessClosed) {
+        if (!audioInitialized) await initAudio();
+        if (hasAnswered) return;
+        hasAnswered = true;
+        isDragging = false;
+        draw(); // 確保動物放下
+
+        const modal = document.getElementById('resultModal');
+        const title = document.getElementById('modalTitle');
+        const desc = document.getElementById('modalDesc');
+        const icon = document.getElementById('modalIcon');
+
+        if (guessClosed === isClosed) {
+            // 答對
+            playWinSound(); // 播放答對音效
+            icon.innerHTML = '🎉';
+            title.innerHTML = '哇！答對了！太厲害了！';
+            title.className = 'text-3xl font-bold mb-4 tracking-wide text-[#FF9C96]';
+            desc.innerHTML = isClosed 
+                ? '你看！線條手牽手圍成一圈，<br>小動物出不去，這就是<b>「閉合圖形」</b>喔！💖' 
+                : '有找到破洞對不對！<br>小動物可以溜出來，這是<b>「不閉合圖形」</b>喔！✨';
+        } else {
+            // 答錯
+            playLoseSound(); // 播放答錯音效
+            icon.innerHTML = '🥺';
+            title.innerHTML = '哎呀，我們再仔細看看？';
+            title.className = 'text-3xl font-bold mb-4 tracking-wide text-[#A892C6]';
+            desc.innerHTML = isClosed 
+                ? '拖曳小動物看看，牠好像找不到出口耶？<br>線條都連在一起，所以是<b>「閉合圖形」</b>喔！🔒' 
+                : '咦？線條好像有一個地方斷掉了？<br>小動物可以從那裡逃走，所以是<b>「不閉合圖形」</b>喔！🔓';
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    async function nextLevel() {
+        if (!audioInitialized) await initAudio();
+        playBtnSound(); // 播放按鈕點擊音效
+        generateLevel();
+    }
+
+    // 啟動遊戲
+    window.onload = init;
+
+</script>
+</body>
+</html>
