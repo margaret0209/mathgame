@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>可愛認識角遊戲</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Varela+Round&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Varela Round', 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #FFD1DC 0%, #B5EAD7 50%, #C8A2C8 100%);
+            touch-action: manipulation; /* 防止雙擊縮放 */
+            overflow-x: hidden;
+        }
+        
+        /* 馬卡龍色系自訂義 */
+        .bg-macaron-pink { background-color: #FFB7B2; }
+        .bg-macaron-yellow { background-color: #FFDAC1; }
+        .bg-macaron-blue { background-color: #E2F0CB; }
+        .bg-macaron-purple { background-color: #C7CEEA; }
+        
+        .btn {
+            transition: all 0.2s ease;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+        }
+        .btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 rgba(0,0,0,0.1);
+        }
+        .canvas-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 8px solid #FFF;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        /* 下拉選單美化 */
+        select {
+            appearance: none;
+            background-color: white;
+            border: 4px solid #FFB7B2;
+            border-radius: 16px;
+            padding: 8px 32px 8px 16px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #5D4037;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23FFB7B2' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            outline: none;
+        }
+        select:focus {
+            border-color: #B5EAD7;
+        }
+
+        /* 隱藏捲動條確保平板橫向美觀 */
+        ::-webkit-scrollbar { display: none; }
+        
+        /* 橫向平板比例容器 */
+        .game-frame {
+            aspect-ratio: 16 / 9;
+            max-height: 95vh;
+        }
+        @media (orientation: portrait) {
+            .game-frame {
+                aspect-ratio: auto;
+                height: 100vh;
+            }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen m-0 p-4">
+
+    <!-- 遊戲外框 -->
+    <div id="app" class="game-frame w-full max-w-6xl bg-white/40 backdrop-blur-md rounded-[40px] shadow-2xl p-6 flex flex-col relative overflow-hidden text-[#5D4037]">
+        
+        <!-- 頂部導航 -->
+        <div id="top-bar" class="hidden flex justify-between items-center mb-4 z-10">
+            <button onclick="goToMenu()" class="bg-white px-6 py-3 rounded-full font-bold text-xl text-gray-600 btn hover:bg-gray-100 flex items-center gap-2">
+                <span>🏠</span> 回主選單
+            </button>
+            <div id="level-title" class="text-3xl font-bold bg-white/80 px-8 py-2 rounded-full shadow-sm">關卡</div>
+            <div class="w-32"></div> <!-- 平衡用 -->
+        </div>
+
+        <!-- 畫面：主選單 -->
+        <div id="screen-menu" class="flex-1 flex flex-col items-center justify-center relative z-10 h-full">
+            <div class="bg-white/90 p-10 rounded-[40px] shadow-xl text-center max-w-3xl w-full">
+                <h1 class="text-6xl font-bold mb-4 text-[#FF8B94]">✨ 可愛認識角 ✨</h1>
+                <p class="text-2xl text-gray-500 mb-10">請選擇一個關卡開始遊戲</p>
+                
+                <div class="flex flex-col md:flex-row gap-6 justify-center">
+                    <button onclick="startLevel(1)" class="flex-1 bg-macaron-pink btn rounded-3xl p-6 text-white font-bold text-3xl border-4 border-white">
+                        <div class="text-5xl mb-2">🔍</div>
+                        Level 1<br><span class="text-xl font-normal">角與不是角</span>
+                    </button>
+                    <button onclick="startLevel(2)" class="flex-1 bg-macaron-yellow btn rounded-3xl p-6 text-[#5D4037] font-bold text-3xl border-4 border-white">
+                        <div class="text-5xl mb-2">⚖️</div>
+                        Level 2<br><span class="text-xl font-normal">角的大小比較</span>
+                    </button>
+                    <button onclick="startLevel(3)" class="flex-1 bg-macaron-blue btn rounded-3xl p-6 text-[#5D4037] font-bold text-3xl border-4 border-white">
+                        <div class="text-5xl mb-2">📐</div>
+                        Level 3<br><span class="text-xl font-normal">角的種類</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 畫面：Level 1 -->
+        <div id="screen-level1" class="hidden flex-1 flex flex-col items-center justify-center z-10 w-full h-full">
+            <div class="flex-1 w-full flex flex-col items-center justify-center gap-8">
+                <h2 class="text-4xl font-bold bg-white/80 px-8 py-4 rounded-full">這是一個角嗎？</h2>
+                <div class="canvas-container relative">
+                    <canvas id="canvas-l1" width="600" height="400" class="max-w-full h-auto rounded-xl"></canvas>
+                    <div id="feedback-l1" class="absolute inset-0 flex items-center justify-center text-8xl opacity-0 pointer-events-none transition-opacity duration-300"></div>
+                </div>
+                <div class="flex gap-8 mt-4">
+                    <button onclick="checkAnswerL1(true)" class="bg-macaron-blue btn rounded-full px-12 py-6 text-3xl font-bold text-[#5D4037] border-4 border-white w-64">是</button>
+                    <button onclick="checkAnswerL1(false)" class="bg-macaron-pink btn rounded-full px-12 py-6 text-3xl font-bold text-white border-4 border-white w-64">不是</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 畫面：Level 2 -->
+        <div id="screen-level2" class="hidden flex-1 flex flex-col items-center z-10 w-full h-full">
+            
+            <div class="flex justify-center gap-4 w-full mb-6">
+                <!-- 角A -->
+                <div class="canvas-container flex flex-col items-center p-2">
+                    <div class="text-2xl font-bold mb-2 text-[#FF8B94]">角 a</div>
+                    <canvas id="canvas-l2-a" width="250" height="250" class="rounded-lg"></canvas>
+                </div>
+                <!-- 角B -->
+                <div class="canvas-container flex flex-col items-center p-2">
+                    <div class="text-2xl font-bold mb-2 text-[#FFb7b2]">角 b</div>
+                    <canvas id="canvas-l2-b" width="250" height="250" class="rounded-lg"></canvas>
+                </div>
+                <!-- 角C -->
+                <div class="canvas-container flex flex-col items-center p-2">
+                    <div class="text-2xl font-bold mb-2 text-[#FFDAC1]">角 c</div>
+                    <canvas id="canvas-l2-c" width="250" height="250" class="rounded-lg"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white/90 rounded-3xl p-6 shadow-lg w-full max-w-4xl flex flex-col gap-6 relative">
+                <div id="feedback-l2" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-8xl opacity-0 pointer-events-none transition-opacity duration-300 z-50"></div>
+                
+                <!-- 問題 1: 排列 -->
+                <div class="bg-gray-50 rounded-2xl p-4 flex flex-col items-center gap-4">
+                    <h3 id="l2-q1-text" class="text-2xl font-bold">由大至小排列角的大小：</h3>
+                    <div class="flex items-center gap-4 text-3xl font-bold">
+                        <select id="l2-s1">
+                            <option value="">選擇</option>
+                            <option value="a">角 a</option>
+                            <option value="b">角 b</option>
+                            <option value="c">角 c</option>
+                        </select>
+                        <span id="l2-sign1">></span>
+                        <select id="l2-s2">
+                            <option value="">選擇</option>
+                            <option value="a">角 a</option>
+                            <option value="b">角 b</option>
+                            <option value="c">角 c</option>
+                        </select>
+                        <span id="l2-sign2">></span>
+                        <select id="l2-s3">
+                            <option value="">選擇</option>
+                            <option value="a">角 a</option>
+                            <option value="b">角 b</option>
+                            <option value="c">角 c</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 問題 2: 比較 -->
+                <div class="bg-gray-50 rounded-2xl p-4 flex flex-col items-center gap-4">
+                    <div class="flex items-center gap-4 text-2xl font-bold">
+                        <span id="l2-q2-text">角 a 比 角 b</span>
+                        <select id="l2-s4">
+                            <option value="">選擇</option>
+                            <option value="大">大</option>
+                            <option value="小">小</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center justify-center mt-2 gap-2">
+                    <div id="l2-warning" class="text-[#FF8B94] font-bold text-xl h-6 opacity-0 transition-opacity">請回答所有問題喔！</div>
+                    <button onclick="checkAnswerL2()" class="bg-macaron-yellow btn rounded-full px-16 py-4 text-3xl font-bold text-[#5D4037] border-4 border-white">確定</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 畫面：Level 3 -->
+        <div id="screen-level3" class="hidden flex-1 flex flex-col items-center justify-center z-10 w-full h-full">
+            <div class="flex-1 w-full flex flex-col items-center justify-center gap-8">
+                <h2 class="text-4xl font-bold bg-white/80 px-8 py-4 rounded-full">這是什麼角？</h2>
+                <div class="canvas-container relative">
+                    <canvas id="canvas-l3" width="600" height="400" class="max-w-full h-auto rounded-xl"></canvas>
+                    <div id="feedback-l3" class="absolute inset-0 flex items-center justify-center text-8xl opacity-0 pointer-events-none transition-opacity duration-300"></div>
+                </div>
+                <div class="flex gap-6 mt-4">
+                    <button onclick="checkAnswerL3('直角')" class="bg-macaron-blue btn rounded-full px-10 py-5 text-3xl font-bold text-[#5D4037] border-4 border-white">直角</button>
+                    <button onclick="checkAnswerL3('銳角')" class="bg-macaron-pink btn rounded-full px-10 py-5 text-3xl font-bold text-white border-4 border-white">銳角</button>
+                    <button onclick="checkAnswerL3('鈍角')" class="bg-macaron-yellow btn rounded-full px-10 py-5 text-3xl font-bold text-[#5D4037] border-4 border-white">鈍角</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+/** ==============================
+ * 音效系統 (Web Audio API)
+ * ============================== */
+let audioCtx = null;
+
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+function playTone(freq, type, duration, vol=0.1) {
+    if(!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+}
+
+function playClick() {
+    initAudio();
+    playTone(600, 'sine', 0.1, 0.05);
+}
+
+function playSuccess() {
+    initAudio();
+    playTone(523.25, 'sine', 0.1, 0.1); // C5
+    setTimeout(() => playTone(659.25, 'sine', 0.1, 0.1), 100); // E5
+    setTimeout(() => playTone(783.99, 'sine', 0.2, 0.1), 200); // G5
+}
+
+function playFail() {
+    initAudio();
+    playTone(300, 'sawtooth', 0.2, 0.1);
+    setTimeout(() => playTone(250, 'sawtooth', 0.3, 0.1), 200);
+}
+
+// 監聽所有按鈕點擊事件，加入基礎音效
+document.addEventListener('click', (e) => {
+    if(e.target.closest('button') || e.target.closest('select')) {
+        playClick();
+    }
+});
+
+
+/** ==============================
+ * 畫面切換與全域變數
+ * ============================== */
+const screens = ['menu', 'level1', 'level2', 'level3'];
+
+function showScreen(screenName) {
+    screens.forEach(s => {
+        document.getElementById(`screen-${s}`).classList.add('hidden');
+    });
+    document.getElementById(`screen-${screenName}`).classList.remove('hidden');
+    
+    const topBar = document.getElementById('top-bar');
+    if (screenName === 'menu') {
+        topBar.classList.add('hidden');
+    } else {
+        topBar.classList.remove('hidden');
+    }
+}
+
+function goToMenu() {
+    showScreen('menu');
+}
+
+function startLevel(level) {
+    initAudio(); // 確保音效已解鎖
+    document.getElementById('level-title').innerText = `Level ${level}`;
+    showScreen(`level${level}`);
+    
+    if (level === 1) generateL1();
+    if (level === 2) generateL2();
+    if (level === 3) generateL3();
+}
+
+function showFeedback(elementId, isCorrect, callback) {
+    const el = document.getElementById(elementId);
+    el.innerHTML = isCorrect ? '✨⭕✨' : '💦❌💦';
+    el.classList.remove('opacity-0');
+    
+    if (isCorrect) playSuccess();
+    else playFail();
+
+    setTimeout(() => {
+        el.classList.add('opacity-0');
+        if (callback) setTimeout(callback, 300);
+    }, 1500);
+}
+
+// 輔助函式：取得隨機整數 [min, max]
+function rand(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// 輔助函式：畫線
+function drawLine(ctx, x1, y1, length, angleRad, isStraight) {
+    const x2 = x1 + Math.cos(angleRad) * length;
+    const y2 = y1 + Math.sin(angleRad) * length;
+    
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    
+    if (isStraight) {
+        ctx.lineTo(x2, y2);
+    } else {
+        // 畫曲線 (使用貝茲曲線)
+        // 計算中點，並加上隨機的垂直偏移來製作彎曲感
+        const cx = (x1 + x2) / 2;
+        const cy = (y1 + y2) / 2;
+        const normalX = -Math.sin(angleRad);
+        const normalY = Math.cos(angleRad);
+        
+        // 決定彎曲方向和程度
+        const bend = length * (Math.random() > 0.5 ? 0.3 : -0.3); 
+        const cp1x = cx + normalX * bend;
+        const cp1y = cy + normalY * bend;
+        
+        ctx.quadraticCurveTo(cp1x, cp1y, x2, y2);
+    }
+    
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#5D4037';
+    ctx.stroke();
+}
+
+
+/** ==============================
+ * Level 1 邏輯：角與不是角
+ * ============================== */
+let l1_isAngle = true;
+
+function generateL1() {
+    const canvas = document.getElementById('canvas-l1');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 隨機決定是否為角
+    l1_isAngle = Math.random() > 0.5;
+    
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2 + 30; // 稍微往下移留空間
+    const length = 150;
+    
+    // 基礎角度與展開角度
+    const baseAngle = rand(0, 360) * Math.PI / 180;
+    const spreadAngle = rand(30, 150) * Math.PI / 180;
+    const angle1 = baseAngle;
+    const angle2 = baseAngle + spreadAngle;
+    
+    let line1Straight = true;
+    let line2Straight = true;
+    
+    if (!l1_isAngle) {
+        // 不是角：1直線1曲線 或 2曲線
+        const type = rand(1, 2);
+        if (type === 1) {
+            line1Straight = false;
+            line2Straight = true;
+        } else {
+            line1Straight = false;
+            line2Straight = false;
+        }
+    }
+    
+    // 畫兩條線交於一點
+    drawLine(ctx, cx, cy, length, angle1, line1Straight);
+    drawLine(ctx, cx, cy, length, angle2, line2Straight);
+    
+    // 畫頂點
+    ctx.beginPath();
+    ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#FF8B94';
+    ctx.fill();
+}
+
+function checkAnswerL1(userAns) {
+    const isCorrect = (userAns === l1_isAngle);
+    showFeedback('feedback-l1', isCorrect, () => {
+        if (isCorrect) generateL1(); // 答對才換下一題
+    });
+}
+
+
+/** ==============================
+ * Level 2 邏輯：角的大小比較
+ * ============================== */
+let l2_angles = []; // {id: 'a', deg: 30, color: '#...'}
+let l2_orderMode = '>'; // '>' or '<'
+let l2_comparePair = []; // [0, 1] 等
+
+function drawAngleArc(ctx, cx, cy, deg, color, length=90) {
+    // 置中畫角
+    const startAngle = -deg/2 * Math.PI/180;
+    const endAngle = deg/2 * Math.PI/180;
+    
+    // 畫扇形填色
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, length * 0.5, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    
+    // 畫邊線
+    drawLine(ctx, cx, cy, length, startAngle, true);
+    drawLine(ctx, cx, cy, length, endAngle, true);
+    
+    // 畫頂點
+    ctx.beginPath();
+    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#5D4037';
+    ctx.fill();
+}
+
+function generateL2() {
+    // 產生3個明顯不同的角度 (例如 銳角, 偏直角, 鈍角)
+    const degs = [rand(20, 60), rand(75, 110), rand(120, 160)];
+    // 打亂
+    degs.sort(() => Math.random() - 0.5);
+    
+    const colors = ['#FFB7B2', '#B5EAD7', '#FFDAC1']; // 柔和紅, 綠, 橘
+    
+    l2_angles = [
+        { id: 'a', deg: degs[0], color: colors[0] },
+        { id: 'b', deg: degs[1], color: colors[1] },
+        { id: 'c', deg: degs[2], color: colors[2] }
+    ];
+    
+    // 畫畫
+    ['a', 'b', 'c'].forEach((id, idx) => {
+        const canvas = document.getElementById(`canvas-l2-${id}`);
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // 移到中間畫
+        ctx.save();
+        ctx.translate(canvas.width/2 - 20, canvas.height/2); // 稍微往左靠，因為角向右開
+        drawAngleArc(ctx, 0, 0, l2_angles[idx].deg, l2_angles[idx].color);
+        ctx.restore();
+    });
+    
+    // 設定問題 1: 排序方向
+    l2_orderMode = Math.random() > 0.5 ? '>' : '<';
+    document.getElementById('l2-q1-text').innerText = l2_orderMode === '>' ? '由大至小排列角的大小：' : '由小至大排列角的大小：';
+    document.getElementById('l2-sign1').innerText = l2_orderMode;
+    document.getElementById('l2-sign2').innerText = l2_orderMode;
+    
+    // 設定問題 2: 隨機比較兩個角
+    const ids = ['a', 'b', 'c'];
+    ids.sort(() => Math.random() - 0.5);
+    l2_comparePair = [ids[0], ids[1]];
+    document.getElementById('l2-q2-text').innerText = `角 ${l2_comparePair[0]} 比 角 ${l2_comparePair[1]}`;
+    
+    // 重設選單
+    document.getElementById('l2-s1').value = '';
+    document.getElementById('l2-s2').value = '';
+    document.getElementById('l2-s3').value = '';
+    document.getElementById('l2-s4').value = '';
+}
+
+function checkAnswerL2() {
+    const s1 = document.getElementById('l2-s1').value;
+    const s2 = document.getElementById('l2-s2').value;
+    const s3 = document.getElementById('l2-s3').value;
+    const s4 = document.getElementById('l2-s4').value;
+    
+    if (!s1 || !s2 || !s3 || !s4) {
+        playFail();
+        const warning = document.getElementById('l2-warning');
+        warning.classList.remove('opacity-0');
+        setTimeout(() => warning.classList.add('opacity-0'), 2000);
+        return;
+    }
+    
+    // 檢查 Q1
+    let sortedAngles = [...l2_angles].sort((a, b) => b.deg - a.deg); // 預設大到小
+    if (l2_orderMode === '<') {
+        sortedAngles.reverse(); // 小到大
+    }
+    const q1Correct = (s1 === sortedAngles[0].id && s2 === sortedAngles[1].id && s3 === sortedAngles[2].id);
+    
+    // 檢查 Q2
+    const a1 = l2_angles.find(a => a.id === l2_comparePair[0]);
+    const a2 = l2_angles.find(a => a.id === l2_comparePair[1]);
+    const expectedSize = (a1.deg > a2.deg) ? '大' : '小';
+    const q2Correct = (s4 === expectedSize);
+    
+    const isCorrect = q1Correct && q2Correct;
+    
+    showFeedback('feedback-l2', isCorrect, () => {
+        if (isCorrect) generateL2();
+    });
+}
+
+
+/** ==============================
+ * Level 3 邏輯：角的種類
+ * ============================== */
+let l3_type = ''; // '銳角', '直角', '鈍角'
+
+function generateL3() {
+    const canvas = document.getElementById('canvas-l3');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    const types = ['銳角', '直角', '鈍角'];
+    l3_type = types[rand(0, 2)];
+    
+    let deg = 90;
+    if (l3_type === '銳角') deg = rand(30, 80);
+    if (l3_type === '鈍角') deg = rand(100, 160);
+    
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2 + 40;
+    const length = 160;
+    
+    // 隨機旋轉
+    const rotation = rand(0, 360) * Math.PI / 180;
+    
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rotation);
+    
+    // 畫顏色區塊
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, 60, 0, deg * Math.PI/180);
+    ctx.closePath();
+    
+    // 根據種類選色
+    if(l3_type === '銳角') ctx.fillStyle = '#FFB7B2'; // Pink
+    if(l3_type === '直角') ctx.fillStyle = '#B5EAD7'; // Blue
+    if(l3_type === '鈍角') ctx.fillStyle = '#FFDAC1'; // Yellow
+    ctx.fill();
+    
+    // 如果是直角，畫直角記號 (方形)
+    if (l3_type === '直角') {
+        const rectSize = 30;
+        ctx.beginPath();
+        ctx.moveTo(rectSize, 0);
+        ctx.lineTo(rectSize, rectSize);
+        ctx.lineTo(0, rectSize);
+        ctx.strokeStyle = '#5D4037';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+    }
+    
+    // 畫兩條邊
+    drawLine(ctx, 0, 0, length, 0, true);
+    drawLine(ctx, 0, 0, length, deg * Math.PI/180, true);
+    
+    // 畫頂點
+    ctx.beginPath();
+    ctx.arc(0, 0, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#5D4037';
+    ctx.fill();
+    
+    ctx.restore();
+}
+
+function checkAnswerL3(userAns) {
+    const isCorrect = (userAns === l3_type);
+    showFeedback('feedback-l3', isCorrect, () => {
+        if(isCorrect) generateL3();
+    });
+}
+
+// 預設啟動
+showScreen('menu');
+</script>
+</body>
+</html>
