@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>快樂幾何：平行線大挑戰</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Kosugi+Maru&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Kosugi Maru', 'Fredoka One', system-ui, -apple-system, sans-serif;
+      background-color: #F0F4F8;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    /* 馬卡龍主題色 */
+    .bg-macaron-pink { background-color: #FFDEE9; }
+    .bg-macaron-blue { background-color: #E0F2FE; }
+    .bg-macaron-green { background-color: #E6F4EA; }
+    .bg-macaron-yellow { background-color: #FEF3C7; }
+    .bg-macaron-purple { background-color: #FAE8FF; }
+    
+    .border-macaron-pink { border-color: #FBCFE8; }
+    .border-macaron-blue { border-color: #BAE6FD; }
+    .border-macaron-green { border-color: #A7F3D0; }
+    .border-macaron-yellow { border-color: #FDE68A; }
+    
+    .text-macaron-darkblue { color: #1E3A8A; }
+    .text-macaron-darkpink { color: #9D174D; }
+
+    /* 適合橫向平板的寬高比 */
+    .tablet-canvas-container {
+      aspect-ratio: 16 / 9;
+      max-height: 70vh;
+    }
+    
+    /* 可愛果凍彈跳動畫 */
+    @keyframes jelly {
+      0%, 100% { transform: scale(1, 1); }
+      25% { transform: scale(0.9, 1.1); }
+      50% { transform: scale(1.1, 0.9); }
+      75% { transform: scale(0.95, 1.05); }
+    }
+    .jelly-hover:hover {
+      animation: jelly 0.6s ease-in-out;
+    }
+    
+    /* 煙火/慶祝粒子特效 */
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
+
+  <!-- 整個遊戲容器 (適應橫向平板) -->
+  <div class="w-full max-w-5xl bg-white rounded-3xl shadow-2xl border-8 border-macaron-blue flex flex-col overflow-hidden relative">
+    
+    <!-- 頂部導覽列與分數 -->
+    <div class="bg-macaron-blue px-6 py-4 flex justify-between items-center border-b-4 border-macaron-blue">
+      <!-- 標題 -->
+      <div class="flex items-center space-x-3">
+        <span class="text-3xl">📐</span>
+        <h1 class="text-2xl md:text-3xl font-extrabold text-blue-900 tracking-wider">平行線挑戰賽</h1>
+      </div>
+      
+      <!-- 關卡切換 -->
+      <div class="flex bg-white rounded-full p-1 shadow-inner border-2 border-sky-200">
+        <button id="btn-lv1" onclick="switchLevel(1)" class="px-5 py-2 rounded-full font-bold transition-all duration-300 bg-amber-400 text-white shadow">
+          Level 1
+        </button>
+        <button id="btn-lv2" onclick="switchLevel(2)" class="px-5 py-2 rounded-full font-bold transition-all duration-300 text-gray-500 hover:text-gray-800">
+          Level 2
+        </button>
+      </div>
+
+      <!-- 分數統計 -->
+      <div class="flex items-center space-x-4 bg-white px-4 py-1.5 rounded-full border-2 border-sky-200">
+        <div class="text-emerald-600 font-bold">
+          <i class="fa-solid fa-circle-check mr-1"></i>答對: <span id="score-correct">0</span>
+        </div>
+        <div class="text-rose-500 font-bold">
+          <i class="fa-solid fa-circle-xmark mr-1"></i>答錯: <span id="score-wrong">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主畫面區域 -->
+    <div class="flex flex-col md:flex-row flex-1 p-6 gap-6 bg-amber-50/30">
+      
+      <!-- 左側/上方：繪圖區 (畫布) -->
+      <div class="flex-1 flex flex-col relative bg-white rounded-2xl border-4 border-dashed border-sky-200 p-2 shadow-inner">
+        <!-- 畫布容器 -->
+        <div class="tablet-canvas-container w-full bg-slate-50 rounded-xl relative overflow-hidden flex-1">
+          <canvas id="gameCanvas" class="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing"></canvas>
+          
+          <!-- 畫布上浮動的關卡指示與提示文字 -->
+          <div class="absolute top-3 left-3 bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg shadow-sm border border-slate-100 flex items-center space-x-2 pointer-events-none">
+            <span class="inline-block w-3 h-3 rounded-full bg-pink-400 animate-ping"></span>
+            <span id="level-instruction" class="text-sm font-bold text-slate-700">正在加載...</span>
+          </div>
+
+          <!-- 拖曳提示（僅在延長輔助線開啟時顯示） -->
+          <div id="drag-hint" class="absolute bottom-3 left-3 bg-indigo-600/90 text-white px-3 py-1.5 rounded-lg shadow-md flex items-center space-x-2 pointer-events-none hidden transition-all duration-300">
+            <i class="fa-solid fa-arrows-up-down-left-right animate-bounce"></i>
+            <span class="text-xs font-bold">按住並拖曳畫面，可以移動去尋找交點喔！</span>
+          </div>
+
+          <!-- 重設畫面視野按鈕 -->
+          <button id="btn-reset-view" onclick="resetView()" class="absolute bottom-3 right-3 p-3 bg-white/90 hover:bg-white text-slate-700 rounded-full shadow-md border border-slate-200 flex items-center justify-center jelly-hover hidden" title="重設畫面位置">
+            <i class="fa-solid fa-arrows-to-dot text-lg"></i>
+          </button>
+
+          <!-- 特效容器 -->
+          <div id="effect-container" class="absolute inset-0 pointer-events-none"></div>
+        </div>
+      </div>
+
+      <!-- 右側/下方：控制操作面板 -->
+      <div class="w-full md:w-80 flex flex-col justify-between bg-white rounded-2xl border-4 border-macaron-pink p-5 shadow-md">
+        
+        <!-- 關卡說明與指引 -->
+        <div class="space-y-4">
+          <div class="bg-macaron-pink/40 p-4 rounded-xl border border-pink-200">
+            <h3 class="font-extrabold text-pink-900 mb-1 flex items-center">
+              <i class="fa-solid fa-lightbulb mr-2 text-pink-500"></i>任務指南
+            </h3>
+            <p id="level-desc" class="text-sm text-pink-950 leading-relaxed">
+              觀察畫布上的兩條直線。動動腦，它們如果無限延長，會不會相交在一起呢？
+            </p>
+          </div>
+
+          <!-- 即時狀態回饋 -->
+          <div id="feedback-box" class="min-h-[80px] flex items-center justify-center p-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 transition-all duration-300">
+            <div class="text-center">
+              <p id="feedback-text" class="text-sm font-bold text-slate-500">請觀察線條，準備作答！</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 互動控制按鈕區 -->
+        <div class="mt-6 space-y-3">
+          
+          <!-- Level 1 專用：提示與選擇按鈕 -->
+          <div id="ctrl-lv1" class="space-y-3">
+            <button onclick="triggerExtend()" class="w-full py-3 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-xl font-bold transition-all duration-200 flex items-center justify-center space-x-2 border-2 border-indigo-200 jelly-hover shadow-sm">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              <span>魔法延長線 (提示)</span>
+            </button>
+            
+            <div class="grid grid-cols-2 gap-3">
+              <button onclick="submitAnswer(true)" class="py-4 bg-emerald-400 hover:bg-emerald-500 text-white rounded-xl font-extrabold text-lg transition-all duration-200 shadow-md border-b-4 border-emerald-600 active:border-b-0 active:translate-y-1 flex flex-col items-center justify-center">
+                <span class="text-2xl">🤝</span>
+                <span>是平行線</span>
+              </button>
+              <button onclick="submitAnswer(false)" class="py-4 bg-rose-400 hover:bg-rose-500 text-white rounded-xl font-extrabold text-lg transition-all duration-200 shadow-md border-b-4 border-rose-600 active:border-b-0 active:translate-y-1 flex flex-col items-center justify-center">
+                <span class="text-2xl">❌</span>
+                <span>不是平行線</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Level 2 專用：說明、提示與確認按鈕 -->
+          <div id="ctrl-lv2" class="space-y-3 hidden">
+            <!-- Level 2 的提示按鈕 -->
+            <button onclick="triggerExtend()" class="w-full py-3 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-xl font-bold transition-all duration-200 flex items-center justify-center space-x-2 border-2 border-indigo-200 jelly-hover shadow-sm">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              <span>魔法延長線 (提示)</span>
+            </button>
+            <div class="p-3 bg-amber-50 rounded-lg text-xs text-amber-800 border border-amber-200">
+              <i class="fa-solid fa-mouse-pointer mr-1"></i>提示：直接在左邊畫布上<strong>點選兩條</strong>你認為是平行的線段。選取後會變色喔！
+            </div>
+            <button id="btn-submit-lv2" onclick="checkLevel2Answer()" disabled class="w-full py-4 bg-slate-300 text-slate-500 rounded-xl font-extrabold text-lg transition-all duration-200 shadow-sm flex items-center justify-center space-x-2 cursor-not-allowed">
+              <i class="fa-solid fa-circle-check"></i>
+              <span>確定選好了</span>
+            </button>
+          </div>
+
+          <!-- 動作控制按鈕（重答與下一題） -->
+          <div id="action-buttons" class="space-y-3">
+            <!-- Level 2 答錯時顯示的「再試一次」按鈕 -->
+            <button id="btn-retry-lv2" onclick="retryLevel2()" class="w-full py-3.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-extrabold text-lg transition-all duration-200 shadow-md border-b-4 border-indigo-700 active:border-b-0 active:translate-y-0.5 flex items-center justify-center space-x-2 hidden jelly-hover">
+              <i class="fa-solid fa-rotate-left"></i>
+              <span>再試一次</span>
+            </button>
+
+            <!-- 下一題按鈕 -->
+            <button id="btn-next" onclick="nextQuestion()" class="w-full py-3 bg-amber-400 hover:bg-amber-500 text-white rounded-xl font-extrabold text-lg transition-all duration-200 shadow-md border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 flex items-center justify-center space-x-2">
+              <span>下一題</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    
+    <!-- 頁尾 -->
+    <div class="bg-slate-100 px-6 py-2 flex justify-between items-center text-xs text-slate-500 border-t border-slate-200">
+      <span>💡 平行線定義：在同一個平面上，往兩端無限延長也絕對不會相交的兩條直線。</span>
+      <span>靜音模式 <input type="checkbox" id="mute-toggle" class="align-middle rounded"></span>
+    </div>
+  </div>
+
+  <!-- 成功答對/慶祝全螢幕覆蓋特效 -->
+  <div id="success-overlay" class="fixed inset-0 bg-emerald-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white p-8 rounded-3xl shadow-2xl border-8 border-emerald-200 text-center max-w-sm mx-4 transform scale-95 transition-transform duration-300">
+      <div class="text-6xl mb-4 animate-bounce">🎉</div>
+      <h2 class="text-3xl font-extrabold text-emerald-800 mb-2">太厲害了！</h2>
+      <p class="text-slate-600 mb-6 font-bold">你有一雙幾何之眼！完全正確！</p>
+      <button onclick="closeSuccessOverlay()" class="px-8 py-3 bg-emerald-400 hover:bg-emerald-500 text-white font-extrabold rounded-full shadow-lg border-b-4 border-emerald-600 active:translate-y-0.5 active:border-b-0 transition-all duration-150">
+        挑戰下一題
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // --- 遊戲狀態與變數 ---
+    let currentLevel = 1;
+    let scoreCorrect = 0;
+    let scoreWrong = 0;
+    
+    // Canvas 相關
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 拖曳畫面（Pan）位移狀態
+    let offsetX = 0;
+    let offsetY = 0;
+    let isDragging = false;
+    let startDragX = 0;
+    let startDragY = 0;
+    
+    // 儲存當前關卡的線段資料
+    let lines = [];
+    let isParallelDataset = false; // Level 1 用來標記答案是否為平行
+    let isExtended = false;        // 是否處於延長狀態
+    let level1Answered = false;    // 關卡一是否已作答
+    let level2Answered = false;    // 關卡二是否已作答
+    let selectedLineIds = [];      // 關卡二已被點選的線段 ID
+    let parallelPairIds = [];      // 關卡二真正平行的線段 ID 對
+    
+    // 音效合成器 (Web Audio API)
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new AudioContext();
+      }
+    }
+
+    // 播放音效函數
+    function playSound(type) {
+      if (document.getElementById('mute-toggle').checked) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'click') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
+        gainNode.gain.setValueAtTime(0.15, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === 'select') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(350, now);
+        osc.frequency.exponentialRampToValueAtTime(700, now + 0.1);
+        gainNode.gain.setValueAtTime(0.2, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      } else if (type === 'magic') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.linearRampToValueAtTime(1000, now + 0.4);
+        gainNode.gain.setValueAtTime(0.1, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.start(now);
+        osc.stop(now + 0.4);
+      } else if (type === 'correct') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+        gainNode.gain.setValueAtTime(0.2, now);
+        gainNode.gain.setValueAtTime(0.2, now + 0.1);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.start(now);
+        osc.stop(now + 0.4);
+      } else if (type === 'wrong') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now); // A3
+        osc.frequency.linearRampToValueAtTime(110, now + 0.3);
+        gainNode.gain.setValueAtTime(0.15, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      }
+    }
+
+    // --- 畫布大小與自適應處理 ---
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      drawScene();
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('load', () => {
+      resizeCanvas();
+      setupLevel();
+    });
+
+    // --- 幾何計算輔助函式 ---
+    
+    // 計算兩條無限直線的交點
+    function getLinesIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+      const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+      if (Math.abs(denom) < 0.0001) return null;
+      
+      const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+      const x = x1 + ua * (x2 - x1);
+      const y = y1 + ua * (y2 - y1);
+      return { x, y };
+    }
+
+    // 計算點到線段的投影距離
+    function getDistanceToSegment(px, py, x1, y1, x2, y2) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const lenSq = dx * dx + dy * dy;
+      if (lenSq === 0) return Math.hypot(px - x1, py - y1);
+      
+      let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+      t = Math.max(0, Math.min(1, t));
+      
+      const projX = x1 + t * dx;
+      const projY = y1 + t * dy;
+      return Math.hypot(px - projX, py - projY);
+    }
+
+    // 重設畫面視野 (將偏移量歸零)
+    function resetView() {
+      playSound('click');
+      offsetX = 0;
+      offsetY = 0;
+      drawScene();
+    }
+
+    // 控制「拖曳提示」與「重設視角按鈕」的顯示狀態
+    function updateHUDVisibility() {
+      const dragHint = document.getElementById('drag-hint');
+      const resetBtn = document.getElementById('btn-reset-view');
+      
+      if (isExtended) {
+        dragHint.classList.remove('hidden');
+        resetBtn.classList.remove('hidden');
+      } else {
+        dragHint.classList.add('hidden');
+        resetBtn.classList.add('hidden');
+      }
+    }
+
+    // --- 關卡生成邏輯 ---
+
+    // 切換關卡
+    function switchLevel(level) {
+      playSound('click');
+      currentLevel = level;
+      
+      const btn1 = document.getElementById('btn-lv1');
+      const btn2 = document.getElementById('btn-lv2');
+      const ctrl1 = document.getElementById('ctrl-lv1');
+      const ctrl2 = document.getElementById('ctrl-lv2');
+      
+      if (level === 1) {
+        btn1.className = "px-5 py-2 rounded-full font-bold transition-all duration-300 bg-amber-400 text-white shadow";
+        btn2.className = "px-5 py-2 rounded-full font-bold transition-all duration-300 text-gray-500 hover:text-gray-800";
+        ctrl1.classList.remove('hidden');
+        ctrl2.classList.add('hidden');
+      } else {
+        btn2.className = "px-5 py-2 rounded-full font-bold transition-all duration-300 bg-amber-400 text-white shadow";
+        btn1.className = "px-5 py-2 rounded-full font-bold transition-all duration-300 text-gray-500 hover:text-gray-800";
+        ctrl2.classList.remove('hidden');
+        ctrl1.classList.add('hidden');
+      }
+      
+      setupLevel();
+    }
+
+    // 初始化/重置當前關卡
+    function setupLevel() {
+      const rect = canvas.getBoundingClientRect();
+      const W = rect.width;
+      const H = rect.height;
+      if (W === 0 || H === 0) {
+        setTimeout(setupLevel, 100);
+        return;
+      }
+
+      // 重整視角與參數
+      offsetX = 0;
+      offsetY = 0;
+      lines = [];
+      selectedLineIds = [];
+      isExtended = false;
+      level1Answered = false;
+      level2Answered = false;
+      
+      document.getElementById('btn-next').classList.add('hidden');
+      document.getElementById('btn-retry-lv2').classList.add('hidden');
+      updateLV2SubmitButton();
+      updateHUDVisibility();
+
+      if (currentLevel === 1) {
+        document.getElementById('level-instruction').innerText = "關卡 1：它們互相平行嗎？";
+        document.getElementById('level-desc').innerText = "仔細觀察畫面中的兩條線。按「魔法延長線」可以展開輔助線，可以拖曳畫面去尋找交點喔！";
+        document.getElementById('feedback-text').className = "text-sm font-bold text-slate-500";
+        document.getElementById('feedback-text').innerText = "請觀察線條，準備作答！";
+        document.getElementById('feedback-box').className = "min-h-[80px] flex items-center justify-center p-3 rounded-xl border border-dashed border-slate-200 bg-slate-50";
+
+        // 決定是否平行 (50% 機率)
+        isParallelDataset = Math.random() < 0.5;
+        
+        // 生成第一條基底線，角度約在 -15 ~ 15 度之間
+        const angle = (Math.random() * 30 - 15) * Math.PI / 180;
+        const len = W * 0.4;
+        
+        // 第一條線中點
+        const cx1 = W * 0.5;
+        const cy1 = H * 0.35;
+        const line1 = {
+          id: 1,
+          x1: cx1 - Math.cos(angle) * (len/2),
+          y1: cy1 - Math.sin(angle) * (len/2),
+          x2: cx1 + Math.cos(angle) * (len/2),
+          y2: cy1 + Math.sin(angle) * (len/2),
+          color: '#FF6B8B' // 可愛粉紅
+        };
+        
+        // 第二條線
+        let line2;
+        const cy2 = H * 0.65;
+        if (isParallelDataset) {
+          line2 = {
+            id: 2,
+            x1: cx1 - Math.cos(angle) * (len/2) + (Math.random() * 40 - 20),
+            y1: cy2 - Math.sin(angle) * (len/2),
+            x2: cx1 + Math.cos(angle) * (len/2) + (Math.random() * 40 - 20),
+            y2: cy2 + Math.sin(angle) * (len/2),
+            color: '#4D96FF' // 天藍
+          };
+        } else {
+          // 不平行：故意生成只有 1.5 ~ 4 度的微小夾角，這會讓交點落在畫布外面很遠的地方，需要拖曳尋找！
+          let angleDiff = (1.5 + Math.random() * 2.5) * (Math.random() < 0.5 ? 1 : -1) * Math.PI / 180;
+          const angle2 = angle + angleDiff;
+          line2 = {
+            id: 2,
+            x1: cx1 - Math.cos(angle2) * (len/2) + (Math.random() * 40 - 20),
+            y1: cy2 - Math.sin(angle2) * (len/2),
+            x2: cx1 + Math.cos(angle2) * (len/2) + (Math.random() * 40 - 20),
+            y2: cy2 + Math.sin(angle2) * (len/2),
+            color: '#4D96FF'
+          };
+        }
+        
+        lines.push(line1, line2);
+
+      } else {
+        // Level 2
+        document.getElementById('level-instruction').innerText = "關卡 2：找出隱藏的平行線！";
+        document.getElementById('level-desc').innerText = "畫面上散落著數條線，其中只有「一對」是平行的。你可以使用「魔法延長線」來幫助你比對哪兩條是不相交的！";
+        document.getElementById('feedback-text').className = "text-sm font-bold text-slate-500";
+        document.getElementById('feedback-text').innerText = "請點選畫布上的任意兩條線段！";
+        document.getElementById('feedback-box').className = "min-h-[80px] flex items-center justify-center p-3 rounded-xl border border-dashed border-slate-200 bg-slate-50";
+
+        // 隨機生成 3 ~ 6 條線
+        const lineCount = Math.floor(Math.random() * 3) + 3; // 3 to 5 條比較不擠
+        
+        // 主平行線的斜率
+        const baseAngle = (Math.random() * 40 - 20) * Math.PI / 180;
+        const len = W * 0.25;
+
+        const py1 = H * 0.25 + Math.random() * (H * 0.1);
+        const py2 = H * 0.65 + Math.random() * (H * 0.1);
+        
+        const px1 = W * 0.25 + Math.random() * (W * 0.1);
+        const px2 = W * 0.45 + Math.random() * (W * 0.1);
+
+        lines.push({
+          id: 1,
+          x1: px1 - Math.cos(baseAngle) * (len/2),
+          y1: py1 - Math.sin(baseAngle) * (len/2),
+          x2: px1 + Math.cos(baseAngle) * (len/2),
+          y2: py1 + Math.sin(baseAngle) * (len/2),
+          color: '#A0AEC0',
+          isParallelPair: true,
+          isSelected: false
+        });
+
+        lines.push({
+          id: 2,
+          x1: px2 - Math.cos(baseAngle) * (len/2),
+          y1: py2 - Math.sin(baseAngle) * (len/2),
+          x2: px2 + Math.cos(baseAngle) * (len/2),
+          y2: py2 + Math.sin(baseAngle) * (len/2),
+          color: '#A0AEC0',
+          isParallelPair: true,
+          isSelected: false
+        });
+
+        parallelPairIds = [1, 2];
+
+        // 生成其他干擾線
+        for (let i = 3; i <= lineCount; i++) {
+          // 與基準平行線只差一點點角度（1.5 ~ 4度），誘使學生選錯並需要拖曳畫面去看相交
+          let diff = (1.5 + Math.random() * 4) * (Math.random() < 0.5 ? 1 : -1) * Math.PI / 180;
+          let randomAngle = baseAngle + diff;
+          
+          let rx = W * 0.2 + Math.random() * (W * 0.6);
+          let ry = H * 0.2 + Math.random() * (H * 0.5);
+          
+          lines.push({
+            id: i,
+            x1: rx - Math.cos(randomAngle) * (len/2),
+            y1: ry - Math.sin(randomAngle) * (len/2),
+            x2: rx + Math.cos(randomAngle) * (len/2),
+            y2: ry + Math.sin(randomAngle) * (len/2),
+            color: '#A0AEC0',
+            isParallelPair: false,
+            isSelected: false
+          });
+        }
+
+        // 打亂順序
+        lines.sort(() => Math.random() - 0.5);
+      }
+
+      drawScene();
+    }
+
+    // --- 繪製場景核心邏輯 (加入 offset 偏移渲染) ---
+    function drawScene() {
+      const rect = canvas.getBoundingClientRect();
+      const W = rect.width;
+      const H = rect.height;
+
+      // 清除畫布
+      ctx.clearRect(0, 0, W, H);
+
+      // 計算交點
+      let intersectionPoint = null;
+      let targetExtendLines = [];
+
+      if (currentLevel === 1) {
+        const l1 = lines.find(l => l.id === 1);
+        const l2 = lines.find(l => l.id === 2);
+        if (l1 && l2) {
+          intersectionPoint = getLinesIntersection(l1.x1, l1.y1, l1.x2, l1.y2, l2.x1, l2.y1, l2.x2, l2.y2);
+          targetExtendLines = [l1, l2];
+        }
+      } else if (currentLevel === 2 && level2Answered) {
+        if (selectedLineIds.length === 2) {
+          const l1 = lines.find(l => l.id === selectedLineIds[0]);
+          const l2 = lines.find(l => l.id === selectedLineIds[1]);
+          if (l1 && l2) {
+            intersectionPoint = getLinesIntersection(l1.x1, l1.y1, l1.x2, l1.y2, l2.x1, l2.y1, l2.x2, l2.y2);
+            targetExtendLines = [l1, l2];
+          }
+        }
+      }
+
+      // 儲存狀態以進行偏移轉換
+      ctx.save();
+      ctx.translate(offsetX, offsetY);
+
+      // 在偏移世界中繪製背景點狀網格
+      ctx.save();
+      ctx.fillStyle = '#E2E8F0';
+      const gridSpacing = 40;
+      const gridRange = 3000; // 繪製遠超畫布的網格區
+      for (let x = -gridRange; x < gridRange; x += gridSpacing) {
+        for (let y = -gridRange; y < gridRange; y += gridSpacing) {
+          ctx.beginPath();
+          ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+
+      // 1. 繪製魔法延長線 (虛線)
+      if (isExtended) {
+        if (currentLevel === 1 || (currentLevel === 2 && level2Answered)) {
+          // Level 1 或 Level 2 答完後的特定兩條線延長
+          if (targetExtendLines.length === 2) {
+            const l1 = targetExtendLines[0];
+            const l2 = targetExtendLines[1];
+
+            ctx.save();
+            ctx.strokeStyle = '#94A3B8';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([8, 6]);
+
+            [l1, l2].forEach(line => {
+              const dx = line.x2 - line.x1;
+              const dy = line.y2 - line.y1;
+              const len = Math.hypot(dx, dy);
+              const ux = dx / len;
+              const uy = dy / len;
+
+              ctx.beginPath();
+              ctx.moveTo(line.x1 - ux * 5000, line.y1 - uy * 5000);
+              ctx.lineTo(line.x2 + ux * 5000, line.y2 + uy * 5000);
+              ctx.stroke();
+            });
+            ctx.restore();
+
+            // 2. 繪製相交點
+            if (intersectionPoint) {
+              ctx.save();
+              ctx.beginPath();
+              ctx.arc(intersectionPoint.x, intersectionPoint.y, 10, 0, Math.PI * 2);
+              ctx.fillStyle = '#FF4D4D';
+              ctx.fill();
+              
+              ctx.beginPath();
+              ctx.arc(intersectionPoint.x, intersectionPoint.y, 22, 0, Math.PI * 2);
+              ctx.strokeStyle = 'rgba(255, 77, 77, 0.4)';
+              ctx.lineWidth = 4;
+              ctx.stroke();
+
+              ctx.fillStyle = '#7F1D1D';
+              ctx.font = 'bold 16px sans-serif';
+              ctx.fillText("✨ 相交點在這裡！", intersectionPoint.x + 18, intersectionPoint.y + 5);
+              ctx.restore();
+            }
+          }
+        } else if (currentLevel === 2 && !level2Answered) {
+          // Level 2 點擊提示狀態：將畫布上「所有的」線段無限延長！讓學生能一目了然看清誰平行、誰交錯。
+          ctx.save();
+          ctx.strokeStyle = '#CBD5E1'; // 溫柔的馬卡龍灰
+          ctx.lineWidth = 2.5;
+          ctx.setLineDash([6, 6]);
+
+          lines.forEach(line => {
+            const dx = line.x2 - line.x1;
+            const dy = line.y2 - line.y1;
+            const len = Math.hypot(dx, dy);
+            const ux = dx / len;
+            const uy = dy / len;
+
+            ctx.beginPath();
+            ctx.moveTo(line.x1 - ux * 5000, line.y1 - uy * 5000);
+            ctx.lineTo(line.x2 + ux * 5000, line.y2 + uy * 5000);
+            ctx.stroke();
+          });
+          ctx.restore();
+        }
+      }
+
+      // 3. 繪製實體線段
+      lines.forEach(line => {
+        ctx.save();
+        
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetY = 3;
+
+        let strokeColor = line.color;
+        let lineWidth = 10;
+
+        if (currentLevel === 2) {
+          if (line.isSelected) {
+            strokeColor = '#F43F5E';
+            lineWidth = 14;
+          } else {
+            // 若為平行線對且已答對/答錯時顯示高亮
+            if (level2Answered && line.isParallelPair) {
+              strokeColor = line.color; // 使用已被標記的顏色 (黃或綠)
+            } else {
+              strokeColor = '#94A3B8';
+            }
+          }
+        }
+
+        // 白邊
+        ctx.beginPath();
+        ctx.moveTo(line.x1, line.y1);
+        ctx.lineTo(line.x2, line.y2);
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = lineWidth + 6;
+        ctx.stroke();
+
+        // 彩色核心
+        ctx.beginPath();
+        ctx.moveTo(line.x1, line.y1);
+        ctx.lineTo(line.x2, line.y2);
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = lineWidth;
+        ctx.stroke();
+
+        ctx.restore();
+      });
+
+      // 還原偏移變換
+      ctx.restore();
+    }
+
+    // --- 滑鼠與觸控拖曳 + 點擊判定處理 ---
+
+    // 取得點擊/觸碰在畫布上的實際座標
+    function getCanvasCoords(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const x = clientX - rect.left - offsetX;
+      const y = clientY - rect.top - offsetY;
+      return { x, y };
+    }
+
+    // 拖曳與點擊共用監聽
+    function handleStart(clientX, clientY) {
+      isDragging = true;
+      startDragX = clientX;
+      startDragY = clientY;
+    }
+
+    function handleMove(clientX, clientY) {
+      if (!isDragging) return;
+      
+      const dx = clientX - startDragX;
+      const dy = clientY - startDragY;
+
+      // 只有在「延長線提示」開啟時，才允許隨意拖曳世界
+      if (isExtended) {
+        offsetX += dx;
+        offsetY += dy;
+        drawScene();
+      }
+
+      startDragX = clientX;
+      startDragY = clientY;
+    }
+
+    function handleEnd(clientX, clientY, isTouch = false) {
+      if (!isDragging) return;
+      isDragging = false;
+    }
+
+    // 點擊事件 (用來選取線段)
+    function handleCanvasClick(e) {
+      // 答對或未完成選取前才可以點擊線段
+      if (currentLevel !== 2 || level2Answered) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left - offsetX;
+      const clickY = e.clientY - rect.top - offsetY;
+
+      let clickedLine = null;
+      let minDistance = 9999;
+
+      lines.forEach(line => {
+        const dist = getDistanceToSegment(clickX, clickY, line.x1, line.y1, line.x2, line.y2);
+        if (dist < 22 && dist < minDistance) {
+          minDistance = dist;
+          clickedLine = line;
+        }
+      });
+
+      if (clickedLine) {
+        playSound('select');
+        clickedLine.isSelected = !clickedLine.isSelected;
+
+        if (clickedLine.isSelected) {
+          selectedLineIds.push(clickedLine.id);
+        } else {
+          selectedLineIds = selectedLineIds.filter(id => id !== clickedLine.id);
+        }
+
+        if (selectedLineIds.length > 2) {
+          const removedId = selectedLineIds.shift();
+          const oldLine = lines.find(l => l.id === removedId);
+          if (oldLine) oldLine.isSelected = false;
+        }
+
+        updateLV2SubmitButton();
+        drawScene();
+      }
+    }
+
+    // 註冊滑鼠事件
+    canvas.addEventListener('mousedown', (e) => {
+      handleStart(e.clientX, e.clientY);
+    });
+    window.addEventListener('mousemove', (e) => {
+      handleMove(e.clientX, e.clientY);
+    });
+    window.addEventListener('mouseup', (e) => {
+      handleEnd(e.clientX, e.clientY);
+    });
+    canvas.addEventListener('click', handleCanvasClick);
+
+    // 註冊觸控手勢 (支援平板電腦)
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        handleStart(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1) {
+        handleMove(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchend', (e) => {
+      handleEnd(0, 0, true);
+    });
+
+    // --- 互動與邏輯判斷 ---
+
+    // 觸發延長提示 (支援 Level 1 與 Level 2)
+    function triggerExtend() {
+      if (currentLevel === 1 && level1Answered) return;
+      if (currentLevel === 2 && level2Answered) return;
+
+      playSound('magic');
+      isExtended = !isExtended;
+      
+      const feedback = document.getElementById('feedback-text');
+      if (isExtended) {
+        if (currentLevel === 1) {
+          if (isParallelDataset) {
+            feedback.innerText = "✨ 魔法延長了！這兩條線是平行的。你可以試著拖曳畫面，發現它們怎麼延伸都不會相碰！";
+          } else {
+            feedback.innerText = "✨ 魔法延長了！這兩條線「不是平行」的。在畫面上【按住並拖曳】看看，尋找遠處的交點！";
+          }
+        } else {
+          // Level 2 提示
+          feedback.innerText = "✨ 魔法延長了！所有線段都展開了，拖曳畫面找找看，哪兩條線不管拉多長都「完美平行」永不相撞？";
+        }
+      } else {
+        if (currentLevel === 1) {
+          feedback.innerText = "請觀察線條，準備作答！";
+        } else {
+          feedback.innerText = "請點選畫布上的任意兩條線段！";
+        }
+        // 關閉延長時，將視角拉回中央
+        offsetX = 0;
+        offsetY = 0;
+      }
+      
+      updateHUDVisibility();
+      drawScene();
+    }
+
+    // 關卡一：提交答案 (是否平行)
+    function submitAnswer(userSaysParallel) {
+      if (level1Answered) return;
+      level1Answered = true;
+      
+      const feedback = document.getElementById('feedback-text');
+      const box = document.getElementById('feedback-box');
+      
+      // 自動開通延長線與拖曳功能
+      isExtended = true;
+      updateHUDVisibility();
+
+      if (userSaysParallel === isParallelDataset) {
+        playSound('correct');
+        scoreCorrect++;
+        feedback.innerText = isParallelDataset 
+          ? "🎉 答對了！這兩條是完美的平行線，不論拖曳到哪裡都永不相交！" 
+          : "🎉 答對了！它們不平行，拖曳畫面可以找到相交的地方！";
+        box.className = "min-h-[80px] flex items-center justify-center p-3 rounded-xl border-2 border-emerald-300 bg-emerald-50 text-emerald-800 font-bold";
+        triggerConfetti();
+        showSuccessOverlay();
+      } else {
+        playSound('wrong');
+        scoreWrong++;
+        feedback.innerText = isParallelDataset 
+          ? "💡 哎呀再看看！它們是永不相交的平行線。拖曳畫面檢查看看吧！" 
+          : "💡 答錯囉！這兩條線其實不平行。快拖曳畫面，去尋找交點在哪裡！";
+        box.className = "min-h-[80px] flex items-center justify-center p-3 rounded-xl border-2 border-rose-300 bg-rose-50 text-rose-800 font-bold";
+      }
+
+      updateScoreDisplay();
+      document.getElementById('btn-next').classList.remove('hidden');
+      drawScene();
+    }
+
+    // 關卡二：更新確定按鈕外觀
+    function updateLV2SubmitButton() {
+      const btn = document.getElementById('btn-submit-lv2');
+      if (selectedLineIds.length === 2) {
+        btn.disabled = false;
+        btn.className = "w-full py-4 bg-emerald-400 hover:bg-emerald-500 text-white rounded-xl font-extrabold text-lg transition-all duration-200 shadow-md border-b-4 border-emerald-600 active:border-b-0 active:translate-y-1 flex items-center justify-center space-x-2";
+      } else {
+        btn.disabled = true;
+        btn.className = "w-full py-4 bg-slate-300 text-slate-500 rounded-xl font-extrabold text-lg transition-all duration-200 shadow-sm flex items-center justify-center space-x-2 cursor-not-allowed";
+      }
+    }
+
+    // 關卡二：檢查選取答案
+    function checkLevel2Answer() {
+      if (selectedLineIds.length !== 2 || level2Answered) return;
+      level2Answered = true;
+
+      document.getElementById('ctrl-lv2').classList.add('hidden');
+      document.getElementById('btn-next').classList.remove('hidden');
+
+      const isCorrect = selectedLineIds.includes(1) && selectedLineIds.includes(2);
+      const feedback = document.getElementById('feedback-text');
+      const box = document.getElementById('feedback-box');
+
+      // 檢查完後強制開啟兩線相交模式的延長線
+      isExtended = true;
+      updateHUDVisibility();
+
+      if (isCorrect) {
+        playSound('correct');
+        scoreCorrect++;
+        feedback.innerText = "🎉 完美發現！你選的這兩條線是平行的！怎麼拉長、怎麼拖曳畫面都不會相碰！";
+        box.className = "min-h-[80px] flex items-center justify-center p-3 rounded-xl border-2 border-emerald-300 bg-emerald-50 text-emerald-800 font-bold";
+        
+        lines.forEach(l => {
+          if (l.isParallelPair) l.color = '#F59E0B'; // 變為金色
+        });
+        
+        triggerConfetti();
+        showSuccessOverlay();
+      } else {
+        playSound('wrong');
+        scoreWrong++;
+        feedback.innerText = "💡 哎呀！這兩條線並不平行。你可以在畫面上【拖曳移動】，看看它們相撞的交點！要不要再試一次？";
+        box.className = "min-h-[80px] flex items-center justify-center p-3 rounded-xl border-2 border-rose-300 bg-rose-50 text-rose-800 font-bold";
+        
+        // 顯示「再試一次」重答按鈕
+        document.getElementById('btn-retry-lv2').classList.remove('hidden');
+
+        // 標記正確的平行線
+        lines.forEach(l => {
+          if (l.isParallelPair) {
+            l.color = '#10B981'; // 綠色
+          }
+        });
+      }
+
+      updateScoreDisplay();
+      drawScene();
+    }
+
+    // 關卡二：重新挑戰同一題
+    function retryLevel2() {
+      playSound('click');
+      
+      // 還原關卡判定狀態與延長狀態
+      level2Answered = false;
+      isExtended = false;
+      selectedLineIds = [];
+      
+      // 重新恢復線段選取與預設顏色
+      lines.forEach(line => {
+        line.isSelected = false;
+        line.color = '#A0AEC0'; // 回復成預設石板灰
+      });
+
+      // 更新按鈕控制台與提示版
+      document.getElementById('btn-retry-lv2').classList.add('hidden');
+      document.getElementById('btn-next').classList.add('hidden');
+      document.getElementById('ctrl-lv2').classList.remove('hidden');
+      
+      updateLV2SubmitButton();
+      updateHUDVisibility();
+      
+      // 重設視角回到中央
+      offsetX = 0;
+      offsetY = 0;
+
+      // 重設回饋框狀態
+      const feedback = document.getElementById('feedback-text');
+      const box = document.getElementById('feedback-box');
+      feedback.className = "text-sm font-bold text-slate-500";
+      feedback.innerText = "請點選畫布上的任意兩條線段！";
+      box.className = "min-h-[80px] flex items-center justify-center p-3 rounded-xl border border-dashed border-slate-200 bg-slate-50";
+
+      drawScene();
+    }
+
+    // 下一題
+    function nextQuestion() {
+      playSound('click');
+      if (currentLevel === 2) {
+        document.getElementById('ctrl-lv2').classList.remove('hidden');
+        document.getElementById('btn-retry-lv2').classList.add('hidden');
+      }
+      setupLevel();
+    }
+
+    // 更新分數
+    function updateScoreDisplay() {
+      document.getElementById('score-correct').innerText = scoreCorrect;
+      document.getElementById('score-wrong').innerText = scoreWrong;
+    }
+
+    // --- 視覺特效 ---
+
+    function showSuccessOverlay() {
+      const overlay = document.getElementById('success-overlay');
+      overlay.classList.remove('hidden');
+      setTimeout(() => {
+        overlay.classList.remove('opacity-0');
+        overlay.querySelector('div').classList.remove('scale-95');
+        overlay.querySelector('div').classList.add('scale-100');
+      }, 50);
+    }
+
+    function closeSuccessOverlay() {
+      playSound('click');
+      const overlay = document.getElementById('success-overlay');
+      overlay.classList.add('opacity-0');
+      overlay.querySelector('div').classList.add('scale-95');
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        nextQuestion();
+      }, 300);
+    }
+
+    function triggerConfetti() {
+      const colors = ['#FFD93D', '#FF6B8B', '#6BCB77', '#4D96FF', '#ECEFF1'];
+      const container = document.getElementById('effect-container');
+      const rect = container.getBoundingClientRect();
+
+      for (let i = 0; i < 40; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        const startX = rect.width / 2;
+        const startY = rect.height;
+        confetti.style.left = startX + 'px';
+        confetti.style.top = startY + 'px';
+
+        container.appendChild(confetti);
+
+        const angle = Math.random() * Math.PI - Math.PI;
+        const speed = 5 + Math.random() * 8;
+        const velocityX = Math.cos(angle) * speed;
+        const velocityY = Math.sin(angle) * speed;
+        let x = startX;
+        let y = startY;
+        let opacity = 1;
+        let gravity = 0.2;
+
+        const animate = () => {
+          x += velocityX;
+          y += velocityY + gravity;
+          gravity += 0.05;
+          opacity -= 0.02;
+
+          confetti.style.left = x + 'px';
+          confetti.style.top = y + 'px';
+          confetti.style.opacity = opacity;
+
+          if (opacity > 0) {
+            requestAnimationFrame(animate);
+          } else {
+            confetti.remove();
+          }
+        };
+
+        requestAnimationFrame(animate);
+      }
+    }
+  </script>
+</body>
+</html>
