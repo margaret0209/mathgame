@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>可愛立體圖形挑戰</title>
+    <title>立體圖形挑戰</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&family=Noto+Sans+TC:wght@500;700&display=swap');
@@ -98,7 +98,7 @@
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         h1 {
@@ -121,16 +121,16 @@
         .level-tabs {
             display: flex;
             gap: 10px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             justify-content: center;
         }
 
         .level-btn {
             flex: 1;
-            padding: 12px 5px;
+            padding: 10px 5px;
             border: none;
             border-radius: 15px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
             background-color: #eee;
@@ -154,9 +154,9 @@
         }
 
         .question-text {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: bold;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             text-align: center;
         }
 
@@ -164,7 +164,7 @@
         .ui-container {
             display: none;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
             flex: 1;
         }
 
@@ -174,7 +174,7 @@
 
         /* 共用按鈕樣式 */
         .ans-btn {
-            padding: 15px;
+            padding: 10px 15px;
             border: none;
             border-radius: 20px;
             font-size: 20px;
@@ -184,6 +184,11 @@
             background-color: var(--mint);
             box-shadow: 0 5px 0 #8cc7b5;
             transition: all 0.1s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.2;
         }
 
         .ans-btn:active {
@@ -191,40 +196,62 @@
             box-shadow: 0 0 0 #8cc7b5;
         }
 
-        /* Level 3 特製 UI */
+        /* 小字英文翻譯樣式 */
+        .btn-eng {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            opacity: 0.75;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        /* Level 3 特製縮減高度 UI */
         .l3-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 10px;
+            gap: 8px;
+            margin-bottom: 12px;
         }
         
         .l3-type-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            gap: 8px;
+            margin-bottom: 5px;
         }
 
         .l3-btn {
-            padding: 12px;
+            padding: 8px 5px;
             border: 3px solid transparent;
             border-radius: 15px;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             background-color: #f0f0f0;
             color: #555;
             transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.1;
+        }
+
+        .l3-btn .btn-eng {
+            font-size: 9px;
+            margin-bottom: 1px;
         }
 
         .l3-btn.selected {
             border-color: var(--text-color);
             background-color: var(--yellow);
-            transform: scale(1.05);
+            transform: scale(1.03);
         }
 
         .submit-btn {
-            margin-top: 15px;
+            margin-top: 10px;
             background-color: var(--pink);
             color: white;
             box-shadow: 0 5px 0 #e67e88;
@@ -241,15 +268,15 @@
 
         /* 回饋訊息 */
         .feedback {
-            height: 40px;
-            font-size: 24px;
+            height: 38px;
+            font-size: 22px;
             font-weight: bold;
             text-align: center;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 10px;
-            margin-top: 15px;
+            margin-top: 10px;
             opacity: 0;
             transition: opacity 0.3s;
         }
@@ -310,38 +337,68 @@
 
             <!-- Level 1 UI -->
             <div id="ui-level1" class="ui-container active">
-                <button class="ans-btn" style="background-color: var(--pink);" onclick="checkAnswer('柱體')">柱體</button>
-                <button class="ans-btn" style="background-color: var(--mint);" onclick="checkAnswer('錐體')">錐體</button>
-                <button class="ans-btn" style="background-color: var(--blue);" onclick="checkAnswer('球體')">球體</button>
+                <button class="ans-btn" style="background-color: var(--pink);" onclick="checkAnswer('柱體')">
+                    <span class="btn-eng">Prisms & Cylinders</span>柱體
+                </button>
+                <button class="ans-btn" style="background-color: var(--mint);" onclick="checkAnswer('錐體')">
+                    <span class="btn-eng">Pyramids & Cones</span>錐體
+                </button>
+                <button class="ans-btn" style="background-color: var(--blue);" onclick="checkAnswer('球體')">
+                    <span class="btn-eng">Spheres</span>球體
+                </button>
             </div>
 
             <!-- Level 2 UI -->
             <div id="ui-level2" class="ui-container">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; height: 100%;">
-                    <button class="ans-btn" style="background-color: var(--pink);" onclick="checkAnswer('圓柱')">圓柱</button>
-                    <button class="ans-btn" style="background-color: var(--purple);" onclick="checkAnswer('角柱')">角柱</button>
-                    <button class="ans-btn" style="background-color: var(--mint);" onclick="checkAnswer('圓錐')">圓錐</button>
-                    <button class="ans-btn" style="background-color: var(--yellow);" onclick="checkAnswer('角錐')">角錐</button>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: 100%;">
+                    <button class="ans-btn" style="background-color: var(--pink);" onclick="checkAnswer('圓柱')">
+                        <span class="btn-eng">Cylinder</span>圓柱
+                    </button>
+                    <button class="ans-btn" style="background-color: var(--purple);" onclick="checkAnswer('角柱')">
+                        <span class="btn-eng">Prism</span>角柱
+                    </button>
+                    <button class="ans-btn" style="background-color: var(--mint);" onclick="checkAnswer('圓錐')">
+                        <span class="btn-eng">Cone</span>圓錐
+                    </button>
+                    <button class="ans-btn" style="background-color: var(--yellow);" onclick="checkAnswer('角錐')">
+                        <span class="btn-eng">Pyramid</span>角錐
+                    </button>
                 </div>
             </div>
 
-            <!-- Level 3 UI -->
+            <!-- Level 3 UI (高度已優化，去除額外文字) -->
             <div id="ui-level3" class="ui-container">
-                <div style="text-align: center; font-weight: bold; color: #888; margin-bottom: 5px;">1. 選擇底面邊數</div>
                 <div class="l3-grid">
-                    <button class="l3-btn num-btn" onclick="selectL3Num('三', this)">三角</button>
-                    <button class="l3-btn num-btn" onclick="selectL3Num('四', this)">四角</button>
-                    <button class="l3-btn num-btn" onclick="selectL3Num('五', this)">五角</button>
-                    <button class="l3-btn num-btn" onclick="selectL3Num('六', this)">六角</button>
-                    <button class="l3-btn num-btn" onclick="selectL3Num('七', this)">七角</button>
-                    <button class="l3-btn num-btn" onclick="selectL3Num('八', this)">八角</button>
+                    <button class="l3-btn num-btn" onclick="selectL3Num('三', this)">
+                        <span class="btn-eng">Triangular</span>三角
+                    </button>
+                    <button class="l3-btn num-btn" onclick="selectL3Num('四', this)">
+                        <span class="btn-eng">Quadrangular</span>四角
+                    </button>
+                    <button class="l3-btn num-btn" onclick="selectL3Num('五', this)">
+                        <span class="btn-eng">Pentagonal</span>五角
+                    </button>
+                    <button class="l3-btn num-btn" onclick="selectL3Num('六', this)">
+                        <span class="btn-eng">Hexagonal</span>六角
+                    </button>
+                    <button class="l3-btn num-btn" onclick="selectL3Num('七', this)">
+                        <span class="btn-eng">Heptagonal</span>七角
+                    </button>
+                    <button class="l3-btn num-btn" onclick="selectL3Num('八', this)">
+                        <span class="btn-eng">Octagonal</span>八角
+                    </button>
                 </div>
-                <div style="text-align: center; font-weight: bold; color: #888; margin-bottom: 5px;">2. 選擇形狀</div>
                 <div class="l3-type-grid">
-                    <button class="l3-btn type-btn" onclick="selectL3Type('柱', this)">柱體</button>
-                    <button class="l3-btn type-btn" onclick="selectL3Type('錐', this)">錐體</button>
+                    <button class="l3-btn type-btn" onclick="selectL3Type('柱', this)">
+                        <span class="btn-eng">Prism</span>柱體
+                    </button>
+                    <button class="l3-btn type-btn" onclick="selectL3Type('錐', this)">
+                        <span class="btn-eng">Pyramid</span>錐體
+                    </button>
                 </div>
-                <button class="ans-btn submit-btn" id="l3-submit" onclick="submitL3Answer()" disabled>確定送出</button>
+                <button class="ans-btn submit-btn" id="l3-submit" onclick="submitL3Answer()" disabled>
+                    <span class="btn-eng">Confirm & Submit</span>確定送出
+                </button>
             </div>
 
             <div id="feedback" class="feedback">答對了！</div>
@@ -408,7 +465,7 @@
     let isUserInteracting = false; // 追蹤學生是否正在觸控旋轉
 
     // --------------------------------------------------------
-    // Web Audio API 音效引擎 (內建合成音效，無需外部檔案)
+    // Web Audio API 音效引擎 (強化版合成音效)
     // --------------------------------------------------------
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     let audioCtx;
@@ -418,10 +475,10 @@
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    // 第一次點擊畫面時初始化音效 (解除瀏覽器自動播放限制)
+    // 第一次點擊畫面時初始化音效
     document.addEventListener('click', () => { if(!audioCtx) initAudio(); }, {once:true});
 
-    function playTone(freq, type, duration, vol=0.1, slideFreq=null) {
+    function playTone(freq, type, duration, vol=0.2, slideFreq=null) {
         if (!audioCtx) return;
         const osc = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
@@ -431,10 +488,12 @@
         
         const now = audioCtx.currentTime;
         osc.frequency.setValueAtTime(freq, now);
-        if (slideFreq) osc.frequency.exponentialRampToValueAtTime(slideFreq, now + duration);
+        if (slideFreq) {
+            osc.frequency.exponentialRampToValueAtTime(slideFreq, now + duration);
+        }
         
         gainNode.gain.setValueAtTime(vol, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration); // 淡出避免爆音
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration); // 漸弱防爆音
         
         osc.start(now);
         osc.stop(now + duration);
@@ -442,20 +501,23 @@
 
     function playClickSound() {
         initAudio();
-        playTone(600, 'sine', 0.1, 0.1, 400); // 俏皮的波波聲
+        // 增強的啵啵聲 (使用 triangle 波，音量 0.25)
+        playTone(550, 'triangle', 0.08, 0.25, 300); 
     }
 
     function playCorrectSound() {
         initAudio();
-        // 開心的雙音符 (叮咚)
-        playTone(523.25, 'sine', 0.15, 0.15); // C5
-        setTimeout(() => playTone(659.25, 'sine', 0.3, 0.15), 100); // E5
+        // 增強的明亮叮咚上升音 (音量 0.25)
+        const now = audioCtx.currentTime;
+        playTone(523.25, 'sine', 0.15, 0.25); // C5
+        setTimeout(() => playTone(659.25, 'sine', 0.15, 0.25), 80); // E5
+        setTimeout(() => playTone(783.99, 'sine', 0.3, 0.25), 160); // G5
     }
 
     function playWrongSound() {
         initAudio();
-        // 答錯的下沉聲
-        playTone(300, 'triangle', 0.3, 0.1, 150);
+        // 增強的低沈滑音警告聲 (音量 0.25)
+        playTone(280, 'sawtooth', 0.35, 0.22, 100);
     }
 
     // 馬卡龍色系供隨機選取
@@ -629,7 +691,7 @@
         isAnimatingResult = true;
         
         if (isCorrect) {
-            playCorrectSound(); // 播放答對音效
+            playCorrectSound(); // 播放更明顯的答對音效
             fb.innerText = "⭐ 答對了！ ⭐";
             fb.className = "feedback show correct";
             score += 10;
@@ -647,7 +709,7 @@
                 generateQuestion();
             }, 1000);
         } else {
-            playWrongSound(); // 播放答錯音效
+            playWrongSound(); // 播放更明顯的答錯音效
             fb.innerText = "再看清楚一點喔！";
             fb.className = "feedback show wrong";
             
