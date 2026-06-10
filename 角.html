@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>可愛認識角遊戲</title>
+    <title>認識角遊戲</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Varela+Round&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -78,8 +78,9 @@
         
         <!-- 頂部導航 -->
         <div id="top-bar" class="hidden flex justify-between items-center mb-2 sm:mb-4 relative z-50 shrink-0 w-full">
-            <button type="button" onclick="goToMenu()" class="bg-white px-5 py-2 rounded-full font-bold text-lg text-gray-600 btn hover:bg-gray-100 flex items-center gap-2 cursor-pointer">
-                <span>🏠</span> 回主選單
+            <button type="button" onclick="goToMenu()" class="bg-white px-5 py-1.5 rounded-full text-gray-600 btn hover:bg-gray-100 flex flex-col items-center justify-center cursor-pointer">
+                <span class="text-[10px] font-bold tracking-wider opacity-60">HOME</span>
+                <span class="font-bold text-base sm:text-lg flex items-center gap-1"><span>🏠</span> 回主選單</span>
             </button>
             <div id="level-title" class="text-2xl sm:text-3xl font-bold bg-white/80 px-6 py-1.5 rounded-full shadow-sm">關卡</div>
             <div class="w-28"></div> <!-- 平衡用 -->
@@ -89,7 +90,7 @@
         <div id="screen-menu" class="flex-1 flex flex-col items-center justify-center relative z-10 h-full">
             <div class="bg-white/90 p-6 sm:p-10 rounded-[32px] shadow-xl text-center max-w-2xl w-full">
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-2 text-[#FF8B94]">✨ 可愛認識角 ✨</h1>
-                <p class="text-lg sm:text-xl text-gray-500 mb-6 sm:mb-8">請選擇一個關卡開始遊戲</p>
+                <p class="text-lg sm:text-xl text-gray-500 mb-6 sm:mb-8">請選擇一個關卡開始遊戲 / Select a Level</p>
                 
                 <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
                     <button onclick="startLevel(1)" class="flex-1 bg-macaron-pink btn rounded-2xl p-4 sm:p-6 text-white font-bold text-2xl border-4 border-white">
@@ -110,7 +111,10 @@
 
         <!-- 畫面：Level 1 -->
         <div id="screen-level1" class="hidden flex-1 flex flex-col items-center justify-between z-10 w-full h-full py-2">
-            <h2 class="text-2xl sm:text-3xl font-bold bg-white/80 px-6 py-2 rounded-full shadow-sm shrink-0">這是一個角嗎？</h2>
+            <div class="text-center flex flex-col items-center shrink-0">
+                <h2 class="text-2xl sm:text-3xl font-bold bg-white/80 px-6 py-2 rounded-full shadow-sm">這是一個角嗎？</h2>
+                <span class="text-xs sm:text-sm text-gray-600 font-bold bg-white/60 px-4 py-0.5 rounded-full mt-1">Is this an angle?</span>
+            </div>
             
             <div class="flex-1 flex items-center justify-center min-h-0 w-full py-2">
                 <div class="canvas-container relative flex items-center justify-center max-h-full">
@@ -120,15 +124,21 @@
             </div>
             
             <div class="flex gap-6 sm:gap-8 shrink-0 pb-2">
-                <button onclick="checkAnswerL1(true)" class="bg-macaron-blue btn rounded-full px-10 py-4 text-2xl sm:text-3xl font-bold text-[#5D4037] border-4 border-white w-48 sm:w-56">是</button>
-                <button onclick="checkAnswerL1(false)" class="bg-macaron-pink btn rounded-full px-10 py-4 text-2xl sm:text-3xl font-bold text-white border-4 border-white w-48 sm:w-56">不是</button>
+                <button onclick="checkAnswerL1(true)" class="bg-macaron-blue btn rounded-full px-10 py-2.5 text-[#5D4037] border-4 border-white w-48 sm:w-56 flex flex-col items-center justify-center">
+                    <span class="text-xs sm:text-sm font-bold tracking-wide opacity-75">YES</span>
+                    <span class="text-2xl sm:text-3xl font-bold leading-tight">是</span>
+                </button>
+                <button onclick="checkAnswerL1(false)" class="bg-macaron-pink btn rounded-full px-10 py-2.5 text-white border-4 border-white w-48 sm:w-56 flex flex-col items-center justify-center">
+                    <span class="text-xs sm:text-sm font-bold tracking-wide opacity-85">NO</span>
+                    <span class="text-2xl sm:text-3xl font-bold leading-tight">不是</span>
+                </button>
             </div>
         </div>
 
         <!-- 畫面：Level 2 -->
         <div id="screen-level2" class="hidden flex-1 flex flex-col items-center justify-between z-10 w-full h-full py-2">
             
-            <!-- 三個角並列區：縮小 Canvas 確保平板不溢出 -->
+            <!-- 三個角並列區 -->
             <div class="flex justify-center gap-3 sm:gap-4 w-full shrink-0">
                 <!-- 角A -->
                 <div class="canvas-container flex flex-col items-center p-1.5">
@@ -152,25 +162,26 @@
                 <div id="feedback-l2" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-7xl opacity-0 pointer-events-none transition-opacity duration-300 z-50"></div>
                 
                 <!-- 問題 1: 排列 -->
-                <div class="bg-gray-50/80 rounded-xl p-2.5 flex flex-col items-center gap-2 shrink-0">
-                    <h3 id="l2-q1-text" class="text-lg sm:text-xl font-bold">由大至小排列角的大小：</h3>
-                    <div class="flex items-center gap-2 sm:gap-4 text-xl sm:text-2xl font-bold">
+                <div class="bg-gray-50/80 rounded-xl p-2 flex flex-col items-center gap-1 shrink-0">
+                    <h3 id="l2-q1-text" class="text-lg sm:text-xl font-bold leading-tight">由大至小排列角的大小：</h3>
+                    <span id="l2-q1-subtext" class="text-xs sm:text-sm text-gray-500 font-bold leading-none">Arrange angles from largest to smallest:</span>
+                    <div class="flex items-center gap-2 sm:gap-4 text-xl sm:text-2xl font-bold mt-1">
                         <select id="l2-s1">
-                            <option value="">選擇</option>
+                            <option value="">選擇 / Select</option>
                             <option value="a">角 a</option>
                             <option value="b">角 b</option>
                             <option value="c">角 c</option>
                         </select>
                         <span id="l2-sign1">></span>
                         <select id="l2-s2">
-                            <option value="">選擇</option>
+                            <option value="">選擇 / Select</option>
                             <option value="a">角 a</option>
                             <option value="b">角 b</option>
                             <option value="c">角 c</option>
                         </select>
                         <span id="l2-sign2">></span>
                         <select id="l2-s3">
-                            <option value="">選擇</option>
+                            <option value="">選擇 / Select</option>
                             <option value="a">角 a</option>
                             <option value="b">角 b</option>
                             <option value="c">角 c</option>
@@ -178,29 +189,35 @@
                     </div>
                 </div>
 
-                <!-- 問題 2: 比較 -->
-                <div class="bg-gray-50/80 rounded-xl p-2.5 flex flex-col items-center justify-center shrink-0">
-                    <div class="flex items-center gap-3 text-lg sm:text-xl font-bold">
-                        <span id="l2-q2-text">角 a 比 角 b</span>
-                        <select id="l2-s4">
-                            <option value="">選擇</option>
-                            <option value="大">大</option>
-                            <option value="小">小</option>
+                <!-- 問題 2: 比較 (已修正為同一行顯示，且移除多餘英文 Angle 翻譯) -->
+                <div class="bg-gray-50/80 rounded-xl p-3 flex flex-row items-center justify-center shrink-0">
+                    <div class="flex flex-wrap items-center justify-center gap-4 text-lg sm:text-xl font-bold">
+                        <span id="l2-q2-text" class="leading-tight">角 a 比 角 b</span>
+                        <select id="l2-s4" class="py-1">
+                            <option value="">選擇 / Select</option>
+                            <option value="大">大 / Larger</option>
+                            <option value="小">小 / Smaller</option>
                         </select>
                     </div>
                 </div>
 
                 <!-- 確定按鈕與提示 -->
                 <div class="flex flex-col items-center justify-center shrink-0">
-                    <div id="l2-warning" class="text-[#FF8B94] font-bold text-base h-5 opacity-0 transition-opacity">請回答所有問題喔！</div>
-                    <button onclick="checkAnswerL2()" class="bg-macaron-yellow btn rounded-full px-12 py-2 sm:py-3 text-2xl font-bold text-[#5D4037] border-4 border-white">確定</button>
+                    <div id="l2-warning" class="text-[#FF8B94] font-bold text-base h-5 opacity-0 transition-opacity">請回答所有問題喔！ / Please answer all questions!</div>
+                    <button onclick="checkAnswerL2()" class="bg-macaron-yellow btn rounded-full px-12 py-2 text-2xl font-bold text-[#5D4037] border-4 border-white flex flex-col items-center justify-center">
+                        <span class="text-xs sm:text-sm font-bold tracking-wide opacity-75">CONFIRM</span>
+                        <span class="text-2xl font-bold leading-tight">確定</span>
+                    </button>
                 </div>
             </div>
         </div>
 
         <!-- 畫面：Level 3 -->
         <div id="screen-level3" class="hidden flex-1 flex flex-col items-center justify-between z-10 w-full h-full py-2">
-            <h2 class="text-2xl sm:text-3xl font-bold bg-white/80 px-6 py-2 rounded-full shadow-sm shrink-0">這是什麼角？</h2>
+            <div class="text-center flex flex-col items-center shrink-0">
+                <h2 class="text-2xl sm:text-3xl font-bold bg-white/80 px-6 py-2 rounded-full shadow-sm">這是什麼角？</h2>
+                <span class="text-xs sm:text-sm text-gray-600 font-bold bg-white/60 px-4 py-0.5 rounded-full mt-1">What kind of angle is this?</span>
+            </div>
             
             <div class="flex-1 flex items-center justify-center min-h-0 w-full py-2">
                 <div class="canvas-container relative flex items-center justify-center max-h-full">
@@ -210,9 +227,18 @@
             </div>
             
             <div class="flex gap-4 sm:gap-6 shrink-0 pb-2">
-                <button onclick="checkAnswerL3('直角')" class="bg-macaron-blue btn rounded-full px-8 py-4 text-2xl sm:text-3xl font-bold text-[#5D4037] border-4 border-white w-36 sm:w-44">直角</button>
-                <button onclick="checkAnswerL3('銳角')" class="bg-macaron-pink btn rounded-full px-8 py-4 text-2xl sm:text-3xl font-bold text-white border-4 border-white w-36 sm:w-44">銳角</button>
-                <button onclick="checkAnswerL3('鈍角')" class="bg-macaron-yellow btn rounded-full px-8 py-4 text-2xl sm:text-3xl font-bold text-[#5D4037] border-4 border-white w-36 sm:w-44">鈍角</button>
+                <button onclick="checkAnswerL3('直角')" class="bg-macaron-blue btn rounded-full px-8 py-2.5 text-[#5D4037] border-4 border-white w-36 sm:w-44 flex flex-col items-center justify-center">
+                    <span class="text-xs sm:text-sm font-bold tracking-wide opacity-75">RIGHT ANGLE</span>
+                    <span class="text-2xl sm:text-3xl font-bold leading-tight">直角</span>
+                </button>
+                <button onclick="checkAnswerL3('銳角')" class="bg-macaron-pink btn rounded-full px-8 py-2.5 text-white border-4 border-white w-36 sm:w-44 flex flex-col items-center justify-center">
+                    <span class="text-xs sm:text-sm font-bold tracking-wide opacity-85">ACUTE ANGLE</span>
+                    <span class="text-2xl sm:text-3xl font-bold leading-tight">銳角</span>
+                </button>
+                <button onclick="checkAnswerL3('鈍角')" class="bg-macaron-yellow btn rounded-full px-8 py-2.5 text-[#5D4037] border-4 border-white w-36 sm:w-44 flex flex-col items-center justify-center">
+                    <span class="text-xs sm:text-sm font-bold tracking-wide opacity-75">OBTUSE ANGLE</span>
+                    <span class="text-2xl sm:text-3xl font-bold leading-tight">鈍角</span>
+                </button>
             </div>
         </div>
 
@@ -247,11 +273,13 @@ function playTone(freq, type, duration, vol=0.1) {
     osc.stop(audioCtx.currentTime + duration);
 }
 
+// 基礎點擊音效
 function playClick() {
     initAudio();
     playTone(600, 'sine', 0.1, 0.05);
 }
 
+// 成功音效
 function playSuccess() {
     initAudio();
     playTone(523.25, 'sine', 0.1, 0.1); // C5
@@ -259,6 +287,7 @@ function playSuccess() {
     setTimeout(() => playTone(783.99, 'sine', 0.2, 0.1), 200); // G5
 }
 
+// 失敗音效
 function playFail() {
     initAudio();
     playTone(300, 'sawtooth', 0.2, 0.1);
@@ -463,13 +492,23 @@ function generateL2() {
     });
     
     l2_orderMode = Math.random() > 0.5 ? '>' : '<';
-    document.getElementById('l2-q1-text').innerText = l2_orderMode === '>' ? '由大至小排列角的大小：' : '由小至大排列角的大小：';
+    
+    if (l2_orderMode === '>') {
+        document.getElementById('l2-q1-text').innerText = '由大至小排列角的大小：';
+        document.getElementById('l2-q1-subtext').innerText = 'Arrange angles from largest to smallest:';
+    } else {
+        document.getElementById('l2-q1-text').innerText = '由小至大排列角的大小：';
+        document.getElementById('l2-q1-subtext').innerText = 'Arrange angles from smallest to largest:';
+    }
+    
     document.getElementById('l2-sign1').innerText = l2_orderMode;
     document.getElementById('l2-sign2').innerText = l2_orderMode;
     
     const ids = ['a', 'b', 'c'];
     ids.sort(() => Math.random() - 0.5);
     l2_comparePair = [ids[0], ids[1]];
+    
+    // 問題二文字設定：僅使用中文，不用翻譯角a, b, c
     document.getElementById('l2-q2-text').innerText = `角 ${l2_comparePair[0]} 比 角 ${l2_comparePair[1]}`;
     
     document.getElementById('l2-s1').value = '';
