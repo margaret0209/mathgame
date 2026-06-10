@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>認識角遊戲</title>
+    <title>認識角</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Varela+Round&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -189,7 +189,7 @@
                     </div>
                 </div>
 
-                <!-- 問題 2: 比較 (已修正為同一行顯示，且移除多餘英文 Angle 翻譯) -->
+                <!-- 問題 2: 比較 -->
                 <div class="bg-gray-50/80 rounded-xl p-3 flex flex-row items-center justify-center shrink-0">
                     <div class="flex flex-wrap items-center justify-center gap-4 text-lg sm:text-xl font-bold">
                         <span id="l2-q2-text" class="leading-tight">角 a 比 角 b</span>
@@ -246,7 +246,7 @@
 
 <script>
 /** ==============================
- * 音效系統 (Web Audio API)
+ * 音效系統 (Web Audio API) - 已強化明顯度與音質
  * ============================== */
 let audioCtx = null;
 
@@ -259,39 +259,50 @@ function initAudio() {
     }
 }
 
-function playTone(freq, type, duration, vol=0.1) {
+// 播放單一合成音，支援頻率滑音（Slide）與精準啟動時間排程，避免 JS 延遲
+function playTone(freq, type, duration, vol=0.2, endFreq=null, startTime=null) {
     if(!audioCtx) return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
+    const t = startTime !== null ? startTime : audioCtx.currentTime;
+    
     osc.type = type;
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+    osc.frequency.setValueAtTime(freq, t);
+    if (endFreq !== null) {
+        osc.frequency.exponentialRampToValueAtTime(endFreq, t + duration);
+    }
+    
+    gain.gain.setValueAtTime(vol, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + duration);
+    osc.start(t);
+    osc.stop(t + duration);
 }
 
-// 基礎點擊音效
+// 基礎點擊音效：更清脆的「啵」一聲（快速下滑音）
 function playClick() {
     initAudio();
-    playTone(600, 'sine', 0.1, 0.05);
+    playTone(800, 'triangle', 0.08, 0.25, 300);
 }
 
-// 成功音效
+// 成功音效：復古可愛的 8-bit 琶音上升音階 (C5 -> E5 -> G5 -> C6)
 function playSuccess() {
     initAudio();
-    playTone(523.25, 'sine', 0.1, 0.1); // C5
-    setTimeout(() => playTone(659.25, 'sine', 0.1, 0.1), 100); // E5
-    setTimeout(() => playTone(783.99, 'sine', 0.2, 0.1), 200); // G5
+    const now = audioCtx.currentTime;
+    playTone(523.25, 'triangle', 0.12, 0.22, null, now);       // C5
+    playTone(659.25, 'triangle', 0.12, 0.22, null, now + 0.08); // E5
+    playTone(783.99, 'triangle', 0.12, 0.22, null, now + 0.16); // G5
+    playTone(1046.50, 'triangle', 0.28, 0.25, null, now + 0.24); // C6
 }
 
-// 失敗音效
+// 失敗音效：滑稽有趣的滑落音「嗚～嗚～」
 function playFail() {
     initAudio();
-    playTone(300, 'sawtooth', 0.2, 0.1);
-    setTimeout(() => playTone(250, 'sawtooth', 0.3, 0.1), 200);
+    const now = audioCtx.currentTime;
+    playTone(280, 'triangle', 0.25, 0.25, 140, now);        // 第一聲滑音
+    playTone(220, 'triangle', 0.35, 0.25, 90, now + 0.15);   // 第二聲更低的滑音
 }
 
 // 監聽所有按鈕與選單點擊事件
