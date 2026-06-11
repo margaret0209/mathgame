@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>硬幣總值互動遊戲 - 清新可愛風</title>
+  <title>硬幣總值互動遊戲</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Noto Sans TC & Quicksand for a cute rounded look -->
@@ -141,6 +141,7 @@
           <label for="modeSelect" class="font-bold text-[#8C5D3A] text-sm md:text-base">選擇關卡：</label>
           <select id="modeSelect" onchange="switchMode()" class="bg-white border-3 border-[#FFD3BA] rounded-full px-4 py-2 text-[#8C5D3A] font-bold focus:outline-none focus:ring-2 focus:ring-[#FFB37C] cursor-pointer text-sm md:text-base shadow-sm">
             <option value="match">🧩 配對模式</option>
+            <option value="match_advanced">🧩 進階配對模式</option>
             <option value="classify">🧺 分類模式</option>
             <option value="value">📝 幣值模式</option>
             <option value="total">🔢 總值模式</option>
@@ -168,7 +169,7 @@
   </header>
 
   <!-- 主遊戲視窗 -->
-  <main class="max-w-6xl mx-auto px-4 mt-8">
+  <main class="max-w-7xl mx-auto px-4 mt-8">
     
     <!-- 答對與提示反饋橫幅 -->
     <div id="feedbackContainer" class="hidden cute-card bg-[#FFFDF5] border-[#FFEAA7] p-4 mb-6 text-center text-[#B7950B] font-bold text-lg md:text-xl transition-all relative">
@@ -205,19 +206,34 @@
 
   <!-- 底部可愛宣告 -->
   <footer class="text-center mt-12 text-[#8C5D3A]/60 font-bold text-sm">
-    🎈 硬幣學習樂園 🎈
+    🎈 專為大、小朋友打造的硬幣學習樂園 🎈
   </footer>
 
-  <!-- 音效與音頻模擬機制 (Web Audio API) -->
   <script>
+    // 增加「1角、2角、5角」的完整圖片庫
     const COIN_IMAGES = {
+      0.1: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/1角正面.png",
+      0.2: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/2角正面.png",
+      0.5: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/5角正面.png",
       1: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/1元正面.png",
       2: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/2元正面.png",
       5: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/5元正面.png",
       10: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/10元正面.png"
     };
 
+    // 配對模式面額庫
     const COIN_VALUES = [1, 2, 5, 10];
+    
+    // 進階配對模式面額庫（包含元與角）
+    const ADVANCED_COIN_VALUES = [0.1, 0.2, 0.5, 1, 2, 5, 10];
+
+    // 格式化貨幣名稱
+    function getCoinName(val) {
+      if (val === 0.1) return "1角";
+      if (val === 0.2) return "2角";
+      if (val === 0.5) return "5角";
+      return `${val}元`;
+    }
 
     // 51 種可愛貨品中央資料庫
     const TOY_DATABASE = [
@@ -349,8 +365,8 @@
       if (feedback) feedback.classList.remove('hidden');
       if (!textSpan) return;
       
-      if (currentMode === 'match') {
-        textSpan.innerHTML = `💡 提示：這個硬幣上面的數字寫著 <b>${currentQuestionData.targetValue}</b> 喔！請把它拖曳配對到下面一樣的硬幣。`;
+      if (currentMode === 'match' || currentMode === 'match_advanced') {
+        textSpan.innerHTML = `💡 提示：這個硬幣是 <b>${getCoinName(currentQuestionData.targetValue)}</b> 喔！請把它拖曳配對到下面一樣的硬幣。`;
       } else if (currentMode === 'classify') {
         textSpan.innerHTML = `💡 提示：請動動手指，把硬幣一個個拖曳放到對應的小籃子裡！`;
       } else if (currentMode === 'value') {
@@ -388,9 +404,10 @@
       
       document.getElementById('nextBtn').classList.add('hidden');
 
-      if (currentMode === 'match') {
+      if (currentMode === 'match' || currentMode === 'match_advanced') {
+        const activePool = currentMode === 'match_advanced' ? ADVANCED_COIN_VALUES : COIN_VALUES;
         let val;
-        do { val = COIN_VALUES[Math.floor(Math.random() * COIN_VALUES.length)]; } while (val === lastMatchVal && COIN_VALUES.length > 1);
+        do { val = activePool[Math.floor(Math.random() * activePool.length)]; } while (val === lastMatchVal && activePool.length > 1);
         lastMatchVal = val;
         currentQuestionData = { targetValue: val };
       } else if (currentMode === 'value') {
@@ -411,7 +428,6 @@
         currentQuestionData = { targetValue: count };
       } else if (currentMode === 'pay_easy') {
         const val = COIN_VALUES[Math.floor(Math.random() * COIN_VALUES.length)];
-        // 從 51 種可愛貨品中隨機挑選一件
         const randomItem = TOY_DATABASE[Math.floor(Math.random() * TOY_DATABASE.length)];
         currentQuestionData = { 
           targetValue: val, 
@@ -420,7 +436,6 @@
         };
       } else if (currentMode === 'pay_medium' || currentMode === 'pay_hard') {
         const price = Math.floor(Math.random() * 10) + 1;
-        // 從 51 種可愛貨品中隨機挑選一件
         const randomItem = TOY_DATABASE[Math.floor(Math.random() * TOY_DATABASE.length)];
         currentQuestionData = { 
           targetValue: price, 
@@ -517,8 +532,13 @@
       switch (currentMode) {
         case 'match':
           title.textContent = "🧩 硬幣配對挑戰";
-          desc.textContent = "請把上方的硬幣【拖曳】放到下方對應數值的一顆硬幣上。";
-          renderMatchMode(area);
+          desc.textContent = "請把上方的硬幣【拖曳】放到下方對應面值的硬幣上。";
+          renderMatchMode(area, false);
+          break;
+        case 'match_advanced':
+          title.textContent = "🧩 進階硬幣配對";
+          desc.textContent = "包含「元」與「角」！請把上方的硬幣【拖曳】放到下方對應面值的一顆硬幣上。";
+          renderMatchMode(area, true);
           break;
         case 'classify':
           title.textContent = "🧺 繽紛分類小高手";
@@ -558,27 +578,33 @@
     }
 
     // -------------------------------------------------------------
-    // 1. 配對模式渲染
+    // 1. 配對 & 進階配對模式渲染
     // -------------------------------------------------------------
-    function renderMatchMode(container) {
+    function renderMatchMode(container, isAdvanced = false) {
+      const activePool = isAdvanced ? ADVANCED_COIN_VALUES : COIN_VALUES;
+      const targetVal = currentQuestionData.targetValue;
+
       const questionDiv = document.createElement('div');
       questionDiv.className = "flex flex-col items-center mb-6";
       questionDiv.innerHTML = `
         <div class="bg-amber-50 p-6 rounded-3xl border-2 border-dashed border-amber-300 flex items-center justify-center w-48 h-48">
-          <img src="${COIN_IMAGES[currentQuestionData.targetValue]}" 
+          <img src="${COIN_IMAGES[targetVal]}" 
                id="draggableCoin" 
                draggable="true" 
                class="w-32 h-32 cursor-grab active:cursor-grabbing coin-img filter drop-shadow-md"
-               alt="${currentQuestionData.targetValue}元" />
+               alt="${getCoinName(targetVal)}" />
         </div>
         <p class="text-base font-bold text-amber-600 mt-3">👈 快把我拖曳去下方配對吧！</p>
       `;
       container.appendChild(questionDiv);
 
       const optionsContainer = document.createElement('div');
-      optionsContainer.className = "grid grid-cols-4 gap-6 w-full max-w-3xl mt-6";
+      // 進階配對橫向平板電腦最佳化：排成一排大按鈕更舒適
+      optionsContainer.className = isAdvanced 
+        ? "grid grid-cols-4 md:grid-cols-7 gap-4 w-full max-w-5xl mt-6 justify-center" 
+        : "grid grid-cols-4 gap-6 w-full max-w-3xl mt-6 justify-center";
       
-      COIN_VALUES.forEach(val => {
+      activePool.forEach(val => {
         if (wrongOptions.includes(val)) {
           const empty = document.createElement('div');
           optionsContainer.appendChild(empty);
@@ -590,7 +616,7 @@
         optionCard.setAttribute('data-val', val);
         optionCard.innerHTML = `
           <img src="${COIN_IMAGES[val]}" class="w-16 h-16 mb-2 pointer-events-none" />
-          <span class="font-bold text-lg text-gray-700">${val}元</span>
+          <span class="font-bold text-lg text-gray-700">${getCoinName(val)}</span>
         `;
 
         optionCard.ondragover = (e) => {
@@ -620,7 +646,7 @@
           return;
         }
         dragCoin.classList.add('dragging');
-        e.dataTransfer.setData('text/plain', currentQuestionData.targetValue);
+        e.dataTransfer.setData('text/plain', targetVal);
       };
       dragCoin.ondragend = () => {
         dragCoin.classList.remove('dragging');
@@ -628,11 +654,11 @@
 
       makeElementTouchDraggable(
         dragCoin,
-        () => currentQuestionData.targetValue,
+        () => targetVal,
         () => {
           return Array.from(document.querySelectorAll('[data-val]')).map(el => ({
             el: el,
-            value: parseInt(el.getAttribute('data-val'))
+            value: parseFloat(el.getAttribute('data-val')) // 升級為 parseFloat 支援「角」
           }));
         },
         (draggedVal, zoneVal) => {
@@ -646,7 +672,7 @@
       if (chosenValue === currentQuestionData.targetValue) {
         const cards = document.querySelectorAll('[data-val]');
         cards.forEach(card => {
-          if (parseInt(card.getAttribute('data-val')) === chosenValue) {
+          if (parseFloat(card.getAttribute('data-val')) === chosenValue) {
             card.classList.add('glow-correct');
           }
         });
@@ -697,7 +723,7 @@
             () => {
               return Array.from(document.querySelectorAll('[data-basket-val]')).map(el => ({
                 el: el,
-                value: parseInt(el.getAttribute('data-basket-val'))
+                value: parseFloat(el.getAttribute('data-basket-val'))
               }));
             },
             (dragData, basketVal) => {
@@ -851,6 +877,7 @@
           if (isAnsweredCorrectly) return;
           
           if (img.getAttribute('data-counted') === 'false') {
+            // 強制由左至右
             if (i !== selectedCount) return;
 
             playCoinSound();
@@ -861,6 +888,7 @@
             countTag.classList.remove('opacity-0', 'scale-0');
             countTag.classList.add('opacity-100', 'scale-100');
           } else {
+            // 取消點算，強制由右至左
             if (i !== selectedCount - 1) return;
 
             playCoinSound();
@@ -941,7 +969,7 @@
         e.preventDefault();
         payZone.classList.remove('drop-zone-active');
         try {
-          const coinVal = parseInt(e.dataTransfer.getData('text/plain'));
+          const coinVal = parseFloat(e.dataTransfer.getData('text/plain'));
           checkPayEasyAnswer(coinVal);
         } catch(err) {}
       };
@@ -1073,7 +1101,7 @@
         e.preventDefault();
         payZone.classList.remove('drop-zone-active');
         try {
-          const coinVal = parseInt(e.dataTransfer.getData('text/plain'));
+          const coinVal = parseFloat(e.dataTransfer.getData('text/plain'));
           processMediumPay(coinVal);
         } catch(err) {}
       };
@@ -1230,7 +1258,7 @@
         e.preventDefault();
         payZone.classList.remove('drop-zone-active');
         try {
-          const coinVal = parseInt(e.dataTransfer.getData('text/plain'));
+          const coinVal = parseFloat(e.dataTransfer.getData('text/plain'));
           processHardPay(coinVal);
         } catch(err) {}
       };
@@ -1401,7 +1429,10 @@
     function handleWrong(wrongVal) {
       playWrongSound();
       
-      if (hintEnabled && wrongVal !== undefined && !wrongOptions.includes(wrongVal)) {
+      // 1. 如果是「配對模式」或「進階配對模式」，則不管提示與否「每次錯誤後自動刪去下方該錯誤硬幣」
+      // 2. 如果是其他模式，只有在「有提示」的情況下，才剔除錯誤選項 (將選項存入 wrongOptions)
+      const forceEliminate = (currentMode === 'match' || currentMode === 'match_advanced');
+      if ((forceEliminate || hintEnabled) && wrongVal !== undefined && !wrongOptions.includes(wrongVal)) {
         wrongOptions.push(wrongVal);
       }
 
@@ -1412,7 +1443,7 @@
         feedback.className = "cute-card bg-rose-50 border-rose-100 p-4 mb-6 text-center text-rose-600 font-bold text-xl relative";
       }
       if (textSpan) {
-        if (hintEnabled) {
+        if (forceEliminate || hintEnabled) {
           textSpan.innerHTML = `💪 沒關係，再試一次！已經幫你拿掉不對的選項囉！`;
         } else {
           textSpan.innerHTML = `❌ 哎呀，不對喔！請仔細再試一次！`;
