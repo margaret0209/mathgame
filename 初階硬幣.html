@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>硬幣總值互動遊戲</title>
+  <title>硬幣總值互動遊戲 - 清新可愛風</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Noto Sans TC & Quicksand for a cute rounded look -->
@@ -20,7 +20,7 @@
       touch-action: manipulation; /* 優化雙擊縮放 */
     }
     .cute-shadow {
-      box-shadow: 0 8px 0px 0px #F9EBE0;
+      box-shadow: 0 6px 0px 0px #F9EBE0;
     }
     .cute-card {
       border: 3px solid #FFD3BA; /* 柔和粉橘邊框 */
@@ -33,61 +33,61 @@
     .btn-macaron-yellow {
       background-color: #FFF9E6;
       border: 3px solid #F5CBA7;
-      box-shadow: 0 6px 0px 0px #F5CBA7;
+      box-shadow: 0 4px 0px 0px #F5CBA7;
       color: #7E5109;
       transition: all 0.1s ease;
     }
     .btn-macaron-yellow:active {
-      transform: translateY(4px);
-      box-shadow: 0 2px 0px 0px #F5CBA7;
+      transform: translateY(3px);
+      box-shadow: 0 1px 0px 0px #F5CBA7;
     }
     
     .btn-macaron-green {
       background-color: #E8F8F5;
       border: 3px solid #A2D9CE;
-      box-shadow: 0 6px 0px 0px #A2D9CE;
+      box-shadow: 0 4px 0px 0px #A2D9CE;
       color: #117864;
       transition: all 0.1s ease;
     }
     .btn-macaron-green:active {
-      transform: translateY(4px);
-      box-shadow: 0 2px 0px 0px #A2D9CE;
+      transform: translateY(3px);
+      box-shadow: 0 1px 0px 0px #A2D9CE;
     }
 
     .btn-macaron-purple {
       background-color: #F5EEF8;
       border: 3px solid #D7BDE2;
-      box-shadow: 0 6px 0px 0px #D7BDE2;
+      box-shadow: 0 4px 0px 0px #D7BDE2;
       color: #512E5F;
       transition: all 0.1s ease;
     }
     .btn-macaron-purple:active {
-      transform: translateY(4px);
-      box-shadow: 0 2px 0px 0px #D7BDE2;
+      transform: translateY(3px);
+      box-shadow: 0 1px 0px 0px #D7BDE2;
     }
 
     .btn-macaron-pink {
       background-color: #FDEDEC;
       border: 3px solid #F5B7B1;
-      box-shadow: 0 6px 0px 0px #F5B7B1;
+      box-shadow: 0 4px 0px 0px #F5B7B1;
       color: #78281F;
       transition: all 0.1s ease;
     }
     .btn-macaron-pink:active {
-      transform: translateY(4px);
-      box-shadow: 0 2px 0px 0px #F5B7B1;
+      transform: translateY(3px);
+      box-shadow: 0 1px 0px 0px #F5B7B1;
     }
 
     .btn-macaron-cyan {
       background-color: #EBF5FB;
       border: 3px solid #AED6F1;
-      box-shadow: 0 6px 0px 0px #AED6F1;
+      box-shadow: 0 4px 0px 0px #AED6F1;
       color: #1B4F72;
       transition: all 0.1s ease;
     }
     .btn-macaron-cyan:active {
-      transform: translateY(4px);
-      box-shadow: 0 2px 0px 0px #AED6F1;
+      transform: translateY(3px);
+      box-shadow: 0 1px 0px 0px #AED6F1;
     }
 
     .coin-img {
@@ -109,9 +109,9 @@
     }
     /* 正確答案的閃亮發光外框特效 */
     .glow-correct {
-      box-shadow: 0 0 0 4px #FFFFFF, 0 0 0 8px #4ade80, 0 8px 15px 8px rgba(74, 222, 128, 0.4) !important;
+      box-shadow: 0 0 0 3px #FFFFFF, 0 0 0 6px #4ade80, 0 6px 12px 6px rgba(74, 222, 128, 0.4) !important;
       border-color: #4ade80 !important;
-      transform: scale(1.05) !important;
+      transform: scale(1.03) !important;
       z-index: 10;
       transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
@@ -123,23 +123,23 @@
     }
   </style>
 </head>
-<body class="min-h-screen pb-12 select-none">
+<body class="h-screen flex flex-col justify-between bg-[#FFFDF9] select-none overflow-hidden pb-4">
 
-  <!-- 頂部導覽列與模式切換 -->
-  <header class="bg-[#FFF2E6] border-b-4 border-[#FFE0CC] py-4 px-6 sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+  <!-- 頂部導覽列與模式切換 (縮減 py 以爭取高度) -->
+  <header class="bg-[#FFF2E6] border-b-4 border-[#FFE0CC] py-2 px-6 sticky top-0 z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
       <!-- 標題 -->
-      <div class="flex items-center gap-3">
-        <span class="text-4xl">💰</span>
-        <h1 class="text-2xl md:text-3xl font-bold text-[#8C5D3A] tracking-wider">硬幣大冒險！</h1>
+      <div class="flex items-center gap-2">
+        <span class="text-3xl">💰</span>
+        <h1 class="text-xl md:text-2xl font-bold text-[#8C5D3A] tracking-wider">硬幣大冒險！</h1>
       </div>
 
       <!-- 控制面板：模式與提示 -->
-      <div class="flex flex-wrap items-center justify-center gap-4">
+      <div class="flex flex-wrap items-center justify-center gap-3">
         <!-- 選擇模式 -->
         <div class="flex items-center gap-2">
-          <label for="modeSelect" class="font-bold text-[#8C5D3A] text-sm md:text-base">選擇關卡：</label>
-          <select id="modeSelect" onchange="switchMode()" class="bg-white border-3 border-[#FFD3BA] rounded-full px-4 py-2 text-[#8C5D3A] font-bold focus:outline-none focus:ring-2 focus:ring-[#FFB37C] cursor-pointer text-sm md:text-base shadow-sm">
+          <label for="modeSelect" class="font-bold text-[#8C5D3A] text-xs md:text-sm">選擇關卡：</label>
+          <select id="modeSelect" onchange="switchMode()" class="bg-white border-2 border-[#FFD3BA] rounded-full px-3 py-1 text-[#8C5D3A] font-bold focus:outline-none focus:ring-2 focus:ring-[#FFB37C] cursor-pointer text-xs md:text-sm shadow-sm">
             <option value="match">🧩 配對模式</option>
             <option value="match_advanced">🧩 進階配對模式</option>
             <option value="classify">🧺 分類模式</option>
@@ -152,50 +152,50 @@
         </div>
 
         <!-- 提示開關 -->
-        <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-full border-2 border-[#FFD3BA]">
-          <span class="text-sm font-bold text-[#8C5D3A]">💡 提示</span>
+        <div class="flex items-center gap-2 bg-white px-3 py-1 rounded-full border-2 border-[#FFD3BA]">
+          <span class="text-xs font-bold text-[#8C5D3A]">💡 提示</span>
           <label class="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" id="hintToggle" onchange="toggleHint()" class="sr-only peer" checked>
-            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FFB37C]"></div>
+            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#FFB37C]"></div>
           </label>
         </div>
 
         <!-- 得分板 -->
-        <div class="bg-[#FF9E79] text-white font-bold px-4 py-2 rounded-full shadow-md text-sm md:text-base">
+        <div class="bg-[#FF9E79] text-white font-bold px-3 py-1 rounded-full shadow-md text-xs md:text-sm">
           得分: <span id="scoreText">0</span> 分
         </div>
       </div>
     </div>
   </header>
 
-  <!-- 主遊戲視窗 -->
-  <main class="max-w-7xl mx-auto px-4 mt-8">
+  <!-- 主遊戲視窗 (使用 flex-grow 與 overflow-hidden 確保絕不溢出) -->
+  <main class="max-w-6xl mx-auto px-4 mt-2 mb-1 flex-grow flex flex-col justify-center overflow-hidden w-full">
     
-    <!-- 答對與提示反饋橫幅 -->
-    <div id="feedbackContainer" class="hidden cute-card bg-[#FFFDF5] border-[#FFEAA7] p-4 mb-6 text-center text-[#B7950B] font-bold text-lg md:text-xl transition-all relative">
+    <!-- 答對與提示反饋橫幅 (縮小 padding 及 margin) -->
+    <div id="feedbackContainer" class="hidden cute-card bg-[#FFFDF5] border-[#FFEAA7] p-2 mb-2 text-center text-[#B7950B] font-bold text-sm md:text-base transition-all relative">
       <span id="feedbackText">做得好！</span>
     </div>
 
-    <!-- 遊戲工作區 -->
-    <div class="cute-card bg-white p-6 md:p-10 cute-shadow min-h-[550px] flex flex-col justify-between">
+    <!-- 遊戲工作區 (調整 min-h 與 padding) -->
+    <div class="cute-card bg-white p-4 md:p-6 cute-shadow flex-grow flex flex-col justify-between overflow-hidden">
       
-      <!-- 關卡標題與動態說明 -->
-      <div class="mb-6 text-center">
-        <h2 id="gameTitle" class="text-2xl font-bold text-[#FF8552] mb-2">關卡載入中...</h2>
-        <p id="gameDesc" class="text-gray-600 font-bold text-base"></p>
+      <!-- 關卡標題與動態說明 (精簡字體大小) -->
+      <div class="mb-2 text-center">
+        <h2 id="gameTitle" class="text-lg md:text-xl font-bold text-[#FF8552]">關卡載入中...</h2>
+        <p id="gameDesc" class="text-gray-500 font-bold text-xs md:text-sm"></p>
       </div>
 
-      <!-- 核心互動區（根據模式動態載入） -->
-      <div id="interactionArea" class="flex-grow flex flex-col items-center justify-center gap-8 py-4">
+      <!-- 核心互動區 (利用 flex-grow 與 overflow-hidden 達到完全貼合) -->
+      <div id="interactionArea" class="flex-grow flex flex-col items-center justify-center gap-2 md:gap-4 py-1 overflow-hidden">
         <!-- 內容由 JS 動態生成 -->
       </div>
 
       <!-- 重來 / 下一題按鈕 -->
-      <div class="mt-8 flex justify-center gap-4">
-        <button onclick="resetCurrentGame()" class="btn-macaron-yellow text-lg font-bold py-3 px-6 rounded-full flex items-center gap-2">
+      <div class="mt-2 flex justify-center gap-3">
+        <button onclick="resetCurrentGame()" class="btn-macaron-yellow text-xs md:text-sm font-bold py-2 px-5 rounded-full flex items-center gap-1">
           🔄 重新挑戰
         </button>
-        <button id="nextBtn" onclick="nextQuestion()" class="btn-macaron-green text-lg font-bold py-3 px-8 rounded-full flex items-center gap-2 hidden">
+        <button id="nextBtn" onclick="nextQuestion()" class="btn-macaron-green text-xs md:text-sm font-bold py-2 px-6 rounded-full flex items-center gap-1 hidden">
           🌟 下一題 ✨
         </button>
       </div>
@@ -204,13 +204,7 @@
 
   </main>
 
-  <!-- 底部可愛宣告 -->
-  <footer class="text-center mt-12 text-[#8C5D3A]/60 font-bold text-sm">
-    🎈 專為大、小朋友打造的硬幣學習樂園 🎈
-  </footer>
-
   <script>
-    // 增加「1角、2角、5角」的完整圖片庫
     const COIN_IMAGES = {
       0.1: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/1角正面.png",
       0.2: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/2角正面.png",
@@ -221,13 +215,9 @@
       10: "https://raw.githubusercontent.com/margaret0209/mathgame/refs/heads/main/10元正面.png"
     };
 
-    // 配對模式面額庫
     const COIN_VALUES = [1, 2, 5, 10];
-    
-    // 進階配對模式面額庫（包含元與角）
     const ADVANCED_COIN_VALUES = [0.1, 0.2, 0.5, 1, 2, 5, 10];
 
-    // 格式化貨幣名稱
     function getCoinName(val) {
       if (val === 0.1) return "1角";
       if (val === 0.2) return "2角";
@@ -235,59 +225,56 @@
       return `${val}元`;
     }
 
-    // 51 種可愛貨品中央資料庫
     const TOY_DATABASE = [
-      { name: "棒棒糖", emoji: "🍭" },
-      { name: "香甜冰淇淋", emoji: "🍦" },
-      { name: "草莓甜甜圈", emoji: "🍩" },
-      { name: "巧克力磚", emoji: "🍫" },
-      { name: "鮮奶油小蛋糕", emoji: "🍰" },
-      { name: "Ｑ彈布丁", emoji: "🍮" },
-      { name: "繽紛糖果", emoji: "🍬" },
-      { name: "巧克力曲奇", emoji: "🍪" },
-      { name: "蜂蜜罐", emoji: "🍯" },
-      { name: "紅草莓", emoji: "🍓" },
-      { name: "小櫻桃", emoji: "🍒" },
-      { name: "水蜜桃", emoji: "🍑" },
-      { name: "哈密瓜", emoji: "🍈" },
-      { name: "香蕉", emoji: "🍌" },
-      { name: "爆米花", emoji: "🍿" },
-      { name: "熱帶果汁", emoji: "🍹" },
+      { name: "恐龍公仔", emoji: "🦖" },
+      { name: "腕龍模型", emoji: "🦕" },
       { name: "泰迪熊玩偶", emoji: "🧸" },
-      { name: "發光小汽車", emoji: "🚗" },
-      { name: "神奇氣球", emoji: "🎈" },
-      { name: "彩色蠟筆", emoji: "🖍️" },
-      { name: "童話故事書", emoji: "📖" },
-      { name: "彩色積木", emoji: "🧱" },
-      { name: "小恐龍玩具", emoji: "🦖" },
-      { name: "魔術方塊", emoji: "🧩" },
-      { name: "彩虹飛盤", emoji: "🥏" },
-      { name: "小飛機模型", emoji: "✈️" },
-      { name: "小木船", emoji: "⛵" },
-      { name: "帥氣腳踏車", emoji: "🚲" },
-      { name: "復古玩具相機", emoji: "📷" },
-      { name: "神奇吹泡泡", emoji: "🫧" },
-      { name: "水果橡皮擦", emoji: "🧼" },
-      { name: "精緻鉛筆盒", emoji: "✏️" },
-      { name: "彩色小風車", emoji: "🎡" },
-      { name: "玩具小鋼琴", emoji: "🎹" },
-      { name: "旋轉木馬音樂盒", emoji: "🎠" },
-      { name: "玩具皇冠", emoji: "👑" },
-      { name: "星星魔法棒", emoji: "🪄" },
-      { name: "金色小鈴鐺", emoji: "🔔" },
-      { name: "探險放大鏡", emoji: "🔍" },
-      { name: "彩色熊軟糖", emoji: "🐻" },
       { name: "招財貓公仔", emoji: "🐱" },
       { name: "哈士奇玩偶", emoji: "🐶" },
-      { name: "粉紅小兔氣球", emoji: "🐰" },
-      { name: "迷你雪人公仔", emoji: "⛄" },
-      { name: "閃亮愛心貼紙", emoji: "💖" },
-      { name: "幸運小金星", emoji: "⭐" },
-      { name: "彩虹拱橋玩具", emoji: "🌈" },
-      { name: "玩具吉他", emoji: "🎸" },
-      { name: "發光機器人", emoji: "🤖" },
-      { name: "天文望遠鏡", emoji: "🔭" },
-      { name: "珍奶磁鐵", emoji: "🧋" }
+      { name: "粉紅小兔娃娃", emoji: "🐰" },
+      { name: "小豬公仔", emoji: "🐷" },
+      { name: "無尾熊抱枕", emoji: "🐨" },
+      { name: "熊貓布偶", emoji: "🐼" },
+      { name: "獅子模型", emoji: "🦁" },
+      { name: "老虎公仔", emoji: "🐯" },
+      { name: "小雞嗶嗶玩具", emoji: "🐥" },
+      { name: "企鵝不倒翁", emoji: "🐧" },
+      { name: "貓頭鷹音樂盒", emoji: "🦉" },
+      { name: "青蛙跳跳玩具", emoji: "🐸" },
+      { name: "小猴子掛飾", emoji: "🐵" },
+      { name: "大象玩偶", emoji: "🐘" },
+      { name: "犀牛模型", emoji: "🦏" },
+      { name: "河馬洗澡玩具", emoji: "🦛" },
+      { name: "老鼠發條玩具", emoji: "🐭" },
+      { name: "倉鼠公仔", emoji: "🐹" },
+      { name: "刺蝟小玩具", emoji: "🦔" },
+      { name: "蝙蝠模型", emoji: "🦇" },
+      { name: "狐狸布偶", emoji: "🦊" },
+      { name: "浣熊玩偶", emoji: "🦝" },
+      { name: "夢幻獨角獸", emoji: "🦄" },
+      { name: "斑馬模型", emoji: "🦓" },
+      { name: "小鹿公仔", emoji: "🦌" },
+      { name: "長頸鹿玩偶", emoji: "🦒" },
+      { name: "駱駝模型", emoji: "🐫" },
+      { name: "綿羊絨毛玩具", emoji: "🐑" },
+      { name: "羊駝公仔", emoji: "🦙" },
+      { name: "山羊模型", emoji: "🐐" },
+      { name: "牛牛抱枕", emoji: "🐮" },
+      { name: "小馬騎乘玩具", emoji: "🐴" },
+      { name: "蝴蝶風箏", emoji: "🦋" },
+      { name: "蝸牛拖拉玩具", emoji: "🐌" },
+      { name: "甲蟲模型", emoji: "🐞" },
+      { name: "烏龜游泳玩具", emoji: "🐢" },
+      { name: "蛇模型", emoji: "🐍" },
+      { name: "蜥蜴玩具", emoji: "🦎" },
+      { name: "章魚布偶", emoji: "🐙" },
+      { name: "螃蟹沙灘玩具", emoji: "🦀" },
+      { name: "鯨魚噴水玩具", emoji: "🐳" },
+      { name: "海豚充氣玩具", emoji: "🐬" },
+      { name: "鯊魚牙齒玩具", emoji: "🦈" },
+      { name: "彩色積木", emoji: "🧱" },
+      { name: "發光小汽車", emoji: "🚗" },
+      { name: "小飛機模型", emoji: "✈️" }
     ];
 
     let currentMode = 'match';
@@ -325,10 +312,12 @@
       setTimeout(() => playTone(783.99, 'triangle', 0.2), 200); 
     }
 
+    // 答錯音效
     function playWrongSound() {
       playTone(220, 'sawtooth', 0.2); 
     }
 
+    // 金屬硬幣音效
     function playCoinSound() {
       playTone(987.77, 'sine', 0.05); 
     }
@@ -578,31 +567,30 @@
     }
 
     // -------------------------------------------------------------
-    // 1. 配對 & 進階配對模式渲染
+    // 1. 配對 & 進階配對模式渲染 (高度緊湊微調)
     // -------------------------------------------------------------
     function renderMatchMode(container, isAdvanced = false) {
       const activePool = isAdvanced ? ADVANCED_COIN_VALUES : COIN_VALUES;
       const targetVal = currentQuestionData.targetValue;
 
       const questionDiv = document.createElement('div');
-      questionDiv.className = "flex flex-col items-center mb-6";
+      questionDiv.className = "flex flex-col items-center mb-2";
       questionDiv.innerHTML = `
-        <div class="bg-amber-50 p-6 rounded-3xl border-2 border-dashed border-amber-300 flex items-center justify-center w-48 h-48">
+        <div class="bg-amber-50 p-3 rounded-2xl border-2 border-dashed border-amber-200 flex items-center justify-center w-32 h-32 md:w-36 md:h-36">
           <img src="${COIN_IMAGES[targetVal]}" 
                id="draggableCoin" 
                draggable="true" 
-               class="w-32 h-32 cursor-grab active:cursor-grabbing coin-img filter drop-shadow-md"
+               class="w-20 h-20 md:w-24 md:h-24 cursor-grab active:cursor-grabbing coin-img filter drop-shadow-md"
                alt="${getCoinName(targetVal)}" />
         </div>
-        <p class="text-base font-bold text-amber-600 mt-3">👈 快把我拖曳去下方配對吧！</p>
+        <p class="text-xs font-bold text-amber-600 mt-1">👈 快把我拖曳去下方配對吧！</p>
       `;
       container.appendChild(questionDiv);
 
       const optionsContainer = document.createElement('div');
-      // 進階配對橫向平板電腦最佳化：排成一排大按鈕更舒適
       optionsContainer.className = isAdvanced 
-        ? "grid grid-cols-4 md:grid-cols-7 gap-4 w-full max-w-5xl mt-6 justify-center" 
-        : "grid grid-cols-4 gap-6 w-full max-w-3xl mt-6 justify-center";
+        ? "grid grid-cols-4 md:grid-cols-7 gap-2 md:gap-3 w-full max-w-4xl mt-2 justify-center" 
+        : "grid grid-cols-4 gap-3 md:gap-4 w-full max-w-2xl mt-2 justify-center";
       
       activePool.forEach(val => {
         if (wrongOptions.includes(val)) {
@@ -612,11 +600,11 @@
         }
 
         const optionCard = document.createElement('div');
-        optionCard.className = "cute-card p-3 flex flex-col items-center justify-center hover:border-amber-400 hover:bg-amber-50 transition-all text-center relative";
+        optionCard.className = "cute-card p-2 md:p-3 flex flex-col items-center justify-center hover:border-amber-400 hover:bg-amber-50 transition-all text-center relative";
         optionCard.setAttribute('data-val', val);
         optionCard.innerHTML = `
-          <img src="${COIN_IMAGES[val]}" class="w-16 h-16 mb-2 pointer-events-none" />
-          <span class="font-bold text-lg text-gray-700">${getCoinName(val)}</span>
+          <img src="${COIN_IMAGES[val]}" class="w-10 h-10 md:w-12 md:h-12 mb-1 pointer-events-none" />
+          <span class="font-bold text-xs md:text-sm text-gray-700">${getCoinName(val)}</span>
         `;
 
         optionCard.ondragover = (e) => {
@@ -658,7 +646,7 @@
         () => {
           return Array.from(document.querySelectorAll('[data-val]')).map(el => ({
             el: el,
-            value: parseFloat(el.getAttribute('data-val')) // 升級為 parseFloat 支援「角」
+            value: parseFloat(el.getAttribute('data-val'))
           }));
         },
         (draggedVal, zoneVal) => {
@@ -684,22 +672,22 @@
     }
 
     // -------------------------------------------------------------
-    // 2. 分類模式渲染
+    // 2. 分類模式渲染 (縮小硬幣和籃子，避免捲動)
     // -------------------------------------------------------------
     function renderClassifyMode(container) {
       const poolContainer = document.createElement('div');
-      poolContainer.className = "flex flex-wrap justify-center gap-4 p-6 bg-orange-50 border-2 border-dashed border-orange-200 rounded-2xl w-full max-w-4xl min-h-[120px]";
+      poolContainer.className = "flex flex-wrap justify-center gap-2 p-3 bg-orange-50 border-2 border-dashed border-orange-200 rounded-2xl w-full max-w-3xl min-h-[90px]";
       
       const coinsLeft = currentQuestionData.coinPool.length;
 
       if (coinsLeft === 0) {
-        poolContainer.innerHTML = `<span class="text-emerald-500 font-bold text-lg py-4">🎉 太棒了！所有的硬幣都分類好了！</span>`;
+        poolContainer.innerHTML = `<span class="text-emerald-500 font-bold text-sm md:text-base py-2">🎉 太棒了！所有的硬幣都分類好了！</span>`;
         document.getElementById('nextBtn').classList.remove('hidden');
       } else {
         currentQuestionData.coinPool.forEach((val, idx) => {
           const coinImg = document.createElement('img');
           coinImg.src = COIN_IMAGES[val];
-          coinImg.className = "w-14 h-14 cursor-grab active:cursor-grabbing filter drop-shadow-sm coin-img";
+          coinImg.className = "w-10 h-10 md:w-11 md:h-11 cursor-grab active:cursor-grabbing filter drop-shadow-sm coin-img";
           coinImg.draggable = true;
           coinImg.id = `classify-coin-${idx}`;
           
@@ -736,29 +724,29 @@
       container.appendChild(poolContainer);
 
       const basketsContainer = document.createElement('div');
-      basketsContainer.className = "grid grid-cols-4 gap-6 w-full max-w-4xl mt-6";
+      basketsContainer.className = "grid grid-cols-4 gap-3 md:gap-4 w-full max-w-3xl mt-2";
 
       COIN_VALUES.forEach(val => {
         const basket = document.createElement('div');
-        basket.className = "cute-card border-2 border-[#FFD3BA] p-3 min-h-[180px] flex flex-col items-center bg-[#FFF9F5] transition-all";
+        basket.className = "cute-card border-2 border-[#FFD3BA] p-2 min-h-[140px] md:min-h-[160px] flex flex-col items-center bg-[#FFF9F5] transition-all";
         basket.setAttribute('data-basket-val', val);
         
         const count = currentQuestionData.classified[val] || 0;
 
         const coinHintHtml = hintEnabled 
-          ? `<img src="${COIN_IMAGES[val]}" class="w-10 h-10 mb-1 filter drop-shadow-sm pointer-events-none" alt="${val}元硬幣提示" />` 
+          ? `<img src="${COIN_IMAGES[val]}" class="w-8 h-8 md:w-9 md:h-9 mb-1 filter drop-shadow-sm pointer-events-none" alt="${val}元硬幣提示" />` 
           : ''; 
 
         basket.innerHTML = `
-          <div class="flex flex-col items-center mb-2">
+          <div class="flex flex-col items-center mb-1">
             ${coinHintHtml}
-            <div class="font-bold text-[#8C5D3A] text-xs md:text-sm">${val}元籃子</div>
+            <div class="font-bold text-[#8C5D3A] text-2xs md:text-xs">${val}元籃子</div>
           </div>
-          <div class="flex-grow w-full border border-dashed border-amber-200 rounded-xl p-2 flex flex-wrap justify-center items-center content-center gap-1 bg-white">
-            ${Array(count).fill(0).map(() => `<img src="${COIN_IMAGES[val]}" class="w-8 h-8 filter drop-shadow-sm" />`).join('')}
-            ${count === 0 ? `<span class="text-xs text-gray-400">放這裡</span>` : ''}
+          <div class="flex-grow w-full border border-dashed border-amber-200 rounded-xl p-1 flex flex-wrap justify-center items-center content-center gap-0.5 bg-white">
+            ${Array(count).fill(0).map(() => `<img src="${COIN_IMAGES[val]}" class="w-6 h-6 md:w-7 md:h-7 filter drop-shadow-sm" />`).join('')}
+            ${count === 0 ? `<span class="text-[10px] text-gray-400">放這裡</span>` : ''}
           </div>
-          <div class="mt-2 text-xs font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">已分類: ${count}</div>
+          <div class="mt-1 text-[10px] font-bold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full">已分類: ${count}</div>
         `;
 
         basket.ondragover = (e) => {
@@ -815,16 +803,16 @@
     // -------------------------------------------------------------
     function renderValueMode(container) {
       const questionDiv = document.createElement('div');
-      questionDiv.className = "flex flex-col items-center mb-6";
+      questionDiv.className = "flex flex-col items-center mb-2";
       questionDiv.innerHTML = `
-        <div class="bg-amber-50 p-8 rounded-3xl border-2 border-dashed border-amber-300 flex items-center justify-center w-48 h-48">
-          <img src="${COIN_IMAGES[currentQuestionData.targetValue]}" class="w-32 h-32 filter drop-shadow-md" />
+        <div class="bg-amber-50 p-4 rounded-3xl border-2 border-dashed border-amber-200 flex items-center justify-center w-36 h-36">
+          <img src="${COIN_IMAGES[currentQuestionData.targetValue]}" class="w-24 h-24 filter drop-shadow-md" />
         </div>
       `;
       container.appendChild(questionDiv);
 
       const optionsContainer = document.createElement('div');
-      optionsContainer.className = "grid grid-cols-2 md:grid-cols-4 gap-6 w-full max-w-3xl mt-6";
+      optionsContainer.className = "grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-2xl mt-2";
 
       COIN_VALUES.forEach(val => {
         if (wrongOptions.includes(val)) {
@@ -834,7 +822,7 @@
         }
 
         const btn = document.createElement('button');
-        btn.className = "btn-macaron-pink text-lg font-bold py-4 px-6 rounded-2xl transition-all relative";
+        btn.className = "btn-macaron-pink text-sm md:text-base font-bold py-2 px-4 rounded-xl transition-all relative";
         btn.textContent = `${val}元`;
         btn.onclick = () => {
           if (isAnsweredCorrectly) return;
@@ -854,11 +842,13 @@
     }
 
     // -------------------------------------------------------------
-    // 4. 總值模式渲染
+    // 4. 總值模式渲染 (修正：每次 render 時將計數歸零，允許錯誤後點選)
     // -------------------------------------------------------------
     function renderTotalMode(container) {
+      selectedCount = 0; // 重置點算數量，讓錯誤重新渲染後能重新順暢點算！
+      
       const coinsArea = document.createElement('div');
-      coinsArea.className = "flex flex-wrap justify-center gap-4 p-8 bg-yellow-50/50 border-2 border-dashed border-yellow-200 rounded-2xl w-full max-w-3xl min-h-[140px]";
+      coinsArea.className = "flex flex-wrap justify-center gap-2 p-4 bg-yellow-50/50 border-2 border-dashed border-yellow-200 rounded-2xl w-full max-w-2xl min-h-[90px] md:min-h-[110px]";
       
       for (let i = 0; i < currentQuestionData.targetValue; i++) {
         const coinWrapper = document.createElement('div');
@@ -866,18 +856,17 @@
 
         const img = document.createElement('img');
         img.src = COIN_IMAGES[1];
-        img.className = "w-14 h-14 cursor-pointer filter drop-shadow-sm transition-all active:scale-95";
+        img.className = "w-10 h-10 md:w-11 md:h-11 cursor-pointer filter drop-shadow-sm transition-all active:scale-95";
         img.setAttribute('data-counted', 'false');
 
         const countTag = document.createElement('span');
-        countTag.className = "absolute -top-6 bg-[#FF9E79] text-white text-xs font-bold rounded-full px-2 py-0.5 opacity-0 transition-all pointer-events-none scale-0";
+        countTag.className = "absolute -top-5 bg-[#FF9E79] text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 opacity-0 transition-all pointer-events-none scale-0";
         countTag.id = `count-tag-${i}`;
 
         img.onclick = () => {
           if (isAnsweredCorrectly) return;
           
           if (img.getAttribute('data-counted') === 'false') {
-            // 強制由左至右
             if (i !== selectedCount) return;
 
             playCoinSound();
@@ -888,7 +877,6 @@
             countTag.classList.remove('opacity-0', 'scale-0');
             countTag.classList.add('opacity-100', 'scale-100');
           } else {
-            // 取消點算，強制由右至左
             if (i !== selectedCount - 1) return;
 
             playCoinSound();
@@ -908,7 +896,7 @@
       container.appendChild(coinsArea);
 
       const optionsContainer = document.createElement('div');
-      optionsContainer.className = "grid grid-cols-5 gap-4 w-full max-w-3xl mt-8";
+      optionsContainer.className = "grid grid-cols-5 gap-2 w-full max-w-2xl mt-3";
 
       for (let v = 1; v <= 10; v++) {
         if (wrongOptions.includes(v)) {
@@ -918,7 +906,7 @@
         }
 
         const btn = document.createElement('button');
-        btn.className = "btn-macaron-cyan text-lg font-bold py-3 px-1 rounded-xl transition-all relative";
+        btn.className = "btn-macaron-cyan text-xs md:text-sm font-bold py-2 px-1 rounded-lg transition-all relative";
         btn.textContent = `${v}元`;
         btn.onclick = () => {
           if (isAnsweredCorrectly) return;
@@ -938,23 +926,23 @@
     }
 
     // -------------------------------------------------------------
-    // 5. 簡易付款模式渲染
+    // 5. 簡易付款模式渲染 (緊密左右排列，高度適中)
     // -------------------------------------------------------------
     function renderPayEasyMode(container) {
       const showcase = document.createElement('div');
-      showcase.className = "flex flex-col items-center justify-center p-6 border-2 border-emerald-200 bg-emerald-50/50 rounded-3xl w-72 relative";
+      showcase.className = "flex flex-col items-center justify-center p-3 border-2 border-emerald-200 bg-emerald-50/50 rounded-2xl w-56 relative shadow-sm";
       showcase.innerHTML = `
-        <div class="text-7xl mb-4">${currentQuestionData.itemEmoji}</div>
-        <div class="font-bold text-gray-800 text-xl mb-2">${currentQuestionData.itemName}</div>
-        <div class="bg-[#FF9E79] text-white font-extrabold text-2xl px-8 py-2 rounded-full shadow-md border-2 border-white">
+        <div class="text-5xl mb-2">${currentQuestionData.itemEmoji}</div>
+        <div class="font-bold text-gray-800 text-sm md:text-base mb-1">${currentQuestionData.itemName}</div>
+        <div class="bg-[#FF9E79] text-white font-extrabold text-lg md:text-xl px-5 py-1 rounded-full shadow-md border-2 border-white">
           $${currentQuestionData.targetValue}
         </div>
       `;
 
       const payZone = document.createElement('div');
-      payZone.className = "cute-card border-dashed border-4 border-emerald-300 p-4 w-72 min-h-[160px] flex flex-col items-center justify-center bg-white relative";
+      payZone.className = "cute-card border-dashed border-4 border-emerald-300 p-2 w-56 min-h-[120px] md:min-h-[140px] flex flex-col items-center justify-center bg-white relative";
       payZone.id = "payZone";
-      payZone.innerHTML = `<span class="text-emerald-600 font-bold text-sm text-center">🚚 拖曳正確的硬幣到這裡付款</span>`;
+      payZone.innerHTML = `<span class="text-[#117864] font-bold text-xs text-center px-2">🚚 拖曳正確硬幣到這裡付款</span>`;
 
       payZone.ondragover = (e) => {
         if (isAnsweredCorrectly) return;
@@ -975,13 +963,13 @@
       };
 
       const topSection = document.createElement('div');
-      topSection.className = "flex flex-col md:flex-row items-center justify-center gap-16 w-full";
+      topSection.className = "flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12 w-full";
       topSection.appendChild(showcase);
       topSection.appendChild(payZone);
       container.appendChild(topSection);
 
       const optionsContainer = document.createElement('div');
-      optionsContainer.className = "grid grid-cols-4 gap-8 w-full max-w-3xl mt-10";
+      optionsContainer.className = "grid grid-cols-4 gap-4 w-full max-w-xl mt-3";
 
       COIN_VALUES.forEach(val => {
         if (wrongOptions.includes(val)) {
@@ -995,7 +983,7 @@
         
         const coinImg = document.createElement('img');
         coinImg.src = COIN_IMAGES[val];
-        coinImg.className = "w-16 h-16 cursor-grab active:cursor-grabbing filter drop-shadow-sm coin-img";
+        coinImg.className = "w-11 h-11 md:w-12 md:h-12 cursor-grab active:cursor-grabbing filter drop-shadow-sm coin-img";
         coinImg.draggable = true;
         coinImg.id = `pay-coin-${val}`;
 
@@ -1031,7 +1019,7 @@
       if (isAnsweredCorrectly) return;
       if (coinVal === currentQuestionData.targetValue) {
         const payZone = document.getElementById('payZone');
-        payZone.innerHTML = `<img src="${COIN_IMAGES[coinVal]}" class="w-16 h-16 filter drop-shadow-md animate-bounce glow-correct" style="border-radius: 50%;" />`;
+        payZone.innerHTML = `<img src="${COIN_IMAGES[coinVal]}" class="w-12 h-12 md:w-14 md:h-14 filter drop-shadow-md animate-bounce glow-correct" style="border-radius: 50%;" />`;
         setTimeout(() => {
           handleSuccess();
         }, 300);
@@ -1042,45 +1030,45 @@
     }
 
     // -------------------------------------------------------------
-    // 6. 中階付款模式渲染 (無提示隱藏累計放入)
+    // 6. 中階付款模式渲染 (高度壓縮，保證全畫面顯示)
     // -------------------------------------------------------------
     function renderPayMediumMode(container) {
       const showcase = document.createElement('div');
-      showcase.className = "flex flex-col items-center justify-center p-6 border-2 border-purple-200 bg-purple-50/50 rounded-3xl w-72";
+      showcase.className = "flex flex-col items-center justify-center p-3 border-2 border-purple-200 bg-purple-50/50 rounded-2xl w-56 shadow-sm";
       showcase.innerHTML = `
-        <div class="text-7xl mb-3">${currentQuestionData.itemEmoji}</div>
-        <div class="font-bold text-gray-800 text-xl mb-2">${currentQuestionData.itemName}</div>
-        <div class="bg-[#FF9E79] text-white font-extrabold text-2xl px-8 py-2 rounded-full shadow-md border-2 border-white">
+        <div class="text-5xl mb-1">${currentQuestionData.itemEmoji}</div>
+        <div class="font-bold text-gray-800 text-xs md:text-sm mb-1">${currentQuestionData.itemName}</div>
+        <div class="bg-[#FF9E79] text-white font-extrabold text-base md:text-lg px-4 py-1 rounded-full shadow-md border-2 border-white">
           $${currentQuestionData.targetValue}
         </div>
       `;
 
       const payZone = document.createElement('div');
-      payZone.className = "cute-card border-dashed border-4 border-purple-300 p-4 w-72 min-h-[180px] flex flex-col items-center justify-center bg-white relative";
+      payZone.className = "cute-card border-dashed border-4 border-purple-300 p-2 w-56 min-h-[120px] md:min-h-[140px] flex flex-col items-center justify-center bg-white relative";
       payZone.id = "payZone";
 
       let coinsHtml = "";
       for (let i = 0; i < paidAmount; i++) {
-        coinsHtml += `<img src="${COIN_IMAGES[1]}" class="w-8 h-8 filter drop-shadow-sm -m-1 animate-ping-once" style="animation-duration: 0.3s" />`;
+        coinsHtml += `<img src="${COIN_IMAGES[1]}" class="w-6 h-6 md:w-7 md:h-7 filter drop-shadow-sm -m-0.5 animate-ping-once" style="animation-duration: 0.3s" />`;
       }
 
       const progressPercent = (paidAmount / currentQuestionData.targetValue) * 100;
       
       const progressHtml = hintEnabled ? `
-        <div class="w-full bg-purple-50 rounded-full h-3 overflow-hidden border border-purple-100 mt-2">
+        <div class="w-full bg-purple-50 rounded-full h-2 overflow-hidden border border-purple-100 mt-1">
           <div id="inlineProgressBar" class="bg-[#FFD3BA] h-full transition-all duration-300" style="width: ${progressPercent}%"></div>
         </div>
       ` : '';
 
       const accumulatedHtml = hintEnabled ? `
-        <div class="text-xs font-bold text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
+        <div class="text-[10px] font-bold text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-100">
           累計放入: $${paidAmount}
         </div>
       ` : '';
 
       payZone.innerHTML = `
-        <div class="flex flex-wrap justify-center gap-1 mb-2">
-          ${coinsHtml || '<span class="text-purple-600 font-bold text-xs text-center">👛 請把 1元 拖曳進來</span>'}
+        <div class="flex flex-wrap justify-center gap-0.5 mb-1">
+          ${coinsHtml || '<span class="text-purple-600 font-bold text-[10px] text-center">👛 請把 1元 拖曳進來</span>'}
         </div>
         <div class="flex flex-col items-center w-full">
           ${accumulatedHtml}
@@ -1107,15 +1095,15 @@
       };
 
       const topSection = document.createElement('div');
-      topSection.className = "flex flex-col md:flex-row items-center justify-center gap-16 w-full";
+      topSection.className = "flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12 w-full";
       
       const payZoneWrapper = document.createElement('div');
-      payZoneWrapper.className = "flex flex-col items-center gap-4 w-72";
+      payZoneWrapper.className = "flex flex-col items-center gap-2 w-56";
       payZoneWrapper.appendChild(payZone);
       
       if (!hintEnabled) {
         const confirmBtn = document.createElement('button');
-        confirmBtn.className = "btn-macaron-green text-base font-bold py-2 px-8 rounded-full shadow-md transition-all";
+        confirmBtn.className = "btn-macaron-green text-2xs md:text-xs font-bold py-1.5 px-6 rounded-full shadow-md transition-all";
         confirmBtn.innerHTML = "✅ 確認付款";
         confirmBtn.onclick = confirmPayment;
         payZoneWrapper.appendChild(confirmBtn);
@@ -1126,16 +1114,16 @@
       container.appendChild(topSection);
 
       const generatorArea = document.createElement('div');
-      generatorArea.className = "flex flex-col items-center mt-10 p-6 bg-purple-50/50 rounded-2xl border border-purple-100 w-full max-w-lg";
+      generatorArea.className = "flex flex-col items-center mt-4 p-3 bg-purple-50/50 rounded-2xl border border-purple-100 w-full max-w-md";
       generatorArea.innerHTML = `
-        <div class="flex gap-6 items-center">
+        <div class="flex gap-4 items-center">
           <img src="${COIN_IMAGES[1]}" 
                id="unlimitedCoin" 
                draggable="true" 
-               class="w-20 h-20 cursor-grab active:cursor-grabbing filter drop-shadow-md coin-img" 
+               class="w-12 h-12 md:w-14 md:h-14 cursor-grab active:cursor-grabbing filter drop-shadow-md coin-img" 
                alt="1元" />
         </div>
-        <p class="text-sm font-bold text-purple-600 mt-3">👈 請拖曳 1 元進上方籃子付款</p>
+        <p class="text-xs font-bold text-purple-600 mt-1">👈 請拖曳 1 元進上方籃子付款</p>
       `;
 
       container.appendChild(generatorArea);
@@ -1196,15 +1184,15 @@
     }
 
     // -------------------------------------------------------------
-    // 7. 進階付款模式渲染 (無提示隱藏累計放入)
+    // 7. 進階付款模式渲染 (高度壓縮，保證全畫面顯示)
     // -------------------------------------------------------------
     function renderPayHardMode(container) {
       const showcase = document.createElement('div');
-      showcase.className = "flex flex-col items-center justify-center p-6 border-2 border-indigo-200 bg-indigo-50/50 rounded-3xl w-72";
+      showcase.className = "flex flex-col items-center justify-center p-3 border-2 border-indigo-200 bg-indigo-50/50 rounded-2xl w-56 shadow-sm";
       showcase.innerHTML = `
-        <div class="text-7xl mb-3">${currentQuestionData.itemEmoji}</div>
-        <div class="font-bold text-gray-800 text-xl mb-2">${currentQuestionData.itemName}</div>
-        <div class="bg-[#FF9E79] text-white font-extrabold text-2xl px-8 py-2 rounded-full shadow-md border-2 border-white">
+        <div class="text-5xl mb-1">${currentQuestionData.itemEmoji}</div>
+        <div class="font-bold text-gray-800 text-xs md:text-sm mb-1">${currentQuestionData.itemName}</div>
+        <div class="bg-[#FF9E79] text-white font-extrabold text-base md:text-lg px-4 py-1 rounded-full shadow-md border-2 border-white">
           $${currentQuestionData.targetValue}
         </div>
       `;
@@ -1214,30 +1202,30 @@
       }
 
       const payZone = document.createElement('div');
-      payZone.className = "cute-card border-dashed border-4 border-indigo-300 p-4 w-72 min-h-[180px] flex flex-col items-center justify-center bg-white relative";
+      payZone.className = "cute-card border-dashed border-4 border-indigo-300 p-2 w-56 min-h-[120px] md:min-h-[140px] flex flex-col items-center justify-center bg-white relative";
       payZone.id = "payZone";
 
       let coinsHtml = currentQuestionData.insertedCoins.map(val => {
-        return `<img src="${COIN_IMAGES[val]}" class="w-8 h-8 filter drop-shadow-sm -m-1 animate-ping-once" style="animation-duration: 0.3s" />`;
+        return `<img src="${COIN_IMAGES[val]}" class="w-6 h-6 md:w-7 md:h-7 filter drop-shadow-sm -m-0.5 animate-ping-once" style="animation-duration: 0.3s" />`;
       }).join('');
 
       const progressPercent = (paidAmount / currentQuestionData.targetValue) * 100;
       
       const progressHtml = hintEnabled ? `
-        <div class="w-full bg-indigo-50 rounded-full h-3 overflow-hidden border border-indigo-100 mt-2">
+        <div class="w-full bg-indigo-50 rounded-full h-2 overflow-hidden border border-indigo-100 mt-1">
           <div id="inlineProgressBar" class="bg-[#FFD3BA] h-full transition-all duration-300" style="width: ${progressPercent}%"></div>
         </div>
       ` : '';
 
       const accumulatedHtml = hintEnabled ? `
-        <div class="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+        <div class="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
           累計放入: $${paidAmount} / $${currentQuestionData.targetValue}
         </div>
       ` : '';
 
       payZone.innerHTML = `
-        <div class="flex flex-wrap justify-center gap-1 mb-2">
-          ${coinsHtml || '<span class="text-indigo-600 font-bold text-xs text-center">👛 請拖曳硬幣到這裡付款</span>'}
+        <div class="flex flex-wrap justify-center gap-0.5 mb-1">
+          ${coinsHtml || '<span class="text-indigo-600 font-bold text-[10px] text-center">👛 請拖曳硬幣到這裡付款</span>'}
         </div>
         <div class="flex flex-col items-center w-full">
           ${accumulatedHtml}
@@ -1264,15 +1252,15 @@
       };
 
       const topSection = document.createElement('div');
-      topSection.className = "flex flex-col md:flex-row items-center justify-center gap-16 w-full";
+      topSection.className = "flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12 w-full";
       
       const payZoneWrapper = document.createElement('div');
-      payZoneWrapper.className = "flex flex-col items-center gap-4 w-72";
+      payZoneWrapper.className = "flex flex-col items-center gap-2 w-56";
       payZoneWrapper.appendChild(payZone);
       
       if (!hintEnabled) {
         const confirmBtn = document.createElement('button');
-        confirmBtn.className = "btn-macaron-green text-base font-bold py-2 px-8 rounded-full shadow-md transition-all";
+        confirmBtn.className = "btn-macaron-green text-2xs md:text-xs font-bold py-1.5 px-6 rounded-full shadow-md transition-all";
         confirmBtn.innerHTML = "✅ 確認付款";
         confirmBtn.onclick = confirmPayment;
         payZoneWrapper.appendChild(confirmBtn);
@@ -1283,7 +1271,7 @@
       container.appendChild(topSection);
 
       const optionsContainer = document.createElement('div');
-      optionsContainer.className = "grid grid-cols-4 gap-8 w-full max-w-3xl mt-10 bg-indigo-50/30 p-6 rounded-2xl border border-indigo-100";
+      optionsContainer.className = "grid grid-cols-4 gap-4 w-full max-w-xl mt-4 bg-indigo-50/30 p-3 rounded-xl border border-indigo-100";
 
       COIN_VALUES.forEach(val => {
         const coinContainer = document.createElement('div');
@@ -1291,7 +1279,7 @@
         
         const coinImg = document.createElement('img');
         coinImg.src = COIN_IMAGES[val];
-        coinImg.className = "w-14 h-14 cursor-grab active:cursor-grabbing filter drop-shadow-sm coin-img";
+        coinImg.className = "w-11 h-11 md:w-12 md:h-12 cursor-grab active:cursor-grabbing filter drop-shadow-sm coin-img";
         coinImg.draggable = true;
         coinImg.id = `hard-coin-${val}`;
 
@@ -1308,7 +1296,7 @@
         };
 
         coinContainer.appendChild(coinImg);
-        coinContainer.innerHTML += `<span class="text-xs font-bold text-indigo-700 mt-1">${val}元</span>`;
+        coinContainer.innerHTML += `<span class="text-[10px] font-bold text-indigo-700 mt-0.5">${val}元</span>`;
         
         const imgEl = coinContainer.querySelector('img');
         imgEl.ondragstart = (e) => {
@@ -1415,7 +1403,7 @@
       const textSpan = document.getElementById('feedbackText');
       if (feedback) {
         feedback.classList.remove('hidden');
-        feedback.className = "cute-card bg-emerald-50 border-emerald-200 p-4 mb-6 text-center text-emerald-700 font-bold text-xl animate-bounce relative";
+        feedback.className = "cute-card bg-emerald-50 border-emerald-200 p-2 mb-2 text-center text-emerald-700 font-bold text-sm md:text-base animate-bounce relative";
       }
       if (textSpan) {
         textSpan.innerHTML = `🎉 太厲害了！你答對了！ ✨ <b>獲得 10 分</b>`;
@@ -1429,8 +1417,6 @@
     function handleWrong(wrongVal) {
       playWrongSound();
       
-      // 1. 如果是「配對模式」或「進階配對模式」，則不管提示與否「每次錯誤後自動刪去下方該錯誤硬幣」
-      // 2. 如果是其他模式，只有在「有提示」的情況下，才剔除錯誤選項 (將選項存入 wrongOptions)
       const forceEliminate = (currentMode === 'match' || currentMode === 'match_advanced');
       if ((forceEliminate || hintEnabled) && wrongVal !== undefined && !wrongOptions.includes(wrongVal)) {
         wrongOptions.push(wrongVal);
@@ -1440,7 +1426,7 @@
       const textSpan = document.getElementById('feedbackText');
       if (feedback) {
         feedback.classList.remove('hidden');
-        feedback.className = "cute-card bg-rose-50 border-rose-100 p-4 mb-6 text-center text-rose-600 font-bold text-xl relative";
+        feedback.className = "cute-card bg-rose-50 border-rose-100 p-2 mb-2 text-center text-rose-600 font-bold text-sm md:text-base relative";
       }
       if (textSpan) {
         if (forceEliminate || hintEnabled) {
@@ -1458,7 +1444,7 @@
     function nextQuestion() {
       const feedback = document.getElementById('feedbackContainer');
       if (feedback) {
-        feedback.className = "hidden cute-card bg-[#FFFDF5] border-[#FFEAA7] p-4 mb-6 text-center text-[#B7950B] font-bold text-lg transition-all relative";
+        feedback.className = "hidden cute-card bg-[#FFFDF5] border-[#FFEAA7] p-2 mb-2 text-center text-[#B7950B] font-bold text-sm transition-all relative";
       }
       resetCurrentGame();
     }
@@ -1473,7 +1459,7 @@
         const textSpan = document.getElementById('feedbackText');
         if (feedback) {
           feedback.classList.remove('hidden');
-          feedback.className = "cute-card bg-rose-50 border-rose-100 p-4 mb-6 text-center text-rose-600 font-bold text-xl relative";
+          feedback.className = "cute-card bg-rose-50 border-rose-100 p-2 mb-2 text-center text-rose-600 font-bold text-sm md:text-base relative";
         }
         if (textSpan) {
           if (paidAmount > currentQuestionData.targetValue) {
