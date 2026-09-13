@@ -324,6 +324,14 @@
         
         .rank-1 { background-color: #fff8e1; border-color: #ffecb3; font-weight: bold; } /* 冠軍黃色 */
 
+        /* 玩家獨立提交按鈕 */
+        .btn-player-submit {
+            margin-top: 10px;
+            padding: 10px 25px;
+            font-size: 1.1rem;
+            width: 90%;
+        }
+
     </style>
 </head>
 <body>
@@ -388,8 +396,6 @@
         </div>
 
         <div style="margin-top: 15px; border-top: 2px dashed #eee; padding-top: 15px;">
-            <button id="btn-submit" class="btn btn-primary" style="margin-top: 0;">提交答案</button>
-            <button id="btn-next" class="btn btn-primary hidden" style="margin-top: 0;">下一回合</button>
             <button id="btn-back-game" class="btn btn-secondary" style="margin-top: 0;">回主選單</button>
         </div>
     </div>
@@ -415,8 +421,8 @@
     const GAME_TEXT = {
         largest: "最大數",
         smallest: "最小數",
-        correct: "✅ 答對了！ +10分",
-        incorrect: "❌ 錯誤！正確答案是: ",
+        correct: "✅ 答對！ +10分",
+        incorrect: "❌ 答錯！ -5分 (請再試一次)",
         fillAll: "⚠️ 請將卡片放滿！",
         champion: "👑 冠軍"
     };
@@ -621,73 +627,86 @@
         startRound();
     }
 
-    // 開始新回合 (發牌)
+    // 開始新回合 (初始化所有玩家畫面)
     function startRound() {
         gameState.isPlaying = true;
-        document.getElementById('btn-submit').classList.remove('hidden');
-        document.getElementById('btn-next').classList.add('hidden');
         
         const container = document.getElementById('players-container');
         container.innerHTML = ''; // 清空畫面
 
         // 為每位玩家建立獨立的遊戲區
         for (let i = 0; i < gameState.players; i++) {
-            const pId = i + 1;
-            
-            // 決定該回合題型：如果是隨機，就隨機抽；否則直接採用使用者設定
-            let targetMode;
-            if (gameState.mode === 'random') {
-                const modes = ['largest', 'smallest'];
-                targetMode = modes[Math.floor(Math.random() * modes.length)];
-            } else {
-                targetMode = gameState.mode;
-            }
-
-            const numbers = generateNumbers(gameState.digits);
-            
-            // 更新玩家當前回合資料
-            gameState.playersData[i].targetMode = targetMode;
-            gameState.playersData[i].numbers = [...numbers];
-
-            // 建立 HTML 結構
-            const modeText = targetMode === 'largest' ? GAME_TEXT.largest : GAME_TEXT.smallest;
-            const zoneHTML = `
-                <div class="player-zone player-${pId}">
-                    <div class="player-header">
-                        <span class="player-title">👤 玩家 ${pId} 
-                            <span class="score-display">(得:${gameState.playersData[i].score}分)</span>
-                        </span>
-                        <span class="target-badge" style="color: ${targetMode==='largest'?'#ff7675':'#0984e3'}">
-                            🎯 拼出${modeText}
-                        </span>
-                    </div>
-                    
-                    <!-- 放置區 (Slots) -->
-                    <div class="drop-zone" id="drop-zone-${i}">
-                        ${'<div class="slot"></div>'.repeat(gameState.digits)}
-                    </div>
-
-                    <div id="result-msg-${i}" class="result-msg"></div>
-                    
-                    <!-- 卡片池 -->
-                    <div class="card-pool" id="card-pool-${i}"></div>
-                </div>
-            `;
-            container.insertAdjacentHTML('beforeend', zoneHTML);
-
-            // 動態產生卡片並綁定事件
-            const cardPool = document.getElementById(`card-pool-${i}`);
-            numbers.forEach((num, index) => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.textContent = num;
-                card.dataset.value = num;
-                card.dataset.playerId = i;
-                // 為了支援點擊與拖曳，綁定相關事件
-                bindCardEvents(card);
-                cardPool.appendChild(card);
-            });
+            initPlayerZone(i);
         }
+    }
+
+    // 初始化/刷新單一玩家的題目區域
+    function initPlayerZone(playerIdx) {
+        const pId = playerIdx + 1;
+        
+        // 決定該回合題型：如果是隨機，就隨機抽；否則採用設定
+        let targetMode;
+        if (gameState.mode === 'random') {
+            const modes = ['largest', 'smallest'];
+            targetMode = modes[Math.floor(Math.random() * modes.length)];
+        } else {
+            targetMode = gameState.mode;
+        }
+
+        const numbers = generateNumbers(gameState.digits);
+        
+        // 更新該玩家題目資料
+        gameState.playersData[playerIdx].targetMode = targetMode;
+        gameState.playersData[playerIdx].numbers = [...numbers];
+
+        const modeText = targetMode === 'largest' ? GAME_TEXT.largest : GAME_TEXT.smallest;
+        
+        let existingZone = document.getElementById(`player-zone-${playerIdx}`);
+        const zoneHTML = `
+            <div class="player-header">
+                <span class="player-title">👤 玩家 ${pId} 
+                    <span class="score-display">(得分:${gameState.playersData[playerIdx].score})</span>
+                </span>
+                <span class="target-badge" style="color: ${targetMode==='largest'?'#ff7675':'#0984e3'}">
+                    🎯 拼出${modeText}
+                </span>
+            </div>
+            
+            <!-- 放置區 (Slots) -->
+            <div class="drop-zone" id="drop-zone-${playerIdx}">
+                ${'<div class="slot"></div>'.repeat(gameState.digits)}
+            </div>
+
+            <div id="result-msg-${playerIdx}" class="result-msg"></div>
+            
+            <!-- 卡片池 -->
+            <div class="card-pool" id="card-pool-${playerIdx}"></div>
+
+            <!-- 獨立提交按鈕 -->
+            <button class="btn btn-primary btn-player-submit" onclick="checkPlayerAnswer(${playerIdx})">提交答案</button>
+        `;
+
+        if (!existingZone) {
+            const container = document.getElementById('players-container');
+            existingZone = document.createElement('div');
+            existingZone.id = `player-zone-${playerIdx}`;
+            existingZone.className = `player-zone player-${pId}`;
+            container.appendChild(existingZone);
+        }
+        
+        existingZone.innerHTML = zoneHTML;
+
+        // 動態產生卡片並綁定事件
+        const cardPool = document.getElementById(`card-pool-${playerIdx}`);
+        numbers.forEach((num) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.textContent = num;
+            card.dataset.value = num;
+            card.dataset.playerId = playerIdx;
+            bindCardEvents(card);
+            cardPool.appendChild(card);
+        });
     }
 
     /**
@@ -950,11 +969,9 @@
             arr.sort((a, b) => b - a); // 降冪 9->0
         } else {
             arr.sort((a, b) => a - b); // 升冪 0->9
-            // 最小數開頭不能為0的特殊處理 (如果有關卡要求)
             if (arr[0] === 0) {
                 let nonZeroIdx = arr.findIndex(n => n !== 0);
                 if (nonZeroIdx !== -1) {
-                    // 交換
                     let temp = arr[0];
                     arr[0] = arr[nonZeroIdx];
                     arr[nonZeroIdx] = temp;
@@ -964,82 +981,72 @@
         return arr.join('');
     }
 
-    function checkAnswers() {
-        let allFilled = true;
+    // 獨立檢查單一玩家答案
+    function checkPlayerAnswer(playerIdx) {
+        if (!gameState.isPlaying) return;
 
-        // 檢查所有人是否都放滿了
-        for (let i = 0; i < gameState.players; i++) {
-            const dropZone = document.getElementById(`drop-zone-${i}`);
-            // 抓取 slot 內的卡片數量
-            const placedCards = Array.from(dropZone.children).filter(slot => slot.children.length > 0).length;
-            
-            if (placedCards < gameState.digits) {
-                allFilled = false;
-                const msgDiv = document.getElementById(`result-msg-${i}`);
-                msgDiv.textContent = GAME_TEXT.fillAll;
-                msgDiv.className = 'result-msg text-red';
-                setTimeout(() => { msgDiv.textContent = ''; }, 2000);
-            }
+        const pData = gameState.playersData[playerIdx];
+        const dropZone = document.getElementById(`drop-zone-${playerIdx}`);
+        const msgDiv = document.getElementById(`result-msg-${playerIdx}`);
+        
+        // 檢查是否所有位數都填滿
+        const placedCards = Array.from(dropZone.children).filter(slot => slot.children.length > 0).length;
+        if (placedCards < gameState.digits) {
+            msgDiv.textContent = GAME_TEXT.fillAll;
+            msgDiv.className = 'result-msg text-red';
+            setTimeout(() => { 
+                if (msgDiv.textContent === GAME_TEXT.fillAll) msgDiv.textContent = ''; 
+            }, 2000);
+            return;
         }
 
-        if (!allFilled) return;
+        // 取出玩家放置的數字
+        const userStr = Array.from(dropZone.children)
+                             .map(slot => slot.children[0].dataset.value)
+                             .join('');
+        
+        const correctStr = getCorrectAnswer(pData.numbers, pData.targetMode);
+        dropZone.classList.remove('correct', 'incorrect');
 
-        // 停止拖曳互動
-        gameState.isPlaying = false;
+        if (userStr === correctStr) {
+            // 答對：加 10 分，播放音效
+            pData.score += 10;
+            SoundManager.play('correct');
+            dropZone.classList.add('correct');
+            msgDiv.textContent = GAME_TEXT.correct;
+            msgDiv.className = 'result-msg text-green';
 
-        // 核對每位玩家的答案
-        for (let i = 0; i < gameState.players; i++) {
-            const pData = gameState.playersData[i];
-            const dropZone = document.getElementById(`drop-zone-${i}`);
-            const msgDiv = document.getElementById(`result-msg-${i}`);
-            
-            // 取出玩家放置的數字
-            const userStr = Array.from(dropZone.children)
-                                 .map(slot => slot.children[0].dataset.value)
-                                 .join('');
-            
-            const correctStr = getCorrectAnswer(pData.numbers, pData.targetMode);
+            // 更新分數
+            const scoreDisplay = document.querySelector(`.player-${playerIdx+1} .score-display`);
+            if (scoreDisplay) scoreDisplay.textContent = `(得分:${pData.score})`;
 
-            dropZone.classList.remove('correct', 'incorrect');
-
-            if (userStr === correctStr) {
-                dropZone.classList.add('correct');
-                msgDiv.textContent = GAME_TEXT.correct;
-                msgDiv.className = 'result-msg text-green';
-                pData.score += 10;
-                // 若單人遊玩，馬上播放正確音效
-                if(gameState.players === 1) SoundManager.play('correct'); 
-            } else {
-                dropZone.classList.add('incorrect');
-                msgDiv.textContent = GAME_TEXT.incorrect + correctStr;
-                msgDiv.className = 'result-msg text-red';
-                // 若單人遊玩，馬上播放錯誤音效
-                if(gameState.players === 1) SoundManager.play('incorrect');
-            }
-            
-            // 更新畫面上顯示的分數
-            document.querySelector(`.player-${i+1} .score-display`).textContent = `(得:${pData.score}分)`;
-        }
-
-        // 多人對戰時，只要有一人錯，就播放錯誤音效；全對才播放正確音效
-        if (gameState.players > 1) {
-            let allCorrect = true;
-            for (let i = 0; i < gameState.players; i++) {
-                if (document.getElementById(`drop-zone-${i}`).classList.contains('incorrect')) {
-                    allCorrect = false;
+            // 0.8 秒後自動進入該玩家的下一題
+            setTimeout(() => {
+                if (gameState.isPlaying) {
+                    initPlayerZone(playerIdx);
                 }
-            }
-            if (allCorrect) {
-                SoundManager.play('correct');
-            } else {
-                SoundManager.play('incorrect');
-            }
-        }
+            }, 800);
+        } else {
+            // 答錯：扣 5 分，播放音效，留在原題目讓玩家重試
+            pData.score -= 5;
+            SoundManager.play('incorrect');
+            dropZone.classList.add('incorrect');
+            msgDiv.textContent = GAME_TEXT.incorrect;
+            msgDiv.className = 'result-msg text-red';
 
-        // 切換按鈕
-        document.getElementById('btn-submit').classList.add('hidden');
-        document.getElementById('btn-next').classList.remove('hidden');
+            // 更新分數
+            const scoreDisplay = document.querySelector(`.player-${playerIdx+1} .score-display`);
+            if (scoreDisplay) scoreDisplay.textContent = `(得分:${pData.score})`;
+
+            // 1.5 秒後清除紅框提示，讓玩家重新排卡片
+            setTimeout(() => {
+                dropZone.classList.remove('incorrect');
+            }, 1500);
+        }
     }
+
+    // 將 checkPlayerAnswer 暴露給全域以供 HTML 內聯 onclick 呼叫
+    window.checkPlayerAnswer = checkPlayerAnswer;
 
     /**
      * ==========================================
@@ -1090,8 +1097,6 @@
      * ==========================================
      */
     document.getElementById('btn-start').addEventListener('click', () => { SoundManager.play('click'); startGame(); });
-    document.getElementById('btn-submit').addEventListener('click', () => { SoundManager.play('click'); checkAnswers(); });
-    document.getElementById('btn-next').addEventListener('click', () => { SoundManager.play('click'); startRound(); });
     
     // 返回主選單
     const returnToMenu = () => {
