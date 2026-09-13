@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- 確保在 iPad 及行動裝置上正確縮放，並禁止雙擊放大以提升遊戲體驗 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數字拼圖遊戲 - 馬卡龍版 (完全離線)</title>
+    <title>數字拼大小</title>
     <style>
         /* ==========================================
            1. 基礎設定與字型 (完全離線，使用系統內建)
@@ -433,6 +433,107 @@
         playersData: []  // 儲存每位玩家的分數、目標、當前題目等
     };
 
+    /**
+     * ==========================================
+     * 音效系統 (使用內建 Web Audio API，無須外部檔案)
+     * 教師可在此調整頻率(frequency)與音量(gain)
+     * ==========================================
+     */
+    const SoundManager = {
+        ctx: null,
+        init: function() {
+            // 瀏覽器規定必須在使用者第一次互動時才能初始化音訊
+            if (!this.ctx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+            }
+            if (this.ctx.state === 'suspended') {
+                this.ctx.resume();
+            }
+        },
+        play: function(type) {
+            if (!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            
+            const now = this.ctx.currentTime;
+            
+            switch(type) {
+                case 'click': // 選單按鈕點擊 (短促輕快)
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                    break;
+                case 'pickup': // 拿起卡片 (音調往上)
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                    break;
+                case 'drop': // 放下卡片 (音調往下)
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(150, now + 0.1);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                    break;
+                case 'correct': // 答對 (C-E-G 快樂和弦)
+                    this.playNote(523.25, 'sine', 0, 0.2); // C5
+                    this.playNote(659.25, 'sine', 0.1, 0.2); // E5
+                    this.playNote(783.99, 'sine', 0.2, 0.4); // G5
+                    break;
+                case 'incorrect': // 答錯 (兩聲低沉鋸齒波)
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200, now);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                    
+                    const osc2 = this.ctx.createOscillator();
+                    const gain2 = this.ctx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(this.ctx.destination);
+                    osc2.type = 'sawtooth';
+                    osc2.frequency.setValueAtTime(150, now + 0.2);
+                    gain2.gain.setValueAtTime(0.2, now + 0.2);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    osc2.start(now + 0.2);
+                    osc2.stop(now + 0.5);
+                    break;
+            }
+        },
+        playNote: function(freq, type, delay, duration) {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            
+            const startTime = this.ctx.currentTime + delay;
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, startTime);
+            gain.gain.setValueAtTime(0.15, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+            
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        }
+    };
+
+    // 解鎖音訊 (捕捉使用者首次點擊或觸控畫面)
+    document.addEventListener('click', () => SoundManager.init(), { once: true });
+    document.addEventListener('touchstart', () => SoundManager.init(), { once: true });
+
     // 儲存目前正在被拖曳的卡片狀態 (支援多點觸控，使用 touch.identifier 作為 key)
     // 格式: { touchId: { element: DOM, placeholder: DOM, startX, startY, offsetX, offsetY } }
     const activeDrags = {};
@@ -445,6 +546,7 @@
     // 綁定選單按鈕事件
     document.querySelectorAll('.option-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
+            SoundManager.play('click'); // 播放點擊音效
             const group = e.target.dataset.group;
             const value = e.target.dataset.value;
             
@@ -621,11 +723,13 @@
         if (card.parentElement === cardPool) {
             const emptySlot = Array.from(dropZone.children).find(slot => slot.classList.contains('slot') && slot.children.length === 0);
             if (emptySlot) {
+                SoundManager.play('drop'); // 放入時音效
                 emptySlot.appendChild(card);
             }
         } 
         // 如果卡片在放置區，點擊退回牌池
         else {
+            SoundManager.play('pickup'); // 退回時音效
             cardPool.appendChild(card);
         }
     }
@@ -709,6 +813,8 @@
 
     // --- 拖曳共用邏輯 ---
     function startDragging(card, dragId, clientX, clientY, offsetX, offsetY) {
+        SoundManager.play('pickup'); // 播放拿起卡片音效
+        
         // 建立一個佔位符號，放在卡片原本的位置，以免排版崩塌
         const placeholder = document.createElement('div');
         placeholder.className = 'card placeholder';
@@ -821,6 +927,7 @@
             if (!dropped) {
                 placeholder.parentNode.replaceChild(element, placeholder);
             } else {
+                SoundManager.play('drop'); // 成功放下卡片音效
                 placeholder.remove(); // 成功放下，移除佔位符號
             }
         }
@@ -900,14 +1007,33 @@
                 msgDiv.textContent = GAME_TEXT.correct;
                 msgDiv.className = 'result-msg text-green';
                 pData.score += 10;
+                // 若單人遊玩，馬上播放正確音效
+                if(gameState.players === 1) SoundManager.play('correct'); 
             } else {
                 dropZone.classList.add('incorrect');
                 msgDiv.textContent = GAME_TEXT.incorrect + correctStr;
                 msgDiv.className = 'result-msg text-red';
+                // 若單人遊玩，馬上播放錯誤音效
+                if(gameState.players === 1) SoundManager.play('incorrect');
             }
             
             // 更新畫面上顯示的分數
             document.querySelector(`.player-${i+1} .score-display`).textContent = `(得:${pData.score}分)`;
+        }
+
+        // 多人對戰時，只要有一人錯，就播放錯誤音效；全對才播放正確音效
+        if (gameState.players > 1) {
+            let allCorrect = true;
+            for (let i = 0; i < gameState.players; i++) {
+                if (document.getElementById(`drop-zone-${i}`).classList.contains('incorrect')) {
+                    allCorrect = false;
+                }
+            }
+            if (allCorrect) {
+                SoundManager.play('correct');
+            } else {
+                SoundManager.play('incorrect');
+            }
         }
 
         // 切換按鈕
@@ -963,12 +1089,13 @@
      * 主按鈕事件綁定
      * ==========================================
      */
-    document.getElementById('btn-start').addEventListener('click', startGame);
-    document.getElementById('btn-submit').addEventListener('click', checkAnswers);
-    document.getElementById('btn-next').addEventListener('click', startRound);
+    document.getElementById('btn-start').addEventListener('click', () => { SoundManager.play('click'); startGame(); });
+    document.getElementById('btn-submit').addEventListener('click', () => { SoundManager.play('click'); checkAnswers(); });
+    document.getElementById('btn-next').addEventListener('click', () => { SoundManager.play('click'); startRound(); });
     
     // 返回主選單
     const returnToMenu = () => {
+        SoundManager.play('click');
         clearInterval(gameState.timerInterval);
         showScreen('menu-screen');
     };
@@ -976,7 +1103,7 @@
     document.getElementById('btn-back-result').addEventListener('click', returnToMenu);
     
     // 再玩一次 (使用目前設定直接開始)
-    document.getElementById('btn-play-again').addEventListener('click', startGame);
+    document.getElementById('btn-play-again').addEventListener('click', () => { SoundManager.play('click'); startGame(); });
 
     // 初始顯示主選單
     showScreen('menu-screen');
