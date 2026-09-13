@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <!-- 確保在 iPad 及行動裝置上正確縮放，並禁止雙擊放大以提升遊戲體驗 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>數字拼圖遊戲 - 馬卡龍版 (完全離線)</title>
+    <style>
+        /* ==========================================
+           1. 基礎設定與字型 (完全離線，使用系統內建)
+           ========================================== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            /* 防止拖曳時反白文字 */
+            user-select: none; 
+            -webkit-user-select: none;
+        }
+
+        body {
+            /* 預設系統字型，確保各平台都有良好顯示 */
+            font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang TC', '微軟正黑體', sans-serif;
+            /* 柔和的淺米白底色，無漸層 */
+            background-color: #fcf9f2; 
+            color: #5c5c5c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            /* 防止整個網頁在觸控拖曳時跟著滑動 */
+            touch-action: none; 
+            overflow: hidden;
+        }
+
+        /* ==========================================
+           2. 容器與版面佈局
+           ========================================== */
+        .container {
+            background-color: #ffffff;
+            border-radius: 24px;
+            padding: 30px;
+            /* 純色陰影，無漸層 */
+            box-shadow: 0 10px 30px rgba(180, 170, 160, 0.2); 
+            width: 100%;
+            max-width: 1000px;
+            text-align: center;
+            border: 3px solid #f0e9e4;
+            display: flex;
+            flex-direction: column;
+            max-height: 95vh;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* 標題樣式 */
+        .title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ff9eaa; /* 馬卡龍粉紅 */
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 0px #ffe1e6; /* 純色文字陰影，取代漸層效果 */
+        }
+
+        /* ==========================================
+           3. 選單按鈕與設定區塊 (純色馬卡龍風格)
+           ========================================== */
+        .setting-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .setting-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #8c8c8c;
+            margin-bottom: 10px;
+            padding-left: 10px;
+        }
+
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn {
+            background-color: #f2f2f2;
+            color: #7a7a7a;
+            border: 2px solid #e0e0e0;
+            padding: 12px 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            flex: 1;
+            min-width: 80px;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+
+        /* 按下時的縮小效果 */
+        .btn:active { transform: scale(0.95); }
+
+        /* 選中狀態的按鈕 - 柔和粉紅色 */
+        .btn.selected {
+            background-color: #ffb6c1;
+            color: #ffffff;
+            border-color: #ff9eaa;
+        }
+
+        /* 主要行動按鈕 (開始遊戲、提交) */
+        .btn-primary {
+            background-color: #a2d5c6; /* 馬卡龍薄荷綠 */
+            color: #ffffff;
+            border-color: #88c5b3;
+            font-size: 1.5rem;
+            padding: 15px 40px;
+            margin-top: 20px;
+            display: inline-block;
+        }
+        
+        .btn-primary:hover { background-color: #88c5b3; }
+
+        .btn-secondary {
+            background-color: #ffdac1; /* 馬卡龍橘 */
+            color: #ffffff;
+            border-color: #f4c2a3;
+        }
+
+        /* ==========================================
+           4. 遊戲主要畫面與玩家區域
+           ========================================== */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px dashed #f0e9e4;
+        }
+
+        .timer {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff9eaa;
+            background-color: #fff0f2;
+            padding: 5px 20px;
+            border-radius: 50px;
+            border: 2px solid #ffe1e6;
+        }
+
+        /* 玩家區域的彈性排版，適應 1~3 人 */
+        .players-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap; /* 空間不夠時自動換行 */
+            justify-content: center;
+            flex: 1;
+            overflow-y: auto; /* 確保內容過多時可以滾動 */
+            padding-bottom: 10px;
+        }
+
+        .player-zone {
+            flex: 1;
+            min-width: 280px; /* 確保在 iPad 橫向/直向都有合理寬度 */
+            background-color: #ffffff;
+            border-radius: 20px;
+            padding: 15px;
+            border: 3px solid #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 為不同玩家設定不同的馬卡龍主題色 */
+        /* 玩家一：綠色系 */
+        .player-1 { background-color: #eaf6ea; border-color: #cce2cb; }
+        .player-1 .player-title { color: #6b9e6b; }
+        .player-1 .card { background-color: #cce2cb; color: #5a8a5a; border-color: #aed3ad; }
+        
+        /* 玩家二：黃色系 */
+        .player-2 { background-color: #fefce8; border-color: #fdfd96; }
+        .player-2 .player-title { color: #b8b83a; }
+        .player-2 .card { background-color: #fdfd96; color: #a1a12d; border-color: #ecec78; }
+
+        /* 玩家三：紫色系 */
+        .player-3 { background-color: #f8f0f9; border-color: #e2c0e8; }
+        .player-3 .player-title { color: #9c6fa6; }
+        .player-3 .card { background-color: #e2c0e8; color: #875992; border-color: #cda3d4; }
+
+        .player-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .player-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .target-badge {
+            background-color: #ffffff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .score-display {
+            font-size: 1.1rem;
+            margin-left: 5px;
+            color: #888;
+        }
+
+        /* ==========================================
+           5. 卡片與放置區 (支援拖曳)
+           ========================================== */
+        .drop-zone {
+            background-color: rgba(255, 255, 255, 0.6);
+            border: 2px dashed #cccccc;
+            border-radius: 12px;
+            min-height: 90px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 10px;
+        }
+
+        /* 答案正確/錯誤的顏色標示 */
+        .drop-zone.correct { background-color: #d4edda; border-color: #c3e6cb; border-style: solid; }
+        .drop-zone.incorrect { background-color: #f8d7da; border-color: #f5c6cb; border-style: solid; }
+
+        .card-pool {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            min-height: 90px;
+            width: 100%;
+        }
+
+        /* 卡片本身樣式 */
+        .card {
+            width: 65px;
+            height: 85px;
+            font-size: 2.5rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 12px;
+            border-width: 2px;
+            border-style: solid;
+            cursor: grab;
+            /* 觸控時不產生預設反白或放大行為 */
+            touch-action: none; 
+            /* 讓卡片看起來有立體感 */
+            box-shadow: 0 4px 0px rgba(0,0,0,0.1);
+            position: relative; /* 用於絕對定位拖曳 */
+            z-index: 10;
+            background-color: #fff; /* 預設，會被玩家主題色覆蓋 */
+        }
+
+        /* 卡片被點擊/拖曳時的狀態 */
+        .card:active {
+            cursor: grabbing;
+        }
+        
+        .card.dragging {
+            position: fixed; /* 拖曳時脫離原本排版 */
+            z-index: 1000;
+            box-shadow: 0 15px 20px rgba(0,0,0,0.2);
+            pointer-events: none; /* 讓底下元素可以接收滑鼠/觸控事件（例如偵測放置區） */
+            transform: scale(1.1); /* 拖曳時稍微放大 */
+        }
+
+        /* 用來佔位的隱形卡片（保持排版不跑位） */
+        .card.placeholder {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* 空的放置槽位 */
+        .slot {
+            width: 65px;
+            height: 85px;
+            border-radius: 12px;
+            border: 2px dashed rgba(0,0,0,0.2);
+            background-color: rgba(255,255,255,0.4);
+        }
+
+        .result-msg {
+            height: 24px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .text-green { color: #4caf50; }
+        .text-red { color: #f44336; }
+
+        /* ==========================================
+           6. 結算畫面
+           ========================================== */
+        .rank-row {
+            display: flex;
+            justify-content: space-between;
+            background-color: #f9f9f9;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            border: 2px solid #eee;
+        }
+        
+        .rank-1 { background-color: #fff8e1; border-color: #ffecb3; font-weight: bold; } /* 冠軍黃色 */
+
+    </style>
+</head>
+<body>
+
+<!-- 遊戲主容器 -->
+<div class="container">
+    
+    <!-- 畫面 1: 主選單 -->
+    <div id="menu-screen">
+        <h1 class="title">✨ 數字拼大小 ✨</h1>
+        
+        <div class="setting-group">
+            <div class="setting-title">👤 選擇人數：</div>
+            <div class="button-row">
+                <button class="btn option-btn selected" data-group="players" data-value="1">單人遊玩</button>
+                <button class="btn option-btn" data-group="players" data-value="2">雙人對戰</button>
+                <button class="btn option-btn" data-group="players" data-value="3">三人對戰</button>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <div class="setting-title">🎯 選擇題型：</div>
+            <div class="button-row">
+                <button class="btn option-btn selected" data-group="mode" data-value="random">隨機混合</button>
+                <button class="btn option-btn" data-group="mode" data-value="largest">最大數</button>
+                <button class="btn option-btn" data-group="mode" data-value="smallest">最小數</button>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <div class="setting-title">🔢 選擇位數：</div>
+            <div class="button-row">
+                <button class="btn option-btn" data-group="digits" data-value="2">2位數</button>
+                <button class="btn option-btn selected" data-group="digits" data-value="3">3位數</button>
+                <button class="btn option-btn" data-group="digits" data-value="4">4位數</button>
+                <button class="btn option-btn" data-group="digits" data-value="5">5位數</button>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <div class="setting-title">⏱️ 選擇時限：</div>
+            <div class="button-row">
+                <button class="btn option-btn selected" data-group="time" data-value="60">1分鐘</button>
+                <button class="btn option-btn" data-group="time" data-value="180">3分鐘</button>
+                <button class="btn option-btn" data-group="time" data-value="300">5分鐘</button>
+            </div>
+        </div>
+
+        <button id="btn-start" class="btn btn-primary">開始遊戲</button>
+    </div>
+
+    <!-- 畫面 2: 遊戲進行中 -->
+    <div id="game-screen" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="game-header">
+            <h2 class="title" style="margin: 0; font-size: 1.8rem;">數字拼圖</h2>
+            <div class="timer" id="timer-display">01:00</div>
+        </div>
+
+        <!-- 動態產生玩家區域的容器 -->
+        <div id="players-container" class="players-container">
+            <!-- JavaScript 會在這裡插入玩家畫面 -->
+        </div>
+
+        <div style="margin-top: 15px; border-top: 2px dashed #eee; padding-top: 15px;">
+            <button id="btn-submit" class="btn btn-primary" style="margin-top: 0;">提交答案</button>
+            <button id="btn-next" class="btn btn-primary hidden" style="margin-top: 0;">下一回合</button>
+            <button id="btn-back-game" class="btn btn-secondary" style="margin-top: 0;">回主選單</button>
+        </div>
+    </div>
+
+    <!-- 畫面 3: 遊戲結算 -->
+    <div id="result-screen" class="hidden">
+        <h1 class="title">⏱️ 時間到！</h1>
+        <div id="final-scores" style="max-width: 400px; margin: 0 auto 30px auto;">
+            <!-- JavaScript 會在這裡插入排名 -->
+        </div>
+        <button id="btn-play-again" class="btn btn-primary">再玩一次</button>
+        <button id="btn-back-result" class="btn btn-secondary">返回設定</button>
+    </div>
+
+</div>
+
+<script>
+    /**
+     * ==========================================
+     * 教師修改區 / 核心設定
+     * ==========================================
+     */
+    const GAME_TEXT = {
+        largest: "最大數",
+        smallest: "最小數",
+        correct: "✅ 答對了！ +10分",
+        incorrect: "❌ 錯誤！正確答案是: ",
+        fillAll: "⚠️ 請將卡片放滿！",
+        champion: "👑 冠軍"
+    };
+
+    // 遊戲狀態物件
+    const gameState = {
+        players: 1,      // 玩家人數 (預設 1)
+        mode: 'random',  // 題型: random, largest, smallest
+        digits: 3,       // 數字位數 (預設 3)
+        timeLimit: 60,   // 時間限制(秒) (預設 60)
+        timeRemaining: 0,
+        timerInterval: null,
+        isPlaying: false,
+        playersData: []  // 儲存每位玩家的分數、目標、當前題目等
+    };
+
+    // 儲存目前正在被拖曳的卡片狀態 (支援多點觸控，使用 touch.identifier 作為 key)
+    // 格式: { touchId: { element: DOM, placeholder: DOM, startX, startY, offsetX, offsetY } }
+    const activeDrags = {};
+
+    /**
+     * ==========================================
+     * UI 切換與初始化邏輯
+     * ==========================================
+     */
+    // 綁定選單按鈕事件
+    document.querySelectorAll('.option-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const group = e.target.dataset.group;
+            const value = e.target.dataset.value;
+            
+            // 移除同組其他按鈕的選中狀態
+            document.querySelectorAll(`.option-btn[data-group="${group}"]`).forEach(b => b.classList.remove('selected'));
+            e.target.classList.add('selected');
+
+            // 更新遊戲狀態 (將數值型態轉換為整數)
+            if (group === 'players') gameState.players = parseInt(value);
+            if (group === 'digits') gameState.digits = parseInt(value);
+            if (group === 'time') gameState.timeLimit = parseInt(value);
+            if (group === 'mode') gameState.mode = value;
+        });
+    });
+
+    // 畫面切換控制
+    function showScreen(screenId) {
+        document.getElementById('menu-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.add('hidden');
+        document.getElementById(screenId).classList.remove('hidden');
+    }
+
+    // 格式化時間 (MM:SS)
+    function formatTime(seconds) {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    /**
+     * ==========================================
+     * 遊戲核心邏輯 (回合管理、產生題目)
+     * ==========================================
+     */
+    // 產生不重複(或隨機)的數字陣列
+    function generateNumbers(count) {
+        const digits = [];
+        for (let i = 0; i < count; i++) {
+            digits.push(Math.floor(Math.random() * 10)); // 0~9
+        }
+        // 防止全部都是0，或者開頭為0導致「最大/最小」判斷邏輯不符合直覺
+        // 若全部是0，將第一個數字改成1~9
+        if (digits.every(d => d === 0)) {
+            digits[0] = Math.floor(Math.random() * 9) + 1;
+        }
+        return digits;
+    }
+
+    // 開始全新遊戲 (重置分數與時間)
+    function startGame() {
+        gameState.timeRemaining = gameState.timeLimit;
+        document.getElementById('timer-display').textContent = formatTime(gameState.timeRemaining);
+        
+        // 初始化玩家資料
+        gameState.playersData = [];
+        for(let i = 0; i < gameState.players; i++) {
+            gameState.playersData.push({ id: i, score: 0 });
+        }
+
+        // 清除舊計時器並啟動新計時器
+        clearInterval(gameState.timerInterval);
+        gameState.timerInterval = setInterval(() => {
+            gameState.timeRemaining--;
+            document.getElementById('timer-display').textContent = formatTime(gameState.timeRemaining);
+            if (gameState.timeRemaining <= 0) {
+                endGame();
+            }
+        }, 1000);
+
+        showScreen('game-screen');
+        startRound();
+    }
+
+    // 開始新回合 (發牌)
+    function startRound() {
+        gameState.isPlaying = true;
+        document.getElementById('btn-submit').classList.remove('hidden');
+        document.getElementById('btn-next').classList.add('hidden');
+        
+        const container = document.getElementById('players-container');
+        container.innerHTML = ''; // 清空畫面
+
+        // 為每位玩家建立獨立的遊戲區
+        for (let i = 0; i < gameState.players; i++) {
+            const pId = i + 1;
+            
+            // 決定該回合題型：如果是隨機，就隨機抽；否則直接採用使用者設定
+            let targetMode;
+            if (gameState.mode === 'random') {
+                const modes = ['largest', 'smallest'];
+                targetMode = modes[Math.floor(Math.random() * modes.length)];
+            } else {
+                targetMode = gameState.mode;
+            }
+
+            const numbers = generateNumbers(gameState.digits);
+            
+            // 更新玩家當前回合資料
+            gameState.playersData[i].targetMode = targetMode;
+            gameState.playersData[i].numbers = [...numbers];
+
+            // 建立 HTML 結構
+            const modeText = targetMode === 'largest' ? GAME_TEXT.largest : GAME_TEXT.smallest;
+            const zoneHTML = `
+                <div class="player-zone player-${pId}">
+                    <div class="player-header">
+                        <span class="player-title">👤 玩家 ${pId} 
+                            <span class="score-display">(得:${gameState.playersData[i].score}分)</span>
+                        </span>
+                        <span class="target-badge" style="color: ${targetMode==='largest'?'#ff7675':'#0984e3'}">
+                            🎯 拼出${modeText}
+                        </span>
+                    </div>
+                    
+                    <!-- 放置區 (Slots) -->
+                    <div class="drop-zone" id="drop-zone-${i}">
+                        ${'<div class="slot"></div>'.repeat(gameState.digits)}
+                    </div>
+
+                    <div id="result-msg-${i}" class="result-msg"></div>
+                    
+                    <!-- 卡片池 -->
+                    <div class="card-pool" id="card-pool-${i}"></div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', zoneHTML);
+
+            // 動態產生卡片並綁定事件
+            const cardPool = document.getElementById(`card-pool-${i}`);
+            numbers.forEach((num, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.textContent = num;
+                card.dataset.value = num;
+                card.dataset.playerId = i;
+                // 為了支援點擊與拖曳，綁定相關事件
+                bindCardEvents(card);
+                cardPool.appendChild(card);
+            });
+        }
+    }
+
+    /**
+     * ==========================================
+     * 多點觸控與拖曳邏輯 (最核心部分)
+     * ==========================================
+     * 支援 iPad 的 touchstart/move/end
+     * 以及 PC 的 mousedown/move/up
+     */
+    function bindCardEvents(card) {
+        // 點擊事件 (短按直接飛入空格)
+        card.addEventListener('click', handleCardClick);
+        
+        // 觸控拖曳事件 (支援多點)
+        card.addEventListener('touchstart', onTouchStart, { passive: false });
+        card.addEventListener('touchmove', onTouchMove, { passive: false });
+        card.addEventListener('touchend', onTouchEnd);
+        card.addEventListener('touchcancel', onTouchEnd);
+
+        // 滑鼠拖曳事件 (支援 PC)
+        card.addEventListener('mousedown', onMouseDown);
+    }
+
+    // --- 簡單點擊模式 (Click / Tap) ---
+    function handleCardClick(e) {
+        if (!gameState.isPlaying) return;
+        const card = e.currentTarget;
+        const playerId = card.dataset.playerId;
+        const dropZone = document.getElementById(`drop-zone-${playerId}`);
+        const cardPool = document.getElementById(`card-pool-${playerId}`);
+
+        // 如果卡片在牌池，尋找第一個空格放進去
+        if (card.parentElement === cardPool) {
+            const emptySlot = Array.from(dropZone.children).find(slot => slot.classList.contains('slot') && slot.children.length === 0);
+            if (emptySlot) {
+                emptySlot.appendChild(card);
+            }
+        } 
+        // 如果卡片在放置區，點擊退回牌池
+        else {
+            cardPool.appendChild(card);
+        }
+    }
+
+    // --- 滑鼠拖曳模式 (PC) ---
+    let mouseDragInfo = null;
+    function onMouseDown(e) {
+        if (!gameState.isPlaying) return;
+        // 左鍵
+        if (e.button !== 0) return;
+        e.preventDefault(); // 避免選取文字
+        const card = e.currentTarget;
+        
+        // 初始化拖曳狀態
+        const rect = card.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        const offsetY = e.clientY - rect.top;
+        
+        startDragging(card, 'mouse', e.clientX, e.clientY, offsetX, offsetY);
+
+        // 綁定全域移動與放開事件
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    }
+
+    function onMouseMove(e) {
+        if (!mouseDragInfo) return;
+        moveDragging('mouse', e.clientX, e.clientY);
+    }
+
+    function onMouseUp(e) {
+        if (!mouseDragInfo) return;
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        endDragging('mouse', e.clientX, e.clientY);
+    }
+
+    // --- 觸控拖曳模式 (iPad 多點觸控) ---
+    function onTouchStart(e) {
+        if (!gameState.isPlaying) return;
+        // 阻止預設行為 (避免網頁滾動)
+        // 注意：如果你有點擊需求，過度 preventDefault 可能會阻擋 click 事件，
+        // 但因為我們自己計算了短按和長按拖曳，這裡先不 preventDefault 也可以，
+        // 為了確保拖曳順暢，只有在 touchmove 時 preventDefault。
+        
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            const touch = e.changedTouches[i];
+            const card = e.currentTarget;
+            
+            const rect = card.getBoundingClientRect();
+            const offsetX = touch.clientX - rect.left;
+            const offsetY = touch.clientY - rect.top;
+
+            startDragging(card, touch.identifier, touch.clientX, touch.clientY, offsetX, offsetY);
+        }
+    }
+
+    function onTouchMove(e) {
+        if (!gameState.isPlaying) return;
+        
+        let hasActiveDrag = false;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            const touch = e.changedTouches[i];
+            if (activeDrags[touch.identifier]) {
+                hasActiveDrag = true;
+                moveDragging(touch.identifier, touch.clientX, touch.clientY);
+            }
+        }
+        // 如果真的有卡片在拖曳，禁止畫面捲動
+        if (hasActiveDrag) e.preventDefault(); 
+    }
+
+    function onTouchEnd(e) {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            const touch = e.changedTouches[i];
+            if (activeDrags[touch.identifier]) {
+                endDragging(touch.identifier, touch.clientX, touch.clientY);
+            }
+        }
+    }
+
+    // --- 拖曳共用邏輯 ---
+    function startDragging(card, dragId, clientX, clientY, offsetX, offsetY) {
+        // 建立一個佔位符號，放在卡片原本的位置，以免排版崩塌
+        const placeholder = document.createElement('div');
+        placeholder.className = 'card placeholder';
+        card.parentNode.insertBefore(placeholder, card);
+
+        // 記錄原始的父元素 (牌池或放置槽)
+        const originalParent = card.parentNode;
+
+        // 設定卡片為拖曳狀態 (絕對定位)
+        card.classList.add('dragging');
+        // 將卡片移到 body 最上層以確保不被遮擋
+        document.body.appendChild(card);
+
+        const dragData = {
+            element: card,
+            placeholder: placeholder,
+            originalParent: originalParent,
+            offsetX: offsetX,
+            offsetY: offsetY,
+            // 記錄起始位置，用來判斷是「點擊」還是「拖曳」
+            startX: clientX,
+            startY: clientY,
+            isMoved: false
+        };
+
+        if (dragId === 'mouse') mouseDragInfo = dragData;
+        else activeDrags[dragId] = dragData;
+
+        // 初始定位
+        moveDragging(dragId, clientX, clientY);
+    }
+
+    function moveDragging(dragId, clientX, clientY) {
+        const dragData = dragId === 'mouse' ? mouseDragInfo : activeDrags[dragId];
+        if (!dragData) return;
+
+        const { element, offsetX, offsetY, startX, startY } = dragData;
+        
+        // 判斷是否有實質移動 (超過 5px 算拖曳，否則視為點擊準備)
+        if (Math.abs(clientX - startX) > 5 || Math.abs(clientY - startY) > 5) {
+            dragData.isMoved = true;
+        }
+
+        element.style.left = (clientX - offsetX) + 'px';
+        element.style.top = (clientY - offsetY) + 'px';
+    }
+
+    function endDragging(dragId, clientX, clientY) {
+        const dragData = dragId === 'mouse' ? mouseDragInfo : activeDrags[dragId];
+        if (!dragData) return;
+
+        const { element, placeholder, originalParent, isMoved } = dragData;
+        const playerId = element.dataset.playerId;
+
+        // 移除拖曳狀態與樣式
+        element.classList.remove('dragging');
+        element.style.left = '';
+        element.style.top = '';
+
+        // 如果沒有移動（只是短按），觸發點擊邏輯，原本的拖曳還原
+        if (!isMoved) {
+            placeholder.parentNode.replaceChild(element, placeholder);
+            // 這裡不再呼叫 handleCardClick，因為原生的 click 事件會自己觸發
+        } 
+        else {
+            // 處理拖曳放下的邏輯
+            // 先將原本的卡片暫時隱藏（因為它現在在滑鼠/手指位置最上層，會擋住下方的元素偵測）
+            element.style.display = 'none';
+            // 取得手指放開位置下方的 DOM 元素
+            const elemBelow = document.elementFromPoint(clientX, clientY);
+            element.style.display = ''; // 恢復顯示
+
+            // 尋找是否放在該玩家的 drop-zone 或 slot 內
+            let dropped = false;
+            if (elemBelow) {
+                // 檢查是否是該玩家的 slot
+                const slot = elemBelow.closest('.slot');
+                const dropZone = elemBelow.closest(`#drop-zone-${playerId}`);
+                
+                if (dropZone) {
+                    if (slot && slot.children.length === 0) {
+                        // 放到空的槽位
+                        slot.appendChild(element);
+                        dropped = true;
+                    } else if (slot && slot.children.length > 0) {
+                        // 放到有卡片的槽位（交換）
+                        const existingCard = slot.children[0];
+                        originalParent.insertBefore(existingCard, placeholder); // 把原本槽位的卡片擠回去
+                        slot.appendChild(element);
+                        dropped = true;
+                    } else {
+                        // 放到 drop-zone 空白處，尋找第一個空格
+                        const emptySlot = Array.from(dropZone.children).find(s => s.classList.contains('slot') && s.children.length === 0);
+                        if (emptySlot) {
+                            emptySlot.appendChild(element);
+                            dropped = true;
+                        }
+                    }
+                }
+                
+                // 檢查是否放回自己的牌池
+                const cardPool = elemBelow.closest(`#card-pool-${playerId}`);
+                if (cardPool) {
+                    cardPool.appendChild(element);
+                    dropped = true;
+                }
+            }
+
+            // 如果沒有成功放下（丟到區外），退回原本位置
+            if (!dropped) {
+                placeholder.parentNode.replaceChild(element, placeholder);
+            } else {
+                placeholder.remove(); // 成功放下，移除佔位符號
+            }
+        }
+
+        // 清理記憶體
+        if (dragId === 'mouse') mouseDragInfo = null;
+        else delete activeDrags[dragId];
+    }
+
+
+    /**
+     * ==========================================
+     * 答案檢查與計算分數
+     * ==========================================
+     */
+    // 取得正確答案字串
+    function getCorrectAnswer(numbers, mode) {
+        let arr = [...numbers];
+        if (mode === 'largest') {
+            arr.sort((a, b) => b - a); // 降冪 9->0
+        } else {
+            arr.sort((a, b) => a - b); // 升冪 0->9
+            // 最小數開頭不能為0的特殊處理 (如果有關卡要求)
+            if (arr[0] === 0) {
+                let nonZeroIdx = arr.findIndex(n => n !== 0);
+                if (nonZeroIdx !== -1) {
+                    // 交換
+                    let temp = arr[0];
+                    arr[0] = arr[nonZeroIdx];
+                    arr[nonZeroIdx] = temp;
+                }
+            }
+        }
+        return arr.join('');
+    }
+
+    function checkAnswers() {
+        let allFilled = true;
+
+        // 檢查所有人是否都放滿了
+        for (let i = 0; i < gameState.players; i++) {
+            const dropZone = document.getElementById(`drop-zone-${i}`);
+            // 抓取 slot 內的卡片數量
+            const placedCards = Array.from(dropZone.children).filter(slot => slot.children.length > 0).length;
+            
+            if (placedCards < gameState.digits) {
+                allFilled = false;
+                const msgDiv = document.getElementById(`result-msg-${i}`);
+                msgDiv.textContent = GAME_TEXT.fillAll;
+                msgDiv.className = 'result-msg text-red';
+                setTimeout(() => { msgDiv.textContent = ''; }, 2000);
+            }
+        }
+
+        if (!allFilled) return;
+
+        // 停止拖曳互動
+        gameState.isPlaying = false;
+
+        // 核對每位玩家的答案
+        for (let i = 0; i < gameState.players; i++) {
+            const pData = gameState.playersData[i];
+            const dropZone = document.getElementById(`drop-zone-${i}`);
+            const msgDiv = document.getElementById(`result-msg-${i}`);
+            
+            // 取出玩家放置的數字
+            const userStr = Array.from(dropZone.children)
+                                 .map(slot => slot.children[0].dataset.value)
+                                 .join('');
+            
+            const correctStr = getCorrectAnswer(pData.numbers, pData.targetMode);
+
+            dropZone.classList.remove('correct', 'incorrect');
+
+            if (userStr === correctStr) {
+                dropZone.classList.add('correct');
+                msgDiv.textContent = GAME_TEXT.correct;
+                msgDiv.className = 'result-msg text-green';
+                pData.score += 10;
+            } else {
+                dropZone.classList.add('incorrect');
+                msgDiv.textContent = GAME_TEXT.incorrect + correctStr;
+                msgDiv.className = 'result-msg text-red';
+            }
+            
+            // 更新畫面上顯示的分數
+            document.querySelector(`.player-${i+1} .score-display`).textContent = `(得:${pData.score}分)`;
+        }
+
+        // 切換按鈕
+        document.getElementById('btn-submit').classList.add('hidden');
+        document.getElementById('btn-next').classList.remove('hidden');
+    }
+
+    /**
+     * ==========================================
+     * 遊戲結束結算畫面
+     * ==========================================
+     */
+    function endGame() {
+        clearInterval(gameState.timerInterval);
+        gameState.isPlaying = false;
+        
+        const finalScoresDiv = document.getElementById('final-scores');
+        finalScoresDiv.innerHTML = ''; // 清空
+
+        // 單人模式
+        if (gameState.players === 1) {
+            finalScoresDiv.innerHTML = `
+                <div style="font-size: 1.5rem; color: #7a7a7a;">
+                    你的最終得分：<br>
+                    <span style="font-size: 3rem; font-weight: bold; color: #ff9eaa;">
+                        ${gameState.playersData[0].score} 分
+                    </span>
+                </div>
+            `;
+        } 
+        // 多人對戰模式 (排序名次)
+        else {
+            const sorted = [...gameState.playersData].sort((a, b) => b.score - a.score);
+            
+            let html = '';
+            sorted.forEach((p, index) => {
+                const isChampion = index === 0 && p.score > 0; // 必須有分數才算冠軍
+                html += `
+                    <div class="rank-row ${isChampion ? 'rank-1' : ''}">
+                        <span>👤 玩家 ${p.id + 1} ${isChampion ? GAME_TEXT.champion : ''}</span>
+                        <span style="color: #ff9eaa; font-weight: bold;">${p.score} 分</span>
+                    </div>
+                `;
+            });
+            finalScoresDiv.innerHTML = html;
+        }
+
+        showScreen('result-screen');
+    }
+
+    /**
+     * ==========================================
+     * 主按鈕事件綁定
+     * ==========================================
+     */
+    document.getElementById('btn-start').addEventListener('click', startGame);
+    document.getElementById('btn-submit').addEventListener('click', checkAnswers);
+    document.getElementById('btn-next').addEventListener('click', startRound);
+    
+    // 返回主選單
+    const returnToMenu = () => {
+        clearInterval(gameState.timerInterval);
+        showScreen('menu-screen');
+    };
+    document.getElementById('btn-back-game').addEventListener('click', returnToMenu);
+    document.getElementById('btn-back-result').addEventListener('click', returnToMenu);
+    
+    // 再玩一次 (使用目前設定直接開始)
+    document.getElementById('btn-play-again').addEventListener('click', startGame);
+
+    // 初始顯示主選單
+    showScreen('menu-screen');
+
+</script>
+
+</body>
+</html>
