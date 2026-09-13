@@ -254,13 +254,16 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: clamp(0.8rem, 2vw, 2.5rem); 
+            /* 移除原本固定的 clamp font-size，改由 JS 動態注入 cqw */
             font-weight: bold;
             color: #444;
             box-shadow: 0 5px 0px #CCC, 0 8px 10px rgba(0,0,0,0.15);
             cursor: grab;
             touch-action: none; /* 必須：防止觸控時滾動畫面 */
             transition: transform 0.1s;
+            
+            /* 新增：將卡片設為 Container，以便內部文字能完美依賴卡片寬度縮放 */
+            container-type: inline-size;
         }
 
         /* 新增：當數字方塊放入答案方格時，使其完全填滿並蓋住虛線邊框 */
@@ -605,7 +608,20 @@
                 const card = document.createElement('div');
                 card.className = 'number-card';
                 card.dataset.value = num;
-                card.innerText = num;
+                
+                // 新增：根據數字長度決定字體比例 (cqw = 容器寬度的百分比)
+                // 確保文字「剛好放大塞滿」方塊，不論是1位數還是5位數
+                const numStr = num.toString();
+                const len = numStr.length;
+                let fontSizeCqw;
+                if (len <= 2) fontSizeCqw = 50;       // 1-99，字體為方塊寬度的 50%
+                else if (len === 3) fontSizeCqw = 40; // 100-999
+                else if (len === 4) fontSizeCqw = 30; // 1000-9999
+                else fontSizeCqw = 24;                // 10000-99999
+                
+                // 加上 span 裝載文字，並設定 pointer-events: none 避免干擾拖曳偵測
+                card.innerHTML = `<span style="font-size: ${fontSizeCqw}cqw; pointer-events: none; line-height: 1;">${num}</span>`;
+                
                 // 添加識別，方便知道卡片屬於哪個玩家
                 card.dataset.ownerId = playerId;
                 startZone.appendChild(card);
