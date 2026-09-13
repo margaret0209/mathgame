@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <!-- 確保在 iPad 及行動裝置上能正確自適應縮放，並禁止使用者手動放大縮小畫面 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>比較數字的大小</title>
+    
+    <style>
+        /* ==================================================
+           基礎重設與全局設定
+           ================================================== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* 防止反白選取文字，讓操作更像原生 App */
+            -webkit-user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            position: fixed; /* 徹底防止 iOS Safari 橡皮筋捲動效應，確保絕不捲動 */
+            overflow: hidden; /* 隱藏捲軸 */
+            touch-action: none; /* 禁用預設的觸控手勢（如瀏覽器滑動） */
+        }
+
+        body {
+            /* 使用適合學童的圓潤字體，若無則降級為無襯線體 */
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', sans-serif;
+            background-color: #fdfbf7; /* 柔和的米白色背景 */
+            color: #4a4a4a; /* 深灰色文字，對比度佳但不刺眼 */
+            --num-font-size: min(8vw, 10vh); /* 動態調整數字方塊字體大小的 CSS 變數 */
+        }
+
+        /* 畫面容器：用於切換設定畫面與遊戲畫面 */
+        .screen {
+            display: none; /* 預設隱藏 */
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2vh 2vw; /* 全部改用視窗比例 */
+        }
+        .screen.active {
+            display: flex; /* 顯示標記為 active 的畫面 */
+        }
+
+        /* ==================================================
+           設定畫面樣式 (Setup Screen)
+           ================================================== */
+        #setup-screen {
+            background-color: #fdfbf7;
+        }
+
+        .setup-panel {
+            background: white;
+            padding: 4vh 4vw;
+            border-radius: 3vh; /* 圓角設計 */
+            box-shadow: 0 1vh 3vh rgba(0,0,0,0.05); /* 柔和陰影 */
+            text-align: center;
+            width: 90vw;
+            max-width: 600px;
+            max-height: 90vh; /* 確保不超出螢幕 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .setup-panel h1 {
+            color: #ffb7b2; /* 馬卡龍粉紅 */
+            margin-bottom: 3vh;
+            font-size: clamp(1.8rem, 5vw, 3rem); /* 自適應標題大小 */
+            text-shadow: 0.2vh 0.2vh 0px #ffe5e5;
+        }
+
+        .form-group {
+            margin-bottom: 2vh;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            font-weight: bold;
+            color: #777;
+        }
+
+        .form-group select {
+            font-size: clamp(1rem, 2.5vw, 1.5rem);
+            padding: 1vh 1vw;
+            border-radius: 1.5vh;
+            border: 0.3vh solid #e2e2e2;
+            background: #fcfcfc;
+            margin-left: 1vw;
+            font-family: inherit;
+            color: #555;
+            outline: none;
+            width: 40%;
+            text-align: center;
+        }
+
+        /* 共用按鈕樣式 */
+        .btn {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            padding: 1.5vh 4vw;
+            border: none;
+            border-radius: 2.5vh;
+            background-color: #ffb7b2; /* 預設粉紅 */
+            color: white;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0.8vh 0 #ff9aa2; /* 底部立體陰影 */
+            transition: transform 0.1s, box-shadow 0.1s;
+            margin-top: 2vh;
+        }
+        .btn:active {
+            transform: translateY(0.8vh); /* 按下時的下壓特效 */
+            box-shadow: 0 0 0 #ff9aa2;
+        }
+        
+        /* ==================================================
+           遊戲畫面樣式 (Game Screen)
+           ================================================== */
+        #game-screen {
+            justify-content: flex-start;
+            padding: 0;
+        }
+
+        /* 頂部計時器 */
+        #timer-bar {
+            width: 100%;
+            height: 8vh;
+            background-color: #e8fccf; /* 馬卡龍淺綠 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: clamp(1.2rem, 3vh, 2rem);
+            font-weight: bold;
+            box-shadow: 0 0.5vh 1.5vh rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+        #time-left {
+            color: #ff7b7b;
+            margin: 0 1vw;
+            font-size: clamp(1.5rem, 4vh, 2.5rem);
+            min-width: 12vw;
+            text-align: center;
+        }
+
+        /* 遊戲主區域：用於橫向排列多個玩家 */
+        #game-area {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: 92vh; /* 精確佔滿剩餘高度 (100-8) */
+            padding: 1.5vh 1.5vw;
+            gap: 1.5vw;
+        }
+
+        /* 單一玩家的區域（直行排列） */
+        .player-col {
+            flex: 1; /* 平均分配寬度，實現分割畫面 */
+            display: flex;
+            flex-direction: column;
+            border-radius: 2vh;
+            border: 0.5vh solid rgba(255,255,255,0.8);
+            padding: 1vh 1vw;
+            box-shadow: 0 1vh 2vh rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .player-header {
+            text-align: center;
+            margin-bottom: 1vh;
+            background: rgba(255,255,255,0.6);
+            border-radius: 1.5vh;
+            padding: 0.5vh;
+        }
+        .player-header h2 { font-size: clamp(1.2rem, 3vh, 2rem); margin: 0; color: #555; }
+        .score-display { font-size: clamp(1rem, 2.5vh, 1.5rem); font-weight: bold; color: #4a4a4a; margin-top: 0.5vh;}
+
+        .game-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-evenly; /* 將內容垂直均勻分佈，絕不超出邊界 */
+            width: 100%;
+        }
+
+        /* ==================================================
+           題目與互動元素
+           ================================================== */
+        /* 第一行：數字與答案空白框 */
+        .question-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 2%; 
+            width: 100%;
+            height: 15vh; /* 限定高度 */
+        }
+
+        /* 數字方塊 */
+        .num-box {
+            flex: 2; 
+            max-width: 42%;
+            height: 100%;
+            background: white;
+            border-radius: 1.5vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 0.5vh 1vh rgba(0,0,0,0.1);
+            font-size: var(--num-font-size); /* JS 動態設定 */
+            color: #555;
+            padding: 0 1vw;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        /* 答案放置區 */
+        .drop-zone {
+            flex: 1;
+            max-width: 25%;
+            height: 100%;
+            border: 0.4vh dashed #ccc;
+            background: rgba(255,255,255,0.8);
+            border-radius: 1.5vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ccc;
+            font-size: clamp(1.5rem, 5vh, 4rem);
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        /* 當答案區被放入符號時的樣式 */
+        .drop-zone.filled {
+            border-style: solid;
+            border-color: #ffb7b2;
+            color: #ff7b7b;
+            background: white;
+            box-shadow: 0 0.5vh 1vh rgba(0,0,0,0.1);
+        }
+
+        /* 第二行：可拖拉的符號 */
+        .symbols-row {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            gap: 2vw;
+            width: 100%;
+            height: 12vh; /* 限定高度 */
+        }
+
+        /* 符號方塊（原地不動的母體） */
+        .draggable-symbol {
+            width: 12vh; /* 保持正方形 */
+            height: 100%;
+            background: white;
+            border-radius: 1.5vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(2rem, 6vh, 4rem);
+            font-weight: bold;
+            color: #6bb9f0; /* 馬卡龍藍文字 */
+            box-shadow: 0 0.8vh 0 #89b3df, 0 1vh 1.5vh rgba(0,0,0,0.1);
+            cursor: grab;
+            touch-action: none; /* 必須：防止觸控時引發畫面滾動 */
+        }
+        .draggable-symbol:active { cursor: grabbing; }
+
+        /* 拖拉中的分身（跟隨手指移動） */
+        .draggable-symbol.dragging-clone {
+            position: fixed; /* 絕對定位於螢幕 */
+            pointer-events: none; /* 讓底下的元素能接收到滑鼠/觸控事件（用於判定落點） */
+            z-index: 9999;
+            transform: translate(-50%, -120%); /* 將分身往上移，避免被使用者的手指擋住視線 */
+            margin: 0 !important;
+            opacity: 0.95;
+            box-shadow: 0 1.5vh 2.5vh rgba(0,0,0,0.2);
+            width: 12vh;
+            height: 12vh;
+        }
+
+        /* ==================================================
+           按鈕與回饋訊息
+           ================================================== */
+        /* 提交按鈕 */
+        .submit-btn {
+            font-size: clamp(1.2rem, 3vh, 2rem);
+            padding: 1vh 2vw;
+            height: 8vh;
+            border: none;
+            border-radius: 2vh;
+            background-color: #c8b6ff; /* 馬卡龍紫 */
+            color: white;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0.8vh 0 #b3a0eb;
+            transition: all 0.1s;
+            width: 80%;
+            max-width: 250px;
+        }
+        .submit-btn:active:not(:disabled) {
+            transform: translateY(0.8vh);
+            box-shadow: 0 0 0 #b3a0eb;
+        }
+        /* 防止重複提交的禁用狀態 */
+        .submit-btn:disabled {
+            background-color: #dcdcdc;
+            box-shadow: 0 0.8vh 0 #bfbfbf;
+            cursor: not-allowed;
+            color: #888;
+        }
+
+        /* 對錯回饋文字 */
+        .feedback-msg {
+            font-size: clamp(1rem, 2.5vh, 1.5rem);
+            font-weight: bold;
+            height: 4vh; /* 固定高度防止排版跳動 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .feedback-msg.correct { color: #5cb85c; animation: pop 0.4s; }
+        .feedback-msg.wrong { color: #d9534f; animation: shake 0.4s; }
+        .feedback-msg.warning { color: #f0ad4e; }
+
+        /* ==================================================
+           結算畫面樣式 (Result Screen)
+           ================================================== */
+        #result-screen { background-color: #fdfbf7; }
+        .result-panel {
+            background: white;
+            padding: 4vh 4vw;
+            border-radius: 3vh;
+            box-shadow: 0 1vh 3vh rgba(0,0,0,0.05);
+            text-align: center;
+            width: 95vw; /* 增加寬度以容納並排卡片 */
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .result-panel h2 {
+            color: #a1c9f1;
+            font-size: clamp(2rem, 6vw, 3.5rem);
+            margin-bottom: 3vh;
+        }
+
+        /* 將成績列表改為橫向排列 (flex-row) */
+        #results-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 3vw;
+            width: 100%;
+            margin-bottom: 4vh;
+            min-height: 25vh; /* 確保有足夠高度顯示縮放特效，不被切掉 */
+        }
+
+        /* 獨立玩家的結算卡片 */
+        .result-col {
+            flex: 1;
+            max-width: 250px; /* 限制單一卡片最大寬度 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4vh 1vw;
+            border-radius: 2vh;
+            box-shadow: 0 1vh 2vh rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            border: 0.5vh solid transparent;
+        }
+
+        .result-col .player-name {
+            font-size: clamp(1.2rem, 3.5vw, 2rem);
+            margin-bottom: 2vh;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .result-col .player-score {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            color: #4a4a4a;
+            font-weight: bold;
+        }
+
+        /* 第一名特別標示 */
+        .result-col.winner {
+            transform: scale(1.15); /* 放大 */
+            box-shadow: 0 0 2vh rgba(255, 215, 0, 0.6), 0 1vh 3vh rgba(0,0,0,0.1); /* 金色光暈 */
+            border-color: #ffd700; /* 金色邊框 */
+            z-index: 2;
+        }
+        
+        .result-col.winner .player-name,
+        .result-col.winner .player-score {
+            color: #d9534f; /* 勝利者文字顏色變紅 */
+        }
+
+        /* 動畫特效 */
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-8px); }
+            80% { transform: translateX(8px); }
+        }
+
+        /* ==================================================
+           針對手機/小螢幕的微調
+           ================================================== */
+        @media (max-width: 768px) {
+            .form-group { flex-direction: column; align-items: stretch; gap: 1vh; }
+            .form-group select { margin-left: 0; width: 100%; }
+            #game-area { padding: 1vh; gap: 1vw; }
+            .player-col { padding: 1vh; border-width: 0.3vh; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 設定畫面 -->
+    <div id="setup-screen" class="screen active">
+        <div class="setup-panel">
+            <h1>比較數字的大小</h1>
+            
+            <div class="form-group">
+                <label for="setting-digits">數字類型：</label>
+                <select id="setting-digits">
+                    <option value="2">兩位數</option>
+                    <option value="3">三位數</option>
+                    <option value="4">四位數</option>
+                    <option value="5">五位數</option>
+                    <option value="6">六位數</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="setting-players">遊玩人數：</label>
+                <select id="setting-players">
+                    <option value="1">1 人</option>
+                    <option value="2">2 人</option>
+                    <option value="3">3 人</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="setting-time">遊戲時限：</label>
+                <select id="setting-time">
+                    <option value="1">1 分鐘</option>
+                    <option value="3">3 分鐘</option>
+                    <option value="5">5 分鐘</option>
+                </select>
+            </div>
+            
+            <button class="btn" onclick="startGame()">開始遊戲</button>
+        </div>
+    </div>
+
+    <!-- 遊戲畫面 -->
+    <div id="game-screen" class="screen">
+        <div id="timer-bar">剩餘時間：<span id="time-left">0:00</span></div>
+        <div id="game-area">
+            <!-- 玩家欄位將透過 JavaScript 動態生成並插入此處 -->
+        </div>
+    </div>
+
+    <!-- 結算畫面 -->
+    <div id="result-screen" class="screen">
+        <div class="result-panel">
+            <h2>遊戲結束</h2>
+            <div id="results-container">
+                <!-- 成績列表將插入此處 -->
+            </div>
+            <button class="btn" onclick="restartToMenu()" style="background-color: #a1c9f1; box-shadow: 0 6px 0 #89b3df;">回到首頁</button>
+        </div>
+    </div>
+
+    <script>
+        /* ==================================================
+           全域變數設定
+           ================================================== */
+        let gameInterval = null;     // 計時器物件
+        let timeLeft = 0;            // 剩餘秒數
+        let playersData = [];        // 儲存所有玩家狀態的陣列
+        let numDigits = 2;           // 當前選擇的位數
+        
+        // 分配給 1~3 名玩家的馬卡龍背景色（粉紅、淺藍、淺綠）
+        const playerColors = ['#ffe5ec', '#e0fbfc', '#e8fccf'];
+
+        /* ==================================================
+           音效系統 (使用 Web Audio API，無需外部音檔)
+           ================================================== */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // 產生不同類型的音效
+        function playSound(type) {
+            // 確保 AudioContext 已啟動 (瀏覽器安全限制)
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+            
+            if (type === 'correct') {
+                // 答對音效：歡快的琶音 (Do-Mi-Sol-Do)
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now);        // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1);  // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2);  // G5
+                osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.5, now + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+            } else if (type === 'wrong') {
+                // 答錯音效：低沉的嘟聲
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(250, now);
+                osc.frequency.linearRampToValueAtTime(150, now + 0.3);
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.5, now + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'click' || type === 'drop') {
+                // 點擊/放開音效：短促的啵聲
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.3, now + 0.02);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'finish') {
+                // 結束音效：號角聲
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.setValueAtTime(554.37, now + 0.2);
+                osc.frequency.setValueAtTime(659.25, now + 0.4);
+                osc.frequency.setValueAtTime(880, now + 0.6);
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.3, now + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
+                osc.start(now);
+                osc.stop(now + 1.2);
+            }
+        }
+
+        /* ==================================================
+           遊戲初始化與畫面控制
+           ================================================== */
+        function startGame() {
+            // 解除瀏覽器音效限制
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            playSound('click');
+
+            // 讀取玩家設定
+            numDigits = parseInt(document.getElementById('setting-digits').value);
+            const numPlayers = parseInt(document.getElementById('setting-players').value);
+            const timeMins = parseInt(document.getElementById('setting-time').value);
+            
+            timeLeft = timeMins * 60;
+            playersData = [];
+
+            // 動態調整字體大小：依據位數與人數，使用 vw 與 vh 的 min 值，確保字體不會超出方塊
+            let fontSizeVW = 8;
+            if (numPlayers === 3) {
+                fontSizeVW = (numDigits >= 5) ? 2.5 : (numDigits >= 4 ? 3 : 3.5);
+            } else if (numPlayers === 2) {
+                fontSizeVW = (numDigits >= 5) ? 4 : (numDigits >= 4 ? 4.5 : 5.5);
+            } else {
+                fontSizeVW = (numDigits >= 5) ? 7 : 9;
+            }
+            // 確保字體在橫向(vw)縮放時，不會超過直向容器的高度(約10vh)
+            document.documentElement.style.setProperty('--num-font-size', `min(${fontSizeVW}vw, 10vh)`);
+
+            // 切換畫面
+            document.getElementById('setup-screen').classList.remove('active');
+            document.getElementById('game-screen').classList.add('active');
+
+            // 清空並生成遊戲區域
+            const gameArea = document.getElementById('game-area');
+            gameArea.innerHTML = '';
+
+            for (let i = 0; i < numPlayers; i++) {
+                playersData.push({
+                    id: i,
+                    score: 0,
+                    currentQuestion: null
+                });
+
+                // 建立該玩家的專屬行 (Column)
+                const col = document.createElement('div');
+                col.className = 'player-col';
+                col.style.backgroundColor = playerColors[i];
+                col.innerHTML = `
+                    <div class="player-header">
+                        <h2>玩家 ${i + 1}</h2>
+                        <div class="score-display">分數: <span id="score-${i}">0</span></div>
+                    </div>
+                    <div class="game-content">
+                        <!-- 第一行：數字與答案框 -->
+                        <div class="question-row">
+                            <div class="num-box" id="num1-${i}"></div>
+                            <div class="drop-zone" id="drop-${i}" data-player="${i}" data-filled="">?</div>
+                            <div class="num-box" id="num2-${i}"></div>
+                        </div>
+                        <!-- 第二行：可拖拉的符號 -->
+                        <div class="symbols-row">
+                            <div class="draggable-symbol" data-value="&gt;" data-player="${i}">&gt;</div>
+                            <div class="draggable-symbol" data-value="=" data-player="${i}">=</div>
+                            <div class="draggable-symbol" data-value="&lt;" data-player="${i}">&lt;</div>
+                        </div>
+                        <!-- 提交按鈕與回饋 -->
+                        <button class="submit-btn" id="submit-${i}" onclick="checkAnswer(${i})">提交</button>
+                        <div class="feedback-msg" id="feedback-${i}"></div>
+                    </div>
+                `;
+                gameArea.appendChild(col);
+            }
+
+            // 初始化所有可拖拉符號的觸控事件
+            document.querySelectorAll('.draggable-symbol').forEach(el => initTouchDrag(el));
+
+            // 生成第一輪題目
+            for (let i = 0; i < numPlayers; i++) {
+                generateNewQuestion(i);
+            }
+
+            // 啟動計時器
+            updateTimerDisplay();
+            clearInterval(gameInterval);
+            gameInterval = setInterval(timerTick, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft / 60);
+            const s = Math.floor(timeLeft % 60);
+            document.getElementById('time-left').innerText = m + ':' + (s < 10 ? '0' : '') + s;
+        }
+
+        function timerTick() {
+            timeLeft--;
+            updateTimerDisplay();
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        /* ==================================================
+           題目生成與答題邏輯
+           ================================================== */
+        function generateQuestion(digits) {
+            // 根據位數計算最大最小值 (例如 2位數為 10~99)
+            const min = Math.pow(10, digits - 1);
+            const max = Math.pow(10, digits) - 1;
+            
+            const num1 = Math.floor(Math.random() * (max - min + 1)) + min;
+            let num2;
+            
+            // 刻意製造約 15% 機率出現相等的數字，增加「=」的使用率
+            if (Math.random() < 0.15) {
+                num2 = num1;
+            } else {
+                num2 = Math.floor(Math.random() * (max - min + 1)) + min;
+                // 若剛好隨機到相等但不在那 15% 機率內，強制重新生成確保不相等
+                while (num1 === num2) {
+                    num2 = Math.floor(Math.random() * (max - min + 1)) + min;
+                }
+            }
+            return { num1, num2 };
+        }
+
+        function generateNewQuestion(playerIdx) {
+            const q = generateQuestion(numDigits);
+            playersData[playerIdx].currentQuestion = q;
+            
+            // 顯示數字
+            document.getElementById(`num1-${playerIdx}`).innerText = q.num1;
+            document.getElementById(`num2-${playerIdx}`).innerText = q.num2;
+            
+            // 重置答案框
+            const dropZone = document.getElementById(`drop-${playerIdx}`);
+            dropZone.innerHTML = '?';
+            dropZone.setAttribute('data-filled', '');
+            dropZone.classList.remove('filled');
+            
+            // 重置回饋訊息與按鈕
+            const feedback = document.getElementById(`feedback-${playerIdx}`);
+            feedback.innerText = '';
+            feedback.className = 'feedback-msg';
+            
+            document.getElementById(`submit-${playerIdx}`).disabled = false;
+        }
+
+        function checkAnswer(playerIdx) {
+            const btn = document.getElementById(`submit-${playerIdx}`);
+            if (btn.disabled) return; // 避免連按
+            
+            const dropZone = document.getElementById(`drop-${playerIdx}`);
+            const userAnswer = dropZone.getAttribute('data-filled');
+            
+            // 如果還沒拖拉符號
+            if (!userAnswer) {
+                playSound('wrong');
+                showFeedback(playerIdx, '請先拖拉符號！', 'warning');
+                return;
+            }
+            
+            btn.disabled = true; // 鎖定按鈕
+            
+            const q = playersData[playerIdx].currentQuestion;
+            let correctAnswer = '';
+            if (q.num1 > q.num2) correctAnswer = '>';
+            else if (q.num1 === q.num2) correctAnswer = '=';
+            else correctAnswer = '<';
+            
+            if (userAnswer === correctAnswer) {
+                // 答對邏輯
+                playSound('correct');
+                playersData[playerIdx].score += 10;
+                document.getElementById(`score-${playerIdx}`).innerText = playersData[playerIdx].score;
+                showFeedback(playerIdx, '答對了！ +10分', 'correct');
+                
+                // 延遲後換下一題
+                setTimeout(() => {
+                    if (timeLeft > 0) generateNewQuestion(playerIdx);
+                }, 1200);
+            } else {
+                // 答錯邏輯
+                playSound('wrong');
+                // 扣分，但最低限制為 0 分，避免學生受挫
+                playersData[playerIdx].score = Math.max(0, playersData[playerIdx].score - 5);
+                document.getElementById(`score-${playerIdx}`).innerText = playersData[playerIdx].score;
+                showFeedback(playerIdx, '答錯了，扣5分。請再試一次！', 'wrong');
+                
+                // 延遲後清空答案區，要求在同一題重試
+                setTimeout(() => {
+                    if (timeLeft > 0) {
+                        dropZone.innerHTML = '?';
+                        dropZone.setAttribute('data-filled', '');
+                        dropZone.classList.remove('filled');
+                        showFeedback(playerIdx, '', '');
+                        btn.disabled = false; // 解鎖按鈕允許重試
+                    }
+                }, 1500);
+            }
+        }
+
+        function showFeedback(playerIdx, text, type) {
+            const feedback = document.getElementById(`feedback-${playerIdx}`);
+            feedback.innerText = text;
+            feedback.className = 'feedback-msg ' + type;
+        }
+
+        /* ==================================================
+           自訂觸控拖放系統 (支援多點觸控與滑鼠)
+           ================================================== */
+        let activeTouches = {}; // 紀錄目前螢幕上的觸控點與其對應的拖拉物件
+        let globalTouchInitialized = false;
+
+        function initTouchDrag(el) {
+            // 綁定起始事件
+            el.addEventListener('mousedown', handleDragStart, {passive: false});
+            el.addEventListener('touchstart', handleDragStart, {passive: false});
+            
+            // 全域事件只需綁定一次
+            if (!globalTouchInitialized) {
+                document.addEventListener('mousemove', handleDragMove, {passive: false});
+                document.addEventListener('touchmove', handleDragMove, {passive: false});
+                document.addEventListener('mouseup', handleDragEnd);
+                document.addEventListener('touchend', handleDragEnd);
+                document.addEventListener('touchcancel', handleDragEnd);
+                globalTouchInitialized = true;
+            }
+        }
+
+        function handleDragStart(e) {
+            if (e.type === 'touchstart') {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    startDrag(e.changedTouches[i], this, e);
+                }
+            } else {
+                // 滑鼠事件
+                if (e.button !== 0) return; // 只接受左鍵
+                startDrag(e, this, e);
+            }
+        }
+
+        function startDrag(point, el, originalEvent) {
+            originalEvent.preventDefault(); // 防止 iOS 觸控時畫面滾動
+            playSound('click'); // 拿起音效
+            
+            const id = point.identifier !== undefined ? point.identifier : 'mouse';
+            
+            // 產生一個分身 (Clone) 附著在 Body 上，用於跟隨手指移動
+            const clone = el.cloneNode(true);
+            clone.classList.add('dragging-clone');
+            document.body.appendChild(clone);
+            
+            // 初始定位分身
+            updateClonePosition(clone, point.clientX, point.clientY);
+            
+            // 記錄狀態
+            activeTouches[id] = {
+                clone: clone,
+                value: el.getAttribute('data-value'),
+                playerIndex: el.getAttribute('data-player')
+            };
+        }
+
+        function handleDragMove(e) {
+            if (e.type === 'touchmove') {
+                let moved = false;
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const id = e.changedTouches[i].identifier;
+                    if (activeTouches[id]) {
+                        updateClonePosition(activeTouches[id].clone, e.changedTouches[i].clientX, e.changedTouches[i].clientY);
+                        moved = true;
+                    }
+                }
+                // 如果有拖拉元素在移動，則阻止預設行為(確保畫面不滑動)
+                if (moved && e.cancelable) e.preventDefault(); 
+            } else {
+                if (activeTouches['mouse']) {
+                    updateClonePosition(activeTouches['mouse'].clone, e.clientX, e.clientY);
+                    if (e.cancelable) e.preventDefault();
+                }
+            }
+        }
+
+        function updateClonePosition(clone, x, y) {
+            // 將座標對應到分身 (CSS 內已設定 translate 將分身往上推，避免被手指擋住)
+            clone.style.left = x + 'px';
+            clone.style.top = y + 'px';
+        }
+
+        function handleDragEnd(e) {
+            if (e.type.startsWith('touch')) {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const id = e.changedTouches[i].identifier;
+                    if (activeTouches[id]) {
+                        endDrag(id, e.changedTouches[i].clientX, e.changedTouches[i].clientY);
+                    }
+                }
+            } else {
+                if (activeTouches['mouse']) {
+                    endDrag('mouse', e.clientX, e.clientY);
+                }
+            }
+        }
+
+        function endDrag(id, x, y) {
+            const dragState = activeTouches[id];
+            const clone = dragState.clone;
+            
+            // 暫時隱藏分身，才能使用 elementFromPoint 偵測底下是甚麼元素
+            clone.style.display = 'none';
+            const dropTarget = document.elementFromPoint(x, y);
+            clone.style.display = 'flex'; // 恢復顯示，即將被移除
+            
+            if (dropTarget) {
+                // 尋找目標是否為放置區 (drop-zone)
+                const dropZone = dropTarget.closest('.drop-zone');
+                // 檢查是否放置在「該玩家專屬」的答案區內
+                if (dropZone && dropZone.getAttribute('data-player') === dragState.playerIndex) {
+                    // 放下成功
+                    dropZone.innerHTML = dragState.value;
+                    dropZone.setAttribute('data-filled', dragState.value);
+                    dropZone.classList.add('filled');
+                    playSound('drop');
+                }
+            }
+            
+            // 移除分身並清除紀錄
+            clone.remove();
+            delete activeTouches[id];
+        }
+
+        /* ==================================================
+           遊戲結束與結算
+           ================================================== */
+        function endGame() {
+            clearInterval(gameInterval);
+            playSound('finish');
+            
+            document.getElementById('game-screen').classList.remove('active');
+            document.getElementById('result-screen').classList.add('active');
+            
+            const resultsContainer = document.getElementById('results-container');
+            resultsContainer.innerHTML = '';
+            
+            // 找出最高分數 (用來標記贏家)
+            let maxScore = -1;
+            playersData.forEach(p => {
+                if (p.score > maxScore) maxScore = p.score;
+            });
+            
+            // 依照玩家原本的實體排列順序 (左至右) 顯示，不重新排序
+            playersData.forEach(p => {
+                const col = document.createElement('div');
+                col.className = 'result-col';
+                
+                // 套用該玩家專屬的馬卡龍背景色
+                col.style.backgroundColor = playerColors[p.id];
+                
+                // 最高分且分數大於0者標記為 winner
+                let crown = '';
+                if (p.score === maxScore && p.score > 0) {
+                    col.classList.add('winner');
+                    crown = '👑 ';
+                }
+                
+                col.innerHTML = `
+                    <div class="player-name">${crown}玩家 ${p.id + 1}</div>
+                    <div class="player-score">${p.score} 分</div>
+                `;
+                resultsContainer.appendChild(col);
+            });
+        }
+
+        function restartToMenu() {
+            playSound('click');
+            document.getElementById('result-screen').classList.remove('active');
+            document.getElementById('setup-screen').classList.add('active');
+        }
+    </script>
+</body>
+</html>
