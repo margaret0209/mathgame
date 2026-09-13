@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬卡龍數字排序遊戲</title>
+    <!-- 引入 Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自定義字體 */
+        @import url('https://fonts.googleapis.com/css2?family=Varela+Round&family=Noto+Sans+TC:wght@400;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', 'Varela Round', sans-serif;
+            /* 馬卡龍色系背景漸層 */
+            background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 50%, #e8eaf6 100%);
+            min-height: 100vh;
+        }
+        
+        /* 隱藏捲軸但保持可捲動 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        /* 按鈕立體效果 */
+        .macaron-btn {
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 0px rgba(0,0,0,0.1);
+        }
+        .macaron-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0px rgba(0,0,0,0.1);
+        }
+        
+        /* 抖動動畫 (用於錯誤提示) */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .animate-shake {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        /* 答對的浮現動畫 */
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+    </style>
+</head>
+<body class="text-slate-700 py-8 px-4 flex flex-col items-center">
+
+    <!-- 設定畫面 -->
+    <div id="setupScreen" class="w-full max-w-3xl bg-white/60 backdrop-blur-md p-6 sm:p-10 rounded-[3rem] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.1)] border-4 border-white">
+        <h1 class="text-4xl sm:text-5xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400">
+            數字排序大挑戰
+        </h1>
+
+        <div class="space-y-8">
+            <!-- 人數設定 -->
+            <div>
+                <h2 class="text-xl font-bold mb-3 text-slate-600 flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center text-sm">1</span> 選擇對戰人數
+                </h2>
+                <div class="grid grid-cols-3 gap-3">
+                    <button class="opt-btn macaron-btn rounded-2xl py-3 font-bold text-lg border-2 border-transparent transition-colors" data-category="players" data-value="1">1 人</button>
+                    <button class="opt-btn macaron-btn rounded-2xl py-3 font-bold text-lg border-2 border-transparent transition-colors" data-category="players" data-value="2">2 人</button>
+                    <button class="opt-btn macaron-btn rounded-2xl py-3 font-bold text-lg border-2 border-transparent transition-colors" data-category="players" data-value="3">3 人</button>
+                </div>
+            </div>
+
+            <!-- 時間設定 -->
+            <div>
+                <h2 class="text-xl font-bold mb-3 text-slate-600 flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-full bg-green-100 text-green-500 flex items-center justify-center text-sm">2</span> 選擇遊戲限時
+                </h2>
+                <div class="grid grid-cols-3 gap-3">
+                    <button class="opt-btn macaron-btn rounded-2xl py-3 font-bold text-lg border-2 border-transparent transition-colors" data-category="time" data-value="60">1 分鐘</button>
+                    <button class="opt-btn macaron-btn rounded-2xl py-3 font-bold text-lg border-2 border-transparent transition-colors" data-category="time" data-value="180">3 分鐘</button>
+                    <button class="opt-btn macaron-btn rounded-2xl py-3 font-bold text-lg border-2 border-transparent transition-colors" data-category="time" data-value="300">5 分鐘</button>
+                </div>
+            </div>
+
+            <!-- 題型設定 -->
+            <div>
+                <h2 class="text-xl font-bold mb-3 text-slate-600 flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-full bg-purple-100 text-purple-500 flex items-center justify-center text-sm">3</span> 選擇排序題型
+                </h2>
+                <div class="grid grid-cols-3 gap-3">
+                    <button class="opt-btn macaron-btn rounded-2xl py-3 font-bold text-lg border-2 border-transparent transition-colors" data-category="type" data-value="asc">由小至大</button>
+                    <button class="opt-btn macaron-btn rounded-2xl py-3 font-bold text-lg border-2 border-transparent transition-colors" data-category="type" data-value="desc">由大至小</button>
+                    <button class="opt-btn macaron-btn rounded-2xl py-3 font-bold text-lg border-2 border-transparent transition-colors" data-category="type" data-value="random">隨機混合</button>
+                </div>
+            </div>
+
+            <!-- 關卡設定 -->
+            <div>
+                <h2 class="text-xl font-bold mb-3 text-slate-600 flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center text-sm">4</span> 選擇數字範圍 (關卡)
+                </h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <button class="opt-btn macaron-btn rounded-2xl py-3 font-bold text-md border-2 border-transparent transition-colors" data-category="level" data-value="0">Lv 1: 1-10</button>
+                    <button class="opt-btn macaron-btn rounded-2xl py-3 font-bold text-md border-2 border-transparent transition-colors" data-category="level" data-value="1">Lv 2: 1-20</button>
+                    <button class="opt-btn macaron-btn rounded-2xl py-3 font-bold text-md border-2 border-transparent transition-colors" data-category="level" data-value="2">Lv 3: 10-99</button>
+                    <button class="opt-btn macaron-btn rounded-2xl py-3 font-bold text-md border-2 border-transparent transition-colors" data-category="level" data-value="3">Lv 4: 100-999</button>
+                    <button class="opt-btn macaron-btn rounded-2xl py-3 font-bold text-md border-2 border-transparent transition-colors sm:col-span-2">Lv 5: 1000-99999</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-10 flex justify-center">
+            <button id="startGameBtn" class="macaron-btn bg-gradient-to-r from-pink-400 to-purple-400 hover:from-pink-500 hover:to-purple-500 text-white font-bold py-4 px-12 rounded-[2rem] text-2xl shadow-lg border-b-4 border-purple-600 w-full sm:w-auto">
+                開始遊戲
+            </button>
+        </div>
+    </div>
+
+    <!-- 遊戲畫面 -->
+    <div id="gameScreen" class="hidden w-full max-w-5xl flex flex-col gap-6">
+        <!-- 頂部資訊列 (計時器與返回按鈕) -->
+        <div class="flex justify-between items-center bg-white/60 backdrop-blur-md p-4 px-8 rounded-full shadow-sm border-2 border-white">
+            <div class="text-lg font-bold text-slate-500">倒數計時</div>
+            <div id="timerDisplay" class="text-4xl font-black text-rose-500 tracking-wider">01:00</div>
+            <button id="forceEndBtn" class="macaron-btn bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold py-2 px-4 rounded-full text-sm">
+                結束遊戲
+            </button>
+        </div>
+
+        <!-- 玩家對戰區域 (動態生成) -->
+        <div id="playersContainer" class="flex flex-col gap-6">
+            <!-- 玩家版面將由 JS 生成 -->
+        </div>
+    </div>
+
+    <!-- 結算畫面 -->
+    <div id="resultScreen" class="hidden w-full max-w-2xl bg-white/80 backdrop-blur-md p-8 sm:p-12 rounded-[3rem] shadow-xl border-4 border-white text-center">
+        <h2 class="text-4xl font-bold mb-2 text-indigo-500">時間到！</h2>
+        <p class="text-xl mb-8 text-slate-500">比賽結束，來看看成績吧</p>
+        
+        <div id="rankingContainer" class="flex flex-col gap-4 mb-8">
+            <!-- 排名清單 -->
+        </div>
+
+        <button id="backToMenuBtn" class="macaron-btn bg-gradient-to-r from-blue-400 to-cyan-400 hover:from-blue-500 hover:to-cyan-500 text-white font-bold py-4 px-10 rounded-[2rem] text-xl shadow-lg border-b-4 border-blue-600">
+            回到主選單
+        </button>
+    </div>
+
+    <script>
+        // 關卡數字範圍
+        const levelRanges = [
+            { min: 1, max: 10 },
+            { min: 1, max: 20 },
+            { min: 10, max: 99 },
+            { min: 100, max: 999 },
+            { min: 1000, max: 99999 }
+        ];
+
+        // 馬卡龍玩家主題色 (用於區分玩家)
+        const playerThemes = [
+            { bg: 'bg-emerald-50', border: 'border-emerald-300', text: 'text-emerald-600', btn: 'bg-emerald-200 hover:bg-emerald-300', active: 'bg-emerald-400 text-white' }, // Player 1
+            { bg: 'bg-rose-50', border: 'border-rose-300', text: 'text-rose-600', btn: 'bg-rose-200 hover:bg-rose-300', active: 'bg-rose-400 text-white' },       // Player 2
+            { bg: 'bg-violet-50', border: 'border-violet-300', text: 'text-violet-600', btn: 'bg-violet-200 hover:bg-violet-300', active: 'bg-violet-400 text-white' }  // Player 3
+        ];
+
+        // 設定狀態
+        const config = {
+            players: 1,
+            time: 60,
+            type: 'asc', // 'asc', 'desc', 'random'
+            level: 0
+        };
+
+        // 遊戲狀態
+        let playersData = [];
+        let gameInterval = null;
+        let timeLeft = 0;
+
+        // DOM 元素
+        const setupScreen = document.getElementById('setupScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const resultScreen = document.getElementById('resultScreen');
+        const playersContainer = document.getElementById('playersContainer');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const rankingContainer = document.getElementById('rankingContainer');
+        
+        // 初始化選項按鈕事件
+        document.querySelectorAll('.opt-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const category = btn.dataset.category;
+                const value = btn.dataset.value;
+                config[category] = isNaN(value) ? value : parseInt(value);
+                updateSetupUI();
+            });
+        });
+
+        // 更新設定畫面的 UI 狀態 (馬卡龍配色標示選中狀態)
+        function updateSetupUI() {
+            const themes = {
+                players: { active: 'bg-blue-300 text-blue-900 border-blue-400 shadow-inner', inactive: 'bg-blue-50 text-blue-600 hover:bg-blue-100' },
+                time: { active: 'bg-green-300 text-green-900 border-green-400 shadow-inner', inactive: 'bg-green-50 text-green-600 hover:bg-green-100' },
+                type: { active: 'bg-purple-300 text-purple-900 border-purple-400 shadow-inner', inactive: 'bg-purple-50 text-purple-600 hover:bg-purple-100' },
+                level: { active: 'bg-orange-300 text-orange-900 border-orange-400 shadow-inner', inactive: 'bg-orange-50 text-orange-600 hover:bg-orange-100' }
+            };
+
+            document.querySelectorAll('.opt-btn').forEach(btn => {
+                const category = btn.dataset.category;
+                const value = isNaN(btn.dataset.value) ? btn.dataset.value : parseInt(btn.dataset.value);
+                
+                // 清除所有樣式
+                btn.className = `opt-btn macaron-btn rounded-2xl py-3 font-bold border-2 transition-colors ${btn.classList.contains('sm:col-span-2') ? 'sm:col-span-2 text-md' : 'text-lg'}`;
+                
+                if (config[category] === value) {
+                    btn.classList.add(...themes[category].active.split(' '));
+                } else {
+                    btn.classList.add(...themes[category].inactive.split(' '));
+                }
+            });
+        }
+
+        // 初始化設定畫面 UI
+        updateSetupUI();
+
+        // 開始遊戲按鈕
+        document.getElementById('startGameBtn').addEventListener('click', startGame);
+        document.getElementById('forceEndBtn').addEventListener('click', endGame);
+        document.getElementById('backToMenuBtn').addEventListener('click', () => {
+            resultScreen.classList.add('hidden');
+            setupScreen.classList.remove('hidden');
+        });
+
+        function startGame() {
+            setupScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+
+            // 初始化玩家資料
+            playersData = [];
+            playersContainer.innerHTML = '';
+            
+            for (let i = 0; i < config.players; i++) {
+                playersData.push({
+                    id: i,
+                    score: 0,
+                    numbersToSort: [],
+                    sortedNumbers: [],
+                    playerAnswers: [],
+                    currentMode: config.type === 'random' ? (Math.random() > 0.5 ? 'asc' : 'desc') : config.type
+                });
+                createPlayerBoard(i);
+                initPlayerRound(i);
+            }
+
+            // 開始計時
+            timeLeft = config.time;
+            updateTimerDisplay();
+            clearInterval(gameInterval);
+            gameInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            timerDisplay.textContent = `${m}:${s}`;
+            
+            // 最後 10 秒變色警告
+            if (timeLeft <= 10) {
+                timerDisplay.classList.add('text-red-600', 'animate-pulse');
+                timerDisplay.classList.remove('text-rose-500');
+            } else {
+                timerDisplay.classList.remove('text-red-600', 'animate-pulse');
+                timerDisplay.classList.add('text-rose-500');
+            }
+        }
+
+        function createPlayerBoard(playerIndex) {
+            const theme = playerThemes[playerIndex];
+            const boardHTML = `
+                <div class="relative w-full ${theme.bg} rounded-[2rem] p-4 sm:p-6 shadow-md border-4 ${theme.border} transition-all">
+                    <!-- 頂部資訊 -->
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center gap-3">
+                            <h3 class="text-xl sm:text-2xl font-bold ${theme.text}">玩家 ${playerIndex + 1}</h3>
+                            <span id="p${playerIndex}-mode" class="px-3 py-1 rounded-full text-sm font-bold bg-white/60 ${theme.text} shadow-sm border border-white"></span>
+                        </div>
+                        <div class="text-xl font-bold text-slate-600 bg-white/60 px-4 py-1 rounded-full shadow-sm">
+                            分數: <span id="p${playerIndex}-score" class="${theme.text} text-2xl">0</span>
+                        </div>
+                    </div>
+
+                    <!-- 成功動畫遮罩 (預設隱藏) -->
+                    <div id="p${playerIndex}-success" class="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-[1.8rem] z-10 flex flex-col items-center justify-center hidden">
+                        <div class="text-5xl mb-2">🎉</div>
+                        <div class="text-2xl font-bold ${theme.text}">+10 分！</div>
+                    </div>
+
+                    <!-- 答案區 -->
+                    <div id="p${playerIndex}-answers" class="flex justify-center gap-2 sm:gap-4 mb-6">
+                        <!-- 渲染5個框 -->
+                    </div>
+
+                    <!-- 問題按鈕區 -->
+                    <div id="p${playerIndex}-questions" class="flex flex-wrap justify-center gap-3 sm:gap-4">
+                        <!-- 渲染5個按鈕 -->
+                    </div>
+                </div>
+            `;
+            playersContainer.insertAdjacentHTML('beforeend', boardHTML);
+        }
+
+        function initPlayerRound(playerIndex) {
+            const pData = playersData[playerIndex];
+            const theme = playerThemes[playerIndex];
+            const levelConfig = levelRanges[config.level];
+            
+            // 如果是隨機題型，每回合重新決定
+            if (config.type === 'random') {
+                pData.currentMode = Math.random() > 0.5 ? 'asc' : 'desc';
+            }
+
+            // 更新 UI 模式文字
+            const modeText = pData.currentMode === 'asc' ? '📈 由小至大' : '📉 由大至小';
+            document.getElementById(`p${playerIndex}-mode`).textContent = modeText;
+
+            // 產生 5 個不重複數字
+            const numbers = new Set();
+            while (numbers.size < 5) {
+                numbers.add(Math.floor(Math.random() * (levelConfig.max - levelConfig.min + 1)) + levelConfig.min);
+            }
+            pData.numbersToSort = Array.from(numbers);
+            
+            // 計算正確排序
+            pData.sortedNumbers = [...pData.numbersToSort].sort((a, b) => pData.currentMode === 'asc' ? a - b : b - a);
+            
+            // 重置玩家答案
+            pData.playerAnswers = [];
+
+            // 渲染答案框 (空的)
+            const answersContainer = document.getElementById(`p${playerIndex}-answers`);
+            answersContainer.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const box = document.createElement('div');
+                box.className = `w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center text-xl sm:text-2xl font-bold rounded-2xl border-4 border-dashed ${theme.border} text-slate-400 bg-white/50`;
+                answersContainer.appendChild(box);
+            }
+
+            // 渲染問題按鈕
+            const questionsContainer = document.getElementById(`p${playerIndex}-questions`);
+            questionsContainer.innerHTML = '';
+            
+            // 隨機打亂按鈕顯示順序
+            const shuffled = [...pData.numbersToSort].sort(() => Math.random() - 0.5);
+            shuffled.forEach(num => {
+                const btn = document.createElement('button');
+                btn.textContent = num;
+                btn.className = `macaron-btn w-16 h-16 sm:w-20 sm:h-20 ${theme.btn} ${theme.text} text-xl sm:text-2xl font-bold rounded-2xl shadow-md border-b-4 ${theme.border}`;
+                btn.onclick = () => handleNumberClick(playerIndex, num, btn);
+                questionsContainer.appendChild(btn);
+            });
+        }
+
+        function handleNumberClick(playerIndex, num, btnElement) {
+            const pData = playersData[playerIndex];
+            const theme = playerThemes[playerIndex];
+            
+            // 檢查是否點擊正確順序的數字
+            const targetNumber = pData.sortedNumbers[pData.playerAnswers.length];
+
+            if (num === targetNumber) {
+                // 答對了
+                pData.playerAnswers.push(num);
+                
+                // 停用按鈕並改變樣式
+                btnElement.disabled = true;
+                btnElement.className = `w-16 h-16 sm:w-20 sm:h-20 bg-slate-200 text-slate-400 text-xl sm:text-2xl font-bold rounded-2xl shadow-inner cursor-not-allowed transform scale-95 opacity-60`;
+                
+                // 填入答案框
+                const answerBox = document.getElementById(`p${playerIndex}-answers`).children[pData.playerAnswers.length - 1];
+                answerBox.textContent = num;
+                answerBox.className = `w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center text-xl sm:text-2xl font-bold rounded-2xl ${theme.active} shadow-md animate-pop`;
+
+                // 檢查是否完成本回合
+                if (pData.playerAnswers.length === 5) {
+                    pData.score += 10; // 每回合 10 分
+                    document.getElementById(`p${playerIndex}-score`).textContent = pData.score;
+                    
+                    // 顯示成功動畫
+                    const successOverlay = document.getElementById(`p${playerIndex}-success`);
+                    successOverlay.classList.remove('hidden');
+                    
+                    // 延遲後產生新回合
+                    setTimeout(() => {
+                        successOverlay.classList.add('hidden');
+                        // 確保時間還沒到才產生新回合
+                        if (timeLeft > 0) {
+                            initPlayerRound(playerIndex);
+                        }
+                    }, 800);
+                }
+            } else {
+                // 答錯了，給予視覺回饋 (抖動 + 變紅)
+                btnElement.classList.remove(theme.btn);
+                btnElement.classList.add('bg-red-300', 'text-red-900', 'animate-shake');
+                
+                setTimeout(() => {
+                    btnElement.classList.remove('bg-red-300', 'text-red-900', 'animate-shake');
+                    btnElement.classList.add(theme.btn.split(' ')[0]); // 回復原本顏色
+                }, 400);
+            }
+        }
+
+        function endGame() {
+            clearInterval(gameInterval);
+            gameScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            // 排序成績
+            const rankedPlayers = [...playersData].sort((a, b) => b.score - a.score);
+
+            rankingContainer.innerHTML = '';
+            
+            const medalColors = ['bg-yellow-200 text-yellow-700 border-yellow-400', 'bg-slate-200 text-slate-700 border-slate-400', 'bg-orange-200 text-orange-800 border-orange-400'];
+            const medalEmoji = ['🥇', '🥈', '🥉'];
+
+            rankedPlayers.forEach((player, index) => {
+                const themeColor = playerThemes[player.id].text;
+                // 如果是平手，給予同樣的獎牌？這裡簡單處理直接照陣列順序
+                const medalStyle = index < 3 && rankedPlayers.length > 1 ? medalColors[index] : 'bg-blue-50 text-blue-800 border-blue-200';
+                const medalStr = index < 3 && rankedPlayers.length > 1 ? medalEmoji[index] : '👏';
+
+                const rankHTML = `
+                    <div class="flex items-center justify-between p-4 sm:p-5 rounded-2xl border-2 ${medalStyle} shadow-sm">
+                        <div class="flex items-center gap-4">
+                            <span class="text-3xl">${medalStr}</span>
+                            <span class="text-xl sm:text-2xl font-bold ${themeColor}">玩家 ${player.id + 1}</span>
+                        </div>
+                        <div class="text-2xl sm:text-3xl font-black">
+                            ${player.score} <span class="text-lg font-bold">分</span>
+                        </div>
+                    </div>
+                `;
+                rankingContainer.insertAdjacentHTML('beforeend', rankHTML);
+            });
+        }
+    </script>
+</body>
+</html>
