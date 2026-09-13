@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>互動數學學習遊戲 (一至三位數)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* 馬卡龍柔和色系 */
+            --primary: #8AB6E3;      
+            --secondary: #FFC4C4;    
+            --success: #A3E4D7;      
+            --danger: #FFB3BA;       
+            --bg-color: #FDF6F7;     
+            --panel-bg: #FFFFFF;     
+            --text-color: #5D5A68;   
+            --border-radius: 24px;   
+            
+            /* 對戰模式顏色 (3人) */
+            --p1-color: #FFB7B2;     /* 粉紅色 */
+            --p1-shadow: #E59098;
+            --p2-color: #FFF59D;     /* 粉黃色 */
+            --p2-shadow: #D4C76C;
+            --p3-color: #B2DFDB;     /* 粉綠色 */
+            --p3-shadow: #80CBC4;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', 'Noto Sans TC', 'PingFang HK', 'Helvetica Neue', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none; 
+        }
+
+        body {
+            background-color: #EAE6EF; 
+            color: var(--text-color);
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: radial-gradient(#F0E5E7 2px, transparent 2px);
+            background-size: 30px 30px;
+        }
+
+        #top-area {
+            height: 90px;
+            background-color: var(--panel-bg);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            padding: 0 20px;
+            z-index: 10;
+            border-bottom: 3px solid #F0E5E7;
+        }
+
+        #middle-area {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 15px 20px;
+            overflow: hidden;
+        }
+
+        #bottom-area {
+            height: 300px;
+            background-color: var(--panel-bg);
+            border-top: 6px solid var(--primary);
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            transform: translateY(100%); 
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            z-index: 20;
+            box-shadow: 0 -10px 20px rgba(0,0,0,0.02);
+            border-top-left-radius: 30px;
+            border-top-right-radius: 30px;
+        }
+
+        #bottom-area.show { transform: translateY(0); }
+
+        .level-btn {
+            padding: 10px 25px;
+            font-size: 20px;
+            font-weight: 800;
+            background-color: #F7F5F9;
+            color: #A5A2AD;
+            border: 3px solid #EAE6EF;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 6px 0 #EAE6EF;
+        }
+        .level-btn:active { transform: translateY(6px); box-shadow: 0 0px 0 #EAE6EF; }
+        .level-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: #729FCA;
+            box-shadow: 0 6px 0 #729FCA;
+        }
+
+        .hint-btn, .vs-toggle-btn {
+            position: absolute;
+            padding: 8px 16px;
+            font-size: 18px;
+            font-weight: 900;
+            background-color: #FFF;
+            color: #000 !important;
+            border: 3px solid #000;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #000;
+            transition: all 0.2s;
+        }
+        .hint-btn { right: 20px; }
+        .vs-toggle-btn { right: 150px; }
+        
+        .hint-btn:active, .vs-toggle-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #000; }
+        .hint-btn.active-hint { background-color: #FFEB3B; }
+        .vs-toggle-btn.vs-active { background-color: #FF9800; color: white !important; border-color: #E65100; box-shadow: 0 4px 0 #E65100; }
+
+        .workspace {
+            display: none; 
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+        }
+        .workspace.active { display: flex; }
+
+        .question-title {
+            font-size: 24px;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        .target-number-display {
+            font-size: 55px;
+            font-weight: 900;
+            text-align: center;
+            color: var(--secondary);
+            margin-bottom: 10px;
+            letter-spacing: 5px;
+        }
+
+        /* 支援3人對戰模式的雙/三邊排版 */
+        .split-screen {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            gap: 10px; /* 縮小間距以容納三人 */
+        }
+        .player-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-radius: var(--border-radius);
+            padding: 10px;
+            position: relative;
+            min-width: 0; /* 防止子元素撐破 flex 容器 */
+        }
+        .p1-side { border: 4px dashed var(--p1-shadow); background-color: rgba(255, 183, 178, 0.15); }
+        .p2-side { border: 4px dashed var(--p2-shadow); background-color: rgba(255, 245, 157, 0.2); }
+        .p3-side { border: 4px dashed var(--p3-shadow); background-color: rgba(178, 223, 219, 0.2); }
+
+        #classify-game { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+        .number-pool {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            min-height: 100px;
+            padding: 15px;
+            background: #FFFFFF;
+            border-radius: var(--border-radius);
+            border: 4px dashed #E0DCE8;
+            margin-bottom: 15px;
+        }
+        .draggable-num {
+            width: 60px;
+            height: 60px;
+            background-color: var(--secondary);
+            color: white;
+            font-size: 26px;
+            font-weight: 900;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            cursor: grab;
+            box-shadow: 0 5px 0 #E59F9F;
+            border: 3px solid #FFF;
+        }
+        
+        /* 對戰專屬數字樣式 */
+        .num-p1 { background-color: var(--p1-color) !important; box-shadow: 0 5px 0 var(--p1-shadow) !important; color: #000 !important; }
+        .num-p2 { background-color: var(--p2-color) !important; box-shadow: 0 5px 0 var(--p2-shadow) !important; color: #000 !important; }
+        .num-p3 { background-color: var(--p3-color) !important; box-shadow: 0 5px 0 var(--p3-shadow) !important; color: #000 !important; }
+
+        .baskets { display: flex; justify-content: space-around; flex: 1; gap: 15px; }
+        .basket {
+            flex: 1;
+            background-color: #FFFFFF;
+            border: 5px solid var(--primary);
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 8px 15px rgba(138, 182, 227, 0.15);
+        }
+        .basket-title {
+            background-color: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 20px;
+            font-weight: 900;
+        }
+        .basket-drop-zone {
+            flex: 1;
+            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 8px;
+            background-color: rgba(138, 182, 227, 0.05);
+        }
+
+        .block-game-layout { display: flex; flex: 1; gap: 10px; width: 100%; min-height: 0; }
+        .answer-zone {
+            flex: 3;
+            background: #FFFFFF;
+            border: 4px dashed var(--success);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 10px;
+            position: relative;
+            overflow-y: auto;
+        }
+        .source-zone {
+            flex: 1;
+            background: #FFFFFF;
+            border: 4px solid #EAE6EF;
+            border-radius: var(--border-radius);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            overflow-y: auto;
+        }
+        .source-title { font-size: 16px; font-weight: 900; color: #A5A2AD; text-align: center; }
+        .block-item { cursor: grab; filter: drop-shadow(0 4px 0px rgba(0,0,0,0.1)); }
+
+        .abacus-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            flex: 1;
+            padding-bottom: 20px;
+            gap: 20px;
+        }
+        .abacus-rod-group { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .rod-label {
+            font-size: 20px;
+            font-weight: 900;
+            color: var(--primary);
+            background: #FFF;
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 3px solid var(--primary);
+            box-shadow: 0 4px 0 var(--primary);
+        }
+        .rod-stem {
+            width: 14px;
+            height: 250px; 
+            background-color: #E2C9B6; 
+            border-radius: 7px 7px 0 0;
+            position: relative;
+            display: flex;
+            flex-direction: column-reverse; 
+            align-items: center;
+            padding-bottom: 5px;
+            gap: 2px;
+            border-bottom: 12px solid #C4A48C;
+            border-left: 2px solid #F0DFD3;
+        }
+        .abacus-bead {
+            width: 46px;
+            height: 20px;
+            background: linear-gradient(180deg, #FFDFBA 0%, #FFB7B2 100%);
+            border: 2px solid #FF9AA2;
+            border-radius: 10px;
+            box-shadow: 0 3px 0 #FF9AA2;
+        }
+        
+        /* 對戰模式專屬算珠與縮放調整以適應三人版面 */
+        .player-side .abacus-container { gap: 8px; }
+        .player-side .rod-stem { width: 10px; height: 180px; }
+        .player-side .abacus-bead { width: 34px; height: 15px; border-radius: 8px; }
+        .player-side .abacus-btn { width: 35px; height: 35px; font-size: 22px; }
+        .player-side .rod-label { font-size: 16px; padding: 2px 8px; }
+
+        .p1-side .abacus-bead { background: linear-gradient(180deg, #FFF 0%, var(--p1-color) 100%); border-color: var(--p1-shadow); box-shadow: 0 3px 0 var(--p1-shadow); }
+        .p2-side .abacus-bead { background: linear-gradient(180deg, #FFF 0%, var(--p2-color) 100%); border-color: var(--p2-shadow); box-shadow: 0 3px 0 var(--p2-shadow); }
+        .p3-side .abacus-bead { background: linear-gradient(180deg, #FFF 0%, var(--p3-color) 100%); border-color: var(--p3-shadow); box-shadow: 0 3px 0 var(--p3-shadow); }
+
+        .btn-group { display: flex; gap: 8px; }
+        .abacus-btn {
+            width: 45px; height: 45px;
+            font-size: 28px; font-weight: 900;
+            border: none; border-radius: 50%;
+            background-color: var(--primary);
+            color: white; cursor: pointer;
+            box-shadow: 0 5px 0 #729FCA;
+        }
+        .abacus-btn:active { transform: translateY(5px); box-shadow: 0 0 0 #729FCA; }
+        .abacus-btn.minus { background-color: var(--danger); box-shadow: 0 5px 0 #E59098; }
+        
+        .submit-btn {
+            align-self: center;
+            margin-top: 10px;
+            padding: 8px 30px;
+            font-size: 20px;
+            font-weight: 900;
+            background-color: var(--success);
+            color: white;
+            border: 3px solid #89C7B9;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #89C7B9;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .submit-btn:active { transform: translateY(5px); box-shadow: 0 0 0 #89C7B9; }
+
+        .dragging-ghost {
+            position: absolute; 
+            pointer-events: none; 
+            z-index: 9999;
+            opacity: 0.9;
+            margin: 0 !important;
+        }
+
+        #feedback-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(253, 246, 247, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 10000;
+            backdrop-filter: blur(5px);
+        }
+        #feedback-icon { font-size: 140px; animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .btn-next {
+            margin-top: 30px;
+            padding: 15px 50px;
+            font-size: 28px;
+            font-weight: 900;
+            background: var(--primary);
+            color: white;
+            border: 3px solid #729FCA;
+            border-radius: 40px;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #729FCA;
+        }
+        .btn-next:active { transform: translateY(8px); box-shadow: 0 0 0 #729FCA; }
+
+        .fill-in-section { flex: 2; background: #F9F7FA; border: 4px dashed #EAE6EF; border-radius: var(--border-radius); padding: 15px; font-size: 24px; font-weight: 700; line-height: 1.5; overflow-y: auto; }
+        .numpad-section { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #FFFFFF; padding: 15px; border: 4px solid #EAE6EF; border-radius: var(--border-radius); }
+        .numpad-btn { background: #FFFFFF; border: 3px solid #E0DCE8; border-radius: 12px; font-size: 28px; font-weight: 900; cursor: pointer; box-shadow: 0 5px 0 #E0DCE8; transition: all 0.1s; }
+        .numpad-btn:active { transform: translateY(5px); box-shadow: 0 0 0 #E0DCE8; }
+        .numpad-btn.btn-del { background: #FFF0F0; color: #E58484; border-color: #FAD4D4; box-shadow: 0 5px 0 #FAD4D4; }
+        .numpad-btn.btn-ok { background: var(--success); color: white; border-color: #89C7B9; box-shadow: 0 5px 0 #89C7B9; grid-column: span 3; }
+
+        /* 對戰模式的 Numpad 縮小尺寸以適應三人版面 */
+        .player-side .numpad-section { gap: 4px; padding: 8px; border-width: 2px; }
+        .player-side .numpad-btn { font-size: 16px !important; padding: 4px; box-shadow: 0 3px 0 #E0DCE8; }
+        .player-side .numpad-btn:active { transform: translateY(3px); box-shadow: 0 0 0 #E0DCE8; }
+        .player-side .numpad-btn.btn-del { box-shadow: 0 3px 0 #FAD4D4; }
+        .player-side .numpad-btn.btn-ok { box-shadow: 0 3px 0 #89C7B9; }
+        .player-side .target-number-display { font-size: 36px; margin-bottom: 5px; }
+        
+        .input-box {
+            display: inline-block; min-width: 50px; height: 42px;
+            background: #FFFFFF; border: 4px dashed #D3CFDE; border-radius: 12px;
+            vertical-align: middle; text-align: center; font-weight: 900;
+            color: var(--primary); cursor: pointer; padding: 0 10px; line-height: 34px;
+        }
+        .input-box.active { border-style: solid; border-color: var(--primary); box-shadow: 0 0 0 5px rgba(138, 182, 227, 0.3); background: #F0F6FC; }
+        .input-box.correct { border-style: solid; border-color: var(--success); background: #EAF8F5; color: #5DB8A1; }
+        .input-box.wrong { border-style: solid; border-color: var(--danger); background: #FFF0F1; color: #E58484; }
+
+        body, .question-title, .target-number-display, .basket-title, .source-title, .rod-label, .abacus-btn, .submit-btn, .numpad-btn, .input-box, .level-btn, #feedback-text, #init-overlay h1, #init-overlay button, .fill-in-section, .basket-drop-zone, .draggable-num { color: #000000 !important; text-shadow: none !important; }
+        .draggable-num:active, .block-item:active { transform: none !important; }
+        
+        body.hint-mode .hint-text-100 { color: #2C7BCC !important; } 
+        body.hint-mode .hint-text-10 { color: #20A789 !important; }  
+        body.hint-mode .hint-text-1 { color: #E55B5B !important; }   
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="init-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(253, 246, 247, 0.95);z-index:20000;display:flex;justify-content:center;align-items:center;flex-direction:column;">
+            <h1 style="font-size: 40px; margin-bottom: 20px;">歡迎來到數學遊戲</h1>
+            <button onpointerdown="initGame()" style="padding: 20px 50px; font-size: 30px; border-radius: 40px; background: #2ECC71; border: 3px solid #000; box-shadow: 0 6px 0 #000; font-weight: bold;">開始遊戲 (開啟音效)</button>
+        </div>
+
+        <!-- 上方區域：關卡與模式選擇 -->
+        <div id="top-area">
+            <button class="level-btn active" onpointerdown="switchLevel('classify')">分類</button>
+            <button class="level-btn" onpointerdown="switchLevel('2digit')">兩位數</button>
+            <button class="level-btn" onpointerdown="switchLevel('3digit')">三位數</button>
+            <button class="level-btn" onpointerdown="switchLevel('abacus')">算柱</button>
+            <button class="level-btn" onpointerdown="switchLevel('reading')">讀音</button>
+            
+            <button id="vs-toggle-btn" class="vs-toggle-btn" onpointerdown="toggleVSMode()">👤 單人模式</button>
+            <button id="hint-toggle-btn" class="hint-btn" onpointerdown="toggleHint()">💡 提示: 關</button>
+        </div>
+
+        <!-- 中間區域：題目區 -->
+        <div id="middle-area">
+            
+            <div id="ws-classify" class="workspace active">
+                <div class="question-title" id="title-classify">請把數字拉到正確的分類區</div>
+                <div class="number-pool" id="classify-pool">
+                    <!-- 動態生成數字 -->
+                </div>
+                <div class="baskets">
+                    <div class="basket">
+                        <div class="basket-title">一位數</div>
+                        <div class="basket-drop-zone" data-type="1"></div>
+                    </div>
+                    <div class="basket">
+                        <div class="basket-title">兩位數</div>
+                        <div class="basket-drop-zone" data-type="2"></div>
+                    </div>
+                    <div class="basket">
+                        <div class="basket-title">三位數</div>
+                        <div class="basket-drop-zone" data-type="3"></div>
+                    </div>
+                </div>
+                <button class="submit-btn" id="btn-submit-classify" onpointerdown="checkClassifySingle()">提交</button>
+                <div id="vs-submit-classify" style="display:none; justify-content:space-around; width:100%; margin-top:10px;">
+                    <button class="submit-btn" data-orig="粉紅 提交" style="background-color:var(--p1-color); color:#000; border-color:var(--p1-shadow); box-shadow: 0 5px 0 var(--p1-shadow);" onpointerdown="checkClassifyVSPlayer('p1', this)">粉紅 提交</button>
+                    <button class="submit-btn" data-orig="粉黃 提交" style="background-color:var(--p2-color); color:#000; border-color:var(--p2-shadow); box-shadow: 0 5px 0 var(--p2-shadow);" onpointerdown="checkClassifyVSPlayer('p2', this)">粉黃 提交</button>
+                    <button class="submit-btn" id="btn-submit-classify-p3" data-orig="粉綠 提交" style="background-color:var(--p3-color); color:#000; border-color:var(--p3-shadow); box-shadow: 0 5px 0 var(--p3-shadow); display:none;" onpointerdown="checkClassifyVSPlayer('p3', this)">粉綠 提交</button>
+                </div>
+            </div>
+
+            <div id="ws-2digit" class="workspace">
+                <div class="question-title">請拉出正確數量的數粒和數棒</div>
+                
+                <!-- 單人模式容器 -->
+                <div id="single-2digit" style="display:flex; flex-direction:column; flex:1;">
+                    <div class="target-number-display" id="target-2digit">48</div>
+                    <div class="block-game-layout">
+                        <div class="answer-zone" id="ans-2digit" data-player="single"></div>
+                        <div class="source-zone" data-player="single">
+                            <div class="source-title">拉出圖案<br><span style="font-size:12px;">(多了可拉回)</span></div>
+                            <div class="source-item" data-val="10" onpointerdown="startDragBlock(event, 10, 'rod', false)">
+                                <svg width="24" height="240" viewBox="0 0 24 240" class="block-item"><rect width="24" height="240" fill="#A3E4D7" stroke="#7DC4B5" stroke-width="2" rx="4"/><path d="M0,24 L24,24 M0,48 L24,48 M0,72 L24,72 M0,96 L24,96 M0,120 L24,120 M0,144 L24,144 M0,168 L24,168 M0,192 L24,192 M0,216 L24,216" stroke="#7DC4B5" stroke-width="2"/></svg>
+                            </div>
+                            <div class="source-item" data-val="1" onpointerdown="startDragBlock(event, 1, 'unit', false)">
+                                <svg width="24" height="24" viewBox="0 0 24 24" class="block-item"><rect width="24" height="24" fill="#FFC4C4" stroke="#E5A0A0" stroke-width="2" rx="4"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="submit-btn" onpointerdown="checkBlockGame('2digit', 'single')">提交</button>
+                </div>
+
+                <!-- 對戰模式容器 (支援2/3人) -->
+                <div id="vs-2digit" class="split-screen" style="display:none;">
+                    <div class="player-side p1-side" data-player="p1">
+                        <div class="target-number-display" id="target-2digit-p1">0</div>
+                        <div class="block-game-layout" style="flex-direction:column;">
+                            <div class="source-zone" style="flex-direction:row; padding:5px; gap:10px;" data-player="p1">
+                                <div class="source-item" data-val="10" onpointerdown="startDragBlock(event, 10, 'rod', false)"><svg width="15" height="100" viewBox="0 0 20 200" class="block-item"><rect width="20" height="200" fill="#A3E4D7" stroke="#7DC4B5" stroke-width="2" rx="4"/></svg></div>
+                                <div class="source-item" data-val="1" onpointerdown="startDragBlock(event, 1, 'unit', false)"><svg width="15" height="15" viewBox="0 0 20 20" class="block-item"><rect width="20" height="20" fill="#FFC4C4" stroke="#E5A0A0" stroke-width="2" rx="4"/></svg></div>
+                            </div>
+                            <div class="answer-zone" id="ans-2digit-p1" data-player="p1"></div>
+                        </div>
+                        <button class="submit-btn" data-orig="提交" onpointerdown="checkBlockGame('2digit', 'p1', this)">提交</button>
+                    </div>
+                    <div class="player-side p2-side" data-player="p2">
+                        <div class="target-number-display" id="target-2digit-p2">0</div>
+                        <div class="block-game-layout" style="flex-direction:column;">
+                            <div class="source-zone" style="flex-direction:row; padding:5px; gap:10px;" data-player="p2">
+                                <div class="source-item" data-val="10" onpointerdown="startDragBlock(event, 10, 'rod', false)"><svg width="15" height="100" viewBox="0 0 20 200" class="block-item"><rect width="20" height="200" fill="#A3E4D7" stroke="#7DC4B5" stroke-width="2" rx="4"/></svg></div>
+                                <div class="source-item" data-val="1" onpointerdown="startDragBlock(event, 1, 'unit', false)"><svg width="15" height="15" viewBox="0 0 20 20" class="block-item"><rect width="20" height="20" fill="#FFC4C4" stroke="#E5A0A0" stroke-width="2" rx="4"/></svg></div>
+                            </div>
+                            <div class="answer-zone" id="ans-2digit-p2" data-player="p2"></div>
+                        </div>
+                        <button class="submit-btn" data-orig="提交" onpointerdown="checkBlockGame('2digit', 'p2', this)">提交</button>
+                    </div>
+                    <div class="player-side p3-side" data-player="p3" style="display:none;">
+                        <div class="target-number-display" id="target-2digit-p3">0</div>
+                        <div class="block-game-layout" style="flex-direction:column;">
+                            <div class="source-zone" style="flex-direction:row; padding:5px; gap:10px;" data-player="p3">
+                                <div class="source-item" data-val="10" onpointerdown="startDragBlock(event, 10, 'rod', false)"><svg width="15" height="100" viewBox="0 0 20 200" class="block-item"><rect width="20" height="200" fill="#A3E4D7" stroke="#7DC4B5" stroke-width="2" rx="4"/></svg></div>
+                                <div class="source-item" data-val="1" onpointerdown="startDragBlock(event, 1, 'unit', false)"><svg width="15" height="15" viewBox="0 0 20 20" class="block-item"><rect width="20" height="20" fill="#FFC4C4" stroke="#E5A0A0" stroke-width="2" rx="4"/></svg></div>
+                            </div>
+                            <div class="answer-zone" id="ans-2digit-p3" data-player="p3"></div>
+                        </div>
+                        <button class="submit-btn" data-orig="提交" onpointerdown="checkBlockGame('2digit', 'p3', this)">提交</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ws-3digit" class="workspace">
+                <div class="question-title">請拉出正確數量的數塊、數棒和數粒</div>
+                
+                <div id="single-3digit" style="display:flex; flex-direction:column; flex:1;">
+                    <div class="target-number-display" id="target-3digit">248</div>
+                    <div class="block-game-layout">
+                        <div class="answer-zone" id="ans-3digit" data-player="single"></div>
+                        <div class="source-zone" style="flex-direction:row; flex-wrap:wrap; justify-content:center;" data-player="single">
+                            <div class="source-title" style="width:100%">拉出圖案 <span style="font-size:12px;">(多了可拉回)</span></div>
+                            <div class="source-item" data-val="100" onpointerdown="startDragBlock(event, 100, 'flat', false)">
+                                <svg width="100" height="100" viewBox="0 0 100 100" class="block-item"><rect width="100" height="100" fill="#8AB6E3" stroke="#689ACD" stroke-width="2" rx="4"/><pattern id="grid3" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="#689ACD" stroke-width="1"/></pattern><rect width="100" height="100" fill="url(#grid3)" rx="4"/></svg>
+                            </div>
+                            <div class="source-item" data-val="10" onpointerdown="startDragBlock(event, 10, 'rod', false)">
+                                <svg width="10" height="100" viewBox="0 0 10 100" class="block-item"><rect width="10" height="100" fill="#A3E4D7" stroke="#7DC4B5" stroke-width="1" rx="2"/><path d="M0,10 L10,10 M0,20 L10,20 M0,30 L10,30 M0,40 L10,40 M0,50 L10,50 M0,60 L10,60 M0,70 L10,70 M0,80 L10,80 M0,90 L10,90" stroke="#7DC4B5" stroke-width="1"/></svg>
+                            </div>
+                            <div class="source-item" data-val="1" onpointerdown="startDragBlock(event, 1, 'unit', false)">
+                                <svg width="10" height="10" viewBox="0 0 10 10" class="block-item"><rect width="10" height="10" fill="#FFC4C4" stroke="#E5A0A0" stroke-width="1" rx="2"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="submit-btn" onpointerdown="checkBlockGame('3digit', 'single')">提交</button>
+                </div>
+
+                <div id="vs-3digit" class="split-screen" style="display:none;">
+                    <div class="player-side p1-side" data-player="p1">
+                        <div class="target-number-display" id="target-3digit-p1">0</div>
+                        <div class="block-game-layout" style="flex-direction:column;">
+                            <div class="source-zone" style="flex-direction:row; gap:5px; padding:5px;" data-player="p1">
+                                <div class="source-item" data-val="100" onpointerdown="startDragBlock(event, 100, 'flat', false)"><svg width="45" height="45" viewBox="0 0 100 100" class="block-item"><rect width="100" height="100" fill="#8AB6E3" stroke="#689ACD" stroke-width="2" rx="4"/></svg></div>
+                                <div class="source-item" data-val="10" onpointerdown="startDragBlock(event, 10, 'rod', false)"><svg width="8" height="45" viewBox="0 0 10 100" class="block-item"><rect width="10" height="100" fill="#A3E4D7" stroke="#7DC4B5" stroke-width="1" rx="2"/></svg></div>
+                                <div class="source-item" data-val="1" onpointerdown="startDragBlock(event, 1, 'unit', false)"><svg width="12" height="12" viewBox="0 0 10 10" class="block-item"><rect width="10" height="10" fill="#FFC4C4" stroke="#E5A0A0" stroke-width="1" rx="2"/></svg></div>
+                            </div>
+                            <div class="answer-zone" id="ans-3digit-p1" data-player="p1"></div>
+                        </div>
+                        <button class="submit-btn" data-orig="提交" onpointerdown="checkBlockGame('3digit', 'p1', this)">提交</button>
+                    </div>
+                    <div class="player-side p2-side" data-player="p2">
+                        <div class="target-number-display" id="target-3digit-p2">0</div>
+                        <div class="block-game-layout" style="flex-direction:column;">
+                            <div class="source-zone" style="flex-direction:row; gap:5px; padding:5px;" data-player="p2">
+                                <div class="source-item" data-val="100" onpointerdown="startDragBlock(event, 100, 'flat', false)"><svg width="45" height="45" viewBox="0 0 100 100" class="block-item"><rect width="100" height="100" fill="#8AB6E3" stroke="#689ACD" stroke-width="2" rx="4"/></svg></div>
+                                <div class="source-item" data-val="10" onpointerdown="startDragBlock(event, 10, 'rod', false)"><svg width="8" height="45" viewBox="0 0 10 100" class="block-item"><rect width="10" height="100" fill="#A3E4D7" stroke="#7DC4B5" stroke-width="1" rx="2"/></svg></div>
+                                <div class="source-item" data-val="1" onpointerdown="startDragBlock(event, 1, 'unit', false)"><svg width="12" height="12" viewBox="0 0 10 10" class="block-item"><rect width="10" height="10" fill="#FFC4C4" stroke="#E5A0A0" stroke-width="1" rx="2"/></svg></div>
+                            </div>
+                            <div class="answer-zone" id="ans-3digit-p2" data-player="p2"></div>
+                        </div>
+                        <button class="submit-btn" data-orig="提交" onpointerdown="checkBlockGame('3digit', 'p2', this)">提交</button>
+                    </div>
+                    <div class="player-side p3-side" data-player="p3" style="display:none;">
+                        <div class="target-number-display" id="target-3digit-p3">0</div>
+                        <div class="block-game-layout" style="flex-direction:column;">
+                            <div class="source-zone" style="flex-direction:row; gap:5px; padding:5px;" data-player="p3">
+                                <div class="source-item" data-val="100" onpointerdown="startDragBlock(event, 100, 'flat', false)"><svg width="45" height="45" viewBox="0 0 100 100" class="block-item"><rect width="100" height="100" fill="#8AB6E3" stroke="#689ACD" stroke-width="2" rx="4"/></svg></div>
+                                <div class="source-item" data-val="10" onpointerdown="startDragBlock(event, 10, 'rod', false)"><svg width="8" height="45" viewBox="0 0 10 100" class="block-item"><rect width="10" height="100" fill="#A3E4D7" stroke="#7DC4B5" stroke-width="1" rx="2"/></svg></div>
+                                <div class="source-item" data-val="1" onpointerdown="startDragBlock(event, 1, 'unit', false)"><svg width="12" height="12" viewBox="0 0 10 10" class="block-item"><rect width="10" height="10" fill="#FFC4C4" stroke="#E5A0A0" stroke-width="1" rx="2"/></svg></div>
+                            </div>
+                            <div class="answer-zone" id="ans-3digit-p3" data-player="p3"></div>
+                        </div>
+                        <button class="submit-btn" data-orig="提交" onpointerdown="checkBlockGame('3digit', 'p3', this)">提交</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ws-abacus" class="workspace">
+                <div class="question-title">請在算柱上撥出指定的數字</div>
+                
+                <div id="single-abacus" style="display:flex; flex-direction:column; flex:1;">
+                    <div class="target-number-display" id="target-abacus">357</div>
+                    <div class="abacus-container">
+                        <div class="abacus-rod-group">
+                            <div class="rod-stem" id="rod-100-single"></div>
+                            <div class="rod-label hint-text-100">百位</div>
+                            <div class="btn-group">
+                                <button class="abacus-btn" onpointerdown="changeBead('single', 100, 1)">+</button>
+                                <button class="abacus-btn minus" onpointerdown="changeBead('single', 100, -1)">-</button>
+                            </div>
+                        </div>
+                        <div class="abacus-rod-group">
+                            <div class="rod-stem" id="rod-10-single"></div>
+                            <div class="rod-label hint-text-10">十位</div>
+                            <div class="btn-group">
+                                <button class="abacus-btn" onpointerdown="changeBead('single', 10, 1)">+</button>
+                                <button class="abacus-btn minus" onpointerdown="changeBead('single', 10, -1)">-</button>
+                            </div>
+                        </div>
+                        <div class="abacus-rod-group">
+                            <div class="rod-stem" id="rod-1-single"></div>
+                            <div class="rod-label hint-text-1">個位</div>
+                            <div class="btn-group">
+                                <button class="abacus-btn" onpointerdown="changeBead('single', 1, 1)">+</button>
+                                <button class="abacus-btn minus" onpointerdown="changeBead('single', 1, -1)">-</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="submit-btn" onpointerdown="checkAbacus('single')" style="position: absolute; bottom: 10px; right: 20px;">提交</button>
+                </div>
+
+                <div id="vs-abacus" class="split-screen" style="display:none;">
+                    <div class="player-side p1-side">
+                        <div class="target-number-display" id="target-abacus-p1">0</div>
+                        <div class="abacus-container">
+                            <div class="abacus-rod-group" id="group-100-p1">
+                                <div class="rod-stem" id="rod-100-p1"></div>
+                                <div class="btn-group"><button class="abacus-btn" onpointerdown="changeBead('p1', 100, 1)">+</button><button class="abacus-btn minus" onpointerdown="changeBead('p1', 100, -1)">-</button></div>
+                            </div>
+                            <div class="abacus-rod-group" id="group-10-p1">
+                                <div class="rod-stem" id="rod-10-p1"></div>
+                                <div class="btn-group"><button class="abacus-btn" onpointerdown="changeBead('p1', 10, 1)">+</button><button class="abacus-btn minus" onpointerdown="changeBead('p1', 10, -1)">-</button></div>
+                            </div>
+                            <div class="abacus-rod-group">
+                                <div class="rod-stem" id="rod-1-p1"></div>
+                                <div class="btn-group"><button class="abacus-btn" onpointerdown="changeBead('p1', 1, 1)">+</button><button class="abacus-btn minus" onpointerdown="changeBead('p1', 1, -1)">-</button></div>
+                            </div>
+                        </div>
+                        <button class="submit-btn" data-orig="提交" onpointerdown="checkAbacus('p1', this)">提交</button>
+                    </div>
+                    <div class="player-side p2-side">
+                        <div class="target-number-display" id="target-abacus-p2">0</div>
+                        <div class="abacus-container">
+                            <div class="abacus-rod-group" id="group-100-p2">
+                                <div class="rod-stem" id="rod-100-p2"></div>
+                                <div class="btn-group"><button class="abacus-btn" onpointerdown="changeBead('p2', 100, 1)">+</button><button class="abacus-btn minus" onpointerdown="changeBead('p2', 100, -1)">-</button></div>
+                            </div>
+                            <div class="abacus-rod-group" id="group-10-p2">
+                                <div class="rod-stem" id="rod-10-p2"></div>
+                                <div class="btn-group"><button class="abacus-btn" onpointerdown="changeBead('p2', 10, 1)">+</button><button class="abacus-btn minus" onpointerdown="changeBead('p2', 10, -1)">-</button></div>
+                            </div>
+                            <div class="abacus-rod-group">
+                                <div class="rod-stem" id="rod-1-p2"></div>
+                                <div class="btn-group"><button class="abacus-btn" onpointerdown="changeBead('p2', 1, 1)">+</button><button class="abacus-btn minus" onpointerdown="changeBead('p2', 1, -1)">-</button></div>
+                            </div>
+                        </div>
+                        <button class="submit-btn" data-orig="提交" onpointerdown="checkAbacus('p2', this)">提交</button>
+                    </div>
+                    <div class="player-side p3-side" style="display:none;">
+                        <div class="target-number-display" id="target-abacus-p3">0</div>
+                        <div class="abacus-container">
+                            <div class="abacus-rod-group" id="group-100-p3">
+                                <div class="rod-stem" id="rod-100-p3"></div>
+                                <div class="btn-group"><button class="abacus-btn" onpointerdown="changeBead('p3', 100, 1)">+</button><button class="abacus-btn minus" onpointerdown="changeBead('p3', 100, -1)">-</button></div>
+                            </div>
+                            <div class="abacus-rod-group" id="group-10-p3">
+                                <div class="rod-stem" id="rod-10-p3"></div>
+                                <div class="btn-group"><button class="abacus-btn" onpointerdown="changeBead('p3', 10, 1)">+</button><button class="abacus-btn minus" onpointerdown="changeBead('p3', 10, -1)">-</button></div>
+                            </div>
+                            <div class="abacus-rod-group">
+                                <div class="rod-stem" id="rod-1-p3"></div>
+                                <div class="btn-group"><button class="abacus-btn" onpointerdown="changeBead('p3', 1, 1)">+</button><button class="abacus-btn minus" onpointerdown="changeBead('p3', 1, -1)">-</button></div>
+                            </div>
+                        </div>
+                        <button class="submit-btn" data-orig="提交" onpointerdown="checkAbacus('p3', this)">提交</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ws-reading" class="workspace">
+                <div class="question-title">讀作（輸入中文書面語）</div>
+                
+                <div id="single-reading" style="display:flex; flex-direction:column; flex:1; align-items:center;">
+                    <div class="target-number-display" id="target-reading">0</div>
+                    <div class="input-box" id="input-reading-single" style="min-width: 250px; height: 60px; font-size: 36px; line-height: 50px; margin-bottom: 20px;"></div>
+                    <div class="numpad-section" style="max-width: 400px; width: 100%;">
+                        <button class="numpad-btn" onpointerdown="inputChinese('single', '一')">一</button>
+                        <button class="numpad-btn" onpointerdown="inputChinese('single', '二')">二</button>
+                        <button class="numpad-btn" onpointerdown="inputChinese('single', '三')">三</button>
+                        <button class="numpad-btn" onpointerdown="inputChinese('single', '四')">四</button>
+                        <button class="numpad-btn" onpointerdown="inputChinese('single', '五')">五</button>
+                        <button class="numpad-btn" onpointerdown="inputChinese('single', '六')">六</button>
+                        <button class="numpad-btn" onpointerdown="inputChinese('single', '七')">七</button>
+                        <button class="numpad-btn" onpointerdown="inputChinese('single', '八')">八</button>
+                        <button class="numpad-btn" onpointerdown="inputChinese('single', '九')">九</button>
+                        <button class="numpad-btn" onpointerdown="inputChinese('single', '零')">零</button>
+                        <button class="numpad-btn" onpointerdown="inputChinese('single', '十')">十</button>
+                        <button class="numpad-btn" onpointerdown="inputChinese('single', '百')">百</button>
+                        <button class="numpad-btn btn-del" onpointerdown="delChinese('single')">刪除</button>
+                        <button class="numpad-btn btn-ok" style="grid-column: span 2;" onpointerdown="checkReading('single')">提交答案</button>
+                    </div>
+                </div>
+
+                <div id="vs-reading" class="split-screen" style="display:none;">
+                    <!-- Player 1 -->
+                    <div class="player-side p1-side">
+                        <div class="target-number-display" id="target-reading-p1">0</div>
+                        <div class="input-box" id="input-reading-p1" style="min-width: 150px; height: 40px; font-size: 20px; line-height: 35px; margin-bottom: 5px;"></div>
+                        <div class="numpad-section" style="width: 100%;">
+                            <button class="numpad-btn" onpointerdown="inputChinese('p1', '一')">一</button><button class="numpad-btn" onpointerdown="inputChinese('p1', '二')">二</button><button class="numpad-btn" onpointerdown="inputChinese('p1', '三')">三</button>
+                            <button class="numpad-btn" onpointerdown="inputChinese('p1', '四')">四</button><button class="numpad-btn" onpointerdown="inputChinese('p1', '五')">五</button><button class="numpad-btn" onpointerdown="inputChinese('p1', '六')">六</button>
+                            <button class="numpad-btn" onpointerdown="inputChinese('p1', '七')">七</button><button class="numpad-btn" onpointerdown="inputChinese('p1', '八')">八</button><button class="numpad-btn" onpointerdown="inputChinese('p1', '九')">九</button>
+                            <button class="numpad-btn" onpointerdown="inputChinese('p1', '零')">零</button><button class="numpad-btn" onpointerdown="inputChinese('p1', '十')">十</button><button class="numpad-btn" onpointerdown="inputChinese('p1', '百')">百</button>
+                            <button class="numpad-btn btn-del" onpointerdown="delChinese('p1')">刪除</button>
+                            <button class="numpad-btn btn-ok vs-submit" style="grid-column: span 2;" data-orig="提交" onpointerdown="checkReading('p1', this)">提交</button>
+                        </div>
+                    </div>
+                    <!-- Player 2 -->
+                    <div class="player-side p2-side">
+                        <div class="target-number-display" id="target-reading-p2">0</div>
+                        <div class="input-box" id="input-reading-p2" style="min-width: 150px; height: 40px; font-size: 20px; line-height: 35px; margin-bottom: 5px;"></div>
+                        <div class="numpad-section" style="width: 100%;">
+                            <button class="numpad-btn" onpointerdown="inputChinese('p2', '一')">一</button><button class="numpad-btn" onpointerdown="inputChinese('p2', '二')">二</button><button class="numpad-btn" onpointerdown="inputChinese('p2', '三')">三</button>
+                            <button class="numpad-btn" onpointerdown="inputChinese('p2', '四')">四</button><button class="numpad-btn" onpointerdown="inputChinese('p2', '五')">五</button><button class="numpad-btn" onpointerdown="inputChinese('p2', '六')">六</button>
+                            <button class="numpad-btn" onpointerdown="inputChinese('p2', '七')">七</button><button class="numpad-btn" onpointerdown="inputChinese('p2', '八')">八</button><button class="numpad-btn" onpointerdown="inputChinese('p2', '九')">九</button>
+                            <button class="numpad-btn" onpointerdown="inputChinese('p2', '零')">零</button><button class="numpad-btn" onpointerdown="inputChinese('p2', '十')">十</button><button class="numpad-btn" onpointerdown="inputChinese('p2', '百')">百</button>
+                            <button class="numpad-btn btn-del" onpointerdown="delChinese('p2')">刪除</button>
+                            <button class="numpad-btn btn-ok vs-submit" style="grid-column: span 2;" data-orig="提交" onpointerdown="checkReading('p2', this)">提交</button>
+                        </div>
+                    </div>
+                    <!-- Player 3 -->
+                    <div class="player-side p3-side" style="display:none;">
+                        <div class="target-number-display" id="target-reading-p3">0</div>
+                        <div class="input-box" id="input-reading-p3" style="min-width: 150px; height: 40px; font-size: 20px; line-height: 35px; margin-bottom: 5px;"></div>
+                        <div class="numpad-section" style="width: 100%;">
+                            <button class="numpad-btn" onpointerdown="inputChinese('p3', '一')">一</button><button class="numpad-btn" onpointerdown="inputChinese('p3', '二')">二</button><button class="numpad-btn" onpointerdown="inputChinese('p3', '三')">三</button>
+                            <button class="numpad-btn" onpointerdown="inputChinese('p3', '四')">四</button><button class="numpad-btn" onpointerdown="inputChinese('p3', '五')">五</button><button class="numpad-btn" onpointerdown="inputChinese('p3', '六')">六</button>
+                            <button class="numpad-btn" onpointerdown="inputChinese('p3', '七')">七</button><button class="numpad-btn" onpointerdown="inputChinese('p3', '八')">八</button><button class="numpad-btn" onpointerdown="inputChinese('p3', '九')">九</button>
+                            <button class="numpad-btn" onpointerdown="inputChinese('p3', '零')">零</button><button class="numpad-btn" onpointerdown="inputChinese('p3', '十')">十</button><button class="numpad-btn" onpointerdown="inputChinese('p3', '百')">百</button>
+                            <button class="numpad-btn btn-del" onpointerdown="delChinese('p3')">刪除</button>
+                            <button class="numpad-btn btn-ok vs-submit" style="grid-column: span 2;" data-orig="提交" onpointerdown="checkReading('p3', this)">提交</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 下方區域：九宮格填充題 (僅在單人模式使用) -->
+        <div id="bottom-area">
+            <div class="fill-in-section" id="fill-in-content"></div>
+            <div class="numpad-section">
+                <button class="numpad-btn" onpointerdown="inputNum('1')">1</button><button class="numpad-btn" onpointerdown="inputNum('2')">2</button><button class="numpad-btn" onpointerdown="inputNum('3')">3</button>
+                <button class="numpad-btn" onpointerdown="inputNum('4')">4</button><button class="numpad-btn" onpointerdown="inputNum('5')">5</button><button class="numpad-btn" onpointerdown="inputNum('6')">6</button>
+                <button class="numpad-btn" onpointerdown="inputNum('7')">7</button><button class="numpad-btn" onpointerdown="inputNum('8')">8</button><button class="numpad-btn" onpointerdown="inputNum('9')">9</button>
+                <button class="numpad-btn btn-del" onpointerdown="inputDel()">刪除</button><button class="numpad-btn" onpointerdown="inputNum('0')">0</button><button class="numpad-btn" style="visibility: hidden;"></button>
+                <button class="numpad-btn btn-ok" onpointerdown="checkFillIn()">提交答案</button>
+            </div>
+        </div>
+
+        <!-- 全螢幕回饋畫面 -->
+        <div id="feedback-overlay">
+            <div id="feedback-icon">✅</div>
+            <h2 id="feedback-text" style="font-size: 32px; margin-top: 20px; color: var(--success); text-align: center; line-height:1.4;">答對了！</h2>
+            <button class="btn-next" onpointerdown="hideFeedback()">繼續</button>
+        </div>
+        
+    </div> 
+
+    <script>
+        let currentLevel = 'classify';
+        let playMode = 'single'; // 可為 'single', 'vs2', 'vs3'
+        
+        let targets = { single: 0, p1: 0, p2: 0, p3: 0 }; 
+        let abacusData = {
+            single: { 100: 0, 10: 0, 1: 0 },
+            p1: { 100: 0, 10: 0, 1: 0 },
+            p2: { 100: 0, 10: 0, 1: 0 },
+            p3: { 100: 0, 10: 0, 1: 0 }
+        };
+        
+        let vsSubmitData = { p1: null, p2: null, p3: null };
+        let readingInput = { single: '', p1: '', p2: '', p3: '' };
+        
+        const activePointers = new Map();
+        let activeInputBox = null;
+
+        document.addEventListener('pointermove', handleGlobalPointerMove);
+        document.addEventListener('pointerup', handleGlobalPointerUp);
+        document.addEventListener('pointercancel', handleGlobalPointerUp);
+
+        function handleGlobalPointerMove(e) {
+            if (!activePointers.has(e.pointerId)) return;
+            e.preventDefault();
+            moveGhost(e.pointerId, e.clientX, e.clientY);
+        }
+
+        function handleGlobalPointerUp(e) {
+            if (!activePointers.has(e.pointerId)) return;
+            const state = activePointers.get(e.pointerId);
+            
+            if (state.dragSourceType === 'classify') processClassifyPointerUp(e.pointerId, e.clientX, e.clientY, state);
+            else processBlockPointerUp(e.pointerId, e.clientX, e.clientY, state);
+            
+            activePointers.delete(e.pointerId);
+        }
+
+        let audioCtx = null;
+        function initGame() {
+            document.getElementById('init-overlay').style.display = 'none';
+            if(!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            switchLevel('classify');
+        }
+
+        function playSound(type) {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            
+            if (type === 'click') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            } else if (type === 'drop') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(150, now + 0.15);
+                gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now); osc.stop(now + 0.15);
+            } else if (type === 'correct') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(440, now); osc.frequency.setValueAtTime(554.37, now + 0.1); osc.frequency.setValueAtTime(659.25, now + 0.2);
+                gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0, now + 0.5);
+                osc.start(now); osc.stop(now + 0.5);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(100, now + 0.3);
+                gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            }
+        }
+
+        let isHintMode = false;
+        function toggleHint() {
+            isHintMode = !isHintMode;
+            const btn = document.getElementById('hint-toggle-btn');
+            if(isHintMode) { document.body.classList.add('hint-mode'); btn.innerHTML = '💡 提示: 開'; btn.classList.add('active-hint'); } 
+            else { document.body.classList.remove('hint-mode'); btn.innerHTML = '💡 提示: 關'; btn.classList.remove('active-hint'); }
+            playSound('click');
+        }
+
+        function toggleVSMode() {
+            if (playMode === 'single') playMode = 'vs2';
+            else if (playMode === 'vs2') playMode = 'vs3';
+            else playMode = 'single';
+            
+            const btn = document.getElementById('vs-toggle-btn');
+            if (playMode === 'vs2') { 
+                btn.innerHTML = '⚔️ 2人對戰'; btn.classList.add('vs-active'); 
+                btn.style.backgroundColor = '#FF9800'; btn.style.borderColor = '#E65100'; btn.style.boxShadow = '0 4px 0 #E65100';
+            } else if (playMode === 'vs3') { 
+                btn.innerHTML = '🔥 3人對戰'; btn.classList.add('vs-active'); 
+                btn.style.backgroundColor = '#E91E63'; btn.style.borderColor = '#C2185B'; btn.style.boxShadow = '0 4px 0 #C2185B';
+            } else { 
+                btn.innerHTML = '👤 單人模式'; btn.classList.remove('vs-active'); 
+                btn.style.backgroundColor = ''; btn.style.borderColor = ''; btn.style.boxShadow = ''; 
+            }
+            playSound('click');
+            switchLevel(currentLevel);
+        }
+
+        function resetVSState() {
+            vsSubmitData = { p1: null, p2: null, p3: null };
+            document.querySelectorAll('.submit-btn, .vs-submit').forEach(btn => {
+                btn.disabled = false;
+                if (btn.hasAttribute('data-orig')) {
+                    btn.innerText = btn.getAttribute('data-orig');
+                } else if (btn.innerText.includes('已提交')) {
+                    btn.innerText = '提交';
+                }
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            });
+        }
+
+        function handleVSGameSubmit(player, level, isCorrect, btnElement) {
+            playSound('click');
+            vsSubmitData[player] = { correct: isCorrect, time: Date.now() };
+            
+            if (btnElement) {
+                btnElement.innerText = '等候對手..';
+                btnElement.disabled = true;
+                btnElement.style.opacity = '0.6';
+                btnElement.style.cursor = 'not-allowed';
+            }
+
+            let allSubmitted = (playMode === 'vs2' && vsSubmitData.p1 && vsSubmitData.p2) || 
+                               (playMode === 'vs3' && vsSubmitData.p1 && vsSubmitData.p2 && vsSubmitData.p3);
+            
+            if (allSubmitted) {
+                evaluateVSWinner(level);
+            }
+        }
+
+        function evaluateVSWinner(level) {
+            let activePlayers = playMode === 'vs3' ? ['p1', 'p2', 'p3'] : ['p1', 'p2'];
+            let labels = { 
+                p1: "<span style='color:var(--p1-shadow);'>粉紅色</span>", 
+                p2: "<span style='color:var(--p2-shadow);'>粉黃色</span>",
+                p3: "<span style='color:var(--p3-shadow);'>粉綠色</span>" 
+            };
+            
+            let correctPlayers = activePlayers.filter(p => vsSubmitData[p].correct);
+            let winnerText = "";
+            let isSuccess = false;
+
+            if (correctPlayers.length === 0) {
+                isSuccess = false;
+                winnerText = `所有人都答錯了！請再檢查一次。`;
+            } else if (correctPlayers.length === 1) {
+                isSuccess = true;
+                winnerText = `${labels[correctPlayers[0]]} 玩家答對了，獨得勝利！`;
+            } else {
+                isSuccess = true;
+                correctPlayers.sort((a, b) => vsSubmitData[a].time - vsSubmitData[b].time);
+                let winner = correctPlayers[0];
+                let texts = correctPlayers.map(p => labels[p]).join('、');
+                winnerText = `${texts} 都答對了！<br>但 ${labels[winner]} 玩家速度最快，獲得勝利！`;
+            }
+
+            setTimeout(() => {
+                if (isSuccess) {
+                    playSound('correct');
+                    showFeedback(true, winnerText, () => switchLevel(level), "再來一局");
+                } else {
+                    playSound('wrong');
+                    showFeedback(false, winnerText, () => resetVSState(), "重新提交");
+                }
+            }, 500);
+        }
+
+        function formatTargetNumber(num) {
+            let str = num.toString(); let html = '';
+            if (str.length === 1) html = `<span class="hint-text-1">${str}</span>`;
+            else if (str.length === 2) html = `<span class="hint-text-10">${str[0]}</span><span class="hint-text-1">${str[1]}</span>`;
+            else if (str.length === 3) html = `<span class="hint-text-100">${str[0]}</span><span class="hint-text-10">${str[1]}</span><span class="hint-text-1">${str[2]}</span>`;
+            return html;
+        }
+        function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+        
+        function generateNumberByDigits(digits, preventZeros = false) {
+            let num = digits === 1 ? getRandomInt(1, 9) : (digits === 2 ? getRandomInt(11, 99) : getRandomInt(111, 999));
+            if (preventZeros) {
+                let str = num.toString();
+                if(str.includes('0')) { str = str.replace(/0/g, '1'); num = parseInt(str); }
+            }
+            return num;
+        }
+
+        function switchLevel(level) {
+            playSound('click');
+            currentLevel = level;
+            resetVSState();
+            
+            document.querySelectorAll('.level-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('onpointerdown')?.includes(`'${level}'`)) btn.classList.add('active');
+            });
+            document.querySelectorAll('.workspace').forEach(ws => ws.classList.remove('active'));
+            document.getElementById('bottom-area').classList.remove('show');
+            document.getElementById('ws-' + level).classList.add('active');
+            
+            // 處理介面中第三名玩家容器的顯示/隱藏
+            document.querySelectorAll('.p3-side').forEach(el => {
+                el.style.display = playMode === 'vs3' ? 'flex' : 'none';
+            });
+            const p3SubmitBtn = document.getElementById('btn-submit-classify-p3');
+            if(p3SubmitBtn) p3SubmitBtn.style.display = playMode === 'vs3' ? 'block' : 'none';
+            
+            if (level === 'classify') setupClassifyGame();
+            if (level === '2digit') setupBlockGame('2digit');
+            if (level === '3digit') setupBlockGame('3digit');
+            if (level === 'abacus') setupAbacusGame();
+            if (level === 'reading') setupReadingGame();
+        }
+
+        function setupClassifyGame() {
+            const pool = document.getElementById('classify-pool');
+            const zones = document.querySelectorAll('.basket-drop-zone');
+            pool.innerHTML = ''; zones.forEach(zone => zone.innerHTML = '');
+
+            if (playMode === 'single') {
+                document.getElementById('title-classify').innerText = "請把數字拉到正確的分類區";
+                document.getElementById('btn-submit-classify').style.display = 'block';
+                document.getElementById('vs-submit-classify').style.display = 'none';
+                
+                let numbers = [];
+                while(numbers.length < 2) { let n = getRandomInt(1, 9); if(!numbers.includes(n)) numbers.push(n); }
+                while(numbers.length < 4) { let n = getRandomInt(10, 99); if(!numbers.includes(n)) numbers.push(n); }
+                while(numbers.length < 6) { let n = getRandomInt(100, 999); if(!numbers.includes(n)) numbers.push(n); }
+                while(numbers.length < 10) {
+                    let r = Math.random();
+                    let n = r < 0.33 ? getRandomInt(1, 9) : (r < 0.66 ? getRandomInt(10, 99) : getRandomInt(100, 999));
+                    if(!numbers.includes(n)) numbers.push(n);
+                }
+                numbers.sort(() => Math.random() - 0.5);
+                numbers.forEach(num => createDraggableNum(num, 'single'));
+            } else {
+                let txt = playMode === 'vs3' ? '3人' : '2人';
+                document.getElementById('title-classify').innerText = `【${txt}對戰】請將自己顏色的6個數字正確分類後提交！`;
+                document.getElementById('btn-submit-classify').style.display = 'none';
+                document.getElementById('vs-submit-classify').style.display = 'flex';
+                
+                let allItems = [];
+                generateVSNums().forEach(n => allItems.push({num: n, p: 'p1'}));
+                generateVSNums().forEach(n => allItems.push({num: n, p: 'p2'}));
+                if (playMode === 'vs3') {
+                    generateVSNums().forEach(n => allItems.push({num: n, p: 'p3'}));
+                }
+                allItems.sort(() => Math.random() - 0.5);
+                
+                allItems.forEach(item => createDraggableNum(item.num, item.p));
+            }
+        }
+
+        function generateVSNums() {
+            let nums = [getRandomInt(1,9), getRandomInt(10,99), getRandomInt(100,999)];
+            while(nums.length < 6) {
+                let r = Math.random();
+                let n = r < 0.33 ? getRandomInt(1, 9) : (r < 0.66 ? getRandomInt(10, 99) : getRandomInt(100, 999));
+                if(!nums.includes(n)) nums.push(n);
+            }
+            return nums;
+        }
+
+        function createDraggableNum(num, player) {
+            const div = document.createElement('div');
+            div.className = 'draggable-num';
+            if (player === 'p1') div.classList.add('num-p1');
+            if (player === 'p2') div.classList.add('num-p2');
+            if (player === 'p3') div.classList.add('num-p3');
+            div.textContent = num;
+            div.setAttribute('data-val', num);
+            div.setAttribute('data-player', player);
+            div.addEventListener('pointerdown', handleClassifyPointerDown);
+            document.getElementById('classify-pool').appendChild(div);
+        }
+
+        function handleClassifyPointerDown(e) {
+            e.preventDefault();
+            const pointerId = e.pointerId;
+            const state = { draggedElement: e.currentTarget, dragSourceType: 'classify', dragStartX: e.clientX, dragStartY: e.clientY };
+            const rect = state.draggedElement.getBoundingClientRect();
+            state.dragOffsetX = e.clientX - rect.left;
+            state.dragOffsetY = e.clientY - rect.top;
+
+            state.ghostElement = state.draggedElement.cloneNode(true);
+            state.ghostElement.classList.add('dragging-ghost');
+            document.getElementById('game-container').appendChild(state.ghostElement);
+            
+            state.draggedElement.style.opacity = '0.3';
+            activePointers.set(pointerId, state);
+            moveGhost(pointerId, e.clientX, e.clientY);
+            playSound('click');
+        }
+
+        function processClassifyPointerUp(pointerId, clientX, clientY, state) {
+            if (state.ghostElement) {
+                let isClickOnly = Math.abs(clientX - state.dragStartX) < 5 && Math.abs(clientY - state.dragStartY) < 5;
+                state.ghostElement.style.display = 'none';
+                if (isClickOnly) {
+                    state.draggedElement.style.opacity = '1'; state.ghostElement.remove(); return;
+                }
+                
+                let elemBelow = document.elementFromPoint(clientX, clientY);
+                state.ghostElement.style.display = '';
+                let dropZone = elemBelow ? elemBelow.closest('.basket-drop-zone') : null;
+                let poolZone = elemBelow ? elemBelow.closest('.number-pool') : null;
+
+                if (dropZone) { dropZone.appendChild(state.draggedElement); playSound('drop'); } 
+                else if (poolZone) { document.getElementById('classify-pool').appendChild(state.draggedElement); playSound('drop'); }
+                
+                state.draggedElement.style.opacity = '1';
+                state.ghostElement.remove();
+            }
+        }
+
+        function checkClassifySingle() {
+            let allCorrect = true, totalPlaced = 0;
+            document.querySelectorAll('.basket-drop-zone').forEach(zone => {
+                let type = parseInt(zone.getAttribute('data-type'));
+                let items = zone.querySelectorAll('.draggable-num');
+                totalPlaced += items.length;
+                items.forEach(item => { if (item.getAttribute('data-val').toString().length !== type) allCorrect = false; });
+            });
+            if (totalPlaced < 10) return showFeedback(false, "還有數字沒有分類完喔！", null, "繼續");
+            if (allCorrect) {
+                playSound('correct');
+                showFeedback(true, "分類完全正確！<br>請繼續完成下方問題。", () => setupFollowUp('classify'), "繼續");
+            } else { playSound('wrong'); showFeedback(false, "有些數字放錯籃子了，再試試看！", null, "再試一次"); }
+        }
+
+        function checkClassifyVSPlayer(player, btnElement) {
+            let correctCount = 0;
+            let wrongCount = 0;
+            document.querySelectorAll('.basket-drop-zone').forEach(zone => {
+                let type = parseInt(zone.getAttribute('data-type'));
+                let items = zone.querySelectorAll(`.draggable-num[data-player="${player}"]`);
+                items.forEach(item => {
+                    if (item.getAttribute('data-val').toString().length === type) correctCount++;
+                    else wrongCount++;
+                });
+            });
+
+            let poolItems = document.querySelectorAll(`#classify-pool .draggable-num[data-player="${player}"]`);
+            let isCorrect = (correctCount === 6 && wrongCount === 0 && poolItems.length === 0);
+            handleVSGameSubmit(player, 'classify', isCorrect, btnElement);
+        }
+
+        function setupBlockGame(level) {
+            let maxDigits = level === '2digit' ? 2 : 3;
+            
+            if (playMode === 'single') {
+                document.getElementById('single-' + level).style.display = 'flex';
+                document.getElementById('vs-' + level).style.display = 'none';
+                document.getElementById('ans-' + level).innerHTML = '';
+                targets.single = generateNumberByDigits(maxDigits, true);
+                document.getElementById('target-' + level).innerHTML = formatTargetNumber(targets.single);
+            } else {
+                document.getElementById('single-' + level).style.display = 'none';
+                document.getElementById('vs-' + level).style.display = 'flex';
+                document.getElementById('ans-' + level + '-p1').innerHTML = '';
+                document.getElementById('ans-' + level + '-p2').innerHTML = '';
+                document.getElementById('ans-' + level + '-p3').innerHTML = '';
+                
+                targets.p1 = generateNumberByDigits(maxDigits, true);
+                targets.p2 = generateNumberByDigits(maxDigits, true);
+                while(targets.p1 === targets.p2) targets.p2 = generateNumberByDigits(maxDigits, true);
+                
+                if (playMode === 'vs3') {
+                    targets.p3 = generateNumberByDigits(maxDigits, true);
+                    while(targets.p3 === targets.p1 || targets.p3 === targets.p2) targets.p3 = generateNumberByDigits(maxDigits, true);
+                }
+                
+                document.getElementById('target-' + level + '-p1').innerHTML = formatTargetNumber(targets.p1);
+                document.getElementById('target-' + level + '-p2').innerHTML = formatTargetNumber(targets.p2);
+                document.getElementById('target-' + level + '-p3').innerHTML = formatTargetNumber(targets.p3);
+            }
+        }
+
+        function startDragBlock(e, val, typeClass, isFromAnswerZone = false) {
+            e.preventDefault();
+            const pointerId = e.pointerId;
+            const state = { dragSourceType: isFromAnswerZone ? 'placed-block' : 'source-block', dragValue: val, dragStartX: e.clientX, dragStartY: e.clientY };
+            
+            let targetElem = isFromAnswerZone ? e.currentTarget : e.currentTarget.querySelector('svg');
+            const rect = targetElem.getBoundingClientRect();
+            state.dragOffsetX = e.clientX - rect.left;
+            state.dragOffsetY = e.clientY - rect.top;
+            state.playerSide = e.currentTarget.closest('.player-side')?.getAttribute('data-player') || 'single';
+
+            if (isFromAnswerZone) {
+                state.draggedElement = e.currentTarget; state.draggedElement.style.opacity = '0.3';
+                state.ghostElement = state.draggedElement.cloneNode(true);
+            } else {
+                state.ghostElement = targetElem.cloneNode(true); state.draggedElement = null; 
+            }
+            
+            state.ghostElement.classList.add('dragging-ghost');
+            state.ghostElement.setAttribute('data-val', val);
+            state.ghostElement.setAttribute('data-type', typeClass);
+            document.getElementById('game-container').appendChild(state.ghostElement);
+
+            activePointers.set(pointerId, state);
+            moveGhost(pointerId, e.clientX, e.clientY);
+            playSound('click');
+        }
+
+        function processBlockPointerUp(pointerId, clientX, clientY, state) {
+            if (state.ghostElement) {
+                let isClickOnly = Math.abs(clientX - state.dragStartX) < 5 && Math.abs(clientY - state.dragStartY) < 5;
+                state.ghostElement.style.display = 'none';
+
+                if (isClickOnly) {
+                    if (state.draggedElement) state.draggedElement.style.opacity = '1';
+                    state.ghostElement.remove(); return;
+                }
+
+                let elemBelow = document.elementFromPoint(clientX, clientY);
+                state.ghostElement.style.display = '';
+                let dropZone = elemBelow ? elemBelow.closest('.answer-zone') : null;
+                
+                if (dropZone && playMode !== 'single') {
+                    let zonePlayer = dropZone.getAttribute('data-player');
+                    if (zonePlayer !== state.playerSide) dropZone = null; 
+                }
+
+                if (dropZone) {
+                    if (state.dragSourceType === 'source-block') {
+                        let newElem = state.ghostElement.cloneNode(true);
+                        newElem.classList.remove('dragging-ghost');
+                        newElem.style.position = ''; newElem.style.left = ''; newElem.style.top = ''; newElem.style.zIndex = '';
+                        newElem.style.pointerEvents = 'auto'; 
+                        let val = newElem.getAttribute('data-val'); let type = newElem.getAttribute('data-type');
+                        newElem.onpointerdown = (ev) => startDragBlock(ev, val, type, true);
+                        dropZone.appendChild(newElem);
+                    } else if (state.draggedElement) {
+                        state.draggedElement.style.opacity = '1';
+                    }
+                    playSound('drop');
+                } else {
+                    if (state.dragSourceType === 'placed-block' && state.draggedElement) { state.draggedElement.remove(); playSound('click'); }
+                }
+
+                if (state.draggedElement && state.dragSourceType === 'placed-block' && dropZone) state.draggedElement.style.opacity = '1';
+                state.ghostElement.remove();
+            }
+        }
+
+        function checkBlockGame(level, player, btnElement) {
+            let zoneId = player === 'single' ? `ans-${level}` : `ans-${level}-${player}`;
+            const items = document.getElementById(zoneId).querySelectorAll('.block-item');
+            let sum = 0;
+            items.forEach(item => sum += parseInt(item.getAttribute('data-val')));
+            let target = targets[player];
+            let isCorrect = (sum === target);
+
+            if (player === 'single') {
+                if (isCorrect) {
+                    playSound('correct');
+                    showFeedback(true, "太棒了！數量完全正確！<br>請繼續完成下方問題。", () => setupFollowUp(level, target), "繼續");
+                } else {
+                    playSound('wrong');
+                    showFeedback(false, `數量不對喔！目前是 ${sum}，目標是 ${target}。<br>請再試試看。`, null, "繼續");
+                }
+            } else {
+                handleVSGameSubmit(player, level, isCorrect, btnElement);
+            }
+        }
+
+        function setupAbacusGame() {
+            if (playMode === 'single') {
+                document.getElementById('single-abacus').style.display = 'flex';
+                document.getElementById('vs-abacus').style.display = 'none';
+                
+                let digits = getRandomInt(1, 3);
+                targets.single = generateNumberByDigits(digits);
+                document.getElementById('target-abacus').innerHTML = formatTargetNumber(targets.single);
+                abacusData.single = { 100: 0, 10: 0, 1: 0 };
+                renderAbacus('single');
+            } else {
+                document.getElementById('single-abacus').style.display = 'none';
+                document.getElementById('vs-abacus').style.display = 'flex';
+                
+                let digits = getRandomInt(1, 3);
+                targets.p1 = generateNumberByDigits(digits);
+                targets.p2 = generateNumberByDigits(digits);
+                while(targets.p1 === targets.p2) targets.p2 = generateNumberByDigits(digits);
+                
+                if (playMode === 'vs3') {
+                    targets.p3 = generateNumberByDigits(digits);
+                    while(targets.p3 === targets.p1 || targets.p3 === targets.p2) targets.p3 = generateNumberByDigits(digits);
+                }
+                
+                document.getElementById('target-abacus-p1').innerHTML = formatTargetNumber(targets.p1);
+                document.getElementById('target-abacus-p2').innerHTML = formatTargetNumber(targets.p2);
+                document.getElementById('target-abacus-p3').innerHTML = formatTargetNumber(targets.p3);
+                
+                abacusData.p1 = { 100: 0, 10: 0, 1: 0 };
+                abacusData.p2 = { 100: 0, 10: 0, 1: 0 };
+                abacusData.p3 = { 100: 0, 10: 0, 1: 0 };
+                renderAbacus('p1'); renderAbacus('p2'); renderAbacus('p3');
+                
+                let show100 = digits >= 3 ? 'flex' : 'none';
+                let show10 = digits >= 2 ? 'flex' : 'none';
+                ['p1', 'p2', 'p3'].forEach(p => {
+                    const g100 = document.getElementById(`group-100-${p}`);
+                    const g10 = document.getElementById(`group-10-${p}`);
+                    if(g100) g100.style.display = show100;
+                    if(g10) g10.style.display = show10;
+                });
+            }
+        }
+
+        function changeBead(player, rodValue, amount) {
+            let current = abacusData[player][rodValue];
+            current += amount;
+            if (current >= 0 && current <= 9) {
+                abacusData[player][rodValue] = current;
+                playSound('click');
+                renderAbacus(player);
+            }
+        }
+
+        function renderAbacus(player) {
+            ['100', '10', '1'].forEach(val => {
+                let suffix = player === 'single' ? 'single' : player;
+                const rod = document.getElementById(`rod-${val}-${suffix}`);
+                if(!rod) return;
+                rod.innerHTML = '';
+                let count = abacusData[player][val];
+                for(let i = 0; i < count; i++) {
+                    const bead = document.createElement('div');
+                    bead.className = 'abacus-bead';
+                    rod.appendChild(bead);
+                }
+            });
+        }
+
+        function checkAbacus(player, btnElement) {
+            let sum = (abacusData[player]['100'] * 100) + (abacusData[player]['10'] * 10) + abacusData[player]['1'];
+            let target = targets[player];
+            let isCorrect = (sum === target);
+
+            if (player === 'single') {
+                if (isCorrect) {
+                    playSound('correct');
+                    showFeedback(true, "算柱撥對了！好厲害！", () => switchLevel('abacus'), "下一題");
+                } else {
+                    playSound('wrong');
+                    showFeedback(false, `數量不對喔！目前算柱是 ${sum}。`, null, "繼續");
+                }
+            } else {
+                handleVSGameSubmit(player, 'abacus', isCorrect, btnElement);
+            }
+        }
+
+        function setupReadingGame() {
+            let maxDigits = getRandomInt(2, 3);
+            if (playMode === 'single') {
+                document.getElementById('single-reading').style.display = 'flex';
+                document.getElementById('vs-reading').style.display = 'none';
+
+                targets.single = generateNumberByDigits(maxDigits);
+                document.getElementById('target-reading').innerHTML = formatTargetNumber(targets.single);
+                readingInput.single = '';
+                updateReadingDisplay('single');
+            } else {
+                document.getElementById('single-reading').style.display = 'none';
+                document.getElementById('vs-reading').style.display = 'flex';
+
+                targets.p1 = generateNumberByDigits(maxDigits);
+                targets.p2 = generateNumberByDigits(maxDigits);
+                while(targets.p1 === targets.p2) targets.p2 = generateNumberByDigits(maxDigits);
+                
+                if (playMode === 'vs3') {
+                    targets.p3 = generateNumberByDigits(maxDigits);
+                    while(targets.p3 === targets.p1 || targets.p3 === targets.p2) targets.p3 = generateNumberByDigits(maxDigits);
+                }
+
+                document.getElementById('target-reading-p1').innerHTML = formatTargetNumber(targets.p1);
+                document.getElementById('target-reading-p2').innerHTML = formatTargetNumber(targets.p2);
+                document.getElementById('target-reading-p3').innerHTML = formatTargetNumber(targets.p3);
+
+                readingInput.p1 = ''; readingInput.p2 = ''; readingInput.p3 = '';
+                updateReadingDisplay('p1'); updateReadingDisplay('p2'); updateReadingDisplay('p3');
+            }
+        }
+
+        function inputChinese(player, char) {
+            playSound('click');
+            if (readingInput[player].length < 10) { 
+                readingInput[player] += char;
+                updateReadingDisplay(player);
+            }
+        }
+
+        function delChinese(player) {
+            playSound('click');
+            if (readingInput[player].length > 0) {
+                readingInput[player] = readingInput[player].slice(0, -1);
+                updateReadingDisplay(player);
+            }
+        }
+
+        function updateReadingDisplay(player) {
+            let suffix = player === 'single' ? 'single' : player;
+            let el = document.getElementById(`input-reading-${suffix}`);
+            if(el) {
+                el.textContent = readingInput[player];
+                el.classList.remove('wrong', 'correct');
+            }
+        }
+
+        function numberToChinese(num) {
+            const digits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+            let result = '';
+
+            if (num < 10) {
+                return digits[num];
+            } else if (num < 100) {
+                let tens = Math.floor(num / 10);
+                let ones = num % 10;
+                if (tens === 1) result += '十';
+                else result += digits[tens] + '十';
+                if (ones !== 0) result += digits[ones];
+                return result;
+            } else if (num < 1000) {
+                let hundreds = Math.floor(num / 100);
+                let tens = Math.floor((num % 100) / 10);
+                let ones = num % 10;
+                
+                result += digits[hundreds] + '百';
+                if (tens === 0 && ones !== 0) {
+                    result += '零' + digits[ones];
+                } else if (tens !== 0) {
+                    result += (tens === 1 ? '一' : digits[tens]) + '十';
+                    if (ones !== 0) result += digits[ones];
+                }
+                return result;
+            }
+            return '';
+        }
+
+        function checkReading(player, btnElement) {
+            let target = targets[player];
+            let correctStr = numberToChinese(target);
+            let userStr = readingInput[player];
+            let isCorrect = (userStr === correctStr);
+
+            let el = document.getElementById(`input-reading-${player === 'single' ? 'single' : player}`);
+
+            if (player === 'single') {
+                if (isCorrect) {
+                    el.classList.add('correct');
+                    playSound('correct');
+                    showFeedback(true, "拼寫完全正確！", () => switchLevel('reading'), "下一題");
+                } else {
+                    el.classList.add('wrong');
+                    playSound('wrong');
+                    showFeedback(false, `拼寫不對喔！請再試試看。`, null, "繼續");
+                }
+            } else {
+                handleVSGameSubmit(player, 'reading', isCorrect, btnElement);
+            }
+        }
+
+        function moveGhost(pointerId, clientX, clientY) {
+            const state = activePointers.get(pointerId);
+            if (state && state.ghostElement) {
+                state.ghostElement.style.left = (clientX - state.dragOffsetX) + 'px';
+                state.ghostElement.style.top = (clientY - state.dragOffsetY) + 'px';
+            }
+        }
+
+        function setupFollowUp(levelType, targetNum) {
+            if (playMode !== 'single') return;
+            
+            const bottomArea = document.getElementById('bottom-area');
+            const content = document.getElementById('fill-in-content');
+            content.innerHTML = '';
+            let htmlString = "";
+
+            if (levelType === 'classify') {
+                htmlString = `
+                    <div style="margin-bottom: 8px;">一位數由 <span class="input-box" data-ans="1"></span> 個數字組成。</div>
+                    <div style="margin-bottom: 8px;">兩位數由 <span class="input-box" data-ans="2"></span> 個數字組成。</div>
+                    <div>三位數由 <span class="input-box" data-ans="3"></span> 個數字組成。</div>
+                `;
+            } else if (levelType === '2digit') {
+                let strNum = targetNum.toString(); 
+                htmlString = `
+                    <div style="color:var(--primary); font-size:32px; font-weight:bold; margin-bottom: 5px;">${targetNum}</div>
+                    <div style="margin-bottom: 8px;"><span class="input-box box-10" data-ans="${strNum[0]}"></span> 在十位，即是 <span class="input-box box-10" data-ans="${strNum[0]}"></span> 個 10，代表 <span class="input-box box-10" data-ans="${strNum[0]}0"></span>。</div>
+                    <div><span class="input-box box-1" data-ans="${strNum[1]}"></span> 在個位，即是 <span class="input-box box-1" data-ans="${strNum[1]}"></span> 個 1，代表 <span class="input-box box-1" data-ans="${strNum[1]}"></span>。</div>
+                `;
+            } else if (levelType === '3digit') {
+                let strNum = targetNum.toString();
+                htmlString = `
+                    <div style="color:var(--primary); font-size:32px; font-weight:bold; margin-bottom: 5px;">${targetNum}</div>
+                    <div style="margin-bottom: 8px;"><span class="input-box box-100" data-ans="${strNum[0]}"></span> 在百位，即是 <span class="input-box box-100" data-ans="${strNum[0]}"></span> 個 100，代表 <span class="input-box box-100" data-ans="${strNum[0]}00"></span>。</div>
+                    <div style="margin-bottom: 8px;"><span class="input-box box-10" data-ans="${strNum[1]}"></span> 在十位，即是 <span class="input-box box-10" data-ans="${strNum[1]}"></span> 個 10，代表 <span class="input-box box-10" data-ans="${strNum[1]}0"></span>。</div>
+                    <div><span class="input-box box-1" data-ans="${strNum[2]}"></span> 在個位，即是 <span class="input-box box-1" data-ans="${strNum[2]}"></span> 個 1，代表 <span class="input-box box-1" data-ans="${strNum[2]}"></span>。</div>
+                `;
+            }
+
+            content.innerHTML = htmlString;
+            bottomArea.classList.add('show');
+            
+            const boxes = content.querySelectorAll('.input-box');
+            boxes.forEach(box => {
+                box.addEventListener('pointerdown', function(e) {
+                    e.preventDefault();
+                    boxes.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    activeInputBox = this;
+                    playSound('click');
+                });
+            });
+            if(boxes.length > 0) { boxes[0].classList.add('active'); activeInputBox = boxes[0]; }
+        }
+
+        function inputNum(numStr) {
+            if (!activeInputBox) return;
+            playSound('click');
+            activeInputBox.textContent += numStr;
+            activeInputBox.classList.remove('wrong', 'correct');
+            
+            let ans = activeInputBox.getAttribute('data-ans');
+            let currentVal = activeInputBox.textContent;
+            
+            if (currentVal === ans) {
+                activeInputBox.classList.add('correct');
+                const boxes = Array.from(document.querySelectorAll('#fill-in-content .input-box'));
+                let currentIndex = boxes.indexOf(activeInputBox);
+                let nextBox = boxes.find((b, i) => i > currentIndex && b.textContent !== b.getAttribute('data-ans')) || 
+                              boxes.find((b, i) => i < currentIndex && b.textContent !== b.getAttribute('data-ans'));
+                
+                if (nextBox) {
+                    boxes.forEach(b => b.classList.remove('active'));
+                    nextBox.classList.add('active');
+                    activeInputBox = nextBox;
+                } else setTimeout(checkFillIn, 400);
+            } else if (currentVal.length >= ans.length) {
+                activeInputBox.classList.add('wrong'); playSound('wrong');
+            }
+        }
+
+        function inputDel() {
+            if (!activeInputBox) return;
+            playSound('click');
+            let txt = activeInputBox.textContent;
+            if (txt.length > 0) { activeInputBox.textContent = txt.slice(0, -1); activeInputBox.classList.remove('wrong', 'correct'); }
+        }
+
+        function checkFillIn() {
+            let allCorrect = true, emptyCount = 0;
+            document.querySelectorAll('#fill-in-content .input-box').forEach(box => {
+                let ans = box.getAttribute('data-ans');
+                let userVal = box.textContent;
+                if (userVal === "") { emptyCount++; allCorrect = false; }
+                else if (userVal === ans) { box.classList.add('correct'); box.classList.remove('wrong'); }
+                else { box.classList.add('wrong'); box.classList.remove('correct'); allCorrect = false; }
+            });
+
+            if (emptyCount > 0) { playSound('wrong'); showFeedback(false, "還有空格沒有填完喔！", null, "再試一次"); } 
+            else if (allCorrect) {
+                playSound('correct');
+                showFeedback(true, "全部答對了！非常棒！", () => { document.getElementById('bottom-area').classList.remove('show'); switchLevel(currentLevel); }, "下一題");
+            } else { playSound('wrong'); showFeedback(false, "有些地方填錯了，亮紅色的格子請再檢查一次！", null, "再試一次"); }
+        }
+
+        let feedbackCallback = null;
+        function showFeedback(isSuccess, text, callback = null, btnText = null) {
+            const overlay = document.getElementById('feedback-overlay');
+            const icon = document.getElementById('feedback-icon');
+            const msg = document.getElementById('feedback-text');
+            const btn = overlay.querySelector('.btn-next');
+            
+            if (isSuccess) { icon.textContent = '✅'; msg.style.color = 'var(--success)'; btn.textContent = btnText || '繼續'; } 
+            else { icon.textContent = '❌'; msg.style.color = 'var(--danger)'; btn.textContent = btnText || '再試一次'; }
+            msg.innerHTML = text; feedbackCallback = callback;
+            overlay.style.display = 'flex';
+        }
+
+        function hideFeedback() {
+            playSound('click'); document.getElementById('feedback-overlay').style.display = 'none';
+            if (feedbackCallback) { feedbackCallback(); feedbackCallback = null; }
+        }
+
+    </script>
+</body>
+</html>
