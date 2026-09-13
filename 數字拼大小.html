@@ -7,15 +7,26 @@
     <title>數字拼大小</title>
     <style>
         :root {
-            --bg-color: #fdf6e3;
-            --pink: #FFB3BA;
-            --blue: #BAE1FF;
-            --yellow: #FFFFBA;
-            --green: #BAFFC9;
-            --purple: #E6B3FF;
-            --text-dark: #5c4b51;
-            --text-light: #ffffff;
-            --shadow: rgba(0, 0, 0, 0.1);
+            /* 馬卡龍超柔和色系 */
+            --bg-base: #FDFBFF;       /* 雲朵白底色 */
+            --player-0-bg: #FFE5EC;   /* 櫻花粉 */
+            --player-1-bg: #E0F7FA;   /* 薄荷藍 */
+            --player-2-bg: #FFF9C4;   /* 奶油黃 */
+            
+            --text-main: #6B5B60;     /* 溫暖的深灰褐色 (取代純黑) */
+            --text-light: #9EA3B0;    
+            --coral-pink: #FF8BA7;    /* 溫和的珊瑚粉 (用於強調/提示) */
+            
+            /* 按鈕色系 */
+            --btn-start: #FFB7B2;
+            --btn-start-shadow: #FF9E99;
+            --btn-submit: #A8E6CF;
+            --btn-submit-shadow: #88D4AB;
+            --btn-disabled: #E0E0E0;
+            --btn-disabled-shadow: #BDBDBD;
+            
+            --shadow-soft: rgba(0, 0, 0, 0.06);
+            --shadow-medium: rgba(0, 0, 0, 0.1);
         }
 
         * {
@@ -27,12 +38,12 @@
         }
 
         body {
-            font-family: 'Comic Sans MS', 'Chalkboard SE', '微軟正黑體', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-dark);
+            font-family: 'Quicksand', 'Nunito', 'Comic Sans MS', 'Chalkboard SE', '微軟正黑體', sans-serif;
+            background: linear-gradient(135deg, #FFF0F5 0%, #E6F2FF 100%);
+            color: var(--text-main);
             height: 100vh;
             width: 100vw;
-            overflow: hidden; /* 嚴格禁止捲動 */
+            overflow: hidden; 
             touch-action: none; 
         }
 
@@ -44,8 +55,8 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            transition: opacity 0.3s ease;
-            overflow: hidden; /* 防止子元素撐開螢幕 */
+            transition: opacity 0.4s ease-in-out;
+            overflow: hidden; 
         }
 
         .hidden {
@@ -58,131 +69,166 @@
         #menu-screen {
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, var(--bg-color) 0%, #fefcf7 100%);
         }
 
         h1 {
-            font-size: 5vmin;
-            margin-bottom: 4vh;
-            color: #ff8b94;
-            text-shadow: 0.3vmin 0.3vmin 0.5vmin var(--shadow);
-            background: white;
-            padding: 2vmin 5vmin;
-            border-radius: 4vmin;
-            border: 0.6vmin dashed #ff8b94;
+            font-size: 5.5vmin;
+            margin-bottom: 5vh;
+            color: var(--coral-pink);
+            background: rgba(255, 255, 255, 0.85);
+            padding: 2.5vmin 6vmin;
+            border-radius: 5vmin;
+            box-shadow: 0 1vmin 3vmin var(--shadow-soft);
+            border: 0.5vmin solid #FFF;
+            backdrop-filter: blur(5px);
+            letter-spacing: 0.2vmin;
         }
 
         .settings-panel {
-            background: white;
-            padding: 4vmin;
-            border-radius: 3vmin;
-            box-shadow: 0 1.5vmin 3vmin var(--shadow);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 4.5vmin;
+            border-radius: 4vmin;
+            box-shadow: 0 2vmin 5vmin var(--shadow-soft);
             display: flex;
             flex-direction: column;
-            gap: 2.5vh;
+            gap: 3vh;
             width: 85vw;
-            max-width: 60vmin;
+            max-width: 65vmin;
+            border: 0.3vmin solid rgba(255,255,255,0.5);
+            backdrop-filter: blur(10px);
         }
 
         .setting-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 2.5vmin;
+            font-size: 2.8vmin;
             font-weight: bold;
+            color: var(--text-main);
         }
 
         select {
-            font-size: 2.5vmin;
-            padding: 1vmin 2vmin;
-            border-radius: 1.5vmin;
-            border: 0.3vmin solid #ddd;
-            background-color: #fafafa;
-            color: var(--text-dark);
+            font-size: 2.6vmin;
+            padding: 1.2vmin 2.5vmin;
+            border-radius: 2vmin;
+            border: 0.3vmin solid #E8E8E8;
+            background-color: #FAFAFA;
+            color: var(--text-main);
             outline: none;
             cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        select:focus {
+            border-color: var(--btn-start);
+            box-shadow: 0 0 1vmin rgba(255, 183, 178, 0.3);
         }
 
         .btn-start {
             margin-top: 2vh;
-            padding: 2vmin 4vmin;
+            padding: 2.5vmin 4vmin;
             font-size: 4vmin;
             font-weight: bold;
             color: white;
-            background-color: #ffb3ba;
+            background-color: var(--btn-start);
             border: none;
-            border-radius: 3vmin;
+            border-radius: 3.5vmin;
             cursor: pointer;
-            box-shadow: 0 0.8vmin 0 #ff8b94;
+            box-shadow: 0 0.8vmin 0 var(--btn-start-shadow), 0 1.5vmin 2vmin var(--shadow-soft);
             transition: transform 0.1s, box-shadow 0.1s;
+            letter-spacing: 0.2vmin;
         }
 
         .btn-start:active {
             transform: translateY(0.8vmin);
-            box-shadow: 0 0px 0 #ff8b94;
+            box-shadow: 0 0px 0 var(--btn-start-shadow), 0 0.5vmin 1vmin var(--shadow-soft);
         }
 
         /* 遊戲畫面排版 */
         #game-screen {
-            background-color: var(--bg-color);
+            background-color: var(--bg-base);
         }
 
         #top-bar {
-            height: 8vh; /* 固定比例，留更多空間給遊戲 */
+            height: 8vh; 
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 3vw;
-            background-color: rgba(255, 255, 255, 0.5);
-            border-bottom: 0.3vmin solid rgba(0,0,0,0.05);
+            padding: 0 4vw;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-bottom: 0.2vmin solid rgba(0,0,0,0.03);
             font-size: 3vmin;
             font-weight: bold;
+            backdrop-filter: blur(5px);
+            color: var(--text-main);
+        }
+
+        #top-bar button {
+            padding: 1.2vmin 2.5vmin; 
+            font-size: 2.5vmin; 
+            border-radius: 2vmin; 
+            cursor: pointer; 
+            border: 0.3vmin solid #E0E0E0; 
+            background: white;
+            color: var(--text-light);
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        #top-bar button:active {
+            background: #F0F0F0;
+            transform: scale(0.95);
         }
 
         #boards-container {
             display: flex;
             flex: 1;
             width: 100vw;
-            height: 92vh; /* 扣除 top-bar 的高度 */
+            height: 92vh; 
         }
 
         .player-board {
             flex: 1;
             display: flex;
             flex-direction: column;
-            border-right: 0.5vmin dashed rgba(0,0,0,0.1);
             position: relative;
-            padding: 1.5vmin;
-            min-width: 0; /* 確保 flex 子元素不會因為內容過大而撐開 */
+            padding: 2vmin;
+            min-width: 0; 
+            border-right: 0.4vmin dashed rgba(0,0,0,0.04);
         }
         .player-board:last-child {
             border-right: none;
         }
 
-        .color-0 { background-color: var(--pink); }
-        .color-1 { background-color: var(--blue); }
-        .color-2 { background-color: var(--yellow); }
+        .color-0 { background-color: var(--player-0-bg); }
+        .color-1 { background-color: var(--player-1-bg); }
+        .color-2 { background-color: var(--player-2-bg); }
 
         .player-header {
             text-align: center;
-            font-size: 3.5vmin;
+            font-size: 3.2vmin;
             font-weight: bold;
             margin-bottom: 1.5vh;
-            color: #333;
-            background: rgba(255,255,255,0.6);
-            border-radius: 2vmin;
+            color: var(--text-main);
+            background: rgba(255,255,255,0.65);
+            border-radius: 2.5vmin;
             padding: 1.5vmin;
             flex-shrink: 0;
+            box-shadow: 0 0.5vmin 1.5vmin var(--shadow-soft);
         }
 
         .instruction {
             text-align: center;
             font-size: 3vmin;
             font-weight: bold;
-            color: #e63946;
+            color: var(--coral-pink);
             margin-bottom: 1.5vh;
-            text-shadow: 0.15vmin 0.15vmin 0.3vmin white;
+            text-shadow: 0.2vmin 0.2vmin 0px white;
             flex-shrink: 0;
+            background: rgba(255,255,255,0.4);
+            padding: 1vmin;
+            border-radius: 1.5vmin;
         }
 
         .game-area {
@@ -192,7 +238,7 @@
             justify-content: space-evenly;
             align-items: center;
             padding: 1vh 0;
-            min-height: 0; /* 防止內部方塊過大撐出捲軸 */
+            min-height: 0; 
         }
 
         /* 數字方塊區排版 */
@@ -200,20 +246,20 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 1.5vmin;
+            gap: 2vmin;
             width: 95%;
             flex: 1;
-            max-height: 25vh; /* 限制最大高度避免上下兩行打架 */
+            max-height: 25vh; 
         }
 
         .slot {
             flex: 1;
             aspect-ratio: 1 / 1;
             max-height: 100%;
-            max-width: 18vmin; /* 限制最大寬度，避免1人模式時方塊過於巨大 */
-            border: 0.5vmin dashed rgba(0,0,0,0.3);
+            max-width: 18vmin; 
+            border: 0.4vmin dashed rgba(107, 91, 96, 0.25);
             background-color: rgba(255, 255, 255, 0.4);
-            border-radius: 2vmin;
+            border-radius: 2.5vmin;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -221,17 +267,18 @@
         }
 
         .block {
-            width: 90%;
-            height: 90%;
-            background-color: white;
-            border-radius: 1.5vmin;
-            box-shadow: 0 0.8vmin 0px rgba(0,0,0,0.15);
+            width: 88%;
+            height: 88%;
+            background: linear-gradient(180deg, #FFFFFF 0%, #F5F5F5 100%);
+            border-radius: 2vmin;
+            box-shadow: 0 0.8vmin 0px rgba(0,0,0,0.06), 0 1.5vmin 2vmin var(--shadow-soft);
+            border: 0.2vmin solid rgba(255,255,255,0.8);
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 5vmin; /* 自適應字體 */
+            font-size: 5.5vmin; 
             font-weight: bold;
-            color: #333;
+            color: var(--text-main);
             cursor: grab;
             transform: translate(0px, 0px); 
             touch-action: none;
@@ -240,37 +287,39 @@
         
         .block.dragging {
             cursor: grabbing;
-            opacity: 0.9;
-            box-shadow: 0 2vmin 3vmin rgba(0,0,0,0.2);
+            opacity: 0.95;
+            box-shadow: 0 2vmin 4vmin rgba(0,0,0,0.15);
             z-index: 1000; 
         }
 
         .submit-btn {
             margin: 1.5vh auto;
             width: 85%;
-            max-width: 30vmin;
-            padding: 2vmin 0;
+            max-width: 32vmin;
+            padding: 2.2vmin 0;
             font-size: 3.5vmin;
             font-weight: bold;
             color: white;
-            background-color: #4CAF50;
+            background-color: var(--btn-submit);
             border: none;
             border-radius: 3vmin;
             cursor: pointer;
-            box-shadow: 0 0.8vmin 0 #388E3C;
+            box-shadow: 0 0.8vmin 0 var(--btn-submit-shadow);
             transition: transform 0.1s, box-shadow 0.1s, background-color 0.3s;
             display: block;
             flex-shrink: 0;
+            letter-spacing: 0.2vmin;
         }
 
         .submit-btn:active:not(:disabled) {
             transform: translateY(0.8vmin);
-            box-shadow: 0 0px 0 #388E3C;
+            box-shadow: 0 0px 0 var(--btn-submit-shadow);
         }
 
         .submit-btn:disabled {
-            background-color: #aaa;
-            box-shadow: 0 0.8vmin 0 #888;
+            background-color: var(--btn-disabled);
+            box-shadow: 0 0.8vmin 0 var(--btn-disabled-shadow);
+            color: #999;
             cursor: not-allowed;
         }
 
@@ -295,74 +344,83 @@
 
         .animate-correct {
             animation: popInAndFade 1.5s ease forwards;
-            color: #4CAF50;
-            text-shadow: 0 0 3vmin white;
+            color: #88D4AB;
+            text-shadow: 0 0 4vmin white;
         }
 
         .animate-wrong {
             animation: popInAndFade 1.5s ease forwards;
-            color: #F44336;
-            text-shadow: 0 0 3vmin white;
+            color: #FFB7B2;
+            text-shadow: 0 0 4vmin white;
         }
 
         /* 結算畫面設計 */
         #result-screen {
-            background: rgba(253, 246, 227, 0.95);
+            background: rgba(253, 251, 255, 0.95);
             align-items: center;
             justify-content: center;
             z-index: 2000;
+            backdrop-filter: blur(8px);
         }
 
         .result-box {
             background: white;
-            padding: 4vmin;
-            border-radius: 3vmin;
-            box-shadow: 0 1.5vmin 4vmin rgba(0,0,0,0.2);
+            padding: 5vmin;
+            border-radius: 4vmin;
+            box-shadow: 0 2vmin 6vmin var(--shadow-medium);
             text-align: center;
-            border: 0.8vmin solid var(--pink);
+            border: 0.6vmin solid white;
             width: 90vw;
             max-width: none;
         }
 
         .result-box h2 {
-            font-size: 5vmin;
-            margin-bottom: 3vh;
-            color: #ff8b94;
+            font-size: 5.5vmin;
+            margin-bottom: 4vh;
+            color: var(--coral-pink);
+            letter-spacing: 0.2vmin;
         }
 
         .result-scores {
             display: flex;
             justify-content: center;
-            align-items: center;
-            gap: 2vmin;
-            margin-bottom: 4vh;
+            align-items: stretch;
+            gap: 3vmin;
+            margin-bottom: 5vh;
             width: 100%;
         }
 
         .score-card {
             flex: 1;
-            padding: 2vmin 1vmin;
-            border-radius: 2vmin;
-            box-shadow: 0 0.8vmin 2vmin var(--shadow);
-            border: 0.4vmin dashed rgba(0,0,0,0.1);
+            padding: 3vmin 2vmin;
+            border-radius: 3vmin;
+            box-shadow: 0 1vmin 2.5vmin var(--shadow-soft);
+            border: 0.3vmin solid white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .score-card .crown {
-            font-size: 5vmin;
-            min-height: 5vmin; 
-            margin-bottom: 1vmin;
+            font-size: 5.5vmin;
+            min-height: 6vmin; 
+            margin-bottom: 1.5vmin;
         }
 
         .score-card h3 {
             font-size: 3.5vmin;
-            color: #333;
-            margin-bottom: 1.5vmin;
+            color: var(--text-main);
+            margin-bottom: 2vmin;
+            background: rgba(255,255,255,0.5);
+            padding: 0.5vmin;
+            border-radius: 1.5vmin;
         }
 
         .score-card .score-number {
-            font-size: 6vmin;
+            font-size: 7vmin;
             font-weight: bold;
-            color: #333;
+            color: var(--coral-pink);
+            text-shadow: 0.2vmin 0.2vmin 0px white;
         }
     </style>
 </head>
