@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>對稱與對稱互補圖案遊戲</title>
+    <style>
+        :root {
+            /* 馬卡龍色系 */
+            --bg-color: #fcf8f6;
+            --text-color: #5c5464;
+            --q-color: #ffb7b2;         /* 題目格子顏色 */
+            --p1-color: #a8e6cf;        /* 玩家1 / 1人模式玩家格子顏色 */
+            --p2-color: #dcedc1;        /* 玩家2格子顏色 */
+            --empty-color: #ffffff;
+            --border-color: #e2d9d5;
+            --axis-color: #ff8b94;      /* 對稱軸顏色 */
+            
+            --btn-bg: #ffd3b6;
+            --btn-active: #ffaaa5;
+            --card-bg: rgba(255, 255, 255, 0.9);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "PingFang HK", "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* 選單與結算畫面 */
+        #menu-screen, #result-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            padding: 30px 40px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+            max-width: 90%;
+            width: 520px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin: 0 0 24px 0;
+            color: #b5838d;
+        }
+
+        h2 {
+            font-size: 26px;
+            margin-bottom: 20px;
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .setting-label {
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #7d7482;
+        }
+
+        .toggle-btns {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 12px 20px;
+            font-size: 18px;
+            border: 3px solid var(--btn-bg);
+            border-radius: 14px;
+            background-color: white;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+
+        .toggle-btn.active {
+            background-color: var(--btn-bg);
+            border-color: var(--btn-bg);
+        }
+
+        .start-btn, .restart-btn {
+            margin-top: 15px;
+            padding: 16px 45px;
+            font-size: 22px;
+            border: none;
+            border-radius: 18px;
+            background-color: #ffb7b2;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 6px 15px rgba(255, 183, 178, 0.4);
+            font-weight: bold;
+            transition: transform 0.1s;
+        }
+
+        .start-btn:active, .restart-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* 主遊戲畫面區域 */
+        #game-screen {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 15px 20px;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            height: 55px;
+            padding: 0 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            margin-bottom: 10px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .back-btn {
+            padding: 8px 18px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            background-color: #eee;
+            color: #555;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* 遊戲區域 container：頂端對齊確保所有方格處於同一水平線 */
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 12px;
+            width: 100%;
+            padding-top: 10px;
+        }
+
+        .board-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+        }
+
+        /* 固定 Header 高度，確保所有對稱軸與網格高度 100% 同步 */
+        .board-header {
+            font-size: 18px;
+            font-weight: bold;
+            height: 44px;
+            min-width: 170px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            padding: 0 16px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            color: #6d6875;
+            text-align: center;
+        }
+
+        /* 網格 CSS: 固定 4 行 x 6 列 (4x6) */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            gap: 6px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        /* 格子大小根據畫面螢幕動態調整 */
+        .cell {
+            width: clamp(28px, 4.8vw, 58px);
+            height: clamp(28px, 4.8vw, 58px);
+            background-color: var(--empty-color);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.15s, transform 0.08s;
+        }
+
+        .cell.q-colored {
+            background-color: var(--q-color);
+            border-color: #ffa49e;
+        }
+
+        .cell.p1-colored {
+            background-color: var(--p1-color);
+            border-color: #8ce0bd;
+        }
+
+        .cell.p2-colored {
+            background-color: var(--p2-color);
+            border-color: #cbebab;
+        }
+
+        .cell.read-only {
+            cursor: default;
+        }
+
+        /* 粗體垂直對稱軸容器：加入 Spacer 對齊 Header，讓對稱軸頂端精準對齊網格頂端 */
+        .axis-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .axis-spacer {
+            height: 44px;
+            margin-bottom: 12px;
+        }
+
+        .axis-line {
+            width: 8px;
+            height: calc(clamp(28px, 4.8vw, 58px) * 6 + 30px + 20px);
+            background: linear-gradient(180deg, #ff9aa2, #ffb7b2);
+            border-radius: 4px;
+            box-shadow: 0 0 8px rgba(255, 139, 148, 0.4);
+            margin: 0 4px;
+        }
+
+        .submit-btn {
+            margin-top: 14px;
+            padding: 10px 24px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 14px;
+            background-color: var(--btn-bg);
+            color: var(--text-color);
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            transition: all 0.15s;
+        }
+
+        .submit-btn:active {
+            transform: scale(0.95);
+            background-color: var(--btn-active);
+        }
+
+        .submit-btn.disabled {
+            background-color: #e0e0e0;
+            color: #888;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* 答對/答錯提示音及覆蓋動態 */
+        .feedback-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 80px;
+            z-index: 20;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.25s ease-in-out;
+        }
+
+        .feedback-overlay.show {
+            opacity: 1;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        .anim-shake { animation: shake 0.4s ease-in-out; }
+        .anim-bounce { animation: bounce 0.4s ease-in-out; }
+    </style>
+</head>
+<body>
+
+    <!-- 主選單畫面 -->
+    <div id="menu-screen">
+        <h1>圖案對對碰</h1>
+        
+        <div class="setting-group">
+            <div class="setting-label">關卡類型</div>
+            <div class="toggle-btns">
+                <button class="toggle-btn active" id="btn-mode-sym" onclick="selectMode('symmetry')">對稱圖案</button>
+                <button class="toggle-btn" id="btn-mode-comp" onclick="selectMode('complement')">對稱互補</button>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <div class="setting-label">遊玩人數</div>
+            <div class="toggle-btns">
+                <button class="toggle-btn active" id="btn-players-1" onclick="selectPlayers(1)">1 人模式</button>
+                <button class="toggle-btn" id="btn-players-2" onclick="selectPlayers(2)">2 人模式</button>
+            </div>
+        </div>
+
+        <button class="start-btn" onclick="startGame()">開始遊戲</button>
+    </div>
+
+    <!-- 遊戲進行畫面 -->
+    <div id="game-screen" class="hidden">
+        <div class="top-bar">
+            <button class="back-btn" onclick="backToMenu()">選單</button>
+            <div id="title-display">對稱圖案 (1人)</div>
+            <div id="round-display">第 1 / 10 題</div>
+        </div>
+
+        <div class="game-area" id="game-area">
+            <!-- 動態由 JavaScript 生成區域與網格 -->
+        </div>
+    </div>
+
+    <!-- 遊戲結束畫面 -->
+    <div id="result-screen" class="hidden">
+        <h1>遊戲完成！</h1>
+        <h2 id="final-result-text"></h2>
+        <button class="restart-btn" onclick="backToMenu()">再玩一次</button>
+    </div>
+
+    <script>
+        // Web Audio API 音效合成器 (完全離線運作，不需外連音效檔)
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    audioCtx = new AudioContext();
+                }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            try {
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'correct') {
+                    // 答對和音效果
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+
+                    osc.type = 'triangle';
+                    osc2.type = 'triangle';
+
+                    osc.frequency.setValueAtTime(523.25, now);   // C5
+                    osc2.frequency.setValueAtTime(659.25, now);  // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.12);  // G5
+                    osc2.frequency.setValueAtTime(1046.50, now + 0.12); // C6
+
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    gain2.gain.setValueAtTime(0.25, now);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+
+                    osc.start(now);
+                    osc2.start(now);
+                    osc.stop(now + 0.35);
+                    osc2.stop(now + 0.35);
+                } else if (type === 'wrong') {
+                    // 答錯低音音效
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                }
+            } catch (e) {
+                console.error('Audio playback error:', e);
+            }
+        }
+
+        /**
+         * STREAMING_CHUNK:Updating state logic and 2-player completion management...
+         * 遊戲配置與狀態
+         */
+        const ROWS = 6;
+        const COLS = 4; // 一半為 4x6 行
+
+        let gameConfig = {
+            mode: 'symmetry', // 'symmetry' (對稱) 或 'complement' (對稱互補)
+            players: 1,       // 1 或 2 人模式
+            totalRounds: 10
+        };
+
+        let gameState = {
+            currentRound: 1,
+            scoreP1: 0,
+            scoreP2: 0,
+            p1Finished: false, // 玩家1是否在本題答對完成
+            p2Finished: false, // 玩家2是否在本題答對完成
+            qSide: 'left',     // 1人模式下題目在 'left' 或 'right'
+            questionGrid: [],  // 6x4 題目矩陣
+            p1AnswerGrid: [],  // 6x4 玩家1答案矩陣
+            p2AnswerGrid: [],  // 6x4 玩家2答案矩陣 (僅2人模式)
+            isRoundActive: false
+        };
+
+        function selectMode(mode) {
+            gameConfig.mode = mode;
+            document.getElementById('btn-mode-sym').classList.toggle('active', mode === 'symmetry');
+            document.getElementById('btn-mode-comp').classList.toggle('active', mode === 'complement');
+        }
+
+        function selectPlayers(num) {
+            gameConfig.players = num;
+            document.getElementById('btn-players-1').classList.toggle('active', num === 1);
+            document.getElementById('btn-players-2').classList.toggle('active', num === 2);
+        }
+
+        /**
+         * 綁定觸控與點擊事件，支援多點觸控 (iPad Safari)
+         */
+        function bindTouchClick(element, callback) {
+            element.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                initAudio();
+                callback(e);
+            }, { passive: false });
+
+            element.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                initAudio();
+                callback(e);
+            });
+        }
+
+        function startGame() {
+            initAudio();
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            gameState.currentRound = 1;
+            gameState.scoreP1 = 0;
+            gameState.scoreP2 = 0;
+
+            const modeText = gameConfig.mode === 'symmetry' ? '對稱圖案' : '對稱互補圖案';
+            const playerText = gameConfig.players === 1 ? '1人模式' : '2人模式';
+            document.getElementById('title-display').innerText = `${modeText} (${playerText})`;
+
+            startRound();
+        }
+
+        function startRound() {
+            document.getElementById('round-display').innerText = `第 ${gameState.currentRound} / ${gameConfig.totalRounds} 題`;
+            gameState.isRoundActive = true;
+            gameState.p1Finished = false;
+            gameState.p2Finished = false;
+
+            // 隨機決定題目在左或右 (1人模式使用)
+            gameState.qSide = Math.random() < 0.5 ? 'left' : 'right';
+
+            // 隨機生成題目 6x4
+            gameState.questionGrid = generateRandomGrid();
+
+            // 初始化玩家答題狀態 (清空)
+            gameState.p1AnswerGrid = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+            gameState.p2AnswerGrid = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+
+            // 建立 UI 佈局
+            renderGameLayout();
+        }
+
+        function generateRandomGrid() {
+            let grid = [];
+            let count = 0;
+            for (let r = 0; r < ROWS; r++) {
+                let row = [];
+                for (let c = 0; c < COLS; c++) {
+                    let colored = Math.random() < 0.4 ? 1 : 0;
+                    row.push(colored);
+                    count += colored;
+                }
+                grid.push(row);
+            }
+            // 避免全空或全滿
+            if (count < 4 || count > 18) {
+                return generateRandomGrid();
+            }
+            return grid;
+        }
+
+        function renderGameLayout() {
+            const gameArea = document.getElementById('game-area');
+            gameArea.innerHTML = ''; // 清空
+
+            if (gameConfig.players === 1) {
+                // 1 人模式：題目區與回答區水平對齊
+                if (gameState.qSide === 'left') {
+                    // 左邊：題目 / 右邊：玩家
+                    gameArea.appendChild(createBoardSection('q', '題目區 (請看這裏)', gameState.questionGrid, true));
+                    gameArea.appendChild(createAxisLine());
+                    gameArea.appendChild(createBoardSection('p1', `得分: ${gameState.scoreP1}`, gameState.p1AnswerGrid, false, 1));
+                } else {
+                    // 左邊：玩家 / 右邊：題目
+                    gameArea.appendChild(createBoardSection('p1', `得分: ${gameState.scoreP1}`, gameState.p1AnswerGrid, false, 1));
+                    gameArea.appendChild(createAxisLine());
+                    gameArea.appendChild(createBoardSection('q', '題目區 (請看這裏)', gameState.questionGrid, true));
+                }
+            } else {
+                // 2 人模式： 玩家1 (左4x6) - 對稱線 - 題目 (中4x6) - 對稱線 - 玩家2 (右4x6)
+                gameArea.appendChild(createBoardSection('p1', `玩家 1 得分: ${gameState.scoreP1}`, gameState.p1AnswerGrid, false, 1));
+                gameArea.appendChild(createAxisLine());
+                gameArea.appendChild(createBoardSection('q', '題目區', gameState.questionGrid, true));
+                gameArea.appendChild(createAxisLine());
+                gameArea.appendChild(createBoardSection('p2', `玩家 2 得分: ${gameState.scoreP2}`, gameState.p2AnswerGrid, false, 2));
+            }
+        }
+
+        function createAxisLine() {
+            const container = document.createElement('div');
+            container.className = 'axis-container';
+
+            const spacer = document.createElement('div');
+            spacer.className = 'axis-spacer';
+            container.appendChild(spacer);
+
+            const axis = document.createElement('div');
+            axis.className = 'axis-line';
+            container.appendChild(axis);
+
+            return container;
+        }
+
+        function createBoardSection(type, headerText, gridData, isReadOnly, playerNum = 0) {
+            const section = document.createElement('div');
+            section.className = 'board-section';
+            section.id = `section-${type}`;
+
+            // 頂部標題
+            const header = document.createElement('div');
+            header.className = 'board-header';
+            header.id = `header-${type}`;
+            header.innerText = headerText;
+            section.appendChild(header);
+
+            // 網格 container
+            const gridEl = document.createElement('div');
+            gridEl.className = 'grid';
+            gridEl.id = `grid-${type}`;
+
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = `cell-${type}-${r}-${c}`;
+
+                    if (isReadOnly) {
+                        cell.classList.add('read-only');
+                        if (gridData[r][c] === 1) cell.classList.add('q-colored');
+                    } else {
+                        if (gridData[r][c] === 1) {
+                            cell.classList.add(playerNum === 1 ? 'p1-colored' : 'p2-colored');
+                        }
+                        // 綁定點擊/觸控事件
+                        bindTouchClick(cell, () => handleCellClick(r, c, playerNum, type));
+                    }
+                    gridEl.appendChild(cell);
+                }
+            }
+
+            section.appendChild(gridEl);
+
+            // 答對/答錯提示 overlay
+            const feedback = document.createElement('div');
+            feedback.className = 'feedback-overlay';
+            feedback.id = `feedback-${type}`;
+            section.appendChild(feedback);
+
+            // 如果是玩家作答區，加入提交按鈕
+            if (!isReadOnly) {
+                const subBtn = document.createElement('button');
+                subBtn.className = 'submit-btn';
+                subBtn.id = `btn-submit-${type}`;
+                subBtn.innerText = '檢查答案';
+                bindTouchClick(subBtn, () => checkAnswer(playerNum));
+                section.appendChild(subBtn);
+            }
+
+            return section;
+        }
+
+        function handleCellClick(r, c, playerNum, type) {
+            if (!gameState.isRoundActive) return;
+
+            // 若該玩家已完成本題，則不再響應點擊
+            if ((playerNum === 1 && gameState.p1Finished) || (playerNum === 2 && gameState.p2Finished)) {
+                return;
+            }
+
+            playSound('click');
+
+            const answerGrid = playerNum === 1 ? gameState.p1AnswerGrid : gameState.p2AnswerGrid;
+            answerGrid[r][c] = answerGrid[r][c] === 0 ? 1 : 0; // 切換著色狀態
+
+            const cell = document.getElementById(`cell-${type}-${r}-${c}`);
+            const activeClass = playerNum === 1 ? 'p1-colored' : 'p2-colored';
+
+            if (answerGrid[r][c] === 1) {
+                cell.classList.add(activeClass);
+            } else {
+                cell.classList.remove(activeClass);
+            }
+        }
+
+        function checkAnswer(playerNum) {
+            if (!gameState.isRoundActive) return;
+
+            // 已完成玩家不可重複檢查
+            if ((playerNum === 1 && gameState.p1Finished) || (playerNum === 2 && gameState.p2Finished)) {
+                return;
+            }
+
+            const playerGrid = playerNum === 1 ? gameState.p1AnswerGrid : gameState.p2AnswerGrid;
+            let isCorrect = true;
+
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const qVal = gameState.questionGrid[r][3 - c];
+                    let expectedVal = (gameConfig.mode === 'complement') ? (1 - qVal) : qVal;
+
+                    if (playerGrid[r][c] !== expectedVal) {
+                        isCorrect = false;
+                        break;
+                    }
+                }
+                if (!isCorrect) break;
+            }
+
+            handleAnswerResult(playerNum, isCorrect);
+        }
+
+        function handleAnswerResult(playerNum, isCorrect) {
+            const sectionType = `p${playerNum}`;
+            const feedbackEl = document.getElementById(`feedback-${sectionType}`);
+            const gridEl = document.getElementById(`grid-${sectionType}`);
+            const subBtn = document.getElementById(`btn-submit-${sectionType}`);
+
+            if (isCorrect) {
+                playSound('correct');
+                feedbackEl.innerText = '⭕';
+                feedbackEl.style.color = '#7bc9a6';
+                feedbackEl.classList.add('show');
+                gridEl.classList.add('anim-bounce');
+
+                // 標記該玩家已完成
+                if (playerNum === 1) {
+                    gameState.p1Finished = true;
+                    gameState.scoreP1 += 10;
+                } else {
+                    gameState.p2Finished = true;
+                    gameState.scoreP2 += 10;
+                }
+
+                // 鎖定該玩家按鈕與網格
+                if (subBtn) {
+                    subBtn.innerText = '已完成 ✅';
+                    subBtn.classList.add('disabled');
+                }
+
+                // 鎖定網格格子
+                const cells = gridEl.querySelectorAll('.cell');
+                cells.forEach(cell => cell.classList.add('read-only'));
+
+                // 更新標題分數顯示
+                const headerEl = document.getElementById(`header-${sectionType}`);
+                if (headerEl) {
+                    const score = playerNum === 1 ? gameState.scoreP1 : gameState.scoreP2;
+                    headerEl.innerText = gameConfig.players === 1 ? `得分: ${score}` : `玩家 ${playerNum} 得分: ${score}`;
+                }
+
+                setTimeout(() => {
+                    feedbackEl.classList.remove('show');
+                    gridEl.classList.remove('anim-bounce');
+                }, 1000);
+
+                // 檢查是否需要進入下一題
+                if (gameConfig.players === 1) {
+                    // 1 人模式：立即跳轉
+                    gameState.isRoundActive = false;
+                    setTimeout(() => nextRound(), 1200);
+                } else {
+                    // 2 人模式：需 2 位玩家均答對後才跳轉
+                    if (gameState.p1Finished && gameState.p2Finished) {
+                        gameState.isRoundActive = false;
+                        setTimeout(() => nextRound(), 1200);
+                    } else {
+                        // 提示等待另一位玩家
+                        if (headerEl) {
+                            headerEl.innerText = `玩家 ${playerNum} 已完成 (等待中...)`;
+                        }
+                    }
+                }
+
+            } else {
+                playSound('wrong');
+                feedbackEl.innerText = '❌';
+                feedbackEl.style.color = '#ff8b94';
+                feedbackEl.classList.add('show');
+                gridEl.classList.add('anim-shake');
+
+                if (playerNum === 1) gameState.scoreP1 = Math.max(0, gameState.scoreP1 - 5);
+                else gameState.scoreP2 = Math.max(0, gameState.scoreP2 - 5);
+
+                const headerEl = document.getElementById(`header-${sectionType}`);
+                if (headerEl) {
+                    const score = playerNum === 1 ? gameState.scoreP1 : gameState.scoreP2;
+                    headerEl.innerText = gameConfig.players === 1 ? `得分: ${score}` : `玩家 ${playerNum} 得分: ${score}`;
+                }
+
+                setTimeout(() => {
+                    feedbackEl.classList.remove('show');
+                    gridEl.classList.remove('anim-shake');
+                }, 700);
+            }
+        }
+
+        function nextRound() {
+            if (gameState.currentRound < gameConfig.totalRounds) {
+                gameState.currentRound++;
+                startRound();
+            } else {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            const resultText = document.getElementById('final-result-text');
+            if (gameConfig.players === 1) {
+                resultText.innerHTML = `太棒了！你完成了所有題目！<br><br>最終得分：<span style="color:#ff8b94; font-size:38px; font-weight:bold;">${gameState.scoreP1}</span>`;
+            } else {
+                let winnerStr = "";
+                if (gameState.scoreP1 > gameState.scoreP2) winnerStr = "🎉 玩家 1 獲勝！";
+                else if (gameState.scoreP2 > gameState.scoreP1) winnerStr = "🎉 玩家 2 獲勝！";
+                else winnerStr = "🤝 兩位玩家平手！";
+
+                resultText.innerHTML = `
+                    ${winnerStr}<br><br>
+                    玩家 1: ${gameState.scoreP1} 分<br>
+                    玩家 2: ${gameState.scoreP2} 分
+                `;
+            }
+        }
+
+        function backToMenu() {
+            playSound('click');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('menu-screen').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

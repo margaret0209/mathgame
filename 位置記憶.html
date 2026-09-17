@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>馬卡龍位置記憶大冒險 - 特殊教育數學科遊戲</title>
+    <style>
+        /* === 核心 CSS 重置與全螢幕極限無捲動設定 (專為 iPad 橫向滿版設計) === */
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #FFF9F5;
+            color: #4A4A4A;
+            touch-action: none;
+        }
+
+        /* === 馬卡龍主題色彩變數 === */
+        :root {
+            --bg-main: #FFF9F5;
+            --card-bg: #FFFFFF;
+            --primary-pink: #FFB7B2;
+            --primary-yellow: #FFE5B4;
+            --primary-green: #B5EAD7;
+            --primary-blue: #A0E7E5;
+            --primary-purple: #E0BBE4;
+            --accent-orange: #FFDAC1;
+            --text-dark: #554A46;
+            --text-light: #8C7B75;
+            --border-radius: 16px;
+            --shadow-soft: 0 6px 16px rgba(180, 160, 150, 0.15);
+        }
+
+        /* === 全域自適應版面容器 === */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+            padding: 8px 12px;
+            gap: 8px;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, #FFF5F5 0%, #F0F7FF 100%);
+            overflow: hidden;
+        }
+
+        /* === 上方控制與選單區 === */
+        .header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--card-bg);
+            padding: 6px 14px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-soft);
+            flex-shrink: 0;
+            height: 52px;
+            min-height: 52px;
+            gap: 10px;
+        }
+
+        .game-title {
+            font-size: clamp(1rem, 2vh, 1.25rem);
+            font-weight: 800;
+            color: #6C5CE7;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .select-label {
+            font-size: clamp(0.75rem, 1.4vh, 0.9rem);
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-right: 2px;
+        }
+
+        /* 按鈕風格 (馬卡龍按鈕) */
+        .btn-option {
+            background-color: #F0F0F0;
+            border: 2px solid transparent;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: clamp(0.75rem, 1.5vh, 0.9rem);
+            font-weight: 700;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 2px 0 #DDD;
+            touch-action: manipulation;
+        }
+
+        .btn-option.active {
+            background-color: var(--primary-green);
+            color: #2D5A4C;
+            border-color: #7FD3B6;
+            box-shadow: 0 2px 0 #60B89B;
+            transform: translateY(-1px);
+        }
+
+        .btn-start {
+            background-color: var(--primary-pink);
+            color: #7A2E2B;
+            border: 2px solid #FF9E99;
+            padding: 5px 16px;
+            border-radius: 12px;
+            font-size: clamp(0.85rem, 1.6vh, 0.95rem);
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #E68883;
+            transition: all 0.15s ease;
+            touch-action: manipulation;
+        }
+
+        .btn-start:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #E68883;
+        }
+
+        .info-badge {
+            background-color: #F8F1FF;
+            padding: 4px 10px;
+            border-radius: 14px;
+            font-weight: 700;
+            color: #7B4397;
+            border: 1.5px solid #E2D4F0;
+            font-size: clamp(0.75rem, 1.4vh, 0.85rem);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        /* === 下方遊戲主區域 (嚴格高度限制自適應) === */
+        .game-stage {
+            flex: 1;
+            min-height: 0; /* 關鍵：防止 Flex 子元素溢出 */
+            display: flex;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 1人模式中央版面 */
+        .single-mode-layout {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: 100%;
+            gap: 14px;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+        }
+
+        /* 2人模式三分版面 (左、中、右) */
+        .dual-mode-layout {
+            display: grid;
+            grid-template-columns: 1fr minmax(130px, 170px) 1fr;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            gap: 10px;
+            align-items: center;
+            padding: 4px;
+        }
+
+        /* 控制卡片與播放鍵 */
+        .center-control-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 10px;
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            height: 100%;
+            min-height: 0;
+            border: 2px solid #FFF0E6;
+            flex-shrink: 0;
+        }
+
+        .btn-replay {
+            background: linear-gradient(135deg, #FFE5B4 0%, #FFDAC1 100%);
+            border: 2px solid #F3C68F;
+            border-radius: 50%;
+            width: clamp(65px, 12vh, 85px);
+            height: clamp(65px, 12vh, 85px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #E2AC6E, 0 6px 12px rgba(0,0,0,0.05);
+            transition: all 0.15s ease;
+            touch-action: manipulation;
+            flex-shrink: 0;
+        }
+
+        .btn-replay:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #E2AC6E;
+        }
+
+        .btn-replay svg {
+            width: clamp(24px, 4vh, 32px);
+            height: clamp(24px, 4vh, 32px);
+            fill: #7A521E;
+        }
+
+        .btn-replay-text {
+            font-size: clamp(0.7rem, 1.2vh, 0.8rem);
+            font-weight: 800;
+            color: #7A521E;
+            margin-top: 2px;
+        }
+
+        /* 雙人模式專用播放按鈕 */
+        .btn-replay-small {
+            background: linear-gradient(135deg, #FFE5B4 0%, #FFDAC1 100%);
+            border: 2px solid #F3C68F;
+            border-radius: 10px;
+            padding: 6px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #E2AC6E;
+            font-size: clamp(0.75rem, 1.4vh, 0.85rem);
+            font-weight: 800;
+            color: #7A521E;
+            margin-top: 4px;
+            transition: all 0.15s ease;
+            width: 100%;
+            max-width: 220px;
+            touch-action: manipulation;
+            flex-shrink: 0;
+        }
+
+        .btn-replay-small:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #E2AC6E;
+        }
+
+        .btn-replay-small svg {
+            width: 16px;
+            height: 16px;
+            fill: #7A521E;
+        }
+
+        .status-message {
+            font-size: clamp(0.8rem, 1.5vh, 0.95rem);
+            font-weight: 800;
+            text-align: center;
+            color: #554A46;
+            min-height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 8px;
+            border-radius: 8px;
+            background-color: #FFF9F5;
+            width: 100%;
+            line-height: 1.25;
+        }
+
+        /* === 遊戲方格矩陣 (極致適應正方形容器) === */
+        .grid-wrapper {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 8px 10px;
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            min-width: 0;
+            position: relative;
+            border: 3px solid #EBF4F6;
+            overflow: hidden;
+        }
+
+        .player-header {
+            font-size: clamp(0.8rem, 1.4vh, 0.9rem);
+            font-weight: 800;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 3px 8px;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .p1-color { background-color: #EBF3FF; color: #3B729F; }
+        .p2-color { background-color: #FFF0F5; color: #A84268; }
+
+        .grid-board-container {
+            flex: 1;
+            min-height: 0;
+            min-width: 0;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px;
+        }
+
+        .grid-board {
+            display: grid;
+            gap: 6px;
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: contain;
+            margin: auto;
+        }
+
+        /* 按鈕預設為灰色，閃亮/點擊時著色 */
+        .grid-tile {
+            background-color: #E2E8F0;
+            border-radius: clamp(8px, 1.8vh, 14px);
+            border: 2px solid #CBD5E1;
+            cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: inset 0 -3px 0 rgba(0,0,0,0.08);
+            touch-action: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* 方格閃爍/點擊時的活躍發光樣式 */
+        .grid-tile.active-flash {
+            transform: scale(0.94);
+            z-index: 5;
+        }
+
+        /* 馬卡龍多色發光定義：僅在 active-flash 時展現專屬亮麗色彩 */
+        .grid-tile.tile-color-0.active-flash { background-color: #FF8B82 !important; border-color: #FF5D52 !important; box-shadow: 0 0 18px rgba(255, 139, 130, 0.9); }
+        .grid-tile.tile-color-1.active-flash { background-color: #FFD166 !important; border-color: #FFC04D !important; box-shadow: 0 0 18px rgba(255, 209, 102, 0.9); }
+        .grid-tile.tile-color-2.active-flash { background-color: #06D6A0 !important; border-color: #05B386 !important; box-shadow: 0 0 18px rgba(6, 214, 160, 0.9); }
+        .grid-tile.tile-color-3.active-flash { background-color: #4CC9F0 !important; border-color: #18B0E0 !important; box-shadow: 0 0 18px rgba(76, 201, 240, 0.9); }
+        .grid-tile.tile-color-4.active-flash { background-color: #C77DFF !important; border-color: #B252FF !important; box-shadow: 0 0 18px rgba(199, 125, 255, 0.9); }
+        .grid-tile.tile-color-5.active-flash { background-color: #FF9F1C !important; border-color: #E08300 !important; box-shadow: 0 0 18px rgba(255, 159, 28, 0.9); }
+        .grid-tile.tile-color-6.active-flash { background-color: #B5179E !important; border-color: #920E7E !important; box-shadow: 0 0 18px rgba(181, 23, 158, 0.9); }
+        .grid-tile.tile-color-7.active-flash { background-color: #48CAE4 !important; border-color: #00B4D8 !important; box-shadow: 0 0 18px rgba(72, 202, 228, 0.9); }
+        .grid-tile.tile-color-8.active-flash { background-color: #8AC926 !important; border-color: #70A41E !important; box-shadow: 0 0 18px rgba(138, 201, 38, 0.9); }
+
+        /* === 結算彈出視窗 === */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(80, 60, 60, 0.4);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: #FFFFFF;
+            border-radius: 20px;
+            padding: 20px 28px;
+            width: 85%;
+            max-width: 420px;
+            text-align: center;
+            box-shadow: 0 16px 32px rgba(0,0,0,0.2);
+            transform: scale(0.85);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 4px solid var(--primary-pink);
+        }
+
+        .modal-overlay.show .modal-card {
+            transform: scale(1);
+        }
+
+        .star-rating {
+            font-size: 2.4rem;
+            margin: 6px 0;
+        }
+
+        .btn-restart {
+            background-color: var(--primary-green);
+            color: #2D5A4C;
+            border: 2px solid #7FD3B6;
+            padding: 8px 24px;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #60B89B;
+            margin-top: 10px;
+            touch-action: manipulation;
+        }
+
+        .btn-restart:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #60B89B;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 上方選單與控制區 -->
+        <header class="header-bar">
+            <div class="game-title">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6C5CE7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                    <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                    <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                    <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                </svg>
+                <span>位置記憶大冒險</span>
+            </div>
+
+            <!-- 選項設定區 -->
+            <div class="control-group">
+                <div>
+                    <span class="select-label">網格：</span>
+                    <button class="btn-option active" onclick="setGridSize(3, this)">3x3</button>
+                    <button class="btn-option" onclick="setGridSize(4, this)">4x4</button>
+                    <button class="btn-option" onclick="setGridSize(5, this)">5x5</button>
+                </div>
+
+                <div style="margin-left: 6px;">
+                    <span class="select-label">模式：</span>
+                    <button class="btn-option active" onclick="setMode(1, this)">1人</button>
+                    <button class="btn-option" onclick="setMode(2, this)">2人</button>
+                </div>
+
+                <button class="btn-start" onclick="startGame()">開始遊戲</button>
+            </div>
+
+            <!-- 計分與關卡進度 -->
+            <div class="control-group">
+                <div class="info-badge" id="question-progress">
+                    <span>關卡：</span><strong id="q-number">1</strong>/10
+                </div>
+                <div class="info-badge" id="score-display">
+                    <span>得分：</span><strong id="p1-score-val">0</strong>
+                </div>
+            </div>
+        </header>
+
+        <!-- 下方遊戲主要舞台 (動態由 JS 渲染) -->
+        <main class="game-stage" id="game-stage">
+            <!-- 1人/2人版面將由 JavaScript 動態生成 -->
+        </main>
+    </div>
+
+    <!-- 結算彈出視窗 -->
+    <div class="modal-overlay" id="end-modal">
+        <div class="modal-card">
+            <h2 style="font-size: 1.4rem; color: #554A46;" id="modal-title">🎉 太棒了！挑戰完成！</h2>
+            <div class="star-rating" id="modal-stars">⭐⭐⭐</div>
+            <p id="modal-desc" style="font-size: 0.95rem; color: #786C66; margin: 6px 0;">你成功完成了 10 個位置記憶關卡！</p>
+            <div id="modal-scores" style="font-size: 1.1rem; font-weight: 800; color: #6C5CE7; margin: 10px 0;"></div>
+            <button class="btn-restart" onclick="closeModalAndRestart()">再玩一次 🚀</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * === Web Audio API 音效合成器 (100% 離線運作、不需任何外部音檔) ===
+         */
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            // 播放點擊/閃爍指定音高
+            playTileSound(index) {
+                this.init();
+                const scale = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50];
+                const freq = scale[index % scale.length];
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+                gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.35);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.35);
+            }
+
+            // 答對音效
+            playCorrect() {
+                this.init();
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.08);
+
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.08 + 0.3);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(this.ctx.currentTime + idx * 0.08);
+                    osc.stop(this.ctx.currentTime + idx * 0.08 + 0.3);
+                });
+            }
+
+            // 答錯音效
+            playWrong() {
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(130, this.ctx.currentTime + 0.3);
+
+                gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.35);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.35);
+            }
+
+            // 遊戲通關歡慶音樂
+            playVictory() {
+                this.init();
+                const melody = [
+                    { f: 523.25, d: 0.15 }, { f: 659.25, d: 0.15 }, { f: 783.99, d: 0.15 },
+                    { f: 1046.50, d: 0.4 }, { f: 880.00, d: 0.2 }, { f: 1046.50, d: 0.6 }
+                ];
+                let now = this.ctx.currentTime;
+                melody.forEach(note => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(note.f, now);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + note.d);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + note.d);
+                    now += note.d + 0.05;
+                });
+            }
+        }
+
+        const audio = new SoundEngine();
+
+        /**
+         * === 遊戲組態與全局狀態 ===
+         */
+        let config = {
+            gridSize: 3,     // 預設 3x3 (可選 3, 4, 5)
+            mode: 1,         // 1人 或 2人 模式
+            totalQuestions: 10
+        };
+
+        let gameState = {
+            currentQIndex: 0,       // 當前題目索引 (0~9)
+            scores: { p1: 0, p2: 0 },
+            questions: [],           // 儲存 10 題的閃爍序列
+            p1IsPlaying: false,      // P1 是否正在播放展示
+            p2IsPlaying: false,      // P2 是否正在播放展示
+            p1Interval: null,        // P1 動畫計時器
+            p2Interval: null,        // P2 動畫計時器
+            p1Input: [],             // P1 當前輸入
+            p2Input: [],             // P2 當前輸入
+            p1Finished: false,       // P1 本題是否完成
+            p2Finished: false,       // P2 本題是否完成
+            firstFinisher: null      // 本題首位答對的玩家 (1 或 2)
+        };
+
+        /**
+         * 題目數量與長度規則：
+         * 1-2題: 4格，每格1秒
+         * 3-4題: 5格，每格1秒
+         * 5-6題: 6格，每格1秒
+         * 7-8題: 7格，每格1秒
+         * 9-10題: 8格，每格1秒
+         */
+        function getSequenceLength(questionIndex) {
+            if (questionIndex < 2) return 4;
+            if (questionIndex < 4) return 5;
+            if (questionIndex < 6) return 6;
+            if (questionIndex < 8) return 7;
+            return 8;
+        }
+
+        // 產生 10 題隨機序列
+        function generateQuestions() {
+            const totalTiles = config.gridSize * config.gridSize;
+            gameState.questions = [];
+
+            for (let q = 0; q < config.totalQuestions; q++) {
+                const len = getSequenceLength(q);
+                const seq = [];
+                for (let i = 0; i < len; i++) {
+                    const randomTile = Math.floor(Math.random() * totalTiles);
+                    seq.push(randomTile);
+                }
+                gameState.questions.push(seq);
+            }
+        }
+
+        function setGridSize(size, btnEl) {
+            config.gridSize = size;
+            document.querySelectorAll('.control-group button').forEach(b => {
+                if (b.onclick && b.onclick.toString().includes('setGridSize')) {
+                    b.classList.remove('active');
+                }
+            });
+            btnEl.classList.add('active');
+            startGame();
+        }
+
+        function setMode(mode, btnEl) {
+            config.mode = mode;
+            document.querySelectorAll('.control-group button').forEach(b => {
+                if (b.onclick && b.onclick.toString().includes('setMode')) {
+                    b.classList.remove('active');
+                }
+            });
+            btnEl.classList.add('active');
+            startGame();
+        }
+
+        function startGame() {
+            gameState.currentQIndex = 0;
+            gameState.scores = { p1: 0, p2: 0 };
+            updateHeaderUI();
+            generateQuestions();
+            buildStageLayout();
+            startCurrentQuestion();
+        }
+
+        function updateHeaderUI() {
+            document.getElementById('q-number').innerText = gameState.currentQIndex + 1;
+            const scoreDisplay = document.getElementById('score-display');
+            if (config.mode === 1) {
+                scoreDisplay.innerHTML = `<span>得分：</span><strong>${gameState.scores.p1}</strong>`;
+            } else {
+                scoreDisplay.innerHTML = `<span>總比分：</span><strong style="color:#3B729F;margin-right:6px;">${gameState.scores.p1}</strong> : <strong style="color:#A84268;">${gameState.scores.p2}</strong>`;
+            }
+
+            // 同步更新各自區域上的得分
+            const p1Val = document.getElementById('p1-score-val');
+            if (p1Val) p1Val.innerText = gameState.scores.p1;
+
+            const p2Val = document.getElementById('p2-score-val');
+            if (p2Val) p2Val.innerText = gameState.scores.p2;
+        }
+
+        function buildStageLayout() {
+            const stage = document.getElementById('game-stage');
+            stage.innerHTML = '';
+
+            if (config.mode === 1) {
+                // 1人模式版面 (左側播放控制，右側自適應矩陣)
+                stage.innerHTML = `
+                    <div class="single-mode-layout">
+                        <!-- 左側：控制與播放鍵 -->
+                        <div class="center-control-card" style="width: 180px;">
+                            <div class="status-message" id="status-text">點擊 [播放] 看記憶序列</div>
+                            <button class="btn-replay" onclick="playSequence(1)">
+                                <svg viewBox="0 0 24 24">
+                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                </svg>
+                                <span class="btn-replay-text">播放序列</span>
+                            </button>
+                        </div>
+                        
+                        <!-- 右側：玩家解答區域 -->
+                        <div class="grid-wrapper">
+                            <div class="player-header p1-color">
+                                <span>解答區域</span>
+                                <span>得分：<strong id="p1-score-val">0</strong> 分</span>
+                            </div>
+                            <div class="grid-board-container">
+                                <div class="grid-board" id="p1-grid"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // 2人模式三分版面 (左: P1, 中: 控制/提示, 右: P2)；兩邊都有獨立播放鍵
+                stage.innerHTML = `
+                    <div class="dual-mode-layout">
+                        <!-- 左方：P1 區域 -->
+                        <div class="grid-wrapper">
+                            <div class="player-header p1-color">
+                                <span>玩家 1 (P1)</span>
+                                <span>得分：<strong id="p1-score-val">0</strong> 分</span>
+                                <span id="p1-status-badge">準備</span>
+                            </div>
+                            <div class="grid-board-container">
+                                <div class="grid-board" id="p1-grid"></div>
+                            </div>
+                            <button class="btn-replay-small" onclick="playSequence(1)">
+                                <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                <span>播放 P1 序列</span>
+                            </button>
+                        </div>
+
+                        <!-- 中間：提示區 -->
+                        <div class="center-control-card">
+                            <div class="status-message" id="status-text">雙方各自點擊 [播放] 觀看題目！</div>
+                        </div>
+
+                        <!-- 右方：P2 區域 -->
+                        <div class="grid-wrapper">
+                            <div class="player-header p2-color">
+                                <span>玩家 2 (P2)</span>
+                                <span>得分：<strong id="p2-score-val">0</strong> 分</span>
+                                <span id="p2-status-badge">準備</span>
+                            </div>
+                            <div class="grid-board-container">
+                                <div class="grid-board" id="p2-grid"></div>
+                            </div>
+                            <button class="btn-replay-small" onclick="playSequence(2)">
+                                <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                <span>播放 P2 序列</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderGridBoard('p1-grid', 1);
+            if (config.mode === 2) {
+                renderGridBoard('p2-grid', 2);
+            }
+        }
+
+        // 生成 N x N 的方格矩陣 (支援多點觸控 pointerdown)
+        function renderGridBoard(boardId, playerId) {
+            const board = document.getElementById(boardId);
+            if (!board) return;
+
+            board.style.gridTemplateColumns = `repeat(${config.gridSize}, 1fr)`;
+            board.style.gridTemplateRows = `repeat(${config.gridSize}, 1fr)`;
+            board.innerHTML = '';
+
+            const total = config.gridSize * config.gridSize;
+            for (let i = 0; i < total; i++) {
+                const tile = document.createElement('div');
+                tile.className = `grid-tile tile-color-${i % 9}`;
+                tile.dataset.index = i;
+
+                // 使用 pointerdown 以支援 iPad 多點觸控反應與無延遲體驗
+                tile.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    handleTileClick(playerId, i, tile);
+                });
+
+                board.appendChild(tile);
+            }
+        }
+
+        /**
+         * === 遊戲核心邏輯 (播放與驗證) ===
+         */
+        function startCurrentQuestion() {
+            if (gameState.p1Interval) clearInterval(gameState.p1Interval);
+            if (gameState.p2Interval) clearInterval(gameState.p2Interval);
+
+            gameState.p1IsPlaying = false;
+            gameState.p2IsPlaying = false;
+            gameState.p1Input = [];
+            gameState.p2Input = [];
+            gameState.p1Finished = false;
+            gameState.p2Finished = false;
+            gameState.firstFinisher = null; // 重置本題首名完成者紀錄
+
+            updateHeaderUI();
+
+            if (config.mode === 1) {
+                const statusEl = document.getElementById('status-text');
+                if (statusEl) statusEl.innerText = '點擊 [播放] 看記憶序列';
+                setTimeout(() => playSequence(1), 300);
+            } else {
+                const b1 = document.getElementById('p1-status-badge');
+                const b2 = document.getElementById('p2-status-badge');
+                if (b1) b1.innerText = '準備';
+                if (b2) b2.innerText = '準備';
+                
+                const statusEl = document.getElementById('status-text');
+                if (statusEl) statusEl.innerText = '雙方各自點擊 [播放] 觀看題目！';
+
+                setTimeout(() => {
+                    playSequence(1);
+                    playSequence(2);
+                }, 300);
+            }
+        }
+
+        // 獨立播放指定玩家 (1 或 2) 的序列動畫 (每格 1 秒)
+        function playSequence(playerNum = 1) {
+            audio.init();
+            const currentSeq = gameState.questions[gameState.currentQIndex];
+
+            if (playerNum === 1) {
+                if (gameState.p1IsPlaying || gameState.p1Finished) return;
+                if (gameState.p1Interval) clearInterval(gameState.p1Interval);
+
+                gameState.p1IsPlaying = true;
+                gameState.p1Input = [];
+
+                const badge = document.getElementById('p1-status-badge');
+                if (badge) badge.innerText = '👀 觀看中';
+
+                let step = 0;
+                gameState.p1Interval = setInterval(() => {
+                    if (step >= currentSeq.length) {
+                        clearInterval(gameState.p1Interval);
+                        gameState.p1IsPlaying = false;
+                        if (badge) badge.innerText = '👉 作答中';
+                        if (config.mode === 1) {
+                            const statusEl = document.getElementById('status-text');
+                            if (statusEl) statusEl.innerText = '👉 輪到你囉！依序按下方格';
+                        }
+                        return;
+                    }
+                    flashTile(1, currentSeq[step]);
+                    step++;
+                }, 1000); // 規範：每格閃爍 1 秒
+            } else if (playerNum === 2) {
+                if (gameState.p2IsPlaying || gameState.p2Finished) return;
+                if (gameState.p2Interval) clearInterval(gameState.p2Interval);
+
+                gameState.p2IsPlaying = true;
+                gameState.p2Input = [];
+
+                const badge = document.getElementById('p2-status-badge');
+                if (badge) badge.innerText = '👀 觀看中';
+
+                let step = 0;
+                gameState.p2Interval = setInterval(() => {
+                    if (step >= currentSeq.length) {
+                        clearInterval(gameState.p2Interval);
+                        gameState.p2IsPlaying = false;
+                        if (badge) badge.innerText = '👉 作答中';
+                        return;
+                    }
+                    flashTile(2, currentSeq[step]);
+                    step++;
+                }, 1000);
+            }
+        }
+
+        // 方格閃爍著色與聲音（閃亮後恢復灰色）
+        function flashTile(playerNum, tileIndex) {
+            audio.playTileSound(tileIndex);
+            const gridId = playerNum === 1 ? '#p1-grid' : '#p2-grid';
+            const tiles = document.querySelectorAll(`${gridId} .grid-tile`);
+            if (tiles[tileIndex]) {
+                tiles[tileIndex].classList.add('active-flash');
+                setTimeout(() => tiles[tileIndex].classList.remove('active-flash'), 650);
+            }
+        }
+
+        // 玩家按下方格
+        function handleTileClick(playerId, tileIndex, tileElem) {
+            if (playerId === 1) {
+                if (gameState.p1IsPlaying || gameState.p1Finished) return;
+            } else {
+                if (gameState.p2IsPlaying || gameState.p2Finished) return;
+            }
+
+            audio.playTileSound(tileIndex);
+            tileElem.classList.add('active-flash');
+            setTimeout(() => tileElem.classList.remove('active-flash'), 250);
+
+            const currentSeq = gameState.questions[gameState.currentQIndex];
+
+            if (config.mode === 1) {
+                // 1人模式驗證
+                gameState.p1Input.push(tileIndex);
+                const step = gameState.p1Input.length - 1;
+
+                if (gameState.p1Input[step] !== currentSeq[step]) {
+                    audio.playWrong();
+                    // 答錯不扣分
+                    const statusEl = document.getElementById('status-text');
+                    if (statusEl) statusEl.innerText = '❌ 答錯囉！請按[播放]再試一次';
+
+                    gameState.p1Input = [];
+                    return;
+                }
+
+                if (gameState.p1Input.length === currentSeq.length) {
+                    audio.playCorrect();
+                    gameState.p1Finished = true;
+                    gameState.scores.p1 += 10;
+                    updateHeaderUI();
+
+                    const statusEl = document.getElementById('status-text');
+                    if (statusEl) statusEl.innerText = '🎉 太棒了！答對了！';
+
+                    nextQuestionDelay();
+                }
+            } else {
+                // 2人模式驗證
+                processDualModeInput(playerId, tileIndex, currentSeq);
+            }
+        }
+
+        // 2人模式輸入處理邏輯 (首個答對加 10 分，最後答對加 5 分，答錯不扣分)
+        function processDualModeInput(player, tileIndex, currentSeq) {
+            const userSeq = (player === 1) ? gameState.p1Input : gameState.p2Input;
+            userSeq.push(tileIndex);
+            const step = userSeq.length - 1;
+
+            if (userSeq[step] !== currentSeq[step]) {
+                audio.playWrong();
+                // 答錯不扣分
+                if (player === 1) {
+                    gameState.p1Input = [];
+                    const badge = document.getElementById('p1-status-badge');
+                    if (badge) badge.innerText = '❌ 重試';
+                } else {
+                    gameState.p2Input = [];
+                    const badge = document.getElementById('p2-status-badge');
+                    if (badge) badge.innerText = '❌ 重試';
+                }
+                updateHeaderUI();
+                return;
+            }
+
+            if (userSeq.length === currentSeq.length) {
+                audio.playCorrect();
+
+                // 判斷首個答對 (+10分) 還是最後答對 (+5分)
+                let pts = 0;
+                if (!gameState.firstFinisher) {
+                    gameState.firstFinisher = player;
+                    pts = 10;
+                } else {
+                    pts = 5;
+                }
+
+                if (player === 1) {
+                    gameState.p1Finished = true;
+                    gameState.scores.p1 += pts;
+                    const badge = document.getElementById('p1-status-badge');
+                    if (badge) badge.innerText = `✅ 完成 (+${pts})`;
+                } else {
+                    gameState.p2Finished = true;
+                    gameState.scores.p2 += pts;
+                    const badge = document.getElementById('p2-status-badge');
+                    if (badge) badge.innerText = `✅ 完成 (+${pts})`;
+                }
+                updateHeaderUI();
+
+                const statusEl = document.getElementById('status-text');
+
+                // 核心規範：必須雙方都答對完成才能跳下一題
+                if (gameState.p1Finished && gameState.p2Finished) {
+                    if (statusEl) statusEl.innerText = '🎉 雙方皆完成！準備進入下一題...';
+                    nextQuestionDelay();
+                } else {
+                    if (statusEl) statusEl.innerText = `P${player} 搶先答對 (+${pts}分)！等待另一位玩家...`;
+                }
+            }
+        }
+
+        function nextQuestionDelay() {
+            gameState.p1IsPlaying = true;
+            gameState.p2IsPlaying = true;
+            setTimeout(() => {
+                gameState.currentQIndex++;
+                if (gameState.currentQIndex < config.totalQuestions) {
+                    startCurrentQuestion();
+                } else {
+                    showEndModal();
+                }
+            }, 1200);
+        }
+
+        function showEndModal() {
+            audio.playVictory();
+            const modal = document.getElementById('end-modal');
+            const scoresEl = document.getElementById('modal-scores');
+            
+            if (config.mode === 1) {
+                scoresEl.innerText = `最終得分：${gameState.scores.p1} 分`;
+            } else {
+                let winner = "🤝 平手！大家都很棒！";
+                if (gameState.scores.p1 > gameState.scores.p2) winner = "🏆 玩家 1 (P1) 獲勝！";
+                if (gameState.scores.p2 > gameState.scores.p1) winner = "🏆 玩家 2 (P2) 獲勝！";
+                scoresEl.innerHTML = `${winner}<br><span style="font-size:0.9rem;color:#786C66;">P1: ${gameState.scores.p1}分 | P2: ${gameState.scores.p2}分</span>`;
+            }
+
+            modal.classList.add('show');
+        }
+
+        function closeModalAndRestart() {
+            document.getElementById('end-modal').classList.remove('show');
+            startGame();
+        }
+
+        // 頁面載入完成時自動啟動遊戲
+        window.onload = function() {
+            startGame();
+        };
+    </script>
+</body>
+</html>
