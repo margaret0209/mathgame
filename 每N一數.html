@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <!-- 確保在 iPad 上全螢幕且禁止縮放與捲動 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>數數小達人</title>
+    <!-- 使用 Tailwind CSS 進行快速排版及馬卡龍色系設定 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        macaron: {
+                            pink: '#FDE2E4',
+                            blue: '#E2ECE9',
+                            green: '#D3F8E2',
+                            yellow: '#FFF1E6',
+                            purple: '#EAE4E9',
+                            orange: '#FAD2E1',
+                            darkText: '#5C4D5C',
+                            btnActive: '#C1D3FE',
+                            btnHover: '#B6CCFE'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Comic Sans MS"', 'Chalkboard SE', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        body {
+            background-color: #FFF1E6; /* 馬卡龍柔和黃 */
+            color: #5C4D5C;
+            touch-action: none; /* 禁用捲動與預設手勢 */
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* 遊戲主容器 */
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 8px;
+            gap: 8px;
+        }
+
+        /* 上方控制列 */
+        #top-bar {
+            background-color: #EAE4E9;
+            border-radius: 18px;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            height: 56px;
+            flex-shrink: 0;
+        }
+
+        .top-controls-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .top-controls-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chip-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        
+        .chip-label {
+            font-weight: bold;
+            font-size: 0.95rem;
+            color: #5C4D5C;
+        }
+
+        .chip {
+            padding: 5px 12px;
+            border-radius: 16px;
+            background-color: white;
+            border: 2px solid #FDE2E4;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .chip.active {
+            background-color: #FDE2E4;
+            border-color: #FAD2E1;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.08);
+        }
+
+        select {
+            padding: 4px 8px;
+            border-radius: 12px;
+            border: 2px solid #E2ECE9;
+            background-color: white;
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #5C4D5C;
+            outline: none;
+        }
+
+        /* 右上角按鈕樣式 */
+        .top-btn {
+            padding: 6px 16px;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .top-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.15);
+        }
+
+        .btn-reset {
+            background-color: #FDE2E4;
+            color: #5C4D5C;
+            border: 2px solid #FAD2E1;
+        }
+
+        .btn-next {
+            background-color: #D3F8E2;
+            color: #43604E;
+            border: 2px solid #B4E8C9;
+        }
+
+        /* 出題視覺區域 */
+        #question-area {
+            flex: 1;
+            background-color: white;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            overflow: hidden;
+            padding: 8px;
+        }
+
+        #question-text {
+            font-size: 1.25rem;
+            font-weight: bold;
+            background: #FFF1E6;
+            padding: 4px 18px;
+            border-radius: 12px;
+            z-index: 5;
+            border: 1.5px solid #FAD2E1;
+            margin-bottom: 4px;
+        }
+
+        #items-container {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: center;
+            align-items: center;
+            gap: 10px;
+            overflow: hidden;
+            padding: 4px;
+        }
+
+        /* 水果群組框框 */
+        .item-group {
+            border: 2.5px dashed #B6CCFE;
+            border-radius: 14px;
+            background-color: rgba(226, 236, 233, 0.25);
+            position: relative;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .emoji-item {
+            display: inline-block;
+            line-height: 1;
+            user-select: none;
+            text-align: center;
+        }
+
+        /* 下方玩家答題區 (佔據 40% 高度) */
+        #players-area {
+            height: 42vh;
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            flex-shrink: 0;
+        }
+
+        .player-zone {
+            flex: 1;
+            background-color: #FDE2E4;
+            border-radius: 18px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .player-zone:nth-child(1) { background-color: #FDE2E4; } /* 馬卡龍粉 */
+        .player-zone:nth-child(2) { background-color: #E2ECE9; } /* 馬卡龍藍 */
+        .player-zone:nth-child(3) { background-color: #D3F8E2; } /* 馬卡龍綠 */
+        .player-zone:nth-child(4) { background-color: #FAD2E1; } /* 馬卡龍紫橙 */
+
+        .player-header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .answer-display {
+            background-color: white;
+            height: 40px;
+            border-radius: 10px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            font-weight: bold;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.08);
+            letter-spacing: 2px;
+        }
+
+        /* 九宮格與按鈕區 (3列 x 4行) */
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 6px;
+            flex: 1;
+        }
+
+        .num-btn {
+            background-color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #5C4D5C;
+            box-shadow: 0 3px 0 #CBD5E1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .num-btn:active, .num-btn.pressed {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #CBD5E1;
+            background-color: #F1F5F9;
+        }
+
+        .action-btn {
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .btn-clear {
+            background-color: #FF9B6A;
+            box-shadow: 0 3px 0 #E07A49;
+        }
+
+        .btn-submit {
+            background-color: #88C425;
+            box-shadow: 0 3px 0 #6A9E19;
+        }
+
+        .btn-clear:active { transform: translateY(2px); box-shadow: 0 1px 0 #E07A49; }
+        .btn-submit:active { transform: translateY(2px); box-shadow: 0 1px 0 #6A9E19; }
+
+        .btn-submit.submitted {
+            background-color: #94A3B8;
+            box-shadow: 0 3px 0 #64748B;
+        }
+
+        /* 答題狀態結果圖示 */
+        .status-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 20;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .status-icon.show {
+            opacity: 1;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popIn {
+            0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+            80% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        
+        /* 提示或結算遮罩層 */
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(255,255,255,0.85);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: bold;
+            color: #5C4D5C;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .show-overlay {
+            pointer-events: auto !important;
+            opacity: 1 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- 上方選單 -->
+        <div id="top-bar">
+            <div class="top-controls-left">
+                <div class="chip-group">
+                    <span class="chip-label">課題:</span>
+                    <select id="topic-select">
+                        <option value="2">2個一數</option>
+                        <option value="5" selected>5個一數</option>
+                        <option value="10">10個一數</option>
+                        <option value="20">20個一數</option>
+                        <option value="50">50個一數</option>
+                        <option value="100">100個一數</option>
+                        <option value="random">隨機</option>
+                    </select>
+                </div>
+
+                <div class="chip-group" id="difficulty-group">
+                    <span class="chip-label">難度:</span>
+                    <div class="chip active" data-value="easy">易</div>
+                    <div class="chip" data-value="hard">難</div>
+                    <div class="chip" data-value="challenge">挑戰</div>
+                </div>
+
+                <div class="chip-group" id="players-group">
+                    <span class="chip-label">人數:</span>
+                    <div class="chip" data-value="1">1人</div>
+                    <div class="chip active" data-value="2">2人</div>
+                    <div class="chip" data-value="3">3人</div>
+                    <div class="chip" data-value="4">4人</div>
+                </div>
+            </div>
+
+            <!-- 右上角按鈕：重新選擇、下一題 -->
+            <div class="top-controls-right">
+                <button id="reset-btn" class="top-btn btn-reset">重新選擇</button>
+                <button id="next-btn" class="top-btn btn-next">下一題</button>
+            </div>
+        </div>
+
+        <!-- 中間題目展示區 -->
+        <div id="question-area">
+            <div id="question-text">準備開始...</div>
+            <div id="items-container"></div>
+        </div>
+
+        <!-- 下方玩家作答區 -->
+        <div id="players-area"></div>
+    </div>
+    
+    <!-- 全面答對過關遮罩 -->
+    <div id="overlay">好棒！全部答對！</div>
+
+    <script>
+        // 使用 Web Audio API 生成音效，完全無外部檔案依賴
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if(!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if(audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        const soundEffects = {
+            tap: () => {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            },
+            correct: () => {
+                initAudio();
+                const playNote = (freq, startTime, duration) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0, startTime);
+                    gain.gain.linearRampToValueAtTime(0.25, startTime + 0.04);
+                    gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(startTime);
+                    osc.stop(startTime + duration);
+                };
+                const now = audioCtx.currentTime;
+                playNote(523.25, now, 0.15); // C5
+                playNote(659.25, now + 0.08, 0.15); // E5
+                playNote(783.99, now + 0.16, 0.3); // G5
+            },
+            wrong: () => {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(160, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(110, audioCtx.currentTime + 0.25);
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.25);
+            },
+            success: () => {
+                initAudio();
+                const playNote = (freq, startTime, duration) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0, startTime);
+                    gain.gain.linearRampToValueAtTime(0.3, startTime + 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(startTime);
+                    osc.stop(startTime + duration);
+                };
+                const now = audioCtx.currentTime;
+                playNote(523.25, now, 0.2);
+                playNote(659.25, now + 0.12, 0.2);
+                playNote(783.99, now + 0.24, 0.2);
+                playNote(1046.50, now + 0.36, 0.5); // C6
+            }
+        };
+
+        let gameState = {
+            topic: 5,            // 2, 5, 10, 20, 50, 100
+            difficulty: 'easy',  // easy, hard
+            players: 2,          // 1, 2, 3, 4
+            currentAnswer: 0,
+            isPlaying: false,
+            playerStatus: []     // [{ id, answer, submitted, correct }]
+        };
+
+        // 擴充至 30 種水果/食物 Emoji
+        const itemsList = [
+            '🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🫐', '🍈',
+            '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅', '🥑', '🥦', '🌽',
+            '🥕', '🍩', '🍪', '🎂', '🧁', '🍬', '🍭', '🍦', '🍔', '🍕'
+        ];
+
+        // 各課題的最大數量限制
+        const maxLimits = {
+            2: 100,
+            5: 100,
+            10: 100,
+            20: 200,
+            50: 200,
+            100: 2000
+        };
+
+        function setupUI() {
+            // 綁定難度選擇
+            document.querySelectorAll('#difficulty-group .chip').forEach(chip => {
+                const handler = (e) => {
+                    if(e) e.preventDefault();
+                    soundEffects.tap();
+                    document.querySelectorAll('#difficulty-group .chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    gameState.difficulty = chip.dataset.value;
+                    if(gameState.isPlaying) {
+                        generateQuestion();
+                        resetPlayerInputs();
+                    }
+                };
+                chip.addEventListener('touchstart', handler, {passive: false});
+                chip.addEventListener('click', handler);
+            });
+
+            // 綁定人數選擇
+            document.querySelectorAll('#players-group .chip').forEach(chip => {
+                const handler = (e) => {
+                    if(e) e.preventDefault();
+                    soundEffects.tap();
+                    document.querySelectorAll('#players-group .chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    gameState.players = parseInt(chip.dataset.value);
+                    renderPlayersArea();
+                    if(gameState.isPlaying) {
+                        resetPlayerInputs();
+                    }
+                };
+                chip.addEventListener('touchstart', handler, {passive: false});
+                chip.addEventListener('click', handler);
+            });
+
+            // 下拉選單變更
+            document.getElementById('topic-select').addEventListener('change', () => {
+                soundEffects.tap();
+                if(gameState.isPlaying) {
+                    generateQuestion();
+                    resetPlayerInputs();
+                }
+            });
+
+            // 右上角：重新選擇按鈕
+            const resetBtn = document.getElementById('reset-btn');
+            const resetAction = (e) => {
+                if(e) e.preventDefault();
+                soundEffects.tap();
+                startGame();
+            };
+            resetBtn.addEventListener('touchstart', resetAction, {passive: false});
+            resetBtn.addEventListener('click', resetAction);
+
+            // 右上角：下一題按鈕
+            const nextBtn = document.getElementById('next-btn');
+            const nextAction = (e) => {
+                if(e) e.preventDefault();
+                soundEffects.tap();
+                if(!gameState.isPlaying) {
+                    startGame();
+                } else {
+                    generateQuestion();
+                    resetPlayerInputs();
+                }
+            };
+            nextBtn.addEventListener('touchstart', nextAction, {passive: false});
+            nextBtn.addEventListener('click', nextAction);
+
+            // 初始化渲染玩家區
+            renderPlayersArea();
+            startGame();
+        }
+
+        function renderPlayersArea() {
+            const area = document.getElementById('players-area');
+            area.innerHTML = '';
+            gameState.playerStatus = [];
+
+            for (let i = 0; i < gameState.players; i++) {
+                gameState.playerStatus.push({
+                    id: i,
+                    answer: '',
+                    submitted: false,
+                    correct: false
+                });
+
+                const zone = document.createElement('div');
+                zone.className = 'player-zone';
+                
+                // 九宮格佈局：
+                // Row 1: 1 2 3
+                // Row 2: 4 5 6
+                // Row 3: 7 8 9
+                // Row 4: 清除 0 提交
+                zone.innerHTML = `
+                    <div class="player-header">玩家 ${i + 1}</div>
+                    <div class="answer-display" id="display-${i}"></div>
+                    <div class="numpad" id="numpad-${i}">
+                        <button class="num-btn" data-player="${i}" data-num="1">1</button>
+                        <button class="num-btn" data-player="${i}" data-num="2">2</button>
+                        <button class="num-btn" data-player="${i}" data-num="3">3</button>
+                        <button class="num-btn" data-player="${i}" data-num="4">4</button>
+                        <button class="num-btn" data-player="${i}" data-num="5">5</button>
+                        <button class="num-btn" data-player="${i}" data-num="6">6</button>
+                        <button class="num-btn" data-player="${i}" data-num="7">7</button>
+                        <button class="num-btn" data-player="${i}" data-num="8">8</button>
+                        <button class="num-btn" data-player="${i}" data-num="9">9</button>
+                        <button class="action-btn btn-clear" data-player="${i}">清除</button>
+                        <button class="num-btn" data-player="${i}" data-num="0">0</button>
+                        <button class="action-btn btn-submit" data-player="${i}">提交</button>
+                    </div>
+                    <div class="status-icon" id="status-${i}"></div>
+                `;
+                area.appendChild(zone);
+            }
+
+            bindPlayerEvents();
+        }
+
+        let isPlayerEventsBound = false;
+        let lastInputTimeMap = new Map();
+
+        function bindPlayerEvents() {
+            // 避免重複綁定事件導致多重觸發（解決出現 555 的問題）
+            if (isPlayerEventsBound) return;
+            isPlayerEventsBound = true;
+
+            const area = document.getElementById('players-area');
+
+            const handleTouchOrClick = (e) => {
+                const target = e.target.closest('button');
+                if(!target) return;
+
+                // 防彈跳：防止 touchstart 與 mousedown 重複觸發或連續快速觸發
+                const now = Date.now();
+                const lastTime = lastInputTimeMap.get(target) || 0;
+                if (now - lastTime < 200) {
+                    if (e.cancelable) e.preventDefault();
+                    return;
+                }
+                lastInputTimeMap.set(target, now);
+
+                if (e.cancelable) e.preventDefault();
+                
+                const pId = parseInt(target.getAttribute('data-player'));
+                const pStatus = gameState.playerStatus[pId];
+                
+                if(!pStatus || pStatus.submitted) return;
+
+                soundEffects.tap();
+
+                target.classList.add('pressed');
+                setTimeout(() => target.classList.remove('pressed'), 120);
+
+                const display = document.getElementById(`display-${pId}`);
+
+                if(target.classList.contains('num-btn')) {
+                    const num = target.getAttribute('data-num');
+                    if(pStatus.answer.length < 4) {
+                        pStatus.answer += num;
+                        display.innerText = pStatus.answer;
+                    }
+                } 
+                else if(target.classList.contains('btn-clear')) {
+                    pStatus.answer = '';
+                    display.innerText = '';
+                }
+                else if(target.classList.contains('btn-submit')) {
+                    if(pStatus.answer === '') return;
+                    submitAnswer(pId);
+                }
+            };
+
+            // 使用 pointerdown 支援多點觸控與滑鼠，且防重複點擊
+            area.addEventListener('pointerdown', handleTouchOrClick, {passive: false});
+        }
+
+        function submitAnswer(playerId) {
+            const pStatus = gameState.playerStatus[playerId];
+            pStatus.submitted = true;
+            
+            const submitBtn = document.querySelector(`.btn-submit[data-player="${playerId}"]`);
+            if(submitBtn) {
+                submitBtn.classList.add('submitted');
+                submitBtn.innerText = "已交";
+            }
+
+            // 檢查是否所有人皆已提交答案
+            const allSubmitted = gameState.playerStatus.every(p => p.submitted);
+            if (allSubmitted) {
+                evaluateAllAnswers();
+            }
+        }
+
+        function evaluateAllAnswers() {
+            let allCorrect = true;
+
+            // 所有人提交後同時揭曉答案對錯
+            gameState.playerStatus.forEach(pStatus => {
+                const isCorrect = parseInt(pStatus.answer, 10) === gameState.currentAnswer;
+                pStatus.correct = isCorrect;
+                if (!isCorrect) allCorrect = false;
+
+                const statusIcon = document.getElementById(`status-${pStatus.id}`);
+                if (statusIcon) {
+                    statusIcon.innerText = isCorrect ? "✅" : "❌";
+                    statusIcon.classList.add('show');
+                }
+            });
+
+            if (allCorrect) {
+                soundEffects.success();
+                const overlay = document.getElementById('overlay');
+                overlay.innerText = "好棒！全部答對！";
+                overlay.classList.add('show-overlay');
+                
+                setTimeout(() => {
+                    overlay.classList.remove('show-overlay');
+                    generateQuestion();
+                    resetPlayerInputs();
+                }, 2500);
+            } else {
+                soundEffects.wrong();
+                
+                // 1.8 秒後自動讓答錯的玩家重新嘗試輸入
+                setTimeout(() => {
+                    gameState.playerStatus.forEach(pStatus => {
+                        if (!pStatus.correct) {
+                            pStatus.submitted = false;
+                            pStatus.answer = '';
+                            const display = document.getElementById(`display-${pStatus.id}`);
+                            const submitBtn = document.querySelector(`.btn-submit[data-player="${pStatus.id}"]`);
+                            const statusIcon = document.getElementById(`status-${pStatus.id}`);
+                            
+                            if (display) display.innerText = '';
+                            if (statusIcon) statusIcon.classList.remove('show');
+                            if (submitBtn) {
+                                submitBtn.classList.remove('submitted');
+                                submitBtn.innerText = "提交";
+                            }
+                        }
+                    });
+                }, 1800);
+            }
+        }
+
+        function resetPlayerInputs() {
+            gameState.playerStatus.forEach(p => {
+                p.answer = '';
+                p.submitted = false;
+                p.correct = false;
+                
+                const display = document.getElementById(`display-${p.id}`);
+                const submitBtn = document.querySelector(`.btn-submit[data-player="${p.id}"]`);
+                const statusIcon = document.getElementById(`status-${p.id}`);
+                
+                if(display) display.innerText = '';
+                if(submitBtn) {
+                    submitBtn.classList.remove('submitted');
+                    submitBtn.innerText = "提交";
+                }
+                if(statusIcon) {
+                    statusIcon.classList.remove('show');
+                    statusIcon.innerText = '';
+                }
+            });
+        }
+
+        function startGame() {
+            gameState.isPlaying = true;
+            resetPlayerInputs();
+            generateQuestion();
+        }
+
+        function generateQuestion() {
+            const topicVal = document.getElementById('topic-select').value;
+            if (topicVal === 'random') {
+                const topics = [2, 5, 10, 20, 50, 100];
+                gameState.topic = topics[Math.floor(Math.random() * topics.length)];
+            } else {
+                gameState.topic = parseInt(topicVal, 10);
+            }
+
+            const maxAns = maxLimits[gameState.topic];
+            const maxGroups = Math.floor(maxAns / gameState.topic);
+            
+            // 為了畫面上能清楚呈現，隨機產生 1 ~ maxGroups 個群組
+            // 若 100個一數，則產生 1~20 個群組（最多2000個）
+            const limitGroupCount = Math.min(maxGroups, 20);
+            const numGroups = Math.floor(Math.random() * limitGroupCount) + 1;
+            
+            gameState.currentAnswer = numGroups * gameState.topic;
+
+            document.getElementById('question-text').innerText = `每 ${gameState.topic} 個一數，共有多少個？`;
+
+            const container = document.getElementById('items-container');
+            container.innerHTML = '';
+            
+            // 隨機自 30 種物品中挑選一種
+            const currentItem = itemsList[Math.floor(Math.random() * itemsList.length)];
+
+            // 動態計算適應尺寸，確保完整顯示在畫面中
+            const containerWidth = container.clientWidth || (window.innerWidth - 30);
+            const containerHeight = container.clientHeight || (window.innerHeight * 0.4);
+
+            // 計算每個群組框的邊長尺寸
+            let groupWidth, groupHeight, fontSize;
+            if (numGroups <= 4) {
+                groupWidth = Math.min(containerWidth / (numGroups + 0.5), containerHeight * 0.8, 180);
+            } else if (numGroups <= 10) {
+                groupWidth = Math.min(containerWidth / 5.5, containerHeight / 2.3, 130);
+            } else {
+                groupWidth = Math.min(containerWidth / 7.5, containerHeight / 3.3, 95);
+            }
+            groupHeight = groupWidth;
+
+            // 根據 topic (2, 5, 10, 20, 50, 100) 計算字型大小
+            if (gameState.topic <= 5) fontSize = groupWidth * 0.32;
+            else if (gameState.topic <= 10) fontSize = groupWidth * 0.24;
+            else if (gameState.topic <= 20) fontSize = groupWidth * 0.18;
+            else if (gameState.topic <= 50) fontSize = groupWidth * 0.13;
+            else fontSize = groupWidth * 0.09;
+
+            if (gameState.difficulty === 'challenge') {
+                // 「挑戰」難度：完全不分區，所有水果混亂分散在整個題目區中
+                container.style.position = 'relative';
+                const totalItems = gameState.currentAnswer;
+                
+                // 動態計算適當字體，防止畫面太擠或太小
+                const areaPerItem = (containerWidth * containerHeight) / totalItems;
+                const baseSize = Math.sqrt(areaPerItem) * 0.7;
+                const challengeFontSize = Math.max(12, Math.min(baseSize, 45));
+
+                for (let k = 0; k < totalItems; k++) {
+                    const item = document.createElement('span');
+                    item.className = 'emoji-item';
+                    item.innerText = currentItem;
+                    item.style.fontSize = `${challengeFontSize}px`;
+                    item.style.position = 'absolute';
+                    
+                    // 隨機分布在整個 container 區域內 (2%~86%)，並加入任意角度旋轉與疊加層級
+                    const left = Math.random() * 84 + 3;
+                    const top = Math.random() * 82 + 3;
+                    const rot = (Math.random() - 0.5) * 360;
+                    
+                    item.style.left = `${left}%`;
+                    item.style.top = `${top}%`;
+                    item.style.transform = `rotate(${rot}deg)`;
+                    item.style.zIndex = Math.floor(Math.random() * 50);
+                    
+                    container.appendChild(item);
+                }
+            } else {
+                for (let i = 0; i < numGroups; i++) {
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'item-group';
+                    groupDiv.style.width = `${groupWidth}px`;
+                    groupDiv.style.height = `${groupHeight}px`;
+                    groupDiv.style.padding = '3px';
+
+                    if (gameState.difficulty === 'easy') {
+                        // 「易」難度：有虛線邊框提示，整齊 Grid 方格排列，確保水果完整收納於框內
+                        groupDiv.style.border = '2.5px dashed #B6CCFE';
+                        groupDiv.style.backgroundColor = 'rgba(226, 236, 233, 0.25)';
+                        groupDiv.style.display = 'grid';
+                        groupDiv.style.overflow = 'hidden';
+
+                        const cols = Math.ceil(Math.sqrt(gameState.topic));
+                        const rows = Math.ceil(gameState.topic / cols);
+
+                        groupDiv.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+                        groupDiv.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+                        groupDiv.style.alignItems = 'center';
+                        groupDiv.style.justifyItems = 'center';
+
+                        // 依據單元格長寬精準計算 Emoji 字體大小，確保永遠不溢出虛線框
+                        const cellW = (groupWidth - 8) / cols;
+                        const cellH = (groupHeight - 8) / rows;
+                        const easyFontSize = Math.max(8, Math.min(cellW, cellH) * 0.72);
+
+                        for (let j = 0; j < gameState.topic; j++) {
+                            const item = document.createElement('span');
+                            item.className = 'emoji-item';
+                            item.innerText = currentItem;
+                            item.style.fontSize = `${easyFontSize}px`;
+                            item.style.lineHeight = '1';
+                            groupDiv.appendChild(item);
+                        }
+                    } else {
+                        // 「難」難度：無方框提示，分區隨機堆疊
+                        groupDiv.style.border = 'none';
+                        groupDiv.style.backgroundColor = 'transparent';
+                        groupDiv.style.display = 'block';
+                        groupDiv.style.position = 'relative';
+
+                        for (let j = 0; j < gameState.topic; j++) {
+                            const item = document.createElement('span');
+                            item.className = 'emoji-item';
+                            item.innerText = currentItem;
+                            item.style.fontSize = `${fontSize}px`;
+                            item.style.position = 'absolute';
+                            
+                            // 隨機定位與角度，堆疊在一起
+                            const left = Math.random() * 60 + 5;
+                            const top = Math.random() * 60 + 5;
+                            const rot = (Math.random() - 0.5) * 180;
+                            item.style.left = `${left}%`;
+                            item.style.top = `${top}%`;
+                            item.style.transform = `rotate(${rot}deg)`;
+                            groupDiv.appendChild(item);
+                        }
+                    }
+                    container.appendChild(groupDiv);
+                }
+            }
+        }
+
+        // 初始化遊戲
+        window.onload = () => {
+            setupUI();
+        };
+
+        // 螢幕尺寸改變時自動適應調整
+        window.onresize = () => {
+            if(gameState.isPlaying) {
+                generateQuestion();
+            }
+        };
+    </script>
+</body>
+</html>
