@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <!-- 確保在 iPad 上自適應螢幕，並禁止使用者縮放以呈現完美 App 體驗 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>閱讀行針鐘 - 馬卡龍雙人挑戰</title>
+    <style>
+        /* =========================================================
+           CSS 樣式設定 (馬卡龍柔和風格)
+           ========================================================= */
+        :root {
+            --bg-color: #F9F3F1;       /* 頁面背景色 */
+            --panel-bg: #FFD1DC;       /* 上方控制列背景色 (粉色) */
+            --clock-border: #B5EAD7;   /* 時鐘外框色 (粉綠) */
+            --text-dark: #4A4A4A;      /* 深灰色字體，保護眼睛 */
+            
+            /* 玩家 1 (左側) 主題色 - 暖黃橘色調 */
+            --p1-bg: #FFF8E7;
+            --p1-btn: #FFDAC1;
+            --p1-active: #FFE5B4;
+            --p1-border: #F7C8A6;
+
+            /* 玩家 2 (右側) 主題色 - 柔和紫藍色調 */
+            --p2-bg: #F0F4FF;
+            --p2-btn: #C7CEEA;
+            --p2-active: #E0E5FF;
+            --p2-border: #A8B1D4;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', "微軟正黑體", sans-serif;
+            user-select: none; /* 防止文字被意外反白選取 */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            touch-action: none; /* 禁止預設滑動，支援多點觸控 */
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 標題與控制區 (上方) */
+        #header-area {
+            background-color: var(--panel-bg);
+            padding: 10px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .header-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin: 0;
+            color: #555;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select {
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 12px;
+            border: 2px solid white;
+            outline: none;
+        }
+
+        #start-btn {
+            padding: 8px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            background-color: #E2F0CB;
+            color: var(--text-dark);
+            cursor: pointer;
+            box-shadow: 0 4px 0 #C1D9A7;
+            transition: all 0.1s;
+        }
+        #start-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #C1D9A7; }
+
+        /* =========================================================
+           遊戲主區佈局 (彈性排版，支援單人與雙人)
+           ========================================================= */
+        #game-area {
+            flex: 1;
+            display: none; /* 點擊開始後透過 JS 改為 flex */
+            flex-direction: row;
+            padding: 15px;
+            gap: 15px;
+            width: 100%;
+        }
+
+        /* 共通玩家面板設計 */
+        .player-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.06);
+            transition: background-color 0.3s;
+        }
+
+        .player-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .score-display {
+            font-size: 18px;
+            color: #777;
+            margin-bottom: 15px;
+        }
+
+        /* 玩家 1 與 玩家 2 的專屬色彩 */
+        #p1-panel { background-color: var(--p1-bg); border: 3px solid var(--p1-border); }
+        #p1-panel .player-title { color: #D47B3E; }
+        
+        #p2-panel { background-color: var(--p2-bg); border: 3px solid var(--p2-border); }
+        #p2-panel .player-title { color: #6170B1; }
+
+        /* 時鐘顯示區 */
+        #clock-panel {
+            flex: 1.2; /* 讓時鐘區域稍微大一點 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.06);
+            padding: 10px;
+        }
+
+        #clock-container {
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 1;
+            position: relative;
+        }
+
+        /* --- 模式切換版面配置 (1人 vs 2人) --- */
+        
+        /* 1人模式：時鐘在左，玩家1在右，隱藏玩家2 */
+        .mode-1p #p2-panel { display: none; }
+        .mode-1p #clock-panel { order: 1; }
+        .mode-1p #p1-panel { order: 2; flex: 1; }
+
+        /* 2人模式：玩家1(左) - 時鐘(中) - 玩家2(右) */
+        .mode-2p #p1-panel { order: 1; }
+        .mode-2p #clock-panel { order: 2; flex: 1.5; }
+        .mode-2p #p2-panel { order: 3; display: flex; }
+
+        /* 針對 iPad 直放 (Portrait) 的自適應調整 */
+        @media (max-aspect-ratio: 4/3) {
+            .mode-2p { flex-wrap: wrap; }
+            .mode-2p #clock-panel {
+                width: 100%;
+                flex: none; /* 讓時鐘佔滿上方一整列 */
+                order: 1;
+                height: 40%;
+            }
+            .mode-2p #p1-panel { width: calc(50% - 10px); flex: none; order: 2; }
+            .mode-2p #p2-panel { width: calc(50% - 10px); flex: none; order: 3; }
+        }
+
+        /* =========================================================
+           互動元件 (題目、輸入框、鍵盤)
+           ========================================================= */
+        .question-area {
+            font-size: 24px;
+            text-align: center;
+            line-height: 1.5;
+            min-height: 80px;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        .input-box {
+            display: inline-block;
+            min-width: 55px;
+            height: 50px;
+            border-radius: 10px;
+            vertical-align: middle;
+            text-align: center;
+            line-height: 44px;
+            font-size: 30px;
+            font-weight: bold;
+            background-color: white;
+            cursor: pointer;
+            margin: 0 3px;
+            padding: 0 5px;
+        }
+
+        /* 玩家各自的輸入框高亮色 */
+        .p1-input { border: 3px dashed var(--p1-border); }
+        .p1-input.active { border: 3px solid #D47B3E; background-color: var(--p1-active); box-shadow: 0 0 10px rgba(212,123,62,0.3); }
+        
+        .p2-input { border: 3px dashed var(--p2-border); }
+        .p2-input.active { border: 3px solid #6170B1; background-color: var(--p2-active); box-shadow: 0 0 10px rgba(97,112,177,0.3); }
+
+        /* 九宮格數字鍵盤 */
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 250px;
+            margin-top: auto; /* 靠下對齊 */
+        }
+
+        .num-key, .action-key, .special-key {
+            border: none;
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-dark);
+            padding: 12px 0;
+            cursor: pointer;
+            transition: transform 0.1s;
+            touch-action: manipulation;
+        }
+        .num-key:active, .action-key:active, .special-key:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 transparent !important;
+        }
+
+        /* 玩家各自的按鈕色 */
+        #p1-panel .num-key { background-color: var(--p1-btn); box-shadow: 0 5px 0 #DAB6A0; }
+        #p2-panel .num-key { background-color: var(--p2-btn); box-shadow: 0 5px 0 #A9AFC9; }
+        
+        .action-key.clear { background-color: #FFB7B2; box-shadow: 0 5px 0 #DF9A95; font-size: 18px; }
+        .action-key.submit { background-color: #E2F0CB; box-shadow: 0 5px 0 #C1D9A7; font-size: 18px; }
+
+        .special-keys-area {
+            display: none; /* 關卡3專用 */
+            width: 100%;
+            max-width: 250px;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .special-key { flex: 1; background-color: #FFF1CA; box-shadow: 0 5px 0 #DFD2AE; }
+
+        /* =========================================================
+           動畫與回饋
+           ========================================================= */
+        #feedback-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.85);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            font-size: 80px;
+        }
+        #feedback-text { font-size: 40px; font-weight: bold; margin-top: 20px; }
+
+        /* 答錯時的左右搖晃特效 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        .shake-wrong {
+            animation: shake 0.3s ease-in-out;
+        }
+        /* 答錯時輸入框短暫閃爍紅框 */
+        .flash-error {
+            border-color: #FF4D4D !important;
+            background-color: #FFE6E6 !important;
+        }
+
+        /* 時鐘互動手勢類別 */
+        .interactive-hand { cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="header-area">
+        <h1 class="header-title">⏰ 行針鐘雙人對戰</h1>
+        <div class="controls">
+            <select id="level-select">
+                <option value="1">關卡 1：認識鐘面</option>
+                <option value="2">關卡 2：時正</option>
+                <option value="3">關卡 3：時正與時半</option>
+                <option value="4">關卡 4：時 (自動填分)</option>
+                <option value="5">關卡 5：時與分</option>
+            </select>
+            <select id="player-select">
+                <option value="1">單人模式 (1人)</option>
+                <option value="2">雙人對戰 (2人同步)</option>
+            </select>
+            <button id="start-btn">開始遊戲</button>
+        </div>
+    </div>
+
+    <!-- 遊戲區，預設為隱藏，點擊開始後動態加上 mode-1p 或 mode-2p 類別 -->
+    <div id="game-area">
+        
+        <!-- 玩家 1 面板 (左側) -->
+        <div id="p1-panel" class="player-panel">
+            <div class="player-title">👦 玩家 1</div>
+            <div class="score-display">分數: <span id="score-1">0</span></div>
+            
+            <div id="q-1" class="question-area"></div>
+            
+            <div id="special-1" class="special-keys-area">
+                <button class="special-key" data-player="1" data-val="正">正</button>
+                <button class="special-key" data-player="1" data-val="半">半</button>
+            </div>
+            
+            <div id="numpad-1" class="numpad">
+                <button class="num-key" data-player="1" data-val="1">1</button>
+                <button class="num-key" data-player="1" data-val="2">2</button>
+                <button class="num-key" data-player="1" data-val="3">3</button>
+                <button class="num-key" data-player="1" data-val="4">4</button>
+                <button class="num-key" data-player="1" data-val="5">5</button>
+                <button class="num-key" data-player="1" data-val="6">6</button>
+                <button class="num-key" data-player="1" data-val="7">7</button>
+                <button class="num-key" data-player="1" data-val="8">8</button>
+                <button class="num-key" data-player="1" data-val="9">9</button>
+                <button class="action-key clear" data-player="1">清除</button>
+                <button class="num-key" data-player="1" data-val="0">0</button>
+                <button class="action-key submit" data-player="1">確定</button>
+            </div>
+        </div>
+
+        <!-- 時鐘面板 (中央) -->
+        <div id="clock-panel">
+            <div id="clock-container">
+                <!-- SVG 時鐘動態生成於此 -->
+            </div>
+        </div>
+
+        <!-- 玩家 2 面板 (右側) -->
+        <div id="p2-panel" class="player-panel">
+            <div class="player-title">👧 玩家 2</div>
+            <div class="score-display">分數: <span id="score-2">0</span></div>
+            
+            <div id="q-2" class="question-area"></div>
+            
+            <div id="special-2" class="special-keys-area">
+                <button class="special-key" data-player="2" data-val="正">正</button>
+                <button class="special-key" data-player="2" data-val="半">半</button>
+            </div>
+            
+            <div id="numpad-2" class="numpad">
+                <button class="num-key" data-player="2" data-val="1">1</button>
+                <button class="num-key" data-player="2" data-val="2">2</button>
+                <button class="num-key" data-player="2" data-val="3">3</button>
+                <button class="num-key" data-player="2" data-val="4">4</button>
+                <button class="num-key" data-player="2" data-val="5">5</button>
+                <button class="num-key" data-player="2" data-val="6">6</button>
+                <button class="num-key" data-player="2" data-val="7">7</button>
+                <button class="num-key" data-player="2" data-val="8">8</button>
+                <button class="num-key" data-player="2" data-val="9">9</button>
+                <button class="action-key clear" data-player="2">清除</button>
+                <button class="num-key" data-player="2" data-val="0">0</button>
+                <button class="action-key submit" data-player="2">確定</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 勝利/答對 回饋全螢幕動畫區 -->
+    <div id="feedback-overlay">
+        <div id="feedback-icon"></div>
+        <div id="feedback-text"></div>
+    </div>
+
+    <script>
+        /* =========================================================
+           遊戲狀態與變數
+           ========================================================= */
+        let audioCtx = null;
+        let currentLevel = 1;
+        let numPlayers = 1;
+        let scores = { 1: 0, 2: 0 };
+        
+        // 記錄兩位玩家目前選中的輸入框 ID
+        let activeInputId = { 1: null, 2: null };
+        
+        // 題目與解答狀態
+        let targetTime = { h: 12, m: 0 };
+        let currentTaskType = '';  // 關卡1題型
+        let expectedAnswer = {};   // 標準答案 (供比對)
+        let isRoundActive = false; // 防止答對後重複計分
+
+        /* =========================================================
+           音效引擎 (無外部檔案)
+           ========================================================= */
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playTone(freq, type, duration, vol=0.1) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playClickSound() { playTone(600, 'sine', 0.1); }
+        function playCorrectSound() {
+            playTone(523.25, 'triangle', 0.15, 0.2); 
+            setTimeout(() => playTone(659.25, 'triangle', 0.15, 0.2), 100); 
+            setTimeout(() => playTone(783.99, 'triangle', 0.3, 0.2), 200);
+        }
+        function playWrongSound() {
+            playTone(200, 'sawtooth', 0.3, 0.2);
+            setTimeout(() => playTone(150, 'sawtooth', 0.4, 0.2), 250);
+        }
+
+        /* =========================================================
+           輔助功能 (觸控綁定、隨機數)
+           ========================================================= */
+        // 綁定觸控與點擊，支援傳遞 event 參數以便判定座標
+        function bindTapEvent(element, callback) {
+            let isTouched = false;
+            element.addEventListener('touchstart', function(e) {
+                e.preventDefault(); 
+                isTouched = true;
+                playClickSound();
+                callback(e);
+            }, { passive: false });
+
+            element.addEventListener('click', function(e) {
+                if (!isTouched) {
+                    playClickSound();
+                    callback(e);
+                }
+                isTouched = false;
+            });
+        }
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        /* =========================================================
+           遊戲流程控制
+           ========================================================= */
+        const startBtn = document.getElementById('start-btn');
+        const gameArea = document.getElementById('game-area');
+        
+        bindTapEvent(startBtn, () => {
+            initAudio();
+            currentLevel = parseInt(document.getElementById('level-select').value);
+            numPlayers = parseInt(document.getElementById('player-select').value);
+            
+            // 重置分數與 UI
+            scores = { 1: 0, 2: 0 };
+            document.getElementById('score-1').textContent = "0";
+            document.getElementById('score-2').textContent = "0";
+            
+            // 根據人數切換版面 CSS class
+            gameArea.style.display = "flex";
+            gameArea.className = numPlayers === 1 ? 'mode-1p' : 'mode-2p';
+            
+            nextQuestion();
+        });
+
+        // 動態生成個別玩家的題目 HTML
+        function generateQuestionHTML(player) {
+            let html = '';
+            const pClass = `p${player}-input`;
+            
+            switch(currentLevel) {
+                case 1:
+                    if (currentTaskType === 'missingNum') {
+                        html = `遺漏了什麼數字？<br><div id="input-num-${player}" class="input-box ${pClass}"></div>`;
+                    } else if (currentTaskType === 'findHourHand') {
+                        html = `請點擊時鐘上的<br><span style="color:#FFB7B2; font-weight:bold;">時針(短)</span>`;
+                    } else {
+                        html = `請點擊時鐘上的<br><span style="color:#6BCB77; font-weight:bold;">分針(長)</span>`;
+                    }
+                    break;
+                case 2:
+                    html = `這是 <div id="input-h-${player}" class="input-box ${pClass}"></div> 時正`;
+                    break;
+                case 3:
+                    html = `這是 <div id="input-h-${player}" class="input-box ${pClass}"></div> 時 <div id="input-text-${player}" class="input-box ${pClass}" style="font-size:26px;"></div>`;
+                    break;
+                case 4:
+                    html = `這是 <div id="input-h-${player}" class="input-box ${pClass}"></div> 時 ${targetTime.m} 分`;
+                    break;
+                case 5:
+                    html = `這是 <div id="input-h-${player}" class="input-box ${pClass}"></div> 時 <div id="input-m-${player}" class="input-box ${pClass}"></div> 分`;
+                    break;
+            }
+            return html;
+        }
+
+        function nextQuestion() {
+            isRoundActive = true;
+            currentTaskType = '';
+            expectedAnswer = {};
+            
+            // 重置雙方特殊按鍵及鍵盤顯示
+            [1, 2].forEach(p => {
+                document.getElementById(`special-${p}`).style.display = 'none';
+                document.getElementById(`numpad-${p}`).style.display = 'grid';
+            });
+
+            let missingNum = null;
+
+            // 隨機產生時間與題目邏輯
+            switch(currentLevel) {
+                case 1:
+                    const subType = getRandomInt(1, 3);
+                    targetTime.h = getRandomInt(1, 12);
+                    targetTime.m = getRandomInt(0, 59);
+                    if (subType === 1) {
+                        currentTaskType = 'missingNum';
+                        missingNum = getRandomInt(1, 12);
+                        expectedAnswer.num = missingNum.toString();
+                    } else if (subType === 2) {
+                        currentTaskType = 'findHourHand';
+                        [1, 2].forEach(p => document.getElementById(`numpad-${p}`).style.display = 'none');
+                    } else {
+                        currentTaskType = 'findMinuteHand';
+                        [1, 2].forEach(p => document.getElementById(`numpad-${p}`).style.display = 'none');
+                    }
+                    break;
+                case 2:
+                    targetTime.h = getRandomInt(1, 12); targetTime.m = 0;
+                    expectedAnswer.h = targetTime.h.toString();
+                    break;
+                case 3:
+                    targetTime.h = getRandomInt(1, 12); targetTime.m = getRandomInt(0, 1) === 0 ? 0 : 30;
+                    expectedAnswer.h = targetTime.h.toString();
+                    expectedAnswer.text = targetTime.m === 0 ? '正' : '半';
+                    [1, 2].forEach(p => document.getElementById(`special-${p}`).style.display = 'flex');
+                    break;
+                case 4:
+                    targetTime.h = getRandomInt(1, 12); targetTime.m = getRandomInt(0, 59);
+                    expectedAnswer.h = targetTime.h.toString();
+                    break;
+                case 5:
+                    targetTime.h = getRandomInt(1, 12); targetTime.m = getRandomInt(0, 59);
+                    expectedAnswer.h = targetTime.h.toString();
+                    expectedAnswer.m = targetTime.m.toString();
+                    break;
+            }
+
+            // 渲染時鐘
+            renderClock(targetTime.h, targetTime.m, missingNum, currentTaskType);
+
+            // 渲染題目與綁定輸入框
+            [1, 2].forEach(p => {
+                if(p === 2 && numPlayers === 1) return; // 單人模式跳過玩家2
+                
+                document.getElementById(`q-${p}`).innerHTML = generateQuestionHTML(p);
+                
+                // 綁定剛生成的輸入框點擊事件
+                const boxes = document.querySelectorAll(`.p${p}-input`);
+                boxes.forEach(box => {
+                    bindTapEvent(box, () => {
+                        boxes.forEach(b => b.classList.remove('active'));
+                        box.classList.add('active');
+                        activeInputId[p] = box.id;
+                    });
+                });
+                
+                // 預設選中第一個輸入框
+                if (boxes.length > 0) {
+                    boxes[0].classList.add('active');
+                    activeInputId[p] = boxes[0].id;
+                }
+            });
+        }
+
+        /* =========================================================
+           時鐘渲染與互動
+           ========================================================= */
+        function renderClock(h, m, missingNumber = null, interactiveType = null) {
+            const size = 350;
+            const center = size / 2;
+            const radius = 150;
+            const hourAngle = (h % 12 + m / 60) * 30; 
+            const minuteAngle = m * 6;                
+
+            let svgHTML = `<svg width="100%" height="100%" viewBox="0 0 ${size} ${size}">`;
+            
+            // 外框
+            svgHTML += `<circle cx="${center}" cy="${center}" r="${radius}" fill="white" stroke="var(--clock-border)" stroke-width="15" />`;
+            svgHTML += `<circle cx="${center}" cy="${center}" r="${radius-10}" fill="#FAFAFA" />`;
+
+            // 刻度與數字
+            for (let i = 1; i <= 12; i++) {
+                const angle = (i * 30 - 90) * (Math.PI / 180);
+                const textR = radius - 35;
+                const tx = center + textR * Math.cos(angle);
+                const ty = center + textR * Math.sin(angle) + 10; 
+                
+                let displayText = i.toString();
+                let textColor = "var(--text-dark)";
+                let fontSize = "30px";
+
+                if (missingNumber !== null && i === missingNumber) {
+                    displayText = "?"; textColor = "#FF8BA7"; fontSize = "40px";
+                }
+
+                svgHTML += `<text x="${tx}" y="${ty}" font-size="${fontSize}" font-weight="bold" fill="${textColor}" text-anchor="middle" pointer-events="none">${displayText}</text>`;
+                
+                const tickR1 = radius - 5; const tickR2 = radius - 15;
+                const x1 = center + tickR1 * Math.cos(angle); const y1 = center + tickR1 * Math.sin(angle);
+                const x2 = center + tickR2 * Math.cos(angle); const y2 = center + tickR2 * Math.sin(angle);
+                svgHTML += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#ccc" stroke-width="3" pointer-events="none" />`;
+            }
+
+            // 分針
+            const minLength = radius - 45;
+            const mx = center + minLength * Math.cos((minuteAngle - 90) * Math.PI / 180);
+            const my = center + minLength * Math.sin((minuteAngle - 90) * Math.PI / 180);
+            
+            let minClass = interactiveType === 'findMinuteHand' ? 'interactive-hand' : '';
+            if (interactiveType === 'findMinuteHand') {
+                 // 隱形加粗點擊區
+                 svgHTML += `<line id="hitbox-min" class="${minClass}" x1="${center}" y1="${center}" x2="${mx}" y2="${my}" stroke="transparent" stroke-width="45" stroke-linecap="round" pointer-events="all" />`;
+            }
+            svgHTML += `<line x1="${center}" y1="${center}" x2="${mx}" y2="${my}" stroke="#AEE1E1" stroke-width="8" stroke-linecap="round" pointer-events="none" />`;
+
+            // 時針
+            const hourLength = radius - 80;
+            const hx = center + hourLength * Math.cos((hourAngle - 90) * Math.PI / 180);
+            const hy = center + hourLength * Math.sin((hourAngle - 90) * Math.PI / 180);
+            
+            let hourClass = interactiveType === 'findHourHand' ? 'interactive-hand' : '';
+            if (interactiveType === 'findHourHand') {
+                // 隱形加粗點擊區
+                svgHTML += `<line id="hitbox-hour" class="${hourClass}" x1="${center}" y1="${center}" x2="${hx}" y2="${hy}" stroke="transparent" stroke-width="45" stroke-linecap="round" pointer-events="all" />`;
+            }
+            svgHTML += `<line x1="${center}" y1="${center}" x2="${hx}" y2="${hy}" stroke="#FFB7B2" stroke-width="12" stroke-linecap="round" pointer-events="none" />`;
+
+            svgHTML += `<circle cx="${center}" cy="${center}" r="8" fill="#555" pointer-events="none" />`;
+            svgHTML += `</svg>`;
+            document.getElementById('clock-container').innerHTML = svgHTML;
+
+            // 綁定指針點擊事件 (關卡1 B/C)
+            if (interactiveType === 'findMinuteHand') {
+                bindTapEvent(document.getElementById('hitbox-min'), (e) => handleClockTouch('minute', e));
+            } else if (interactiveType === 'findHourHand') {
+                bindTapEvent(document.getElementById('hitbox-hour'), (e) => handleClockTouch('hour', e));
+            }
+        }
+
+        /* =========================================================
+           雙人同步輸入處理與判定邏輯
+           ========================================================= */
+        
+        // 1. 處理九宮格數字鍵點擊
+        document.querySelectorAll('.num-key').forEach(btn => {
+            bindTapEvent(btn, (e) => {
+                const player = parseInt(btn.getAttribute('data-player'));
+                const targetId = activeInputId[player];
+                if (!targetId || !isRoundActive) return;
+                
+                const box = document.getElementById(targetId);
+                // 限制最多輸入兩位數
+                if (box.textContent.length < 2) box.textContent += btn.getAttribute('data-val');
+            });
+        });
+
+        // 2. 處理特殊鍵 (正/半)
+        document.querySelectorAll('.special-key').forEach(btn => {
+            bindTapEvent(btn, (e) => {
+                const player = parseInt(btn.getAttribute('data-player'));
+                if (!isRoundActive) return;
+                
+                const textBox = document.getElementById(`input-text-${player}`);
+                if (textBox) {
+                    // 自動跳轉焦點並填入
+                    document.querySelectorAll(`.p${player}-input`).forEach(b => b.classList.remove('active'));
+                    textBox.classList.add('active');
+                    activeInputId[player] = textBox.id;
+                    textBox.textContent = btn.getAttribute('data-val');
+                }
+            });
+        });
+
+        // 3. 處理清除鍵
+        document.querySelectorAll('.action-key.clear').forEach(btn => {
+            bindTapEvent(btn, () => {
+                const player = parseInt(btn.getAttribute('data-player'));
+                if (activeInputId[player]) document.getElementById(activeInputId[player]).textContent = '';
+            });
+        });
+
+        // 4. 處理時鐘直接點擊 (關卡1) -> 判斷是哪位玩家點的
+        function handleClockTouch(tappedPart, event) {
+            if (!isRoundActive) return;
+            
+            let actingPlayer = 1;
+            // 如果是雙人模式，根據觸控點在螢幕的左右半邊來判斷是誰點的
+            if (numPlayers === 2) {
+                let clientX = 0;
+                if (event.touches && event.touches.length > 0) {
+                    clientX = event.touches[0].clientX;
+                } else if (event.changedTouches && event.changedTouches.length > 0) {
+                    clientX = event.changedTouches[0].clientX;
+                } else {
+                    clientX = event.clientX; // 滑鼠支援
+                }
+                actingPlayer = (clientX > window.innerWidth / 2) ? 2 : 1;
+            }
+
+            let isCorrect = false;
+            if (currentTaskType === 'findHourHand' && tappedPart === 'hour') isCorrect = true;
+            if (currentTaskType === 'findMinuteHand' && tappedPart === 'minute') isCorrect = true;
+            
+            processAnswer(actingPlayer, isCorrect);
+        }
+
+        // 5. 處理確定鍵 (鍵盤輸入驗證)
+        document.querySelectorAll('.action-key.submit').forEach(btn => {
+            bindTapEvent(btn, () => {
+                const player = parseInt(btn.getAttribute('data-player'));
+                if (!isRoundActive) return;
+                
+                let isCorrect = false;
+                
+                if (currentLevel === 1 && currentTaskType === 'missingNum') {
+                    isCorrect = (document.getElementById(`input-num-${player}`).textContent === expectedAnswer.num);
+                } 
+                else if (currentLevel === 2 || currentLevel === 4) {
+                    isCorrect = (document.getElementById(`input-h-${player}`).textContent === expectedAnswer.h);
+                }
+                else if (currentLevel === 3) {
+                    const ansH = document.getElementById(`input-h-${player}`).textContent;
+                    const ansText = document.getElementById(`input-text-${player}`).textContent;
+                    isCorrect = (ansH === expectedAnswer.h && ansText === expectedAnswer.text);
+                }
+                else if (currentLevel === 5) {
+                    const ansH = document.getElementById(`input-h-${player}`).textContent;
+                    const ansM = document.getElementById(`input-m-${player}`).textContent;
+                    isCorrect = (ansH === expectedAnswer.h && parseInt(ansM||"-1") === parseInt(expectedAnswer.m));
+                }
+
+                processAnswer(player, isCorrect);
+            });
+        });
+
+        // 處理對錯邏輯：答對則結束該回合並給分，答錯則清除該玩家輸入並提示
+        function processAnswer(player, isCorrect) {
+            if (isCorrect) {
+                isRoundActive = false; // 鎖定回合，防止另一位玩家重複送出
+                playCorrectSound();
+                
+                scores[player] += 10;
+                document.getElementById(`score-${player}`).textContent = scores[player];
+                
+                // 顯示勝利動畫
+                const overlay = document.getElementById('feedback-overlay');
+                const icon = document.getElementById('feedback-icon');
+                const text = document.getElementById('feedback-text');
+                
+                overlay.style.display = "flex";
+                icon.innerHTML = '🌟';
+                text.style.color = "#6BCB77";
+                
+                if (numPlayers === 2) {
+                    text.textContent = `玩家 ${player} 獲勝！速度真快！`;
+                } else {
+                    text.textContent = "答對了！好棒！";
+                }
+                
+                // 延遲後進入下一題
+                setTimeout(() => {
+                    overlay.style.display = "none";
+                    nextQuestion();
+                }, 2000);
+
+            } else {
+                // 答錯邏輯：不中斷遊戲，僅針對該玩家提示
+                playWrongSound();
+                
+                const qArea = document.getElementById(`q-${player}`);
+                qArea.classList.add('shake-wrong');
+                
+                // 將輸入框閃爍紅色並清空
+                document.querySelectorAll(`.p${player}-input`).forEach(box => {
+                    box.classList.add('flash-error');
+                    box.textContent = '';
+                });
+
+                // 重新聚焦第一個框
+                const firstBox = document.querySelector(`.p${player}-input`);
+                if (firstBox) {
+                    document.querySelectorAll(`.p${player}-input`).forEach(b => b.classList.remove('active'));
+                    firstBox.classList.add('active');
+                    activeInputId[player] = firstBox.id;
+                }
+                
+                // 移除錯誤特效
+                setTimeout(() => {
+                    qArea.classList.remove('shake-wrong');
+                    document.querySelectorAll(`.p${player}-input`).forEach(box => box.classList.remove('flash-error'));
+                }, 500);
+            }
+        }
+
+    </script>
+</body>
+</html>
