@@ -3,729 +3,953 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>調校行針鐘</title>
+<title>調校行針鐘 - 特教數學教育遊戲</title>
 <style>
+  /* ====================================================
+     1. 馬卡龍柔和主題色彩 (Macaron Pastel Theme)
+     ==================================================== */
   :root {
-    /* 馬卡龍色系定義 */
-    --bg-color: #FFF9F9;      /* 背景柔和白底 */
-    --top-bg: #F8C8DC;        /* 頂部控制列：粉紅色 */
-    --p1-bg: #E8F4FA;         /* 玩家一區域：粉藍色 */
-    --p2-bg: #EAF7ED;         /* 玩家二區域：粉綠色 */
-    --btn-default: #FCF6BD;   /* 按鈕預設：淡黃色 */
-    --btn-active: #E4C1F9;    /* 按鈕選取：淡紫色 */
-    --text-main: #4A4A4A;     /* 主要文字顏色（深灰確保高對比度易讀） */
+    --macaron-bg: #FFFBF2;         /* 奶油米黃背景 */
+    --macaron-frame-bg: #FFF6EC;   /* 主框架底色 */
+    --macaron-top-bg: #FFD6E0;     /* 上方列粉紅 */
+    --macaron-p1-bg: #E8F4F8;      /* 玩家1淡藍底 */
+    --macaron-p2-bg: #EAF7ED;      /* 玩家2淡綠底 */
     
-    --h-btn-bg: #FFCACA;      /* 時針按鈕：珊瑚粉 */
-    --h-btn-shadow: #E5A3A3;
-    --m-btn-bg: #C1E1DC;      /* 分針按鈕：薄荷綠 */
-    --m-btn-shadow: #98C4BD;
-    --submit-btn: #D0F4DE;    /* 確定按鈕：馬卡龍綠 */
-    --submit-shadow: #A3D4B6;
+    --macaron-yellow: #FCF6BD;    /* 馬卡龍黃 */
+    --macaron-yellow-shadow: #E2DA99;
+    
+    --macaron-pink: #F8C8DC;      /* 時針/按鈕粉紅 */
+    --macaron-pink-shadow: #DDA1B9;
+    
+    --macaron-blue: #A9DEF9;      /* 分針/按鈕粉藍 */
+    --macaron-blue-shadow: #7DC0E3;
+    
+    --macaron-purple: #E4C1F9;    /* 選中態紫色 */
+    --macaron-purple-shadow: #B288CF;
+    
+    --macaron-green: #D0F4DE;     /* 核對答案按鈕粉綠 */
+    --macaron-green-shadow: #97D8A9;
+    
+    --text-dark: #3D3D3D;         /* 深灰文字（高對比度且溫和） */
+    --text-muted: #6E6E6E;
   }
 
-  body {
-    margin: 0; padding: 0;
-    font-family: 'PingFang HK', 'Microsoft JhengHei', 'Comic Sans MS', sans-serif;
-    background-color: var(--bg-color);
-    /* 可愛波點背景 */
-    background-image: radial-gradient(rgba(252, 246, 189, 0.6) 3px, transparent 3px);
-    background-size: 40px 40px;
-    color: var(--text-main);
-    display: flex;
-    flex-direction: column;
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
     height: 100vh;
-    touch-action: none; /* 避免在 iPad 上意外捲動畫面 */
-    user-select: none;  /* 避免學生誤選文字 */
-    overflow: hidden;
-  }
-
-  #top-area {
-    background: var(--top-bg);
-    padding: 1vh 10px;
+    background-color: var(--macaron-bg);
+    /* 可愛波點點綴 */
+    background-image: radial-gradient(#F5E6D3 18%, transparent 19%), radial-gradient(#F5E6D3 18%, transparent 19%);
+    background-size: 28px 28px;
+    background-position: 0 0, 14px 14px;
+    font-family: 'PingFang HK', 'Microsoft JhengHei', 'Comic Sans MS', sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 15px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    overflow: hidden; /* 全頁禁止捲動 */
+    user-select: none;
+    touch-action: none; /* 防止 iPad 預設手勢干擾 */
+  }
+
+  /* 主遊戲容器：高度嚴格限制為 85vh */
+  #game-container {
+    width: 98vw;
+    max-width: 1200px;
+    height: 85vh;
+    max-height: 85vh;
+    background: var(--macaron-frame-bg);
+    border: 4px solid #FFFFFF;
+    border-radius: 28px;
+    box-shadow: 0 12px 36px rgba(180, 150, 130, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* 上方區域：控制列 (約占 13% 高度) */
+  #top-area {
+    height: 13%;
+    min-height: 48px;
+    background: var(--macaron-top-bg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     z-index: 10;
-    flex-wrap: wrap;
   }
 
   .top-group {
     display: flex;
     align-items: center;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.6);
-    padding: 0.5vh 15px;
-    border-radius: 25px;
-    box-shadow: inset 0 2px 5px rgba(255,255,255,0.8);
-  }
-
-  .top-group span {
-    font-size: clamp(1rem, 2.5vh, 1.4rem);
-    font-weight: bold;
-    color: #555;
-  }
-
-  .btn {
-    background: var(--btn-default);
-    border: none;
-    padding: 1vh 2vh;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.75);
+    padding: 4px 10px;
     border-radius: 20px;
-    font-size: clamp(1rem, 2.5vh, 1.3rem);
-    font-weight: bold;
-    color: #555;
+  }
+
+  .top-label {
+    font-size: clamp(0.85rem, 1.9vh, 1.05rem);
+    font-weight: 800;
+    color: var(--text-dark);
+  }
+
+  /* 通用馬卡龍可愛按鈕 */
+  .m-btn {
+    background: var(--macaron-yellow);
+    border: none;
+    padding: 5px 12px;
+    border-radius: 14px;
+    font-size: clamp(0.8rem, 1.8vh, 1rem);
+    font-weight: 800;
+    color: var(--text-dark);
     cursor: pointer;
-    box-shadow: 0 5px 0 #DED69C;
-    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 4px 0 var(--macaron-yellow-shadow);
+    transition: transform 0.06s, box-shadow 0.06s;
     touch-action: manipulation;
   }
-  
-  .btn:active {
-    transform: translateY(5px);
-    box-shadow: 0 0 0 #DED69C;
-  }
-  
-  .btn.active-tab {
-    background: var(--btn-active);
-    box-shadow: 0 5px 0 #C79EDF;
-    color: #333;
-  }
-  .btn.active-tab:active {
-    transform: translateY(5px);
-    box-shadow: 0 0 0 #C79EDF;
+
+  .m-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 var(--macaron-yellow-shadow);
   }
 
+  .m-btn.active {
+    background: var(--macaron-purple);
+    box-shadow: 0 4px 0 var(--macaron-purple-shadow);
+    color: #2E1B38;
+  }
+
+  .m-btn.action-btn {
+    background: #FFB5A7;
+    box-shadow: 0 4px 0 #D88E80;
+    color: #FFFFFF;
+  }
+
+  /* 下方區域：遊戲主體 (約占 87% 高度) */
   #bottom-area {
+    height: 87%;
     flex: 1;
     display: flex;
     flex-direction: row;
     overflow: hidden;
+    position: relative;
   }
 
-  .player-area {
+  /* 玩家卡片 */
+  .player-card {
     flex: 1;
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-evenly;
-    padding: 1vh 10px;
-    box-sizing: border-box;
+    justify-content: space-between;
+    padding: 6px 12px 10px 12px;
     position: relative;
-    height: 100%;
     overflow: hidden;
   }
 
-  #p1-area { background: var(--p1-bg); }
-  #p2-area { background: var(--p2-bg); border-left: 6px dashed rgba(0,0,0,0.05); }
-  
-  .hidden { display: none !important; }
-
-  .question-box {
-    font-size: clamp(1.5rem, 5vmin, 3rem);
-    font-weight: bold;
-    background: white;
-    padding: 1vh 3vw;
-    border-radius: 35px;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.05);
-    margin-bottom: 0;
-    text-align: center;
-    color: #333;
-    border: 4px solid #FFF;
+  #p1-card {
+    background: var(--macaron-p1-bg);
   }
 
-  .clock-container {
+  #p2-card {
+    background: var(--macaron-p2-bg);
+    border-left: 4px dashed rgba(160, 200, 180, 0.4);
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  /* 題目與分數欄位 */
+  .header-info {
     width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+  }
+
+  .score-badge {
+    background: #FFFFFF;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: clamp(0.85rem, 2vh, 1.1rem);
+    font-weight: 800;
+    color: #FF8800;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+
+  .question-box {
+    background: #FFFFFF;
+    border: 3px solid #FFF;
+    border-radius: 20px;
+    padding: 4px 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    text-align: center;
+  }
+
+  .question-title {
+    font-size: clamp(1.2rem, 3.2vh, 2.2rem);
+    font-weight: 900;
+    color: #2B2B2B;
+    letter-spacing: 1px;
+  }
+
+  /* 鐘面容器：自動等比例縮放 */
+  .clock-stage {
     flex: 1;
-    min-height: 0;
+    width: 100%;
+    min-height: 0; /* 關鍵：讓 Flex 容器在垂直方向自由伸縮 */
     display: flex;
     justify-content: center;
     align-items: center;
-    background: transparent;
     position: relative;
-    margin-bottom: 5px;
+    padding: 2px;
   }
 
-  .clock-container svg {
-    max-width: 100%;
+  .clock-stage svg {
     max-height: 100%;
-    height: auto !important;
-    width: auto !important;
+    max-width: 100%;
     aspect-ratio: 1 / 1;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.08));
   }
 
-  .controls-box {
+  /* 下方控制器：左右 2 個方塊形式 (時針 | 分針) */
+  .controls-panel {
     display: flex;
     flex-direction: row;
     justify-content: space-around;
-    gap: 15px;
-    background: rgba(255,255,255,0.7);
-    padding: 1.5vh 20px;
-    border-radius: 25px;
-    width: 95%;
-    max-width: 380px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    align-items: center;
+    background: rgba(255, 255, 255, 0.88);
+    border-radius: 20px;
+    padding: 6px 12px;
+    width: 98%;
+    max-width: 440px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.04);
   }
 
-  .control-column {
+  .control-block {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1vh;
+    gap: 3px;
   }
 
   .control-title {
-    font-size: clamp(1.2rem, 3vh, 1.6rem);
-    font-weight: bold;
+    font-size: clamp(0.95rem, 2vh, 1.25rem);
+    font-weight: 900;
   }
 
-  .btn-group {
+  .btn-pair {
     display: flex;
-    gap: 10px;
+    gap: 8px;
   }
 
-  .ctrl-btn {
-    width: clamp(45px, 8vmin, 65px);
-    height: clamp(45px, 8vmin, 60px);
-    font-size: clamp(1.5rem, 4vmin, 2.5rem);
-    line-height: 1;
-    border-radius: 15px;
-    background: var(--h-btn-bg);
-    color: #444;
-    box-shadow: 0 6px 0 var(--h-btn-shadow);
+  /* 微調按鈕：放大適合觸控 */
+  .adj-btn {
+    width: clamp(42px, 6.2vh, 56px);
+    height: clamp(42px, 6.2vh, 56px);
+    border-radius: 16px;
+    border: none;
+    font-size: clamp(1.4rem, 3.2vh, 2.2rem);
+    font-weight: 900;
+    color: #333;
     display: inline-flex;
     justify-content: center;
     align-items: center;
-  }
-  .ctrl-btn:active {
-    transform: translateY(6px);
-    box-shadow: 0 0 0 var(--h-btn-shadow);
-  }
-
-  .ctrl-btn.min { 
-    background: var(--m-btn-bg); 
-    box-shadow: 0 6px 0 var(--m-btn-shadow); 
-  }
-  .ctrl-btn.min:active {
-    box-shadow: 0 0 0 var(--m-btn-shadow);
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: transform 0.05s, box-shadow 0.05s;
   }
 
+  /* 時針按鈕：珊瑚粉 */
+  .adj-btn.hour-btn {
+    background: var(--macaron-pink);
+    box-shadow: 0 5px 0 var(--macaron-pink-shadow);
+  }
+  .adj-btn.hour-btn:active {
+    transform: translateY(5px);
+    box-shadow: 0 0 0 var(--macaron-pink-shadow);
+  }
+
+  /* 分針按鈕：薄荷藍 */
+  .adj-btn.min-btn {
+    background: var(--macaron-blue);
+    box-shadow: 0 5px 0 var(--macaron-blue-shadow);
+  }
+  .adj-btn.min-btn:active {
+    transform: translateY(5px);
+    box-shadow: 0 0 0 var(--macaron-blue-shadow);
+  }
+
+  /* 提交答案按鈕 */
   .submit-btn {
-    margin-top: 5px;
-    background: var(--submit-btn);
-    box-shadow: 0 8px 0 var(--submit-shadow);
-    font-size: clamp(1.5rem, 4vmin, 2rem);
-    padding: 1.5vh 20px;
-    width: 95%;
-    max-width: 380px;
-    border-radius: 30px;
+    width: 98%;
+    max-width: 440px;
+    background: var(--macaron-green);
+    box-shadow: 0 6px 0 var(--macaron-green-shadow);
+    color: #1E4620;
+    font-size: clamp(1.1rem, 2.5vh, 1.5rem);
+    font-weight: 900;
+    padding: 7px 0;
+    border-radius: 18px;
+    border: none;
+    margin-top: 4px;
+    cursor: pointer;
+    touch-action: manipulation;
   }
+
   .submit-btn:active {
-    transform: translateY(8px);
-    box-shadow: 0 0 0 var(--submit-shadow);
+    transform: translateY(6px);
+    box-shadow: 0 0 0 var(--macaron-green-shadow);
   }
 
-  .feedback {
+  /* 動畫回饋遮罩 (答對/答錯) */
+  .feedback-overlay {
     position: absolute;
-    top: 40%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: clamp(6rem, 20vmin, 12rem);
-    pointer-events: none;
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.92);
+    z-index: 50;
     opacity: 0;
-    transition: opacity 0.3s;
-    z-index: 100;
-    filter: drop-shadow(0 10px 10px rgba(0,0,0,0.2));
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    border-radius: 20px;
   }
 
-  .feedback.show {
+  .feedback-overlay.show {
     opacity: 1;
-    animation: pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: auto;
   }
 
-  @keyframes pop {
-    0% { transform: translate(-50%, -50%) scale(0); }
-    80% { transform: translate(-50%, -50%) scale(1.1); }
-    100% { transform: translate(-50%, -50%) scale(1); }
+  .feedback-emoji {
+    font-size: clamp(4rem, 14vh, 7.5rem);
+    animation: popScale 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .feedback-text {
+    font-size: clamp(1.3rem, 3.2vh, 2rem);
+    font-weight: 900;
+    margin-top: 8px;
+    color: #333;
+  }
+
+  @keyframes popScale {
+    0% { transform: scale(0); }
+    80% { transform: scale(1.15); }
+    100% { transform: scale(1); }
   }
 </style>
 </head>
 <body>
 
-<div id="app" style="display:contents;">
-    
-    <!-- 上方區域：控制台 -->
-    <div id="top-area">
-        <div class="top-group">
-            <span>關卡：</span>
-            <button id="btn-lvl-0" class="btn active-tab" onclick="setLevel(0)">時正</button>
-            <button id="btn-lvl-1" class="btn" onclick="setLevel(1)">時半</button>
-            <button id="btn-lvl-2" class="btn" onclick="setLevel(2)">時與分</button>
-        </div>
-        <div class="top-group">
-            <span>人數：</span>
-            <button id="btn-mode-1" class="btn active-tab" onclick="setMode(1)">1人</button>
-            <button id="btn-mode-2" class="btn" onclick="setMode(2)">2人</button>
-        </div>
+<div id="game-container">
+  
+  <!-- 上方控制欄 -->
+  <div id="top-area">
+    <!-- 關卡選擇 -->
+    <div class="top-group">
+      <span class="top-label">關卡：</span>
+      <button id="lvl-btn-0" class="m-btn active" onclick="selectLevel(0)">時正</button>
+      <button id="lvl-btn-1" class="m-btn" onclick="selectLevel(1)">時半</button>
+      <button id="lvl-btn-2" class="m-btn" onclick="selectLevel(2)">時與分</button>
     </div>
-    
-    <!-- 下方區域：遊戲區 -->
-    <div id="bottom-area">
-        <!-- 玩家一 -->
-        <div id="p1-area" class="player-area">
-            <div id="feedback-1" class="feedback"></div>
-            <div id="q-text-1" class="question-box">--</div>
-            <div id="clock-1" class="clock-container"></div>
-            <div class="controls-box">
-                <div class="control-column">
-                    <span class="lbl-h control-title">時針</span>
-                    <div class="btn-group">
-                        <button class="btn ctrl-btn" onclick="adjustTime(1, 'h', 1)">+</button>
-                        <button class="btn ctrl-btn" onclick="adjustTime(1, 'h', -1)">-</button>
-                    </div>
-                </div>
-                <div class="control-column">
-                    <span class="lbl-m control-title">分針</span>
-                    <div class="btn-group">
-                        <button class="btn ctrl-btn min" onclick="adjustTime(1, 'm', 1)">+</button>
-                        <button class="btn ctrl-btn min" onclick="adjustTime(1, 'm', -1)">-</button>
-                    </div>
-                </div>
-            </div>
-            <button class="btn submit-btn" onclick="checkAnswer(1)">確定</button>
-        </div>
-        
-        <!-- 玩家二 -->
-        <div id="p2-area" class="player-area hidden">
-            <div id="feedback-2" class="feedback"></div>
-            <div id="q-text-2" class="question-box">--</div>
-            <div id="clock-2" class="clock-container"></div>
-            <div class="controls-box">
-                <div class="control-column">
-                    <span class="lbl-h control-title">時針</span>
-                    <div class="btn-group">
-                        <button class="btn ctrl-btn" onclick="adjustTime(2, 'h', 1)">+</button>
-                        <button class="btn ctrl-btn" onclick="adjustTime(2, 'h', -1)">-</button>
-                    </div>
-                </div>
-                <div class="control-column">
-                    <span class="lbl-m control-title">分針</span>
-                    <div class="btn-group">
-                        <button class="btn ctrl-btn min" onclick="adjustTime(2, 'm', 1)">+</button>
-                        <button class="btn ctrl-btn min" onclick="adjustTime(2, 'm', -1)">-</button>
-                    </div>
-                </div>
-            </div>
-            <button class="btn submit-btn" onclick="checkAnswer(2)">確定</button>
-        </div>
+
+    <!-- 人數模式 -->
+    <div class="top-group">
+      <span class="top-label">人數：</span>
+      <button id="mode-btn-1" class="m-btn active" onclick="selectMode(1)">1人</button>
+      <button id="mode-btn-2" class="m-btn" onclick="selectMode(2)">2人</button>
     </div>
+
+    <!-- 提示與換題功能 -->
+    <div style="display: flex; gap: 6px;">
+      <button id="prompt-btn" class="m-btn" onclick="togglePrompt()">💡 提示：關</button>
+      <button class="m-btn action-btn" onclick="refreshAllQuestions()">🔄 換題</button>
+    </div>
+  </div>
+
+  <!-- 下方遊戲主區域 -->
+  <div id="bottom-area">
+    
+    <!-- 玩家一區域 (P1) -->
+    <div id="p1-card" class="player-card">
+      <div id="fb-1" class="feedback-overlay">
+        <div id="fb-emoji-1" class="feedback-emoji">🌟</div>
+        <div id="fb-text-1" class="feedback-text">答對了！太棒了！</div>
+      </div>
+
+      <div class="header-info">
+        <div class="score-badge">⭐ 得分：<span id="score-1">0</span></div>
+      </div>
+
+      <div class="question-box">
+        <div id="q-title-1" class="question-title">--</div>
+      </div>
+
+      <div class="clock-stage" id="clock-stage-1"></div>
+
+      <!-- 下方按鈕控制器 (左右 2 方塊形式) -->
+      <div class="controls-panel">
+        <!-- 左方塊：時針 + - -->
+        <div class="control-block">
+          <span class="control-title" style="color: #E05275;">時針</span>
+          <div class="btn-pair">
+            <button class="adj-btn hour-btn" onpointerdown="startAdjust(1, 'h', 1)" onpointerup="stopAdjust()" onpointerleave="stopAdjust()">+</button>
+            <button class="adj-btn hour-btn" onpointerdown="startAdjust(1, 'h', -1)" onpointerup="stopAdjust()" onpointerleave="stopAdjust()">-</button>
+          </div>
+        </div>
+
+        <!-- 右方塊：分針 + - -->
+        <div class="control-block">
+          <span class="control-title" style="color: #1D8A99;">分針</span>
+          <div class="btn-pair">
+            <button class="adj-btn min-btn" onpointerdown="startAdjust(1, 'm', 1)" onpointerup="stopAdjust()" onpointerleave="stopAdjust()">+</button>
+            <button class="adj-btn min-btn" onpointerdown="startAdjust(1, 'm', -1)" onpointerup="stopAdjust()" onpointerleave="stopAdjust()">-</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="submit-btn" onclick="checkPlayerAnswer(1)">核對答案</button>
+    </div>
+
+    <!-- 玩家二區域 (P2, 雙人模式顯示) -->
+    <div id="p2-card" class="player-card hidden">
+      <div id="fb-2" class="feedback-overlay">
+        <div id="fb-emoji-2" class="feedback-emoji">🌟</div>
+        <div id="fb-text-2" class="feedback-text">答對了！太棒了！</div>
+      </div>
+
+      <div class="header-info">
+        <div class="score-badge">⭐ 得分：<span id="score-2">0</span></div>
+      </div>
+
+      <div class="question-box">
+        <div id="q-title-2" class="question-title">--</div>
+      </div>
+
+      <div class="clock-stage" id="clock-stage-2"></div>
+
+      <!-- 下方按鈕控制器 (左右 2 方塊形式) -->
+      <div class="controls-panel">
+        <!-- 左方塊：時針 + - -->
+        <div class="control-block">
+          <span class="control-title" style="color: #E05275;">時針</span>
+          <div class="btn-pair">
+            <button class="adj-btn hour-btn" onpointerdown="startAdjust(2, 'h', 1)" onpointerup="stopAdjust()" onpointerleave="stopAdjust()">+</button>
+            <button class="adj-btn hour-btn" onpointerdown="startAdjust(2, 'h', -1)" onpointerup="stopAdjust()" onpointerleave="stopAdjust()">-</button>
+          </div>
+        </div>
+
+        <!-- 右方塊：分針 + - -->
+        <div class="control-block">
+          <span class="control-title" style="color: #1D8A99;">分針</span>
+          <div class="btn-pair">
+            <button class="adj-btn min-btn" onpointerdown="startAdjust(2, 'm', 1)" onpointerup="stopAdjust()" onpointerleave="stopAdjust()">+</button>
+            <button class="adj-btn min-btn" onpointerdown="startAdjust(2, 'm', -1)" onpointerup="stopAdjust()" onpointerleave="stopAdjust()">-</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="submit-btn" onclick="checkPlayerAnswer(2)">核對答案</button>
+    </div>
+
+  </div>
 </div>
 
 <script>
-/* =======================================
-   遊戲設定區 (教師可在此修改設定)
-   ======================================= */
-const GAME_TEXT = {
-    // 關卡題目格式，{h} 代表小時，{m} 代表分鐘
-    questionFormat_0: "{h} 時正",
-    questionFormat_1: "{h} 時半",
-    questionFormat_2: "{h} 時 {m} 分",
-    
-    labelHourHand: "時針", // 介面文字：時針
-    labelMinuteHand: "分針", // 介面文字：分針
-    confirmBtn: "確定" // 按鈕文字：確定
-};
-
-/* 遊戲全域變數 */
-let currentLevel = 0; // 0: 時正, 1: 時半, 2: 時與分
-let currentMode = 1;  // 1: 單人, 2: 雙人
-
-// 玩家狀態紀錄 (時間以「分鐘」為單位，0 = 12:00, 719 = 11:59)
-let players = {
-    1: { time: 0, targetTime: 0, hGroup: null, mGroup: null },
-    2: { time: 0, targetTime: 0, hGroup: null, mGroup: null }
-};
-
-/* =======================================
-   音效引擎 (無須外部音效檔，全離線合成)
-   ======================================= */
+/* ====================================================
+   2. Web Audio API 離線音效合成器
+   ==================================================== */
 const AudioContext = window.AudioContext || window.webkitAudioContext;
-let audioCtx;
+let audioCtx = null;
 
-// 初始化音效，必須在使用者點擊後觸發
 function initAudio() {
-    if (!audioCtx) {
-        audioCtx = new AudioContext();
-    }
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
+  if (!audioCtx) {
+    audioCtx = new AudioContext();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
 }
 
-// 產生特定頻率的聲音
-function playTone(freq, type, duration, vol=0.1) {
-    if (!audioCtx) return;
+function playSynthTone(freq, type, duration, vol = 0.1) {
+  if (!audioCtx) return;
+  try {
     let osc = audioCtx.createOscillator();
     let gain = audioCtx.createGain();
     osc.type = type;
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    
     gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-    
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     osc.start();
     osc.stop(audioCtx.currentTime + duration);
+  } catch(e){}
 }
 
-// 按鈕點擊聲
-function playClick() { playTone(400, 'sine', 0.1); }
-// 指針撥動聲 (滴答)
-function playTick() { playTone(800, 'square', 0.02, 0.02); }
-// 答對音效 (和弦)
-function playCorrect() { 
-    playTone(523.25, 'sine', 0.15, 0.2); // C5
-    setTimeout(() => playTone(659.25, 'sine', 0.15, 0.2), 100); // E5
-    setTimeout(() => playTone(783.99, 'sine', 0.3, 0.2), 200); // G5
-}
-// 答錯音效 (低沉音)
-function playWrong() {
-    playTone(200, 'sawtooth', 0.4, 0.1);
-    setTimeout(() => playTone(150, 'sawtooth', 0.4, 0.1), 150);
+function playSoundClick() {
+  playSynthTone(550, 'sine', 0.08, 0.08);
 }
 
+function playSoundTick() {
+  playSynthTone(850, 'triangle', 0.03, 0.03);
+}
 
-/* =======================================
-   時鐘繪製邏輯 (SVG 動態生成)
-   ======================================= */
-function createClock(containerId, playerIndex) {
-    const svgNS = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(svgNS, "svg");
-    svg.setAttribute("viewBox", "0 0 200 200");
-    svg.style.width = "100%";
-    svg.style.height = "100%";
-    
-    // 繪製時鐘底盤
-    const face = document.createElementNS(svgNS, "circle");
-    face.setAttribute("cx", "100"); face.setAttribute("cy", "100");
-    face.setAttribute("r", "96");
-    face.setAttribute("fill", "#FFFFFF");
-    face.setAttribute("stroke", "#F8C8DC"); // 馬卡龍粉紅邊框
-    face.setAttribute("stroke-width", "6");
-    svg.appendChild(face);
-    
-    // 繪製 60 個刻度及數字
-    for(let i=0; i<60; i++) {
-        let angle = i * 6 * Math.PI / 180;
-        let isHour = i % 5 === 0;
-        let r1 = isHour ? 78 : 88;
-        let r2 = 94;
-        let x1 = 100 + r1 * Math.sin(angle);
-        let y1 = 100 - r1 * Math.cos(angle);
-        let x2 = 100 + r2 * Math.sin(angle);
-        let y2 = 100 - r2 * Math.cos(angle);
-        
-        let line = document.createElementNS(svgNS, "line");
-        line.setAttribute("x1", x1); line.setAttribute("y1", y1);
-        line.setAttribute("x2", x2); line.setAttribute("y2", y2);
-        line.setAttribute("stroke", isHour ? "#A9DEF9" : "#E2E2E2"); // 大刻度粉藍，小刻度淺灰
-        line.setAttribute("stroke-width", isHour ? "4" : "2");
-        line.setAttribute("stroke-linecap", "round");
-        svg.appendChild(line);
-        
-        // 數字
-        if (isHour) {
-            let num = i / 5;
-            if (num === 0) num = 12;
-            let tx = 100 + 64 * Math.sin(angle);
-            let ty = 100 - 64 * Math.cos(angle);
-            let text = document.createElementNS(svgNS, "text");
-            text.setAttribute("x", tx);
-            text.setAttribute("y", ty);
-            text.setAttribute("text-anchor", "middle");
-            text.setAttribute("dominant-baseline", "central");
-            text.setAttribute("font-size", "15");
-            text.setAttribute("font-weight", "bold");
-            text.setAttribute("fill", "#FF85A1"); // 馬卡龍粉紅數字
-            text.textContent = num;
-            svg.appendChild(text);
-        }
+function playSoundCorrect() {
+  if (!audioCtx) return;
+  const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+  notes.forEach((freq, idx) => {
+    setTimeout(() => {
+      playSynthTone(freq, 'sine', 0.25, 0.15);
+    }, idx * 90);
+  });
+}
+
+function playSoundWrong() {
+  if (!audioCtx) return;
+  playSynthTone(261.63, 'sine', 0.2, 0.12); // C4
+  setTimeout(() => {
+    playSynthTone(220.00, 'sine', 0.3, 0.12); // A3
+  }, 120);
+}
+
+/* ====================================================
+   3. 全域遊戲狀態與資料結構
+   ==================================================== */
+let currentLevel = 0; // 0: 時正, 1: 時半, 2: 時與分
+let currentMode = 1;  // 1: 單人, 2: 雙人
+let isPromptOn = false; // 是否開啟外框 0-55 分鐘提示
+
+// 玩家數據，時間以「總分鐘數」(0 - 719) 儲存
+const players = {
+  1: { time: 0, targetTime: 0, score: 0, hGroup: null, mGroup: null, bubbleGroup: null },
+  2: { time: 0, targetTime: 0, score: 0, hGroup: null, mGroup: null, bubbleGroup: null }
+};
+
+let adjustIntervalTimer = null; // 長按按鈕連續觸發計時器
+
+/* ====================================================
+   4. SVG 聯動鐘面繪製 (viewBox: 0 0 240 240)
+   ==================================================== */
+function renderClockSVG(containerId, pId) {
+  const svgNS = "http://www.w3.org/2000/svg";
+  const container = document.getElementById(containerId);
+  container.innerHTML = ""; // 清空容器
+
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("viewBox", "0 0 240 240");
+  svg.style.width = "100%";
+  svg.style.height = "100%";
+
+  const cx = 120, cy = 120; // 鐘心座標
+
+  // 1. 鐘面底盤
+  const face = document.createElementNS(svgNS, "circle");
+  face.setAttribute("cx", cx); face.setAttribute("cy", cy);
+  face.setAttribute("r", "82");
+  face.setAttribute("fill", "#FFFFFF");
+  face.setAttribute("stroke", pId === 1 ? "#A9DEF9" : "#B5EAD7");
+  face.setAttribute("stroke-width", "6");
+  svg.appendChild(face);
+
+  // 2. 60 個小格刻度與 1-12 大刻度數字
+  for (let i = 0; i < 60; i++) {
+    let angleRad = (i * 6 - 90) * Math.PI / 180;
+    let isHour = (i % 5 === 0);
+    let r1 = isHour ? 68 : 75;
+    let r2 = 79;
+
+    let x1 = cx + r1 * Math.cos(angleRad);
+    let y1 = cy + r1 * Math.sin(angleRad);
+    let x2 = cx + r2 * Math.cos(angleRad);
+    let y2 = cy + r2 * Math.sin(angleRad);
+
+    let tick = document.createElementNS(svgNS, "line");
+    tick.setAttribute("x1", x1); tick.setAttribute("y1", y1);
+    tick.setAttribute("x2", x2); tick.setAttribute("y2", y2);
+    tick.setAttribute("stroke", isHour ? "#F8C8DC" : "#D0D0D0");
+    tick.setAttribute("stroke-width", isHour ? "3.5" : "1.5");
+    tick.setAttribute("stroke-linecap", "round");
+    svg.appendChild(tick);
+
+    // 鐘內 1-12 大數字
+    if (isHour) {
+      let num = i / 5;
+      if (num === 0) num = 12;
+      let tx = cx + 55 * Math.cos(angleRad);
+      let ty = cy + 55 * Math.sin(angleRad);
+
+      let text = document.createElementNS(svgNS, "text");
+      text.setAttribute("x", tx); text.setAttribute("y", ty);
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("dominant-baseline", "central");
+      text.setAttribute("font-size", "14");
+      text.setAttribute("font-weight", "900");
+      text.setAttribute("fill", "#4A4A4A");
+      text.textContent = num;
+      svg.appendChild(text);
     }
-    
-    // === 時針群組 ===
-    const hGroup = document.createElementNS(svgNS, "g");
-    const hLine = document.createElementNS(svgNS, "line");
-    hLine.setAttribute("x1", "100"); hLine.setAttribute("y1", "100");
-    hLine.setAttribute("x2", "100"); hLine.setAttribute("y2", "60");
-    hLine.setAttribute("stroke", "#FF85A1"); // 粉紅色
-    hLine.setAttribute("stroke-width", "8");
-    hLine.setAttribute("stroke-linecap", "round");
-    
-    // 隱形觸控範圍 (加粗方便手指觸碰)
-    const hTouch = document.createElementNS(svgNS, "line");
-    hTouch.setAttribute("x1", "100"); hTouch.setAttribute("y1", "100");
-    hTouch.setAttribute("x2", "100"); hTouch.setAttribute("y2", "60");
-    hTouch.setAttribute("stroke", "transparent");
-    hTouch.setAttribute("stroke-width", "40");
-    hTouch.setAttribute("stroke-linecap", "round");
-    hTouch.style.cursor = "pointer";
-    
-    hGroup.appendChild(hLine);
-    hGroup.appendChild(hTouch);
-    svg.appendChild(hGroup);
-    
-    // === 分針群組 ===
-    const mGroup = document.createElementNS(svgNS, "g");
-    const mLine = document.createElementNS(svgNS, "line");
-    mLine.setAttribute("x1", "100"); mLine.setAttribute("y1", "100");
-    mLine.setAttribute("x2", "100"); mLine.setAttribute("y2", "30");
-    mLine.setAttribute("stroke", "#43BEE5"); // 粉藍色
-    mLine.setAttribute("stroke-width", "5");
-    mLine.setAttribute("stroke-linecap", "round");
-    
-    // 隱形觸控範圍
-    const mTouch = document.createElementNS(svgNS, "line");
-    mTouch.setAttribute("x1", "100"); mTouch.setAttribute("y1", "100");
-    mTouch.setAttribute("x2", "100"); mTouch.setAttribute("y2", "30");
-    mTouch.setAttribute("stroke", "transparent");
-    mTouch.setAttribute("stroke-width", "40");
-    mTouch.setAttribute("stroke-linecap", "round");
-    mTouch.style.cursor = "pointer";
-    
-    mGroup.appendChild(mLine);
-    mGroup.appendChild(mTouch);
-    svg.appendChild(mGroup);
-    
-    // === 中心圓點 ===
-    const center = document.createElementNS(svgNS, "circle");
-    center.setAttribute("cx", "100"); center.setAttribute("cy", "100");
-    center.setAttribute("r", "7");
-    center.setAttribute("fill", "#FF85A1");
-    svg.appendChild(center);
-    
-    const centerInner = document.createElementNS(svgNS, "circle");
-    centerInner.setAttribute("cx", "100"); centerInner.setAttribute("cy", "100");
-    centerInner.setAttribute("r", "3");
-    centerInner.setAttribute("fill", "#FFFFFF");
-    svg.appendChild(centerInner);
-    
-    document.getElementById(containerId).appendChild(svg);
-    
-    players[playerIndex].hGroup = hGroup;
-    players[playerIndex].mGroup = mGroup;
-    
-    // 綁定拖曳事件
-    attachDrag(hTouch, false, playerIndex, svg);
-    attachDrag(mTouch, true, playerIndex, svg);
+  }
+
+  // 3. 【提示功能】：最外框 0, 5, 10, 15 ... 55 可愛氣泡標籤
+  const bubbleGroup = document.createElementNS(svgNS, "g");
+  bubbleGroup.setAttribute("class", "hint-bubbles");
+  bubbleGroup.style.display = isPromptOn ? "inline" : "none";
+
+  for (let i = 0; i < 12; i++) {
+    let val = i * 5; // 0, 5, 10 ... 55
+    let angleRad = (i * 30 - 90) * Math.PI / 180;
+    let bx = cx + 104 * Math.cos(angleRad);
+    let by = cy + 104 * Math.sin(angleRad);
+
+    // 氣泡背景圓圈
+    let bCircle = document.createElementNS(svgNS, "circle");
+    bCircle.setAttribute("cx", bx); bCircle.setAttribute("cy", by);
+    bCircle.setAttribute("r", "11.5");
+    bCircle.setAttribute("fill", i % 2 === 0 ? "#FFD1DC" : "#B5EAD7");
+    bCircle.setAttribute("stroke", "#FFFFFF");
+    bCircle.setAttribute("stroke-width", "2");
+    bubbleGroup.appendChild(bCircle);
+
+    // 氣泡數字
+    let bText = document.createElementNS(svgNS, "text");
+    bText.setAttribute("x", bx); bText.setAttribute("y", by);
+    bText.setAttribute("text-anchor", "middle");
+    bText.setAttribute("dominant-baseline", "central");
+    bText.setAttribute("font-size", "10.5");
+    bText.setAttribute("font-weight", "900");
+    bText.setAttribute("fill", "#2D2D2D");
+    bText.textContent = val;
+    bubbleGroup.appendChild(bText);
+  }
+  svg.appendChild(bubbleGroup);
+
+  // 4. 時針群組 (珊瑚粉，短粗)
+  const hGroup = document.createElementNS(svgNS, "g");
+  const hLine = document.createElementNS(svgNS, "line");
+  hLine.setAttribute("x1", cx); hLine.setAttribute("y1", cy);
+  hLine.setAttribute("x2", cx); hLine.setAttribute("y2", cy - 42);
+  hLine.setAttribute("stroke", "#FF6B8B");
+  hLine.setAttribute("stroke-width", "8");
+  hLine.setAttribute("stroke-linecap", "round");
+
+  // 隱形加寬觸控線，利於特教學童觸控拖拽
+  const hTouch = document.createElementNS(svgNS, "line");
+  hTouch.setAttribute("x1", cx); hTouch.setAttribute("y1", cy);
+  hTouch.setAttribute("x2", cx); hTouch.setAttribute("y2", cy - 42);
+  hTouch.setAttribute("stroke", "transparent");
+  hTouch.setAttribute("stroke-width", "36");
+  hTouch.setAttribute("stroke-linecap", "round");
+  hTouch.style.cursor = "pointer";
+
+  hGroup.appendChild(hLine);
+  hGroup.appendChild(hTouch);
+  svg.appendChild(hGroup);
+
+  // 5. 分針群組 (薄荷藍，長細)
+  const mGroup = document.createElementNS(svgNS, "g");
+  const mLine = document.createElementNS(svgNS, "line");
+  mLine.setAttribute("x1", cx); mLine.setAttribute("y1", cy);
+  mLine.setAttribute("x2", cx); mLine.setAttribute("y2", cy - 66);
+  mLine.setAttribute("stroke", "#0096C7");
+  mLine.setAttribute("stroke-width", "5");
+  mLine.setAttribute("stroke-linecap", "round");
+
+  const mTouch = document.createElementNS(svgNS, "line");
+  mTouch.setAttribute("x1", cx); mTouch.setAttribute("y1", cy);
+  mTouch.setAttribute("x2", cx); mTouch.setAttribute("y2", cy - 66);
+  mTouch.setAttribute("stroke", "transparent");
+  mTouch.setAttribute("stroke-width", "36");
+  mTouch.setAttribute("stroke-linecap", "round");
+  mTouch.style.cursor = "pointer";
+
+  mGroup.appendChild(mLine);
+  mGroup.appendChild(mTouch);
+  svg.appendChild(mGroup);
+
+  // 6. 中心粉紅軸心
+  const centerCircle = document.createElementNS(svgNS, "circle");
+  centerCircle.setAttribute("cx", cx); centerCircle.setAttribute("cy", cy);
+  centerCircle.setAttribute("r", "7.5");
+  centerCircle.setAttribute("fill", "#FF6B8B");
+  svg.appendChild(centerCircle);
+
+  const centerDot = document.createElementNS(svgNS, "circle");
+  centerDot.setAttribute("cx", cx); centerDot.setAttribute("cy", cy);
+  centerDot.setAttribute("r", "2.5");
+  centerDot.setAttribute("fill", "#FFFFFF");
+  svg.appendChild(centerDot);
+
+  container.appendChild(svg);
+
+  // 記錄 DOM 引用
+  players[pId].hGroup = hGroup;
+  players[pId].mGroup = mGroup;
+  players[pId].bubbleGroup = bubbleGroup;
+
+  // 綁定手指與滑鼠拖拽事件 (支援 iPad 多點觸控)
+  bindPointerDrag(hTouch, false, pId, svg);
+  bindPointerDrag(mTouch, true, pId, svg);
 }
 
-// 根據目前的分鐘數更新指針角度 (聯動效果)
-function updateClockHands(playerIndex) {
-    let t = players[playerIndex].time; // 總分鐘數 (0-719)
-    let hAngle = t * 0.5; // 每分鐘時針走 0.5 度 (360/720)
-    let mAngle = (t % 60) * 6; // 每分鐘分針走 6 度 (360/60)
-    
-    players[playerIndex].hGroup.setAttribute("transform", `rotate(${hAngle} 100 100)`);
-    players[playerIndex].mGroup.setAttribute("transform", `rotate(${mAngle} 100 100)`);
+/* 更新鐘面指針旋轉角度 (時針與分針物理聯動) */
+function updateClockVisual(pId) {
+  let totalMins = players[pId].time;
+  let hAngle = (totalMins / 720) * 360;  // 720 分鐘為 360 度 (30度/小時)
+  let mAngle = (totalMins % 60) * 6;     // 60 分鐘為 360 度 (6度/分鐘)
+
+  players[pId].hGroup.setAttribute("transform", `rotate(${hAngle} 120 120)`);
+  players[pId].mGroup.setAttribute("transform", `rotate(${mAngle} 120 120)`);
 }
 
-// 綁定指針拖曳控制
-function attachDrag(element, isMinuteHand, playerIndex, svg) {
-    element.addEventListener('pointerdown', (e) => {
-        initAudio(); // 確保解鎖音效
-        e.preventDefault(); // 防止畫面滾動
-        element.setPointerCapture(e.pointerId); // 綁定該手指到此元素，實現完美多點觸控
-        
-        let pt = svg.createSVGPoint();
-        
-        // 計算觸控點相對於時鐘中心的角度 (0 - 360, 12點鐘方向為0)
-        function getAngle(clientX, clientY) {
-            pt.x = clientX;
-            pt.y = clientY;
-            let loc = pt.matrixTransform(svg.getScreenCTM().inverse());
-            let dx = loc.x - 100;
-            let dy = loc.y - 100;
-            let angle = Math.atan2(dy, dx) * 180 / Math.PI + 90;
-            if (angle < 0) angle += 360;
-            return angle;
-        }
-        
-        function onMove(me) {
-            let currentAngle = getAngle(me.clientX, me.clientY);
-            let currentMinutes = players[playerIndex].time;
-            
-            if (isMinuteHand) {
-                // 撥動分針
-                let newMin = Math.round(currentAngle / 6);
-                if (newMin === 60) newMin = 0;
-                let oldMin = currentMinutes % 60;
-                let diff = newMin - oldMin;
-                
-                // 處理跨過 12 點的突變
-                if (diff > 30) diff -= 60;
-                if (diff < -30) diff += 60;
-                
-                if (diff !== 0) {
-                    players[playerIndex].time = (currentMinutes + diff + 720) % 720;
-                    playTick(); // 發出滴答聲
-                    updateClockHands(playerIndex);
-                }
-            } else {
-                // 撥動時針
-                let newTotalMin = Math.round(currentAngle * 2);
-                if (newTotalMin === 720) newTotalMin = 0;
-                let oldTotalMin = currentMinutes;
-                let diff = newTotalMin - oldTotalMin;
-                
-                if (diff > 360) diff -= 720;
-                if (diff < -360) diff += 720;
-                
-                if (Math.abs(diff) >= 1) { // 至少移動一分鐘才更新
-                    players[playerIndex].time = (currentMinutes + diff + 720) % 720;
-                    playTick();
-                    updateClockHands(playerIndex);
-                }
-            }
-        }
-        
-        function onUp(ue) {
-            element.releasePointerCapture(ue.pointerId);
-            element.removeEventListener('pointermove', onMove);
-            element.removeEventListener('pointerup', onUp);
-        }
-        
-        element.addEventListener('pointermove', onMove);
-        element.addEventListener('pointerup', onUp);
-    });
-}
-
-// 處理 "+" 與 "-" 按鈕
-function adjustTime(p, type, dir) {
+/* 拖拽指針邏輯 */
+function bindPointerDrag(element, isMinuteHand, pId, svg) {
+  element.addEventListener('pointerdown', (e) => {
     initAudio();
-    playClick();
-    if (type === 'h') {
-        let delta = dir > 0 ? 60 : -60; // 增減 60 分鐘
-        players[p].time = (players[p].time + delta + 720) % 720;
-    } else {
-        let delta = dir > 0 ? 1 : -1;   // 增減 1 分鐘
-        players[p].time = (players[p].time + delta + 720) % 720;
+    e.preventDefault();
+    element.setPointerCapture(e.pointerId); // 鎖定觸控點
+
+    function getAngleFromCenter(evt) {
+      let rect = svg.getBoundingClientRect();
+      let x = evt.clientX - (rect.left + rect.width / 2);
+      let y = evt.clientY - (rect.top + rect.height / 2);
+      let angle = Math.atan2(y, x) * (180 / Math.PI) + 90;
+      if (angle < 0) angle += 360;
+      return angle;
     }
-    updateClockHands(p);
-}
 
-// 變更關卡
-function setLevel(lvl) {
-    initAudio(); playClick();
-    currentLevel = lvl;
-    document.getElementById('btn-lvl-0').classList.remove('active-tab');
-    document.getElementById('btn-lvl-1').classList.remove('active-tab');
-    document.getElementById('btn-lvl-2').classList.remove('active-tab');
-    document.getElementById(`btn-lvl-${lvl}`).classList.add('active-tab');
-    
-    generateQuestion(1);
-    if (currentMode === 2) generateQuestion(2);
-}
+    function onPointerMove(me) {
+      let angle = getAngleFromCenter(me);
+      let currentT = players[pId].time;
 
-// 變更遊玩人數
-function setMode(mode) {
-    initAudio(); playClick();
-    currentMode = mode;
-    document.getElementById('btn-mode-1').classList.remove('active-tab');
-    document.getElementById('btn-mode-2').classList.remove('active-tab');
-    document.getElementById(`btn-mode-${mode}`).classList.add('active-tab');
-    
-    if (mode === 1) {
-        document.getElementById('p2-area').classList.add('hidden');
-    } else {
-        document.getElementById('p2-area').classList.remove('hidden');
-        generateQuestion(2);
-    }
-}
+      if (isMinuteHand) {
+        // 撥動分針
+        let targetMin = Math.round(angle / 6) % 60;
+        let currentMin = currentT % 60;
+        let diff = targetMin - currentMin;
 
-// 隨機產生題目
-function generateQuestion(p) {
-    let hour, min, text, newTarget;
-    let currentT = players[p].time; // 取得指針目前的位置
-    
-    // 使用迴圈確保產生的新題目不會剛好等於目前的指針位置
-    do {
-        if (currentLevel === 0) { // 時正
-            hour = Math.floor(Math.random() * 12) + 1; // 1 ~ 12
-            min = 0;
-            text = GAME_TEXT.questionFormat_0.replace('{h}', hour);
-        } else if (currentLevel === 1) { // 時半
-            hour = Math.floor(Math.random() * 12) + 1;
-            min = 30;
-            text = GAME_TEXT.questionFormat_1.replace('{h}', hour);
-        } else { // 時與分
-            hour = Math.floor(Math.random() * 12) + 1;
-            min = Math.floor(Math.random() * 60); // 0 ~ 59
-            text = GAME_TEXT.questionFormat_2.replace('{h}', hour).replace('{m}', min);
+        // 跨越 12 點邊界處理
+        if (diff > 30) diff -= 60;
+        if (diff < -30) diff += 60;
+
+        if (diff !== 0) {
+          players[pId].time = (currentT + diff + 720) % 720;
+          playSoundTick();
+          updateClockVisual(pId);
         }
-        
-        // 將隨機出的時間轉換為總分鐘數 (0-719)
-        let hCalc = (hour === 12) ? 0 : hour;
-        newTarget = hCalc * 60 + min;
-    } while (newTarget === currentT); 
-    
-    players[p].targetTime = newTarget;
-    document.getElementById(`q-text-${p}`).innerText = text;
-    document.getElementById(`feedback-${p}`).className = "feedback";
-}
+      } else {
+        // 撥動時針
+        let targetTotalMin = Math.round((angle / 360) * 720);
+        let diff = targetTotalMin - currentT;
 
-// 檢查答案是否正確
-function checkAnswer(p) {
-    initAudio();
-    let currentT = players[p].time;
-    let targetT = players[p].targetTime;
-    let fb = document.getElementById(`feedback-${p}`);
-    
-    if (currentT === targetT) {
-        playCorrect();
-        fb.innerText = "🌟"; // 大星星 Emoji 表示答對
-        fb.className = "feedback show";
-        
-        // 延遲後產生下一題
-        setTimeout(() => {
-            generateQuestion(p);
-        }, 1500);
-    } else {
-        playWrong();
-        fb.innerText = "❌"; // 叉叉表示答錯
-        fb.className = "feedback show";
-        setTimeout(() => {
-            fb.className = "feedback";
-        }, 1000);
+        if (diff > 360) diff -= 720;
+        if (diff < -360) diff += 720;
+
+        if (Math.abs(diff) >= 2) {
+          players[pId].time = (currentT + diff + 720) % 720;
+          playSoundTick();
+          updateClockVisual(pId);
+        }
+      }
     }
+
+    function onPointerUp(ue) {
+      element.releasePointerCapture(ue.pointerId);
+      element.removeEventListener('pointermove', onPointerMove);
+      element.removeEventListener('pointerup', onPointerUp);
+    }
+
+    element.addEventListener('pointermove', onPointerMove);
+    element.addEventListener('pointerup', onPointerUp);
+  });
 }
 
-// 初始化介面與遊戲
+/* ====================================================
+   5. 微調按鈕邏輯 (+ / - 按鈕長按)
+   ==================================================== */
+function adjustTime(pId, type, dir) {
+  initAudio();
+  let delta = 0;
+  if (type === 'h') {
+    delta = dir * 60; // 時針變動 1 小時
+  } else {
+    delta = dir * 1;  // 分針變動 1 分鐘
+  }
+
+  players[pId].time = (players[pId].time + delta + 720) % 720;
+  playSoundTick();
+  updateClockVisual(pId);
+}
+
+function startAdjust(pId, type, dir) {
+  adjustTime(pId, type, dir);
+  stopAdjust();
+  adjustIntervalTimer = setInterval(() => {
+    adjustTime(pId, type, dir);
+  }, 140); // 每 140ms 持續按住微調
+}
+
+function stopAdjust() {
+  if (adjustIntervalTimer) {
+    clearInterval(adjustIntervalTimer);
+    adjustIntervalTimer = null;
+  }
+}
+
+/* ====================================================
+   6. 題目生成與核對
+   ==================================================== */
+function generateQuestion(pId) {
+  let h, m, qText, targetMins;
+  let oldTarget = players[pId].targetTime;
+
+  do {
+    if (currentLevel === 0) { // 時正
+      h = Math.floor(Math.random() * 12) + 1;
+      m = 0;
+      qText = `${h} 時正`;
+    } else if (currentLevel === 1) { // 時半
+      h = Math.floor(Math.random() * 12) + 1;
+      m = 30;
+      qText = `${h} 時半`;
+    } else { // 時與分
+      h = Math.floor(Math.random() * 12) + 1;
+      m = Math.floor(Math.random() * 60);
+      qText = `${h} 時 ${m} 分`;
+    }
+
+    let hCalc = (h === 12) ? 0 : h;
+    targetMins = hCalc * 60 + m;
+  } while (targetMins === oldTarget);
+
+  players[pId].targetTime = targetMins;
+
+  // 設定起始干擾位置 (避免與答案直接重疊)
+  let offset = (Math.floor(Math.random() * 5) + 1) * 60;
+  players[pId].time = (targetMins + offset) % 720;
+
+  document.getElementById(`q-title-${pId}`).innerText = qText;
+  document.getElementById(`fb-${pId}`).classList.remove("show");
+
+  updateClockVisual(pId);
+}
+
+function refreshAllQuestions() {
+  initAudio(); playSoundClick();
+  generateQuestion(1);
+  if (currentMode === 2) generateQuestion(2);
+}
+
+// 切換關卡
+function selectLevel(lvl) {
+  initAudio(); playSoundClick();
+  currentLevel = lvl;
+  for (let i = 0; i <= 2; i++) {
+    document.getElementById(`lvl-btn-${i}`).classList.remove('active');
+  }
+  document.getElementById(`lvl-btn-${lvl}`).classList.add('active');
+  refreshAllQuestions();
+}
+
+// 切換人數模式 (1人 / 2人)
+function selectMode(mode) {
+  initAudio(); playSoundClick();
+  currentMode = mode;
+  document.getElementById('mode-btn-1').classList.remove('active');
+  document.getElementById('mode-btn-2').classList.remove('active');
+  document.getElementById(`mode-btn-${mode}`).classList.add('active');
+
+  const p2Card = document.getElementById('p2-card');
+  if (mode === 1) {
+    p2Card.classList.add('hidden');
+  } else {
+    p2Card.classList.remove('hidden');
+    generateQuestion(2);
+  }
+}
+
+// 切換提示 (開 / 關外框 0-55 氣泡)
+function togglePrompt() {
+  initAudio(); playSoundClick();
+  isPromptOn = !isPromptOn;
+  
+  const btn = document.getElementById('prompt-btn');
+  btn.innerText = isPromptOn ? "💡 提示：開" : "💡 提示：關";
+  if (isPromptOn) {
+    btn.classList.add("active");
+  } else {
+    btn.classList.remove("active");
+  }
+
+  // 切換外圈 0-55 氣泡顯示狀態
+  [1, 2].forEach(pId => {
+    if (players[pId].bubbleGroup) {
+      players[pId].bubbleGroup.style.display = isPromptOn ? "inline" : "none";
+    }
+  });
+}
+
+// 核對答案
+function checkPlayerAnswer(pId) {
+  initAudio();
+  let userTime = players[pId].time % 720;
+  let targetTime = players[pId].targetTime % 720;
+
+  let fbOverlay = document.getElementById(`fb-${pId}`);
+  let fbEmoji = document.getElementById(`fb-emoji-${pId}`);
+  let fbText = document.getElementById(`fb-text-${pId}`);
+
+  if (userTime === targetTime) {
+    playSoundCorrect();
+    players[pId].score += 10;
+    document.getElementById(`score-${pId}`).innerText = players[pId].score;
+
+    fbEmoji.innerText = "🌟";
+    fbText.innerText = "答對了！太棒了！";
+    fbOverlay.classList.add("show");
+
+    // 1.5 秒後自動生成下一題
+    setTimeout(() => {
+      fbOverlay.classList.remove("show");
+      generateQuestion(pId);
+    }, 1500);
+  } else {
+    playSoundWrong();
+    fbEmoji.innerText = "💪";
+    fbText.innerText = "再試試看喔！";
+    fbOverlay.classList.add("show");
+
+    setTimeout(() => {
+      fbOverlay.classList.remove("show");
+    }, 1200);
+  }
+}
+
+/* ====================================================
+   7. 遊戲啟動初始化
+   ==================================================== */
 window.onload = function() {
-    // 建立玩家一與玩家二的時鐘
-    createClock("clock-1", 1);
-    createClock("clock-2", 2);
-    
-    // 初始化 UI 文字 (套用設定區的文字)
-    let lblH = document.getElementsByClassName("lbl-h");
-    let lblM = document.getElementsByClassName("lbl-m");
-    for(let i=0; i<lblH.length; i++) {
-        lblH[i].innerText = GAME_TEXT.labelHourHand;
-        lblM[i].innerText = GAME_TEXT.labelMinuteHand;
-    }
-    
-    let submitBtns = document.getElementsByClassName("submit-btn");
-    for(let i=0; i<submitBtns.length; i++) {
-        submitBtns[i].innerText = GAME_TEXT.confirmBtn;
-    }
-    
-    // 指針初始預設為 12:00 (time: 0)
-    updateClockHands(1);
-    updateClockHands(2);
-    
-    // 預設進入時正關卡、單人模式
-    setLevel(0);
-    setMode(1);
-}
+  renderClockSVG("clock-stage-1", 1);
+  renderClockSVG("clock-stage-2", 2);
+
+  selectLevel(0);
+  selectMode(1);
+};
 </script>
 </body>
 </html>
