@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- 確保在 iPad 上全螢幕且禁止縮放與捲動 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>每N個一數</title>
+    <title>數數小達人</title>
     <!-- 使用 Tailwind CSS 進行快速排版及馬卡龍色系設定 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -49,12 +49,15 @@
             padding: 0;
             width: 100vw;
             height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* 遊戲主容器 */
         #game-container {
             width: 100vw;
-            height: 100vh;
+            height: 90vh;
             display: flex;
             flex-direction: column;
             padding: 8px;
@@ -214,9 +217,9 @@
             text-align: center;
         }
 
-        /* 下方玩家答題區 (佔據 40% 高度) */
+        /* 下方玩家答題區 */
         #players-area {
-            height: 42vh;
+            height: 42%;
             display: flex;
             gap: 8px;
             width: 100%;
