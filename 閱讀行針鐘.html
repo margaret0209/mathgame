@@ -611,27 +611,43 @@
             svgHTML += `<circle cx="${center}" cy="${center}" r="${radius}" fill="white" stroke="var(--clock-border)" stroke-width="15" />`;
             svgHTML += `<circle cx="${center}" cy="${center}" r="${radius-10}" fill="#FAFAFA" />`;
 
-            // 刻度與數字
-            for (let i = 1; i <= 12; i++) {
-                const angle = (i * 30 - 90) * (Math.PI / 180);
-                const textR = radius - 35;
-                const tx = center + textR * Math.cos(angle);
-                const ty = center + textR * Math.sin(angle) + 10; 
+            // 刻度與數字 (繪製 60 個小刻度與 12 個小時大刻度)
+            for (let i = 1; i <= 60; i++) {
+                const angle = (i * 6 - 90) * (Math.PI / 180);
+                const isHourTick = (i % 5 === 0);
                 
-                let displayText = i.toString();
-                let textColor = "var(--text-dark)";
-                let fontSize = "30px";
+                // 粗細與長度設定：小時大刻度長度較長、線條較粗
+                const tickR1 = radius - 5;
+                const tickR2 = isHourTick ? (radius - 17) : (radius - 10);
+                const strokeWidth = isHourTick ? "3" : "1.5";
+                const strokeColor = isHourTick ? "#666" : "#CCC";
 
-                if (missingNumber !== null && i === missingNumber) {
-                    displayText = "?"; textColor = "#FF8BA7"; fontSize = "40px";
+                const x1 = center + tickR1 * Math.cos(angle); 
+                const y1 = center + tickR1 * Math.sin(angle);
+                const x2 = center + tickR2 * Math.cos(angle); 
+                const y2 = center + tickR2 * Math.sin(angle);
+                
+                svgHTML += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${strokeColor}" stroke-width="${strokeWidth}" pointer-events="none" />`;
+
+                // 逢 5 個小刻度繪製 1-12 的小時數字
+                if (isHourTick) {
+                    const hourNum = i / 5;
+                    const textR = radius - 36;
+                    const tx = center + textR * Math.cos(angle);
+                    const ty = center + textR * Math.sin(angle) + 10; 
+                    
+                    let displayText = hourNum.toString();
+                    let textColor = "var(--text-dark)";
+                    let fontSize = "28px";
+
+                    if (missingNumber !== null && hourNum === missingNumber) {
+                        displayText = "?"; 
+                        textColor = "#FF8BA7"; 
+                        fontSize = "38px";
+                    }
+
+                    svgHTML += `<text x="${tx}" y="${ty}" font-size="${fontSize}" font-weight="bold" fill="${textColor}" text-anchor="middle" pointer-events="none">${displayText}</text>`;
                 }
-
-                svgHTML += `<text x="${tx}" y="${ty}" font-size="${fontSize}" font-weight="bold" fill="${textColor}" text-anchor="middle" pointer-events="none">${displayText}</text>`;
-                
-                const tickR1 = radius - 5; const tickR2 = radius - 15;
-                const x1 = center + tickR1 * Math.cos(angle); const y1 = center + tickR1 * Math.sin(angle);
-                const x2 = center + tickR2 * Math.cos(angle); const y2 = center + tickR2 * Math.sin(angle);
-                svgHTML += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#ccc" stroke-width="3" pointer-events="none" />`;
             }
 
             // 分針
