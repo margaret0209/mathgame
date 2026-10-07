@@ -34,6 +34,10 @@
             user-select: none; /* 防止文字被意外反白選取 */
         }
 
+        html {
+            background-color: var(--bg-color);
+        }
+
         body {
             margin: 0;
             padding: 0;
@@ -42,7 +46,8 @@
             touch-action: none; /* 禁止預設滑動，支援多點觸控 */
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            height: 85vh;
+            max-height: 85vh;
             overflow: hidden;
         }
 
