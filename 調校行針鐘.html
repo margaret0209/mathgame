@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>調校行針鐘</title>
+<style>
+  :root {
+    /* 馬卡龍色系定義 */
+    --bg-color: #FFF9F9;      /* 背景柔和白底 */
+    --top-bg: #F8C8DC;        /* 頂部控制列：粉紅色 */
+    --p1-bg: #E8F4FA;         /* 玩家一區域：粉藍色 */
+    --p2-bg: #EAF7ED;         /* 玩家二區域：粉綠色 */
+    --btn-default: #FCF6BD;   /* 按鈕預設：淡黃色 */
+    --btn-active: #E4C1F9;    /* 按鈕選取：淡紫色 */
+    --text-main: #4A4A4A;     /* 主要文字顏色（深灰確保高對比度易讀） */
+    
+    --h-btn-bg: #FFCACA;      /* 時針按鈕：珊瑚粉 */
+    --h-btn-shadow: #E5A3A3;
+    --m-btn-bg: #C1E1DC;      /* 分針按鈕：薄荷綠 */
+    --m-btn-shadow: #98C4BD;
+    --submit-btn: #D0F4DE;    /* 確定按鈕：馬卡龍綠 */
+    --submit-shadow: #A3D4B6;
+  }
+
+  body {
+    margin: 0; padding: 0;
+    font-family: 'PingFang HK', 'Microsoft JhengHei', 'Comic Sans MS', sans-serif;
+    background-color: var(--bg-color);
+    /* 可愛波點背景 */
+    background-image: radial-gradient(rgba(252, 246, 189, 0.6) 3px, transparent 3px);
+    background-size: 40px 40px;
+    color: var(--text-main);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    touch-action: none; /* 避免在 iPad 上意外捲動畫面 */
+    user-select: none;  /* 避免學生誤選文字 */
+    overflow: hidden;
+  }
+
+  #top-area {
+    background: var(--top-bg);
+    padding: 1vh 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    z-index: 10;
+    flex-wrap: wrap;
+  }
+
+  .top-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 0.5vh 15px;
+    border-radius: 25px;
+    box-shadow: inset 0 2px 5px rgba(255,255,255,0.8);
+  }
+
+  .top-group span {
+    font-size: clamp(1rem, 2.5vh, 1.4rem);
+    font-weight: bold;
+    color: #555;
+  }
+
+  .btn {
+    background: var(--btn-default);
+    border: none;
+    padding: 1vh 2vh;
+    border-radius: 20px;
+    font-size: clamp(1rem, 2.5vh, 1.3rem);
+    font-weight: bold;
+    color: #555;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #DED69C;
+    transition: transform 0.1s, box-shadow 0.1s;
+    touch-action: manipulation;
+  }
+  
+  .btn:active {
+    transform: translateY(5px);
+    box-shadow: 0 0 0 #DED69C;
+  }
+  
+  .btn.active-tab {
+    background: var(--btn-active);
+    box-shadow: 0 5px 0 #C79EDF;
+    color: #333;
+  }
+  .btn.active-tab:active {
+    transform: translateY(5px);
+    box-shadow: 0 0 0 #C79EDF;
+  }
+
+  #bottom-area {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+  }
+
+  .player-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    padding: 1vh 10px;
+    box-sizing: border-box;
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #p1-area { background: var(--p1-bg); }
+  #p2-area { background: var(--p2-bg); border-left: 6px dashed rgba(0,0,0,0.05); }
+  
+  .hidden { display: none !important; }
+
+  .question-box {
+    font-size: clamp(1.5rem, 5vmin, 3rem);
+    font-weight: bold;
+    background: white;
+    padding: 1vh 3vw;
+    border-radius: 35px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+    margin-bottom: 0;
+    text-align: center;
+    color: #333;
+    border: 4px solid #FFF;
+  }
+
+  .clock-container {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: transparent;
+    position: relative;
+    margin-bottom: 5px;
+  }
+
+  .clock-container svg {
+    max-width: 100%;
+    max-height: 100%;
+    height: auto !important;
+    width: auto !important;
+    aspect-ratio: 1 / 1;
+  }
+
+  .controls-box {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    gap: 15px;
+    background: rgba(255,255,255,0.7);
+    padding: 1.5vh 20px;
+    border-radius: 25px;
+    width: 95%;
+    max-width: 380px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  }
+
+  .control-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1vh;
+  }
+
+  .control-title {
+    font-size: clamp(1.2rem, 3vh, 1.6rem);
+    font-weight: bold;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 10px;
+  }
+
+  .ctrl-btn {
+    width: clamp(45px, 8vmin, 65px);
+    height: clamp(45px, 8vmin, 60px);
+    font-size: clamp(1.5rem, 4vmin, 2.5rem);
+    line-height: 1;
+    border-radius: 15px;
+    background: var(--h-btn-bg);
+    color: #444;
+    box-shadow: 0 6px 0 var(--h-btn-shadow);
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .ctrl-btn:active {
+    transform: translateY(6px);
+    box-shadow: 0 0 0 var(--h-btn-shadow);
+  }
+
+  .ctrl-btn.min { 
+    background: var(--m-btn-bg); 
+    box-shadow: 0 6px 0 var(--m-btn-shadow); 
+  }
+  .ctrl-btn.min:active {
+    box-shadow: 0 0 0 var(--m-btn-shadow);
+  }
+
+  .submit-btn {
+    margin-top: 5px;
+    background: var(--submit-btn);
+    box-shadow: 0 8px 0 var(--submit-shadow);
+    font-size: clamp(1.5rem, 4vmin, 2rem);
+    padding: 1.5vh 20px;
+    width: 95%;
+    max-width: 380px;
+    border-radius: 30px;
+  }
+  .submit-btn:active {
+    transform: translateY(8px);
+    box-shadow: 0 0 0 var(--submit-shadow);
+  }
+
+  .feedback {
+    position: absolute;
+    top: 40%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: clamp(6rem, 20vmin, 12rem);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 100;
+    filter: drop-shadow(0 10px 10px rgba(0,0,0,0.2));
+  }
+
+  .feedback.show {
+    opacity: 1;
+    animation: pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  @keyframes pop {
+    0% { transform: translate(-50%, -50%) scale(0); }
+    80% { transform: translate(-50%, -50%) scale(1.1); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+  }
+</style>
+</head>
+<body>
+
+<div id="app" style="display:contents;">
+    
+    <!-- 上方區域：控制台 -->
+    <div id="top-area">
+        <div class="top-group">
+            <span>關卡：</span>
+            <button id="btn-lvl-0" class="btn active-tab" onclick="setLevel(0)">時正</button>
+            <button id="btn-lvl-1" class="btn" onclick="setLevel(1)">時半</button>
+            <button id="btn-lvl-2" class="btn" onclick="setLevel(2)">時與分</button>
+        </div>
+        <div class="top-group">
+            <span>人數：</span>
+            <button id="btn-mode-1" class="btn active-tab" onclick="setMode(1)">1人</button>
+            <button id="btn-mode-2" class="btn" onclick="setMode(2)">2人</button>
+        </div>
+    </div>
+    
+    <!-- 下方區域：遊戲區 -->
+    <div id="bottom-area">
+        <!-- 玩家一 -->
+        <div id="p1-area" class="player-area">
+            <div id="feedback-1" class="feedback"></div>
+            <div id="q-text-1" class="question-box">--</div>
+            <div id="clock-1" class="clock-container"></div>
+            <div class="controls-box">
+                <div class="control-column">
+                    <span class="lbl-h control-title">時針</span>
+                    <div class="btn-group">
+                        <button class="btn ctrl-btn" onclick="adjustTime(1, 'h', 1)">+</button>
+                        <button class="btn ctrl-btn" onclick="adjustTime(1, 'h', -1)">-</button>
+                    </div>
+                </div>
+                <div class="control-column">
+                    <span class="lbl-m control-title">分針</span>
+                    <div class="btn-group">
+                        <button class="btn ctrl-btn min" onclick="adjustTime(1, 'm', 1)">+</button>
+                        <button class="btn ctrl-btn min" onclick="adjustTime(1, 'm', -1)">-</button>
+                    </div>
+                </div>
+            </div>
+            <button class="btn submit-btn" onclick="checkAnswer(1)">確定</button>
+        </div>
+        
+        <!-- 玩家二 -->
+        <div id="p2-area" class="player-area hidden">
+            <div id="feedback-2" class="feedback"></div>
+            <div id="q-text-2" class="question-box">--</div>
+            <div id="clock-2" class="clock-container"></div>
+            <div class="controls-box">
+                <div class="control-column">
+                    <span class="lbl-h control-title">時針</span>
+                    <div class="btn-group">
+                        <button class="btn ctrl-btn" onclick="adjustTime(2, 'h', 1)">+</button>
+                        <button class="btn ctrl-btn" onclick="adjustTime(2, 'h', -1)">-</button>
+                    </div>
+                </div>
+                <div class="control-column">
+                    <span class="lbl-m control-title">分針</span>
+                    <div class="btn-group">
+                        <button class="btn ctrl-btn min" onclick="adjustTime(2, 'm', 1)">+</button>
+                        <button class="btn ctrl-btn min" onclick="adjustTime(2, 'm', -1)">-</button>
+                    </div>
+                </div>
+            </div>
+            <button class="btn submit-btn" onclick="checkAnswer(2)">確定</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* =======================================
+   遊戲設定區 (教師可在此修改設定)
+   ======================================= */
+const GAME_TEXT = {
+    // 關卡題目格式，{h} 代表小時，{m} 代表分鐘
+    questionFormat_0: "{h} 時正",
+    questionFormat_1: "{h} 時半",
+    questionFormat_2: "{h} 時 {m} 分",
+    
+    labelHourHand: "時針", // 介面文字：時針
+    labelMinuteHand: "分針", // 介面文字：分針
+    confirmBtn: "確定" // 按鈕文字：確定
+};
+
+/* 遊戲全域變數 */
+let currentLevel = 0; // 0: 時正, 1: 時半, 2: 時與分
+let currentMode = 1;  // 1: 單人, 2: 雙人
+
+// 玩家狀態紀錄 (時間以「分鐘」為單位，0 = 12:00, 719 = 11:59)
+let players = {
+    1: { time: 0, targetTime: 0, hGroup: null, mGroup: null },
+    2: { time: 0, targetTime: 0, hGroup: null, mGroup: null }
+};
+
+/* =======================================
+   音效引擎 (無須外部音效檔，全離線合成)
+   ======================================= */
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+
+// 初始化音效，必須在使用者點擊後觸發
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new AudioContext();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+// 產生特定頻率的聲音
+function playTone(freq, type, duration, vol=0.1) {
+    if (!audioCtx) return;
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+}
+
+// 按鈕點擊聲
+function playClick() { playTone(400, 'sine', 0.1); }
+// 指針撥動聲 (滴答)
+function playTick() { playTone(800, 'square', 0.02, 0.02); }
+// 答對音效 (和弦)
+function playCorrect() { 
+    playTone(523.25, 'sine', 0.15, 0.2); // C5
+    setTimeout(() => playTone(659.25, 'sine', 0.15, 0.2), 100); // E5
+    setTimeout(() => playTone(783.99, 'sine', 0.3, 0.2), 200); // G5
+}
+// 答錯音效 (低沉音)
+function playWrong() {
+    playTone(200, 'sawtooth', 0.4, 0.1);
+    setTimeout(() => playTone(150, 'sawtooth', 0.4, 0.1), 150);
+}
+
+
+/* =======================================
+   時鐘繪製邏輯 (SVG 動態生成)
+   ======================================= */
+function createClock(containerId, playerIndex) {
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("viewBox", "0 0 200 200");
+    svg.style.width = "100%";
+    svg.style.height = "100%";
+    
+    // 繪製時鐘底盤
+    const face = document.createElementNS(svgNS, "circle");
+    face.setAttribute("cx", "100"); face.setAttribute("cy", "100");
+    face.setAttribute("r", "96");
+    face.setAttribute("fill", "#FFFFFF");
+    face.setAttribute("stroke", "#F8C8DC"); // 馬卡龍粉紅邊框
+    face.setAttribute("stroke-width", "6");
+    svg.appendChild(face);
+    
+    // 繪製 60 個刻度及數字
+    for(let i=0; i<60; i++) {
+        let angle = i * 6 * Math.PI / 180;
+        let isHour = i % 5 === 0;
+        let r1 = isHour ? 78 : 88;
+        let r2 = 94;
+        let x1 = 100 + r1 * Math.sin(angle);
+        let y1 = 100 - r1 * Math.cos(angle);
+        let x2 = 100 + r2 * Math.sin(angle);
+        let y2 = 100 - r2 * Math.cos(angle);
+        
+        let line = document.createElementNS(svgNS, "line");
+        line.setAttribute("x1", x1); line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2); line.setAttribute("y2", y2);
+        line.setAttribute("stroke", isHour ? "#A9DEF9" : "#E2E2E2"); // 大刻度粉藍，小刻度淺灰
+        line.setAttribute("stroke-width", isHour ? "4" : "2");
+        line.setAttribute("stroke-linecap", "round");
+        svg.appendChild(line);
+        
+        // 數字
+        if (isHour) {
+            let num = i / 5;
+            if (num === 0) num = 12;
+            let tx = 100 + 64 * Math.sin(angle);
+            let ty = 100 - 64 * Math.cos(angle);
+            let text = document.createElementNS(svgNS, "text");
+            text.setAttribute("x", tx);
+            text.setAttribute("y", ty);
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("dominant-baseline", "central");
+            text.setAttribute("font-size", "15");
+            text.setAttribute("font-weight", "bold");
+            text.setAttribute("fill", "#FF85A1"); // 馬卡龍粉紅數字
+            text.textContent = num;
+            svg.appendChild(text);
+        }
+    }
+    
+    // === 時針群組 ===
+    const hGroup = document.createElementNS(svgNS, "g");
+    const hLine = document.createElementNS(svgNS, "line");
+    hLine.setAttribute("x1", "100"); hLine.setAttribute("y1", "100");
+    hLine.setAttribute("x2", "100"); hLine.setAttribute("y2", "60");
+    hLine.setAttribute("stroke", "#FF85A1"); // 粉紅色
+    hLine.setAttribute("stroke-width", "8");
+    hLine.setAttribute("stroke-linecap", "round");
+    
+    // 隱形觸控範圍 (加粗方便手指觸碰)
+    const hTouch = document.createElementNS(svgNS, "line");
+    hTouch.setAttribute("x1", "100"); hTouch.setAttribute("y1", "100");
+    hTouch.setAttribute("x2", "100"); hTouch.setAttribute("y2", "60");
+    hTouch.setAttribute("stroke", "transparent");
+    hTouch.setAttribute("stroke-width", "40");
+    hTouch.setAttribute("stroke-linecap", "round");
+    hTouch.style.cursor = "pointer";
+    
+    hGroup.appendChild(hLine);
+    hGroup.appendChild(hTouch);
+    svg.appendChild(hGroup);
+    
+    // === 分針群組 ===
+    const mGroup = document.createElementNS(svgNS, "g");
+    const mLine = document.createElementNS(svgNS, "line");
+    mLine.setAttribute("x1", "100"); mLine.setAttribute("y1", "100");
+    mLine.setAttribute("x2", "100"); mLine.setAttribute("y2", "30");
+    mLine.setAttribute("stroke", "#43BEE5"); // 粉藍色
+    mLine.setAttribute("stroke-width", "5");
+    mLine.setAttribute("stroke-linecap", "round");
+    
+    // 隱形觸控範圍
+    const mTouch = document.createElementNS(svgNS, "line");
+    mTouch.setAttribute("x1", "100"); mTouch.setAttribute("y1", "100");
+    mTouch.setAttribute("x2", "100"); mTouch.setAttribute("y2", "30");
+    mTouch.setAttribute("stroke", "transparent");
+    mTouch.setAttribute("stroke-width", "40");
+    mTouch.setAttribute("stroke-linecap", "round");
+    mTouch.style.cursor = "pointer";
+    
+    mGroup.appendChild(mLine);
+    mGroup.appendChild(mTouch);
+    svg.appendChild(mGroup);
+    
+    // === 中心圓點 ===
+    const center = document.createElementNS(svgNS, "circle");
+    center.setAttribute("cx", "100"); center.setAttribute("cy", "100");
+    center.setAttribute("r", "7");
+    center.setAttribute("fill", "#FF85A1");
+    svg.appendChild(center);
+    
+    const centerInner = document.createElementNS(svgNS, "circle");
+    centerInner.setAttribute("cx", "100"); centerInner.setAttribute("cy", "100");
+    centerInner.setAttribute("r", "3");
+    centerInner.setAttribute("fill", "#FFFFFF");
+    svg.appendChild(centerInner);
+    
+    document.getElementById(containerId).appendChild(svg);
+    
+    players[playerIndex].hGroup = hGroup;
+    players[playerIndex].mGroup = mGroup;
+    
+    // 綁定拖曳事件
+    attachDrag(hTouch, false, playerIndex, svg);
+    attachDrag(mTouch, true, playerIndex, svg);
+}
+
+// 根據目前的分鐘數更新指針角度 (聯動效果)
+function updateClockHands(playerIndex) {
+    let t = players[playerIndex].time; // 總分鐘數 (0-719)
+    let hAngle = t * 0.5; // 每分鐘時針走 0.5 度 (360/720)
+    let mAngle = (t % 60) * 6; // 每分鐘分針走 6 度 (360/60)
+    
+    players[playerIndex].hGroup.setAttribute("transform", `rotate(${hAngle} 100 100)`);
+    players[playerIndex].mGroup.setAttribute("transform", `rotate(${mAngle} 100 100)`);
+}
+
+// 綁定指針拖曳控制
+function attachDrag(element, isMinuteHand, playerIndex, svg) {
+    element.addEventListener('pointerdown', (e) => {
+        initAudio(); // 確保解鎖音效
+        e.preventDefault(); // 防止畫面滾動
+        element.setPointerCapture(e.pointerId); // 綁定該手指到此元素，實現完美多點觸控
+        
+        let pt = svg.createSVGPoint();
+        
+        // 計算觸控點相對於時鐘中心的角度 (0 - 360, 12點鐘方向為0)
+        function getAngle(clientX, clientY) {
+            pt.x = clientX;
+            pt.y = clientY;
+            let loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+            let dx = loc.x - 100;
+            let dy = loc.y - 100;
+            let angle = Math.atan2(dy, dx) * 180 / Math.PI + 90;
+            if (angle < 0) angle += 360;
+            return angle;
+        }
+        
+        function onMove(me) {
+            let currentAngle = getAngle(me.clientX, me.clientY);
+            let currentMinutes = players[playerIndex].time;
+            
+            if (isMinuteHand) {
+                // 撥動分針
+                let newMin = Math.round(currentAngle / 6);
+                if (newMin === 60) newMin = 0;
+                let oldMin = currentMinutes % 60;
+                let diff = newMin - oldMin;
+                
+                // 處理跨過 12 點的突變
+                if (diff > 30) diff -= 60;
+                if (diff < -30) diff += 60;
+                
+                if (diff !== 0) {
+                    players[playerIndex].time = (currentMinutes + diff + 720) % 720;
+                    playTick(); // 發出滴答聲
+                    updateClockHands(playerIndex);
+                }
+            } else {
+                // 撥動時針
+                let newTotalMin = Math.round(currentAngle * 2);
+                if (newTotalMin === 720) newTotalMin = 0;
+                let oldTotalMin = currentMinutes;
+                let diff = newTotalMin - oldTotalMin;
+                
+                if (diff > 360) diff -= 720;
+                if (diff < -360) diff += 720;
+                
+                if (Math.abs(diff) >= 1) { // 至少移動一分鐘才更新
+                    players[playerIndex].time = (currentMinutes + diff + 720) % 720;
+                    playTick();
+                    updateClockHands(playerIndex);
+                }
+            }
+        }
+        
+        function onUp(ue) {
+            element.releasePointerCapture(ue.pointerId);
+            element.removeEventListener('pointermove', onMove);
+            element.removeEventListener('pointerup', onUp);
+        }
+        
+        element.addEventListener('pointermove', onMove);
+        element.addEventListener('pointerup', onUp);
+    });
+}
+
+// 處理 "+" 與 "-" 按鈕
+function adjustTime(p, type, dir) {
+    initAudio();
+    playClick();
+    if (type === 'h') {
+        let delta = dir > 0 ? 60 : -60; // 增減 60 分鐘
+        players[p].time = (players[p].time + delta + 720) % 720;
+    } else {
+        let delta = dir > 0 ? 1 : -1;   // 增減 1 分鐘
+        players[p].time = (players[p].time + delta + 720) % 720;
+    }
+    updateClockHands(p);
+}
+
+// 變更關卡
+function setLevel(lvl) {
+    initAudio(); playClick();
+    currentLevel = lvl;
+    document.getElementById('btn-lvl-0').classList.remove('active-tab');
+    document.getElementById('btn-lvl-1').classList.remove('active-tab');
+    document.getElementById('btn-lvl-2').classList.remove('active-tab');
+    document.getElementById(`btn-lvl-${lvl}`).classList.add('active-tab');
+    
+    generateQuestion(1);
+    if (currentMode === 2) generateQuestion(2);
+}
+
+// 變更遊玩人數
+function setMode(mode) {
+    initAudio(); playClick();
+    currentMode = mode;
+    document.getElementById('btn-mode-1').classList.remove('active-tab');
+    document.getElementById('btn-mode-2').classList.remove('active-tab');
+    document.getElementById(`btn-mode-${mode}`).classList.add('active-tab');
+    
+    if (mode === 1) {
+        document.getElementById('p2-area').classList.add('hidden');
+    } else {
+        document.getElementById('p2-area').classList.remove('hidden');
+        generateQuestion(2);
+    }
+}
+
+// 隨機產生題目
+function generateQuestion(p) {
+    let hour, min, text, newTarget;
+    let currentT = players[p].time; // 取得指針目前的位置
+    
+    // 使用迴圈確保產生的新題目不會剛好等於目前的指針位置
+    do {
+        if (currentLevel === 0) { // 時正
+            hour = Math.floor(Math.random() * 12) + 1; // 1 ~ 12
+            min = 0;
+            text = GAME_TEXT.questionFormat_0.replace('{h}', hour);
+        } else if (currentLevel === 1) { // 時半
+            hour = Math.floor(Math.random() * 12) + 1;
+            min = 30;
+            text = GAME_TEXT.questionFormat_1.replace('{h}', hour);
+        } else { // 時與分
+            hour = Math.floor(Math.random() * 12) + 1;
+            min = Math.floor(Math.random() * 60); // 0 ~ 59
+            text = GAME_TEXT.questionFormat_2.replace('{h}', hour).replace('{m}', min);
+        }
+        
+        // 將隨機出的時間轉換為總分鐘數 (0-719)
+        let hCalc = (hour === 12) ? 0 : hour;
+        newTarget = hCalc * 60 + min;
+    } while (newTarget === currentT); 
+    
+    players[p].targetTime = newTarget;
+    document.getElementById(`q-text-${p}`).innerText = text;
+    document.getElementById(`feedback-${p}`).className = "feedback";
+}
+
+// 檢查答案是否正確
+function checkAnswer(p) {
+    initAudio();
+    let currentT = players[p].time;
+    let targetT = players[p].targetTime;
+    let fb = document.getElementById(`feedback-${p}`);
+    
+    if (currentT === targetT) {
+        playCorrect();
+        fb.innerText = "🌟"; // 大星星 Emoji 表示答對
+        fb.className = "feedback show";
+        
+        // 延遲後產生下一題
+        setTimeout(() => {
+            generateQuestion(p);
+        }, 1500);
+    } else {
+        playWrong();
+        fb.innerText = "❌"; // 叉叉表示答錯
+        fb.className = "feedback show";
+        setTimeout(() => {
+            fb.className = "feedback";
+        }, 1000);
+    }
+}
+
+// 初始化介面與遊戲
+window.onload = function() {
+    // 建立玩家一與玩家二的時鐘
+    createClock("clock-1", 1);
+    createClock("clock-2", 2);
+    
+    // 初始化 UI 文字 (套用設定區的文字)
+    let lblH = document.getElementsByClassName("lbl-h");
+    let lblM = document.getElementsByClassName("lbl-m");
+    for(let i=0; i<lblH.length; i++) {
+        lblH[i].innerText = GAME_TEXT.labelHourHand;
+        lblM[i].innerText = GAME_TEXT.labelMinuteHand;
+    }
+    
+    let submitBtns = document.getElementsByClassName("submit-btn");
+    for(let i=0; i<submitBtns.length; i++) {
+        submitBtns[i].innerText = GAME_TEXT.confirmBtn;
+    }
+    
+    // 指針初始預設為 12:00 (time: 0)
+    updateClockHands(1);
+    updateClockHands(2);
+    
+    // 預設進入時正關卡、單人模式
+    setLevel(0);
+    setMode(1);
+}
+</script>
+</body>
+</html>
