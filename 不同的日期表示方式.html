@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>不同的日期表示方式</title>
+    <style>
+        :root {
+            /* 馬卡龍色系調色盤 */
+            --bg-color: #fdf6e3; /* 柔和背景色 */
+            --panel-bg: #ffe4e1; /* 淺粉紅面板 */
+            --player1-bg: #e0f7fa; /* 淺藍玩家1 */
+            --player2-bg: #f3e5f5; /* 淺紫玩家2 */
+            --btn-base: #fff;
+            --btn-text: #555;
+            --btn-hover: #f0f0f0;
+            --correct-color: #c8e6c9; /* 淺綠正確 */
+            --wrong-color: #ffcdd2; /* 淺紅錯誤 */
+            --border-color: #ddd;
+            --text-main: #333;
+            --title-color: #ffb6c1; /* 標題粉紅 */
+            
+            /* 圓角和陰影 */
+            --radius-md: 15px;
+            --radius-lg: 20px;
+            --shadow-sm: 0 4px 6px rgba(0,0,0,0.05);
+            --shadow-md: 0 8px 15px rgba(0,0,0,0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none; /* 防止反白文字，適合遊戲 */
+            -webkit-user-select: none;
+            touch-action: manipulation; /* 改善觸控體驗 */
+            font-family: 'Helvetica Neue', Arial, 'Microsoft JhengHei', sans-serif;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            overflow: hidden; /* 防止滾動 */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 隱藏元素用 */
+        .hidden {
+            display: none !important;
+        }
+
+        #top-bar {
+            height: 60px;
+            background-color: var(--panel-bg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: var(--shadow-sm);
+            z-index: 10;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-main);
+            text-shadow: 1px 1px 2px #fff;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mode-btn {
+            padding: 10px 20px;
+            font-size: 18px;
+            border: 2px solid var(--border-color);
+            background-color: var(--btn-base);
+            color: var(--btn-text);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .mode-btn.active {
+            background-color: var(--title-color);
+            color: white;
+            border-color: #ff99aa;
+            transform: scale(1.05);
+        }
+
+        #game-container {
+            flex: 1;
+            display: flex;
+            width: 100%;
+            padding: 10px;
+            gap: 10px;
+        }
+
+        /* 玩家區域通用樣式 */
+        .player-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-radius: var(--radius-lg);
+            padding: 15px;
+            box-shadow: var(--shadow-md);
+            transition: width 0.3s;
+            position: relative; /* 為了放置過關動畫 */
+        }
+
+        /* 單人模式佔滿，雙人模式各半 */
+        .player-area.single {
+            background-color: var(--player1-bg);
+        }
+
+        .player-area.player1 {
+            background-color: var(--player1-bg);
+        }
+
+        .player-area.player2 {
+            background-color: var(--player2-bg);
+        }
+
+        .question-box {
+            background-color: white;
+            border-radius: var(--radius-md);
+            padding: 8px; /* 縮小 padding */
+            text-align: center;
+            font-size: 20px; /* 縮小字體 */
+            font-weight: bold;
+            color: var(--text-main);
+            margin-bottom: 8px; /* 縮小下邊距 */
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            border: 2px dashed #ccc;
+        }
+
+        .work-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px; /* 大幅縮小間距 */
+            justify-content: center;
+        }
+
+        /* 三種格式的容器 */
+        .format-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.6);
+            padding: 6px 10px; /* 縮小 padding */
+            border-radius: var(--radius-md);
+        }
+
+        .format-label {
+            font-size: 16px; /* 縮小字體 */
+            font-weight: bold;
+            width: 85px; /* 縮小寬度 */
+            color: var(--text-main);
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 4px; /* 縮小格子間距 */
+            flex: 1;
+            justify-content: center;
+        }
+
+        /* 數字輸入框 (虛擬的，由鍵盤輸入) */
+        .digit-box {
+            width: 34px; /* 縮小寬度 */
+            height: 42px; /* 縮小高度 */
+            background-color: white;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 20px; /* 縮小字體 */
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-main);
+            cursor: pointer;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* 目前選中的輸入框 */
+        .digit-box.active {
+            border-color: #ff99aa;
+            background-color: #fff0f5;
+            box-shadow: 0 0 8px #ff99aa;
+        }
+
+        .digit-box.correct {
+            background-color: var(--correct-color);
+            border-color: #81c784;
+            color: #2e7d32;
+        }
+
+        .separator {
+            font-size: 24px;
+            font-weight: bold;
+            color: #777;
+            padding: 0 5px;
+        }
+
+        /* 檢查按鈕 */
+        .check-btn {
+            padding: 8px 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            background-color: #ffcc80;
+            color: #333;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #ef6c00;
+            transition: transform 0.1s;
+        }
+        .check-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        /* 數字鍵盤區域自適應 */
+        .numpad-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2px;
+            min-height: 0; /* 讓 flex 子元素可以縮小 */
+        }
+
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(4, 1fr); /* 確保4列均分，配合 3/4 比例讓按鍵呈正方形 */
+            gap: 6px; /* 縮小間距 */
+            padding: 6px;
+            background-color: rgba(255,255,255,0.5);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 220px; /* 縮小最大寬度，避免鍵盤佔據過大空間 */
+            aspect-ratio: 3 / 4; /* 強制 3x4 比例 */
+        }
+
+        .num-key {
+            background-color: white;
+            border: 2px solid var(--border-color);
+            border-radius: 10px; /* 縮小圓角 */
+            font-size: 22px; /* 縮小字體 */
+            font-weight: bold;
+            color: var(--text-main);
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* 讓按鍵填滿 grid cell 並保持形狀 */
+            width: 100%;
+            height: 100%;
+        }
+
+        .num-key:active {
+            transform: translateY(4px);
+            box-shadow: none;
+            background-color: var(--btn-hover);
+        }
+
+        /* 清除鍵的特殊樣式 */
+        .num-key.clear-key {
+            background-color: #ffe0b2;
+            color: #e65100;
+            font-size: 18px; /* 縮小字體 */
+            border-color: #ffcc80;
+            box-shadow: 0 4px 0 #f57c00;
+        }
+        .num-key.clear-key:active {
+            box-shadow: none;
+        }
+
+        /* 刪除鍵 (Backspace) 的特殊樣式 */
+        .num-key.del-key {
+            background-color: #ffcdd2;
+            color: #c62828;
+            font-size: 18px; /* 縮小字體 */
+            border-color: #ef9a9a;
+            box-shadow: 0 4px 0 #e53935;
+        }
+        .num-key.del-key:active {
+            box-shadow: none;
+        }
+
+        /* 0鍵佔兩格 */
+        .num-key.zero {
+            /* grid-column: span 2; */ /* 暫不使用 span，保持 3x4 佈局 */
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.9);
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        .overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .star-icon {
+            font-size: 100px;
+            margin-bottom: 20px;
+            animation: bounce 1s infinite alternate;
+        }
+        @keyframes bounce {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-20px) scale(1.1); }
+        }
+        .next-btn {
+            padding: 15px 30px;
+            font-size: 24px;
+            background-color: #81c784;
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: bold;
+            box-shadow: 0 6px 0 #388e3c;
+            cursor: pointer;
+        }
+        .next-btn:active {
+            transform: translateY(6px);
+            box-shadow: none;
+        }
+
+        /* 自適應調整 (較小螢幕) */
+        @media (max-width: 768px) {
+            .title { font-size: 16px; }
+            .mode-btn { padding: 5px 10px; font-size: 14px; }
+            .question-box { font-size: 16px; padding: 6px; margin-bottom: 6px;}
+            .work-area { gap: 4px; }
+            .format-row { padding: 4px; }
+            .format-label { font-size: 14px; width: 60px; }
+            .input-group { gap: 2px; }
+            .digit-box { width: 24px; height: 32px; font-size: 16px; border-radius: 4px;}
+            .separator { font-size: 18px; padding: 0 2px; }
+            .numpad-container { padding: 0; }
+            .numpad { max-width: 160px; gap: 4px; padding: 4px; } /* 手機板進一步縮小鍵盤 */
+            .num-key { font-size: 18px; border-radius: 8px;}
+            .check-btn { font-size: 12px; padding: 6px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        // 使用 Web Audio API 產生簡單音效，不依賴外部檔案
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        // 按鍵音效 (短促的嗶聲)
+        function playClickSound() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        // 答對音效 (輕快的上升音階)
+        function playCorrectSound() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'triangle';
+            
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+            osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+            osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+            osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.3); // C6
+
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        // 答錯音效 (低沉的嘟聲)
+        function playWrongSound() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.3);
+            
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+    </script>
+
+    <div id="top-bar">
+        <div class="title">📅 不同的日期表示方式</div>
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="setMode(1)" id="btn-mode-1">單人模式</button>
+            <button class="mode-btn" onclick="setMode(2)" id="btn-mode-2">雙人模式</button>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <!-- 玩家1 區域 -->
+        <div class="player-area single" id="area-p1">
+            <div class="question-box" id="qbox-p1">
+                題目載入中...
+            </div>
+            
+            <div class="work-area">
+                <!-- A) 日-月-年 -->
+                <div class="format-row">
+                    <div class="format-label">A)日-月-年</div>
+                    <div class="input-group" id="group-p1-A">
+                        <!-- 動態生成輸入框 -->
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer(1, 'A')">檢查</button>
+                </div>
+
+                <!-- B) 年-月-日 -->
+                <div class="format-row">
+                    <div class="format-label">B) 年-月-日</div>
+                    <div class="input-group" id="group-p1-B">
+                        <!-- 動態生成輸入框 -->
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer(1, 'B')">檢查</button>
+                </div>
+
+                <!-- C) 月-日-年 -->
+                <div class="format-row">
+                    <div class="format-label">C) 月-日-年</div>
+                    <div class="input-group" id="group-p1-C">
+                        <!-- 動態生成輸入框 -->
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer(1, 'C')">檢查</button>
+                </div>
+            </div>
+
+            <!-- 數字鍵盤 -->
+            <div class="numpad-container">
+                <div class="numpad" id="numpad-p1">
+                    <!-- 動態生成 1-9, C, 0, Del -->
+                </div>
+            </div>
+
+            <!-- 過關畫面 -->
+            <div class="overlay" id="overlay-p1">
+                <div class="star-icon">🌟</div>
+                <h2 style="color: #388e3c; margin-bottom: 20px;">太棒了！全對！</h2>
+                <button class="next-btn" onclick="generateNewQuestion(1)">下一題</button>
+            </div>
+        </div>
+
+        <!-- 玩家2 區域 (預設隱藏) -->
+        <div class="player-area player2 hidden" id="area-p2">
+            <div class="question-box" id="qbox-p2">
+                題目載入中...
+            </div>
+            
+            <div class="work-area">
+                <!-- A) 日-月-年 -->
+                <div class="format-row">
+                    <div class="format-label">A) 日-月-年</div>
+                    <div class="input-group" id="group-p2-A"></div>
+                    <button class="check-btn" onclick="checkAnswer(2, 'A')">檢查</button>
+                </div>
+
+                <!-- B) 年-月-日 -->
+                <div class="format-row">
+                    <div class="format-label">B) 年-月-日</div>
+                    <div class="input-group" id="group-p2-B"></div>
+                    <button class="check-btn" onclick="checkAnswer(2, 'B')">檢查</button>
+                </div>
+
+                <!-- C) 月-日-年 -->
+                <div class="format-row">
+                    <div class="format-label">C) 月-日-年</div>
+                    <div class="input-group" id="group-p2-C"></div>
+                    <button class="check-btn" onclick="checkAnswer(2, 'C')">檢查</button>
+                </div>
+            </div>
+
+            <!-- 數字鍵盤 -->
+            <div class="numpad-container">
+                <div class="numpad" id="numpad-p2"></div>
+            </div>
+
+            <!-- 過關畫面 -->
+            <div class="overlay" id="overlay-p2">
+                <div class="star-icon">🌟</div>
+                <h2 style="color: #388e3c; margin-bottom: 20px;">太棒了！全對！</h2>
+                <button class="next-btn" onclick="generateNewQuestion(2)">下一題</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 狀態變數 ---
+        let currentMode = 1; // 1: 單人, 2: 雙人
+        
+        // 儲存玩家狀態
+        const players = {
+            1: {
+                currentDate: { y: 0, m: 0, d: 0 },
+                activeInputId: null, // 目前選中的輸入框 ID (e.g., 'p1-A-d1')
+                completed: { A: false, B: false, C: false }
+            },
+            2: {
+                currentDate: { y: 0, m: 0, d: 0 },
+                activeInputId: null,
+                completed: { A: false, B: false, C: false }
+            }
+        };
+
+        // 格式定義：需要的位數 (例如年4位，月2位，日2位)
+        const formatDef = {
+            A: [ {type: 'd', len: 2}, {type: 'm', len: 2}, {type: 'y', len: 4} ], // 日-月-年
+            B: [ {type: 'y', len: 4}, {type: 'm', len: 2}, {type: 'd', len: 2} ], // 年-月-日
+            C: [ {type: 'm', len: 2}, {type: 'd', len: 2}, {type: 'y', len: 4} ]  // 月-日-年
+        };
+
+        // --- 初始化函數 ---
+        function init() {
+            buildNumpad(1);
+            buildNumpad(2);
+            buildInputGroups(1);
+            buildInputGroups(2);
+            generateNewQuestion(1);
+            generateNewQuestion(2);
+            
+            // 監聽全域點擊，處理音效初始化 (瀏覽器政策要求)
+            document.body.addEventListener('touchstart', function() {
+                if(audioCtx.state === 'suspended') audioCtx.resume();
+            }, {once:true});
+            document.body.addEventListener('mousedown', function() {
+                if(audioCtx.state === 'suspended') audioCtx.resume();
+            }, {once:true});
+        }
+
+        // 切換單人/雙人模式
+        function setMode(mode) {
+            playClickSound();
+            currentMode = mode;
+            
+            // 更新按鈕樣式
+            document.getElementById('btn-mode-1').classList.toggle('active', mode === 1);
+            document.getElementById('btn-mode-2').classList.toggle('active', mode === 2);
+            
+            // 顯示/隱藏區域
+            const areaP1 = document.getElementById('area-p1');
+            const areaP2 = document.getElementById('area-p2');
+            
+            if (mode === 1) {
+                areaP1.className = 'player-area single';
+                areaP2.classList.add('hidden');
+            } else {
+                areaP1.className = 'player-area player1';
+                areaP2.classList.remove('hidden');
+                generateNewQuestion(2); // 確保P2有新題目
+            }
+        }
+
+        // 產生隨機日期 (限制在 2000-2030 年)
+        function getRandomDate() {
+            const y = Math.floor(Math.random() * (2030 - 2000 + 1)) + 2000;
+            const m = Math.floor(Math.random() * 12) + 1;
+            // 簡化天數計算，假設每月最多 28 天以避免無效日期
+            const d = Math.floor(Math.random() * 28) + 1; 
+            return { y, m, d };
+        }
+
+        // 產生新題目
+        function generateNewQuestion(playerId) {
+            const p = players[playerId];
+            p.currentDate = getRandomDate();
+            p.completed = { A: false, B: false, C: false };
+            p.activeInputId = null;
+
+            // 更新題目顯示
+            const qStr = `${p.currentDate.y}年${p.currentDate.m}月${p.currentDate.d}日`;
+            document.getElementById(`qbox-p${playerId}`).innerText = `📝 ${qStr}`;
+
+            // 重置輸入框
+            buildInputGroups(playerId);
+            
+            // 隱藏過關畫面
+            document.getElementById(`overlay-p${playerId}`).classList.remove('show');
+            
+            // 自動選中第一個空格
+            selectNextEmpty(playerId, 'A');
+        }
+
+        // 建立數字鍵盤
+        function buildNumpad(playerId) {
+            const pad = document.getElementById(`numpad-p${playerId}`);
+            pad.innerHTML = '';
+            
+            // 建立 1-9
+            for (let i = 1; i <= 9; i++) {
+                const btn = document.createElement('div');
+                btn.className = 'num-key';
+                btn.innerText = i;
+                // 支援觸控和滑鼠
+                btn.addEventListener('pointerdown', (e) => handleNumpadPress(e, playerId, i.toString()));
+                pad.appendChild(btn);
+            }
+            
+            // 建立 清除鍵
+            const clr = document.createElement('div');
+            clr.className = 'num-key clear-key';
+            clr.innerText = 'C';
+            clr.addEventListener('pointerdown', (e) => handleNumpadPress(e, playerId, 'C'));
+            pad.appendChild(clr);
+
+            // 建立 0
+            const zero = document.createElement('div');
+            zero.className = 'num-key zero';
+            zero.innerText = '0';
+            zero.addEventListener('pointerdown', (e) => handleNumpadPress(e, playerId, '0'));
+            pad.appendChild(zero);
+            
+            // 建立 刪除鍵 (Del)
+            const del = document.createElement('div');
+            del.className = 'num-key del-key';
+            del.innerHTML = '⌫'; // 使用符號表示刪除
+            del.addEventListener('pointerdown', (e) => handleNumpadPress(e, playerId, 'DEL'));
+            pad.appendChild(del);
+        }
+
+        // 建立格式的輸入框群組
+        function buildInputGroups(playerId) {
+            ['A', 'B', 'C'].forEach(format => {
+                const container = document.getElementById(`group-p${playerId}-${format}`);
+                container.innerHTML = ''; // 清空
+                
+                const parts = formatDef[format];
+                parts.forEach((part, index) => {
+                    // 建立該部分 (y, m, d) 的空格
+                    for (let i = 0; i < part.len; i++) {
+                        const box = document.createElement('div');
+                        box.className = 'digit-box';
+                        // ID 命名規則: p{id}-{格式}-{部分}{索引} e.g. p1-A-y0
+                        box.id = `p${playerId}-${format}-${part.type}${i}`;
+                        box.dataset.player = playerId;
+                        box.dataset.format = format;
+                        box.dataset.type = part.type;
+                        box.dataset.idx = i;
+                        box.innerText = ''; // 初始為空
+                        
+                        // 點擊選中
+                        box.addEventListener('pointerdown', (e) => {
+                            e.preventDefault();
+                            setActiveBox(playerId, box.id);
+                        });
+                        
+                        container.appendChild(box);
+                    }
+                    
+                    // 加入分隔符號 '-' (除了最後一個)
+                    if (index < parts.length - 1) {
+                        const sep = document.createElement('span');
+                        sep.className = 'separator';
+                        sep.innerText = '-';
+                        container.appendChild(sep);
+                    }
+                });
+            });
+        }
+
+        // 設定作用中的輸入框
+        function setActiveBox(playerId, boxId) {
+            playClickSound();
+            const p = players[playerId];
+            
+            // 如果該行已經完成，不允許選取
+            const format = boxId.split('-')[1];
+            if(p.completed[format]) return;
+
+            // 移除舊的 active 狀態
+            if (p.activeInputId) {
+                const oldBox = document.getElementById(p.activeInputId);
+                if(oldBox) oldBox.classList.remove('active');
+            }
+
+            // 設定新的
+            p.activeInputId = boxId;
+            const newBox = document.getElementById(boxId);
+            if(newBox) newBox.classList.add('active');
+        }
+
+        // 處理數字鍵盤點擊
+        function handleNumpadPress(e, playerId, key) {
+            e.preventDefault(); // 防止穿透
+            playClickSound();
+            
+            const p = players[playerId];
+            if (!p.activeInputId) return; // 沒有選中框則忽略
+
+            const activeBox = document.getElementById(p.activeInputId);
+            const format = activeBox.dataset.format;
+            
+            if (p.completed[format]) return; // 已完成則不能改
+
+            if (key === 'C') {
+                // 清除該題的所有輸入
+                const container = document.getElementById(`group-p${playerId}-${format}`);
+                const boxes = container.querySelectorAll('.digit-box');
+                boxes.forEach(box => box.innerText = '');
+                // 跳回第一個空格
+                selectFirstEmpty(playerId, format);
+            } else if (key === 'DEL') {
+                // 刪除邏輯：刪除目前格子的內容，如果目前格子是空的，則退回上一格並刪除
+                if (activeBox.innerText !== '') {
+                    activeBox.innerText = '';
+                } else {
+                    selectPrevious(playerId, format);
+                    const prevBox = document.getElementById(players[playerId].activeInputId);
+                    if (prevBox) prevBox.innerText = '';
+                }
+            } else {
+                activeBox.innerText = key; // 填入數字
+                // 自動跳到下一個空格
+                selectNextEmpty(playerId, format);
+            }
+        }
+
+        // 選擇該格式第一個空的格子
+        function selectFirstEmpty(playerId, format) {
+            const container = document.getElementById(`group-p${playerId}-${format}`);
+            const boxes = container.querySelectorAll('.digit-box');
+            
+            for (let i = 0; i < boxes.length; i++) {
+                setActiveBox(playerId, boxes[i].id);
+                return;
+            }
+        }
+
+        // 自動尋找下一個空的格子並選中
+        function selectNextEmpty(playerId, format) {
+            const container = document.getElementById(`group-p${playerId}-${format}`);
+            const boxes = container.querySelectorAll('.digit-box');
+            
+            for (let i = 0; i < boxes.length; i++) {
+                if (boxes[i].innerText === '') {
+                    setActiveBox(playerId, boxes[i].id);
+                    return;
+                }
+            }
+            // 如果都滿了，取消選取
+            const p = players[playerId];
+            if (p.activeInputId) {
+                document.getElementById(p.activeInputId).classList.remove('active');
+                p.activeInputId = null;
+            }
+        }
+
+        // 選取上一個格子
+        function selectPrevious(playerId, format) {
+            const container = document.getElementById(`group-p${playerId}-${format}`);
+            const boxes = Array.from(container.querySelectorAll('.digit-box'));
+            
+            const currentIndex = boxes.findIndex(box => box.id === players[playerId].activeInputId);
+            
+            if (currentIndex > 0) {
+                setActiveBox(playerId, boxes[currentIndex - 1].id);
+            }
+        }
+
+        // 將數字轉為補零字串
+        function padZero(num, len) {
+            return String(num).padStart(len, '0');
+        }
+
+        // 檢查答案
+        function checkAnswer(playerId, format) {
+            const p = players[playerId];
+            if (p.completed[format]) return; // 已經對了就不檢查
+
+            const container = document.getElementById(`group-p${playerId}-${format}`);
+            const boxes = container.querySelectorAll('.digit-box');
+            
+            // 組合使用者輸入的字串 (例如 YYYY, MM, DD)
+            let userVals = { y: '', m: '', d: '' };
+            boxes.forEach(box => {
+                const type = box.dataset.type;
+                userVals[type] += box.innerText;
+            });
+
+            // 取得正確答案字串
+            const correctVals = {
+                y: padZero(p.currentDate.y, 4),
+                m: padZero(p.currentDate.m, 2),
+                d: padZero(p.currentDate.d, 2)
+            };
+
+            // 檢查是否填滿且正確
+            let isCorrect = true;
+            let isFull = true;
+
+            ['y', 'm', 'd'].forEach(type => {
+                if (userVals[type].length < correctVals[type].length) isFull = false;
+                if (userVals[type] !== correctVals[type]) isCorrect = false;
+            });
+
+            if (!isFull) {
+                // 未填完，給錯誤提示音
+                playWrongSound();
+                // 簡單的抖動效果 (直接操作style)
+                container.style.transform = 'translateX(-5px)';
+                setTimeout(()=> container.style.transform = 'translateX(5px)', 50);
+                setTimeout(()=> container.style.transform = 'translateX(0)', 100);
+                return;
+            }
+
+            if (isCorrect) {
+                playCorrectSound();
+                p.completed[format] = true;
+                // 鎖定並變綠色
+                boxes.forEach(box => {
+                    box.classList.add('correct');
+                    box.classList.remove('active');
+                });
+                
+                // 檢查是否全部完成 (A, B, C)
+                if (p.completed.A && p.completed.B && p.completed.C) {
+                    showSuccess(playerId);
+                } else {
+                    // 自動跳到下一個未完成的格式
+                    const nextFormat = ['A', 'B', 'C'].find(f => !p.completed[f]);
+                    if(nextFormat) selectNextEmpty(playerId, nextFormat);
+                }
+            } else {
+                playWrongSound();
+                // 答錯：清空該行
+                boxes.forEach(box => box.innerText = '');
+                // 重新選中第一個
+                selectNextEmpty(playerId, format);
+            }
+        }
+
+        // 顯示過關畫面
+        function showSuccess(playerId) {
+            setTimeout(() => {
+                // 播放過關音效 (長一點的上升音)
+                if(audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(880, audioCtx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 1);
+
+                document.getElementById(`overlay-p${playerId}`).classList.add('show');
+            }, 500);
+        }
+
+        // 啟動遊戲
+        window.onload = init;
+
+    </script>
+</body>
+</html>
