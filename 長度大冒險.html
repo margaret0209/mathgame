@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>長度大冒險 - cm 與 m</title>
+    <style>
+        :root {
+            --bg-color: #f0f9ff;
+            --card-bg: #ffffff;
+            --primary: #0284c7;
+            --primary-hover: #0369a1;
+            --accent: #f59e0b;
+            --text: #1e293b;
+            --muted: #64748b;
+            --border: #cbd5e1;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --ruler-bg: #fef3c7;
+            --ruler-border: #d97706;
+            --font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', '微軟正黑體', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: var(--font-family);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* 改為 flex-start 以適應較長內容 */
+            min-height: 100vh;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .game-container {
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            padding: max(2vh, 16px);
+            display: flex;
+            flex-direction: column;
+            gap: max(1.5vh, 12px);
+            border: 4px solid var(--border);
+            position: relative;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            max-height: 85vh; /* 自適應畫面高度的 85% */
+        }
+
+        /* MENU SCREEN */
+        .menu-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 20px;
+            padding: 10px 10px;
+            z-index: 10;
+        }
+
+        .menu-screen h1 {
+            font-size: 2.3rem;
+            color: var(--primary);
+        }
+
+        .menu-subtitle {
+            font-size: 1.15rem;
+            color: var(--muted);
+        }
+
+        .menu-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .menu-btn {
+            background: #ffffff;
+            border: 3px solid var(--border);
+            border-radius: 20px;
+            padding: 14px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            font-family: inherit;
+            color: var(--text);
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--border);
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .menu-btn span.desc {
+            font-size: 0.9rem;
+            font-weight: normal;
+            color: var(--muted);
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 var(--border);
+            border-color: var(--primary);
+            background: #e0f2fe;
+        }
+
+        .menu-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 var(--border);
+        }
+
+        /* GAMEPLAY SCREEN */
+        .gameplay-screen {
+            display: none;
+            flex-direction: column;
+            gap: max(1vh, 6px); /* 縮小各區塊間距 */
+            z-index: 10;
+            height: 100%;
+            overflow-y: auto; /* 如果高度不足，允許內容滾動 */
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f1f5f9;
+            padding: 10px 16px;
+            border-radius: 16px;
+            border: 2px solid var(--border);
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .stat-item {
+            background: #ffffff;
+            padding: 4px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.05);
+            border-color: var(--primary);
+        }
+
+        .icon-btn.muted {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+
+        /* Question Banner */
+        .question-banner {
+            text-align: center;
+            font-size: clamp(1.1rem, 3vh, 1.2rem);
+            font-weight: bold;
+            color: var(--text);
+            background: #ffffff;
+            padding: max(1vh, 8px);
+            border-radius: 16px;
+            border: 2px dashed var(--primary);
+        }
+
+        /* Interactive Canvas Workspace */
+        .workspace {
+            background: #ffffff;
+            border: 3px solid var(--border);
+            border-radius: 20px;
+            padding: max(1.5vh, 12px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            min-height: min(25vh, 200px); /* 隨畫面高度縮小工作區高度 */
+            justify-content: center;
+        }
+
+        /* SVG Object Area */
+        .object-area {
+            position: relative;
+            width: 100%;
+            height: 90px; /* 從 120px 縮小以節省垂直空間 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: -3px; 
+            z-index: 2;
+        }
+
+        .draggable-object {
+            position: absolute;
+            height: 80px;
+            display: flex;
+            align-items: flex-end; 
+            justify-content: center;
+            touch-action: none;
+            padding-bottom: 5px; 
+        }
+
+        .draggable-object.draggable {
+            cursor: grab;
+        }
+
+        .draggable-object.draggable:active {
+            cursor: grabbing;
+        }
+
+        .drag-hint {
+            position: absolute;
+            top: -24px;
+            background: #fef08a;
+            color: #854d0e;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border: 1px solid #facc15;
+            white-space: nowrap;
+            pointer-events: none;
+            animation: bounce 1.5s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        /* Ruler Container */
+        .ruler-container {
+            width: 100%;
+            height: 90px;
+            background: var(--ruler-bg);
+            border: 3px solid var(--ruler-border);
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            z-index: 1;
+        }
+
+        .ruler-container.hidden {
+            display: none;
+        }
+
+        .ruler-ticks {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Ticks positioned at the top edge of the ruler */
+        .tick {
+            position: absolute;
+            top: 0; 
+            background-color: var(--ruler-border);
+            width: 2px;
+        }
+
+        .tick.major {
+            height: 40px;
+            width: 2px;
+        }
+
+        .tick.half {
+            height: 25px;
+        }
+
+        /* Labels positioned below the ticks */
+        .tick-label {
+            position: absolute;
+            top: 45px; 
+            transform: translateX(-50%);
+            font-weight: bold;
+            font-size: 1rem;
+            color: #78350f;
+        }
+
+        .ruler-unit-label {
+            position: absolute;
+            right: 12px;
+            bottom: 10px; 
+            font-weight: bold;
+            color: #b45309;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Conversion Display Graphic */
+        .conversion-card {
+            background: #f0f9ff;
+            border: 3px dashed var(--primary);
+            border-radius: 20px;
+            padding: 20px 24px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 10px;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* Answer Input Area - Keypad Design */
+        .answer-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px; /* 從 16px 縮小間距 */
+        }
+
+        .input-display-area {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: baseline;
+            gap: 12px;
+            min-height: 44px; /* 從 60px 縮小 */
+        }
+
+        .input-group {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .input-box {
+            background: #f8fafc;
+            border: 3px solid var(--border);
+            border-radius: 12px;
+            width: clamp(50px, 12vw, 70px); /* 寬度響應式 */
+            height: clamp(36px, 4.5vh, 48px); /* 高度進一步縮小 */
+            font-size: clamp(1.2rem, 3vh, 1.5rem); /* 字體隨畫面縮小 */
+            font-weight: bold;
+            color: var(--primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .input-box.empty {
+            color: #cbd5e1;
+        }
+
+        .input-box.active {
+            border-color: var(--accent);
+            background: #fffbeb;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+        }
+
+        .input-label {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--text);
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px; /* 進一步縮小鍵盤間距 */
+            width: 100%;
+            max-width: 250px; /* 縮小鍵盤整體最大寬度 */
+        }
+
+        .key-btn {
+            background: #ffffff;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: max(0.5vh, 4px);
+            height: clamp(32px, 4.5vh, 44px); /* 大幅降低按鍵高度以避免超出畫面 */
+            font-size: clamp(1.1rem, 2.5vh, 1.3rem); /* 字體動態縮放 */
+            font-weight: bold;
+            font-family: inherit;
+            color: var(--text);
+            cursor: pointer;
+            box-shadow: 0 3px 0 var(--border);
+            transition: all 0.1s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .key-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 0 0 var(--border);
+        }
+
+        .key-btn.action-btn {
+            background: #e2e8f0;
+            border-color: #cbd5e1;
+            box-shadow: 0 3px 0 #cbd5e1;
+            font-size: clamp(1rem, 2.5vh, 1.3rem);
+        }
+
+        .key-btn.submit-btn {
+            background: var(--success);
+            color: white;
+            border-color: #16a34a;
+            box-shadow: 0 3px 0 #16a34a;
+            font-size: clamp(1rem, 2.5vh, 1.3rem);
+        }
+
+        /* Explanation Card */
+        .explanation-card {
+            min-height: min(6vh, 52px);
+            background: #f0f9ff;
+            border: 2px solid #bae6fd;
+            border-radius: 14px;
+            padding: max(1vh, 8px) 16px;
+            text-align: center;
+            font-size: clamp(1rem, 2.5vh, 1.15rem);
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .explanation-card.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .explanation-card.error {
+            background: #fef2f2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+
+        .explanation-card.success {
+            background: #f0fdf4;
+            border-color: #86efac;
+            color: #166534;
+        }
+
+        /* Action Buttons */
+        .action-area {
+            display: flex;
+            justify-content: center;
+        }
+
+        .next-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 10px 28px; /* 縮小按鈕垂直高度 */
+            font-size: 1.15rem;
+            font-weight: bold;
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--primary-hover);
+            transition: all 0.2s ease;
+            display: none;
+        }
+
+        .next-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+
+    <!-- MENU SCREEN -->
+    <div class="menu-screen" id="menuScreen">
+        <h1>長度測量大冒險</h1>
+        <p class="menu-subtitle">練習 cm 與 m 的測量及換算吧！</p>
+        
+        <div class="menu-options">
+            <button class="menu-btn" id="btnLevel1" type="button">
+                第一關：從 0 開始測量
+                <span class="desc">物品已對齊直尺上的 0 刻度</span>
+            </button>
+            <button class="menu-btn" id="btnLevel2" type="button">
+                第二關：拖曳並對齊 0
+                <span class="desc">拖曳物品使其從 0 開始測量</span>
+            </button>
+            <button class="menu-btn" id="btnLevel3" type="button">
+                第三關：cm 與 m 簡單換算
+                <span class="desc">整數單位的互相轉換</span>
+            </button>
+            <button class="menu-btn" id="btnLevel4" type="button">
+                第四關：單名數轉複名數
+                <span class="desc">將 cm 轉換成 m 和 cm</span>
+            </button>
+            <button class="menu-btn" id="btnLevel5" type="button">
+                第五關：複名數轉單名數
+                <span class="desc">將 m 和 cm 轉換成 cm</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- GAMEPLAY SCREEN -->
+    <div class="gameplay-screen" id="gameplayScreen">
+        <header>
+            <h1 id="modeTitle">第一關</h1>
+            <div class="stats-bar">
+                <div class="stat-item" title="分數">⭐ <span id="score">0</span></div>
+                <div class="stat-item" title="連勝">🔥 <span id="streak">0</span></div>
+            </div>
+            <div class="controls">
+                <button class="icon-btn" id="soundToggle" type="button" title="開啟/關閉聲音">🔊</button>
+                <button class="icon-btn" id="homeBtn" type="button" title="回主選單">🏠</button>
+            </div>
+        </header>
+
+        <div class="question-banner" id="questionText">
+            這個物品有多長？
+        </div>
+
+        <div class="workspace" id="workspace">
+            <div class="object-area" id="objectArea">
+                <!-- SVG Object or Conversion Graphic injected dynamically -->
+            </div>
+            <div class="ruler-container" id="rulerContainer">
+                <div class="ruler-unit-label" id="rulerUnitLabel">cm</div>
+                <div class="ruler-ticks" id="rulerTicks"></div>
+            </div>
+        </div>
+
+        <div class="answer-area">
+            <div class="input-display-area" id="inputDisplayArea">
+                <!-- Dynamic input boxes injected here -->
+            </div>
+            
+            <div class="keypad" id="keypad">
+                <button class="key-btn" data-key="1">1</button>
+                <button class="key-btn" data-key="2">2</button>
+                <button class="key-btn" data-key="3">3</button>
+                <button class="key-btn" data-key="4">4</button>
+                <button class="key-btn" data-key="5">5</button>
+                <button class="key-btn" data-key="6">6</button>
+                <button class="key-btn" data-key="7">7</button>
+                <button class="key-btn" data-key="8">8</button>
+                <button class="key-btn" data-key="9">9</button>
+                <button class="key-btn action-btn" data-key="del">⌫</button>
+                <button class="key-btn" data-key="0">0</button>
+                <button class="key-btn action-btn submit-btn" data-key="submit">確定</button>
+            </div>
+        </div>
+
+        <div class="explanation-card" id="explanation"></div>
+
+        <div class="action-area">
+            <button class="next-btn" id="nextBtn" type="button">下一題 ➔</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Sound Effects Synthesizer Engine
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new AudioContext();
+    }
+
+    function playSound(type) {
+        if (!soundEnabled) return;
+        initAudio();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'correct') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.1);
+            osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.2);
+            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+            osc.start(now);
+            osc.stop(now + 0.35);
+        } else if (type === 'pop') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(320, now);
+            osc.frequency.exponentialRampToValueAtTime(160, now + 0.06);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+            osc.start(now);
+            osc.stop(now + 0.06);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(220, now);
+            osc.frequency.linearRampToValueAtTime(160, now + 0.25);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        }
+    }
+
+    // Measurable Objects Library (SVGs)
+    const OBJECTS = [
+        {
+            name: "鉛筆",
+            svg: (w) => `<svg width="${w}" height="50" viewBox="0 0 ${w} 50" preserveAspectRatio="none">
+                <rect x="0" y="15" width="${w-20}" height="20" fill="#f59e0b" rx="2"/>
+                <polygon points="${w-20},15 ${w},25 ${w-20},35" fill="#fde68a"/>
+                <polygon points="${w-8},21 ${w},25 ${w-8},29" fill="#1e293b"/>
+                <rect x="0" y="15" width="15" height="20" fill="#f43f5e" rx="2"/>
+                <rect x="15" y="15" width="5" height="20" fill="#cbd5e1"/>
+            </svg>`
+        },
+        {
+            name: "蠟筆",
+            svg: (w) => `<svg width="${w}" height="50" viewBox="0 0 ${w} 50" preserveAspectRatio="none">
+                <rect x="10" y="15" width="${w-20}" height="20" fill="#3b82f6" rx="3"/>
+                <polygon points="10,15 0,25 10,35" fill="#2563eb"/>
+                <polygon points="${w-10},15 ${w},25 ${w-10},35" fill="#2563eb"/>
+                <rect x="25" y="15" width="15" height="20" fill="#1d4ed8"/>
+            </svg>`
+        },
+        {
+            name: "迴紋針",
+            svg: (w) => `<svg width="${w}" height="40" viewBox="0 0 ${w} 40" preserveAspectRatio="none">
+                <rect x="2" y="10" width="${w-4}" height="20" rx="10" fill="none" stroke="#64748b" stroke-width="5"/>
+                <path d="M 12 15 L ${w-12} 15 A 5 5 0 0 1 ${w-12} 25 L 18 25" fill="none" stroke="#64748b" stroke-width="4"/>
+            </svg>`
+        },
+        {
+            name: "水彩筆",
+            svg: (w) => `<svg width="${w}" height="50" viewBox="0 0 ${w} 50" preserveAspectRatio="none">
+                <rect x="0" y="20" width="${w-25}" height="10" fill="#84cc16" rx="3"/>
+                <rect x="${w-25}" y="18" width="10" height="14" fill="#94a3b8"/>
+                <path d="M ${w-15} 18 Q ${w} 25 ${w-15} 32 Z" fill="#ec4899"/>
+            </svg>`
+        },
+        {
+            name: "鑰匙",
+            svg: (w) => `<svg width="${w}" height="40" viewBox="0 0 ${w} 40" preserveAspectRatio="none">
+                <circle cx="15" cy="20" r="12" fill="none" stroke="#eab308" stroke-width="5"/>
+                <rect x="25" y="17" width="${w-27}" height="6" fill="#eab308"/>
+                <rect x="${w-12}" y="23" width="4" height="6" fill="#eab308"/>
+                <rect x="${w-6}" y="23" width="4" height="8" fill="#eab308"/>
+            </svg>`
+        }
+    ];
+
+    // State Variables
+    let currentLevel = 1;
+    let score = 0;
+    let streak = 0;
+    let isAnswered = false;
+    let currentObject = null;
+    let startPos = 0;
+    let objectLength = 0;
+
+    // Input States
+    let expectedAnswers = {}; // Format: { 1: correctValue1, 2: correctValue2 }
+    let userInputs = {};      // Format: { 1: "userVal", 2: "userVal" }
+    let activeInputId = 1;    // ID of the currently focused input box
+
+    // Dragging state
+    let isDragging = false;
+    let dragStartX = 0;
+    let elementStartLeftPx = 0;
+    let currentObjectElement = null;
+    const RULER_MAX_CM = 15;
+
+    // Elements
+    const menuScreen = document.getElementById('menuScreen');
+    const gameplayScreen = document.getElementById('gameplayScreen');
+    const modeTitle = document.getElementById('modeTitle');
+    const questionText = document.getElementById('questionText');
+    const objectArea = document.getElementById('objectArea');
+    const rulerContainer = document.getElementById('rulerContainer');
+    const rulerTicks = document.getElementById('rulerTicks');
+    const rulerUnitLabel = document.getElementById('rulerUnitLabel');
+    const inputDisplayArea = document.getElementById('inputDisplayArea');
+    const explanation = document.getElementById('explanation');
+    const nextBtn = document.getElementById('nextBtn');
+    const scoreDisplay = document.getElementById('score');
+    const streakDisplay = document.getElementById('streak');
+    
+    // Binding Menus
+    document.getElementById('btnLevel1').addEventListener('click', () => startLevel(1));
+    document.getElementById('btnLevel2').addEventListener('click', () => startLevel(2));
+    document.getElementById('btnLevel3').addEventListener('click', () => startLevel(3));
+    document.getElementById('btnLevel4').addEventListener('click', () => startLevel(4));
+    document.getElementById('btnLevel5').addEventListener('click', () => startLevel(5));
+
+    document.getElementById('homeBtn').addEventListener('click', () => {
+        playSound('pop');
+        gameplayScreen.style.display = 'none';
+        menuScreen.style.display = 'flex';
+    });
+
+    document.getElementById('soundToggle').addEventListener('click', (e) => {
+        soundEnabled = !soundEnabled;
+        e.currentTarget.classList.toggle('muted', !soundEnabled);
+    });
+
+    document.body.addEventListener('click', () => initAudio(), { once: true });
+
+    // Keypad Event Listeners
+    document.querySelectorAll('.key-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => handleKeyPress(e.currentTarget.dataset.key));
+    });
+
+    function startLevel(level) {
+        playSound('pop');
+        currentLevel = level;
+        menuScreen.style.display = 'none';
+        gameplayScreen.style.display = 'flex';
+        
+        const titles = { 
+            1: '第一關：從 0 開始測量', 
+            2: '第二關：拖曳並對齊 0', 
+            3: '第三關：cm 與 m 簡單換算',
+            4: '第四關：單名數轉複名數',
+            5: '第五關：複名數轉單名數'
+        };
+        modeTitle.textContent = titles[level];
+
+        if (level === 1 || level === 2) renderRuler();
+        generateQuestion();
+    }
+
+    function renderRuler() {
+        rulerTicks.innerHTML = '';
+        for (let i = 0; i <= RULER_MAX_CM; i++) {
+            const pct = (i / RULER_MAX_CM) * 100;
+            const majorTick = document.createElement('div');
+            majorTick.className = 'tick major';
+            majorTick.style.left = `${pct}%`;
+            rulerTicks.appendChild(majorTick);
+
+            const label = document.createElement('div');
+            label.className = 'tick-label';
+            label.style.left = `${pct}%`;
+            label.textContent = i;
+            rulerTicks.appendChild(label);
+
+            if (i < RULER_MAX_CM) {
+                const halfTick = document.createElement('div');
+                halfTick.className = 'tick half';
+                halfTick.style.left = `${pct + (100 / RULER_MAX_CM / 2)}%`;
+                rulerTicks.appendChild(halfTick);
+            }
+        }
+    }
+
+    function generateQuestion() {
+        isAnswered = false;
+        explanation.classList.remove('visible', 'error', 'success');
+        nextBtn.style.display = 'none';
+        objectArea.innerHTML = '';
+
+        if (currentLevel === 1 || currentLevel === 2) {
+            currentObject = OBJECTS[Math.floor(Math.random() * OBJECTS.length)];
+            rulerContainer.classList.remove('hidden');
+            
+            if (currentLevel === 1) {
+                startPos = 0;
+                objectLength = Math.floor(Math.random() * 10) + 3; // 3 to 12 cm
+                questionText.textContent = `${currentObject.name} 長幾 cm？`;
+                renderObjectOnRuler(startPos, objectLength, false);
+            } else {
+                objectLength = Math.floor(Math.random() * 6) + 3; // 3 to 8 cm
+                startPos = Math.floor(Math.random() * (RULER_MAX_CM - objectLength - 2)) + 2; 
+                questionText.textContent = `將${currentObject.name}拖曳對齊 0 刻度，看看它有多長！`;
+                renderObjectOnRuler(startPos, objectLength, true);
+            }
+            rulerUnitLabel.textContent = "cm";
+            setupInputs([{ id: 1, unit: 'cm', answer: objectLength }]);
+        } 
+        else if (currentLevel === 3) {
+            rulerContainer.classList.add('hidden');
+            const isMToCm = Math.random() < 0.5;
+            
+            if (isMToCm) {
+                const meters = Math.floor(Math.random() * 5) + 1; // 1 to 5 m
+                questionText.textContent = `${meters} m 等於幾 cm？`;
+                renderConversionGraphic(`${meters} m = ❓ cm`);
+                setupInputs([{ id: 1, unit: 'cm', answer: meters * 100 }]);
+            } else {
+                const meters = Math.floor(Math.random() * 5) + 1;
+                const cm = meters * 100;
+                questionText.textContent = `${cm} cm 等於幾 m？`;
+                renderConversionGraphic(`${cm} cm = ❓ m`);
+                setupInputs([{ id: 1, unit: 'm', answer: meters }]);
+            }
+        }
+        else if (currentLevel === 4) {
+            rulerContainer.classList.add('hidden');
+            // Generate 101 to 999 cm, avoiding pure hundreds for challenge
+            let totalCm = Math.floor(Math.random() * 899) + 101; 
+            if(totalCm % 100 === 0) totalCm += Math.floor(Math.random() * 98) + 1;
+            
+            const meters = Math.floor(totalCm / 100);
+            const remainingCm = totalCm % 100;
+            
+            questionText.textContent = `${totalCm} cm 等於幾 m 幾 cm？`;
+            renderConversionGraphic(`${totalCm} cm = ❓ m ❓ cm`);
+            
+            setupInputs([
+                { id: 1, unit: 'm', answer: meters },
+                { id: 2, unit: 'cm', answer: remainingCm }
+            ]);
+        }
+        else if (currentLevel === 5) {
+            rulerContainer.classList.add('hidden');
+            // Generate 1 to 10 m and 1 to 99 cm
+            const meters = Math.floor(Math.random() * 10) + 1;
+            const remainingCm = Math.floor(Math.random() * 99) + 1;
+            const totalCm = meters * 100 + remainingCm;
+            
+            questionText.textContent = `${meters} m ${remainingCm} cm 等於幾 cm？`;
+            renderConversionGraphic(`${meters} m ${remainingCm} cm = ❓ cm`);
+            
+            setupInputs([{ id: 1, unit: 'cm', answer: totalCm }]);
+        }
+    }
+
+    function renderConversionGraphic(text) {
+        objectArea.innerHTML = '';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'conversion-card';
+        wrapper.innerHTML = text;
+        objectArea.appendChild(wrapper);
+    }
+
+    function renderObjectOnRuler(start, length, allowDrag) {
+        const workspaceWidth = rulerTicks.clientWidth;
+        const startPct = (start / RULER_MAX_CM) * 100;
+        const widthPct = (length / RULER_MAX_CM) * 100;
+        const pixelWidth = (workspaceWidth * widthPct) / 100;
+
+        const objWrapper = document.createElement('div');
+        objWrapper.className = `draggable-object ${allowDrag ? 'draggable' : ''}`;
+        objWrapper.style.left = `${startPct}%`;
+        objWrapper.style.width = `${widthPct}%`;
+
+        if (allowDrag) {
+            const hint = document.createElement('div');
+            hint.className = 'drag-hint';
+            hint.textContent = '↔️ 拖曳至 0';
+            objWrapper.appendChild(hint);
+        }
+
+        const svgContainer = document.createElement('div');
+        svgContainer.innerHTML = currentObject.svg(pixelWidth);
+        objWrapper.appendChild(svgContainer);
+        objectArea.appendChild(objWrapper);
+
+        if (allowDrag) {
+            setupDragAndDrop(objWrapper);
+        }
+    }
+
+    function setupDragAndDrop(element) {
+        element.addEventListener('pointerdown', onPointerDown);
+
+        function onPointerDown(e) {
+            if (isAnswered) return;
+            isDragging = true;
+            dragStartX = e.clientX;
+            elementStartLeftPx = element.offsetLeft;
+            element.setPointerCapture(e.pointerId);
+
+            element.addEventListener('pointermove', onPointerMove);
+            element.addEventListener('pointerup', onPointerUp);
+            element.addEventListener('pointercancel', onPointerUp);
+        }
+
+        function onPointerMove(e) {
+            if (!isDragging) return;
+            const deltaX = e.clientX - dragStartX;
+            let newLeftPx = elementStartLeftPx + deltaX;
+
+            const parentWidth = objectArea.clientWidth;
+            const maxLeftPx = parentWidth - element.offsetWidth;
+
+            if (newLeftPx < 0) newLeftPx = 0;
+            if (newLeftPx > maxLeftPx) newLeftPx = maxLeftPx;
+
+            element.style.left = `${newLeftPx}px`;
+        }
+
+        function onPointerUp(e) {
+            if (!isDragging) return;
+            isDragging = false;
+            element.releasePointerCapture(e.pointerId);
+            element.removeEventListener('pointermove', onPointerMove);
+            element.removeEventListener('pointerup', onPointerUp);
+            element.removeEventListener('pointercancel', onPointerUp);
+
+            const parentWidth = objectArea.clientWidth;
+            const currentLeftPx = element.offsetLeft;
+            const snappedPct = (Math.round(((currentLeftPx / parentWidth) * 100) / (100/RULER_MAX_CM)) * (100/RULER_MAX_CM));
+            element.style.left = `${snappedPct}%`;
+            playSound('pop');
+        }
+    }
+
+    function setupInputs(configArray) {
+        inputDisplayArea.innerHTML = '';
+        expectedAnswers = {};
+        userInputs = {};
+        
+        configArray.forEach((cfg, index) => {
+            expectedAnswers[cfg.id] = cfg.answer;
+            userInputs[cfg.id] = ""; // default empty
+
+            const group = document.createElement('div');
+            group.className = 'input-group';
+
+            const box = document.createElement('div');
+            // Auto-focus the first input box
+            box.className = `input-box empty ${index === 0 ? 'active' : ''}`;
+            box.id = `inputBox${cfg.id}`;
+            box.textContent = '?';
+            box.onclick = () => setActiveInput(cfg.id);
+
+            const label = document.createElement('span');
+            label.className = 'input-label';
+            label.textContent = cfg.unit;
+
+            group.appendChild(box);
+            group.appendChild(label);
+            inputDisplayArea.appendChild(group);
+
+            if (index === 0) activeInputId = cfg.id;
+        });
+    }
+
+    function setActiveInput(id) {
+        if (isAnswered) return;
+        activeInputId = id;
+        document.querySelectorAll('.input-box').forEach(box => {
+            box.classList.remove('active');
+            if (box.id === `inputBox${id}`) {
+                box.classList.add('active');
+            }
+        });
+        playSound('pop');
+    }
+
+    function handleKeyPress(key) {
+        if (isAnswered) return;
+        
+        if (key === 'submit') {
+            checkAnswer();
+            return;
+        }
+
+        playSound('pop');
+        let currentStr = userInputs[activeInputId];
+
+        if (key === 'del') {
+            userInputs[activeInputId] = currentStr.slice(0, -1);
+        } else {
+            // Limit to 4 characters to prevent overflow
+            if (currentStr.length < 4) {
+                userInputs[activeInputId] = currentStr + key;
+            }
+        }
+        updateInputDisplay();
+    }
+
+    function updateInputDisplay() {
+        const box = document.getElementById(`inputBox${activeInputId}`);
+        const val = userInputs[activeInputId];
+        
+        if (val === "") {
+            box.textContent = '?';
+            box.classList.add('empty');
+        } else {
+            box.textContent = val;
+            box.classList.remove('empty');
+        }
+    }
+
+    function checkAnswer() {
+        // Check if all inputs are filled
+        for (let id in expectedAnswers) {
+            if (userInputs[id] === "") {
+                explanation.textContent = "⚠️ 請填寫所有空格！";
+                explanation.className = 'explanation-card visible error';
+                playSound('pop');
+                return;
+            }
+        }
+
+        let isCorrect = true;
+        for (let id in expectedAnswers) {
+            // Use parseInt to remove leading zeros safely (e.g., "05" -> 5)
+            if (parseInt(userInputs[id]) !== expectedAnswers[id]) {
+                isCorrect = false;
+                break;
+            }
+        }
+
+        if (isCorrect) {
+            isAnswered = true;
+            playSound('correct');
+            score += 10 + (streak * 2);
+            streak++;
+            scoreDisplay.textContent = score;
+            streakDisplay.textContent = streak;
+
+            // Generate Success Message
+            if (currentLevel === 1 || currentLevel === 2) {
+                explanation.textContent = `🌟 答對了！長度是 ${expectedAnswers[1]} cm！`;
+            } else if (currentLevel === 3) {
+                explanation.textContent = `🌟 太棒了！單位換算正確！`;
+            } else if (currentLevel === 4) {
+                explanation.textContent = `🌟 沒錯！${expectedAnswers[1]} m 就是 ${expectedAnswers[1]*100} cm，加上 ${expectedAnswers[2]} cm 剛剛好！`;
+            } else if (currentLevel === 5) {
+                explanation.textContent = `🌟 完全正確！組合起來就是 ${expectedAnswers[1]} cm！`;
+            }
+
+            explanation.className = 'explanation-card visible success';
+            nextBtn.style.display = 'inline-block';
+            
+            // Remove active highlight
+            document.querySelectorAll('.input-box').forEach(b => b.classList.remove('active'));
+            
+        } else {
+            playSound('wrong');
+            streak = 0;
+            streakDisplay.textContent = streak;
+
+            if (currentLevel === 2) {
+                explanation.textContent = `試著將物品的左邊對齊 0，然後看看它的右邊停在哪裡！`;
+            } else if (currentLevel === 4) {
+                explanation.textContent = `再試一次！提示：100 cm = 1 m。`;
+            } else if (currentLevel === 5) {
+                explanation.textContent = `再想想看！1 m 等於 100 cm 喔！`;
+            } else {
+                explanation.textContent = `答案不對喔，請再檢查一次！`;
+            }
+
+            explanation.className = 'explanation-card visible error';
+            
+            // Clear inputs for retry
+            for(let id in userInputs) userInputs[id] = "";
+            document.querySelectorAll('.input-box').forEach(box => {
+                box.textContent = '?';
+                box.classList.add('empty');
+            });
+            // Focus back to first input
+            setActiveInput(Object.keys(expectedAnswers)[0]);
+        }
+    }
+
+    nextBtn.addEventListener('click', () => {
+        playSound('pop');
+        generateQuestion();
+    });
+</script>
+
+</body>
+</html>
