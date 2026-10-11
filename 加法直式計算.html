@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>比較數字的大小 - 計算加法(直式)</title>
+    <style>
+        :root {
+            /* 馬卡龍色系變數，教師可在此修改顏色 */
+            --bg-color: #FFF0F5;       /* 背景粉色 */
+            --panel-bg: #FFFFFF;       /* 面板白色 */
+            --btn-blue: #B5EAD7;       /* 按鈕淺綠藍 */
+            --btn-pink: #FFB7B2;       /* 按鈕粉紅 */
+            --btn-yellow: #FFF2B2;     /* 按鈕淺黃 */
+            --btn-purple: #E2D1F9;     /* 按鈕淺紫 */
+            --text-dark: #555555;      /* 深色文字 */
+            --active-border: #FF6B6B;  /* 作用中框線顏色 */
+            --hint-bg: #FFE8E8;        /* 提示背景色 */
+            --carry-bg: #FFDAC1;       /* 進位小圓點背景色 */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* 防止文字被選取 */
+            -webkit-user-select: none;
+            touch-action: manipulation; /* 最佳化觸控 */
+        }
+
+        html {
+            background-color: var(--bg-color);
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body {
+            font-family: "Comic Sans MS", "Arial Rounded MT Bold", "PingFang HK", "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            height: 88vh; /* 自適應為畫面高度的 88% */
+            width: 100%;
+            overflow: hidden;
+        }
+
+        #top-bar {
+            background-color: var(--panel-bg);
+            padding: 15px 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f9f9f9;
+            padding: 8px 12px;
+            border-radius: 12px;
+            border: 2px solid #eee;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        select, button.toggle-btn {
+            font-size: 1.1rem;
+            padding: 5px 10px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            background: white;
+            outline: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        button.toggle-btn.active {
+            background-color: var(--btn-blue);
+            border-color: #88d4b4;
+            font-weight: bold;
+        }
+
+        #game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            padding: 10px;
+            gap: 10px;
+            overflow: hidden;
+        }
+
+        .board-container {
+            flex: 1;
+            background-color: var(--panel-bg);
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: row; /* 修改為左右橫向排列 */
+            padding: 20px;
+            align-items: center;
+            justify-content: center; /* 置中對齊 */
+            gap: 40px; /* 算式與鍵盤之間的間距 */
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        /* 雙人模式分隔線 */
+        .board-container:nth-child(2) {
+            border-left: 4px dashed #ddd;
+        }
+
+        .math-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-end; /* 靠右對齊 (個位對齊) */
+            /* 移除了原本的上下 margin，讓其在容器中垂直置中 */
+        }
+
+        .math-row {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            width: 100%;
+        }
+
+        .math-cell {
+            width: 65px;
+            height: 65px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+            font-weight: bold;
+            border-radius: 8px;
+        }
+
+        /* 表頭 (萬, 千, 百, 十, 個) */
+        .header-cell {
+            font-size: 1.5rem;
+            color: #aaa;
+            height: 35px;
+        }
+
+        /* 運算符號 (+) */
+        .symbol-cell {
+            color: #888;
+            justify-content: flex-start;
+        }
+
+        /* 分隔線 */
+        .divider-row {
+            border-bottom: 4px solid var(--text-dark);
+            margin: 5px 0;
+            width: 100%;
+        }
+
+        .carry-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px dashed #ccc;
+            font-size: 1.5rem;
+            margin: 0 auto;
+            color: #d9534f;
+            /* 新增 Flexbox 置中設定 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .carry-box.filled {
+            border-style: solid;
+            background-color: var(--carry-bg);
+            border-color: #fca874;
+        }
+
+        .answer-box {
+            border: 3px dashed #ccc;
+            background-color: #fafafa;
+        }
+
+        .answer-box.filled {
+            border-style: solid;
+            border-color: #88d4b4;
+            background-color: var(--btn-blue);
+        }
+
+        /* 作用中閃爍特效 (引導學生輸入) */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255,107,107,0.6); }
+            70% { box-shadow: 0 0 0 12px rgba(255,107,107,0); }
+            100% { box-shadow: 0 0 0 0 rgba(255,107,107,0); }
+        }
+
+        .active-target {
+            border: 3px solid var(--active-border) !important;
+            background-color: #fff !important;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* 提示模式亮起特效 */
+        .hint-highlight {
+            background-color: var(--hint-bg);
+            border-radius: 8px;
+            color: #d9534f;
+        }
+
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 100%;
+            max-width: 220px;
+        }
+
+        .numpad-btn {
+            background-color: var(--btn-purple);
+            border: 2px solid #c9b3f0;
+            border-radius: 12px;
+            padding: 10px;
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: var(--text-dark);
+            box-shadow: 0 4px 0 #c9b3f0;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            /* 新增 Flexbox 置中設定 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .numpad-btn:active, .numpad-btn.pressed {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #c9b3f0;
+            background-color: #d2bcf2;
+        }
+
+        /* 錯誤震動特效 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.4s; }
+
+        /* 完成動畫 */
+        .success-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: #FF6B6B;
+            border-radius: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+            z-index: 5;
+        }
+        .success-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* 自適應縮小 (針對手機或直立平板) */
+        @media (max-width: 768px) {
+            .board-container {
+                flex-direction: column; /* 螢幕過窄時改回上下排列 */
+                gap: 15px;
+            }
+            .math-cell { width: 45px; height: 45px; font-size: 2rem; }
+            .carry-box { width: 30px; height: 30px; font-size: 1.2rem; }
+            .header-cell { height: 25px; font-size: 1.2rem; }
+            .numpad-btn { font-size: 1.3rem; padding: 8px; }
+            #game-area { flex-direction: column; }
+            .board-container:nth-child(2) { border-left: none; border-top: 4px dashed #ddd; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="top-bar">
+        <div class="control-group">
+            <label>關卡：</label>
+            <select id="sel-level">
+                <option value="2">兩位數</option>
+                <option value="3">三位數</option>
+                <option value="4">四位數</option>
+                <option value="5">五位數</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>模式：</label>
+            <select id="sel-mode">
+                <option value="beginner">初階 (無進位)</option>
+                <option value="advanced">高階 (有進位)</option>
+                <option value="challenge">挑戰 (混合)</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>人數：</label>
+            <select id="sel-players">
+                <option value="1">1 人</option>
+                <option value="2">2 人</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>提示：</label>
+            <button id="btn-hint" class="toggle-btn">關閉</button>
+        </div>
+    </div>
+
+    <div id="game-area">
+        <!-- 玩家 1 版面 -->
+        <div id="board-1" class="board-container">
+            <!-- 算式區將由 JS 動態生成 -->
+            <div class="math-grid" id="grid-1"></div>
+            <!-- 數字鍵盤 -->
+            <div class="numpad" id="numpad-1"></div>
+            <!-- 成功動畫覆蓋層 -->
+            <div class="success-overlay" id="success-1">
+                🎉 答對了！
+            </div>
+        </div>
+
+        <!-- 玩家 2 版面 (預設隱藏) -->
+        <div id="board-2" class="board-container" style="display: none;">
+            <div class="math-grid" id="grid-2"></div>
+            <div class="numpad" id="numpad-2"></div>
+            <div class="success-overlay" id="success-2">
+                🎉 答對了！
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 音效系統 (使用 Web Audio API，無需外部音檔)
+        // ==========================================
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTone(freq, type, duration) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        const Sound = {
+            click: () => playTone(400, 'sine', 0.1),
+            correct: () => {
+                playTone(600, 'sine', 0.1);
+                setTimeout(() => playTone(800, 'sine', 0.15), 100);
+            },
+            wrong: () => playTone(200, 'sawtooth', 0.3),
+            win: () => {
+                [400, 500, 600, 800].forEach((f, i) => {
+                    setTimeout(() => playTone(f, 'sine', 0.1), i * 100);
+                });
+            }
+        };
+
+        // ==========================================
+        // 遊戲核心設定與常數
+        // ==========================================
+        const PLACE_LABELS = ["個", "十", "百", "千", "萬"];
+        
+        let config = {
+            level: 2,           // 2=兩位數, 3=三位數, etc.
+            mode: 'beginner',   // 'beginner' 或 'advanced'
+            players: 1,         // 1 或 2
+            hint: false         // 提示開關
+        };
+
+        class MathBoard {
+            constructor(boardId) {
+                this.boardId = boardId;
+                this.gridEl = document.getElementById(`grid-${boardId}`);
+                this.numpadEl = document.getElementById(`numpad-${boardId}`);
+                this.successEl = document.getElementById(`success-${boardId}`);
+                
+                this.num1 = [];     // 第一個數字 (由右至左陣列, 索引0為個位)
+                this.num2 = [];     // 第二個數字
+                this.carries = [];  // 使用者輸入的進位
+                this.answers = [];  // 使用者輸入的答案
+                
+                this.targetCol = 0; // 目前正在作答的位數 (0=個位)
+                this.waitingFor = 'answer'; // 'carry' (等候進位) 或 'answer' (等候答案)
+                
+                this.initNumpad();
+                this.startNewGame();
+            }
+
+            // 初始化數字鍵盤 (0-9)
+            initNumpad() {
+                this.numpadEl.innerHTML = '';
+                const layout = [1, 2, 3, 4, 5, 6, 7, 8, 9, "", 0, ""];
+                layout.forEach(num => {
+                    const btn = document.createElement('div');
+                    if (num === "") {
+                        btn.style.visibility = 'hidden'; // 空白佔位
+                    } else {
+                        btn.className = 'numpad-btn';
+                        btn.textContent = num;
+                        // 支援觸控與滑鼠點擊
+                        btn.addEventListener('pointerdown', (e) => {
+                            e.preventDefault();
+                            Sound.click();
+                            btn.classList.add('pressed');
+                            setTimeout(() => btn.classList.remove('pressed'), 100);
+                            this.handleInput(num);
+                        });
+                    }
+                    this.numpadEl.appendChild(btn);
+                });
+            }
+
+            // 產生新題目
+            startNewGame() {
+                this.successEl.classList.remove('show');
+                this.carries = [];
+                this.answers = [];
+                this.targetCol = 0;
+                this.generateNumbers();
+                this.updateState(); // 計算第一步
+                this.renderGrid();
+            }
+
+            generateNumbers() {
+                let lvl = config.level;
+                let mode = config.mode;
+                this.num1 = [];
+                this.num2 = [];
+
+                if (mode === 'beginner') {
+                    // 初階：無進位
+                    for (let i = 0; i < lvl; i++) {
+                        let isHighest = (i === lvl - 1);
+                        let max1 = isHighest ? 9 : 9;
+                        let min1 = isHighest ? 1 : 0;
+                        let d1 = min1 + Math.floor(Math.random() * (max1 - min1 + 1));
+                        
+                        let max2 = 9 - d1;
+                        let min2 = (isHighest && d1 === 0) ? 1 : 0;
+                        let d2 = min2 + Math.floor(Math.random() * (max2 - min2 + 1));
+                        
+                        // 防呆確保最高位不為0
+                        if (isHighest && d1+d2 === 0) { d1=1; d2=1; }
+                        
+                        this.num1.push(d1);
+                        this.num2.push(d2);
+                    }
+                } else if (mode === 'advanced') {
+                    // 高階：有進位。為確保不超過設定位數，總和必須小於 10^lvl
+                    let minSum = Math.pow(10, lvl - 1);
+                    let maxSum = Math.pow(10, lvl) - 1;
+                    let found = false;
+                    
+                    while (!found) {
+                        let sum = minSum + Math.floor(Math.random() * (maxSum - minSum + 1));
+                        let val1 = Math.floor(Math.random() * sum);
+                        if(val1 < minSum / 10) val1 += Math.floor(minSum/2); // 避免數字太小
+                        let val2 = sum - val1;
+                        
+                        // 轉成陣列檢查是否有進位
+                        let arr1 = val1.toString().split('').reverse().map(Number);
+                        let arr2 = val2.toString().split('').reverse().map(Number);
+                        
+                        // 補齊位數
+                        while(arr1.length < lvl) arr1.push(0);
+                        while(arr2.length < lvl) arr2.push(0);
+                        
+                        // 檢查是否包含至少一次進位
+                        let hasCarry = false;
+                        let c = 0;
+                        for(let i=0; i<lvl; i++) {
+                            if (arr1[i] + arr2[i] + c > 9) { hasCarry = true; break; }
+                            c = Math.floor((arr1[i] + arr2[i] + c) / 10);
+                        }
+                        
+                        if (hasCarry && arr1[lvl-1] + arr2[lvl-1] > 0) {
+                            this.num1 = arr1;
+                            this.num2 = arr2;
+                            found = true;
+                        }
+                    }
+                } else if (mode === 'challenge') {
+                    // 挑戰：完全隨機，混合進位與不進位
+                    let minSum = Math.pow(10, lvl - 1);
+                    let maxSum = Math.pow(10, lvl) - 1;
+                    
+                    let sum = minSum + Math.floor(Math.random() * (maxSum - minSum + 1));
+                    let val1 = Math.floor(Math.random() * sum);
+                    if (val1 < minSum / 10) val1 += Math.floor(minSum/2);
+                    let val2 = sum - val1;
+                    
+                    let arr1 = val1.toString().split('').reverse().map(Number);
+                    let arr2 = val2.toString().split('').reverse().map(Number);
+                    
+                    while(arr1.length < lvl) arr1.push(0);
+                    while(arr2.length < lvl) arr2.push(0);
+                    
+                    // 防呆確保最高位和不為 0
+                    if (arr1[lvl-1] + arr2[lvl-1] === 0) {
+                        arr1[lvl-1] = 1;
+                        arr2[lvl-1] = 1;
+                    }
+                    
+                    this.num1 = arr1;
+                    this.num2 = arr2;
+                }
+            }
+
+            updateState() {
+                if (this.targetCol >= config.level) {
+                    // 遊戲過關
+                    setTimeout(() => {
+                        Sound.win();
+                        this.successEl.classList.add('show');
+                        setTimeout(() => this.startNewGame(), 2500); // 2.5秒後自動下一題
+                    }, 300);
+                    return;
+                }
+
+                let c = this.targetCol;
+                let d1 = this.num1[c];
+                let d2 = this.num2[c];
+                let carryIn = this.carries[c] || 0;
+                let sum = d1 + d2 + carryIn;
+                
+                let correctCarry = Math.floor(sum / 10);
+                
+                // 如果需要進位，且使用者尚未輸入進位
+                if (correctCarry > 0 && this.carries[c + 1] === undefined) {
+                    this.waitingFor = 'carry';
+                    this.expectedInput = correctCarry;
+                } else {
+                    // 否則等待輸入當前位數的答案
+                    this.waitingFor = 'answer';
+                    this.expectedInput = sum % 10;
+                }
+            }
+
+            handleInput(num) {
+                if (this.targetCol >= config.level) return; // 已過關
+
+                if (num === this.expectedInput) {
+                    Sound.correct();
+                    // 正確輸入
+                    if (this.waitingFor === 'carry') {
+                        this.carries[this.targetCol + 1] = num;
+                    } else {
+                        this.answers[this.targetCol] = num;
+                        this.targetCol++; // 推進到下一個位數
+                    }
+                    this.updateState();
+                    this.renderGrid();
+                } else {
+                    // 錯誤輸入 (Errorless Learning: 錯誤時不填寫，僅提示)
+                    Sound.wrong();
+                    let activeCell = this.gridEl.querySelector('.active-target');
+                    if (activeCell) {
+                        activeCell.classList.add('shake');
+                        setTimeout(() => activeCell.classList.remove('shake'), 400);
+                    }
+                }
+            }
+
+            renderGrid() {
+                this.gridEl.innerHTML = '';
+                let maxCol = config.level;
+                
+                // 產生行數陣列 [標題, 進位, 數字1, 數字2, 分隔線, 答案]
+                let rows = [[], [], [], [], [], []];
+                
+                // 迴圈由左至右建立欄位 (視覺上：高位到低位)
+                for (let c = maxCol; c >= 0; c--) {
+                    let isSymbolCol = (c === maxCol); // 最左邊保留給 + 號
+                    
+                    // 1. 表頭 (萬千百十個)
+                    let hCell = document.createElement('div');
+                    hCell.className = 'math-cell header-cell';
+                    hCell.textContent = isSymbolCol ? "" : PLACE_LABELS[c];
+                    rows[0].push(hCell);
+
+                    // 2. 進位列 (小圓圈)
+                    let carryCell = document.createElement('div');
+                    carryCell.className = 'math-cell';
+                    if (!isSymbolCol && c < maxCol) {
+                        let cBox = document.createElement('div');
+                        cBox.className = 'carry-box';
+                        if (this.carries[c] !== undefined) {
+                            cBox.textContent = this.carries[c];
+                            cBox.classList.add('filled');
+                        }
+                        // 判斷是否為作用中目標
+                        if (this.waitingFor === 'carry' && this.targetCol + 1 === c) {
+                            cBox.classList.add('active-target');
+                        }
+                        carryCell.appendChild(cBox);
+                        
+                        // 提示模式標記
+                        if (config.hint && c === this.targetCol + 1 && this.waitingFor === 'carry') {
+                            cBox.classList.add('hint-highlight');
+                        }
+                    }
+                    rows[1].push(carryCell);
+
+                    // 3. 數字 1
+                    let n1Cell = document.createElement('div');
+                    n1Cell.className = 'math-cell';
+                    let d1Val = !isSymbolCol ? this.num1[c] : "";
+                    // 隱藏最左邊多餘的 0
+                    if (c >= this.num1.length) d1Val = ""; 
+                    n1Cell.textContent = d1Val;
+                    // 提示模式標記
+                    if (config.hint && c === this.targetCol && !isSymbolCol) n1Cell.classList.add('hint-highlight');
+                    rows[2].push(n1Cell);
+
+                    // 4. 數字 2 與 + 號
+                    let n2Cell = document.createElement('div');
+                    n2Cell.className = 'math-cell';
+                    if (isSymbolCol) {
+                        n2Cell.textContent = "+";
+                        n2Cell.classList.add('symbol-cell');
+                    } else {
+                        let d2Val = this.num2[c] !== undefined ? this.num2[c] : "";
+                        if (c >= this.num2.length) d2Val = "";
+                        n2Cell.textContent = d2Val;
+                        // 提示模式標記
+                        if (config.hint && c === this.targetCol) n2Cell.classList.add('hint-highlight');
+                    }
+                    rows[3].push(n2Cell);
+
+                    // 6. 答案列
+                    let ansCell = document.createElement('div');
+                    ansCell.className = 'math-cell';
+                    if (!isSymbolCol) {
+                        let aBox = document.createElement('div');
+                        aBox.className = 'math-cell answer-box';
+                        if (this.answers[c] !== undefined) {
+                            aBox.textContent = this.answers[c];
+                            aBox.classList.add('filled');
+                        }
+                        // 判斷是否為作用中目標
+                        if (this.waitingFor === 'answer' && this.targetCol === c) {
+                            aBox.classList.add('active-target');
+                        }
+                        ansCell.appendChild(aBox);
+                        
+                        // 提示模式標記 (如果正在算這行，連進位也標記)
+                        if (config.hint && c === this.targetCol) {
+                            aBox.classList.add('hint-highlight');
+                            // 標記這行的進位(如果有)
+                            let currentCarryBox = rows[1][rows[1].length-1].querySelector('.carry-box');
+                            if (currentCarryBox && this.carries[c] !== undefined) {
+                                currentCarryBox.classList.add('hint-highlight');
+                            }
+                        }
+                    }
+                    rows[5].push(ansCell);
+                }
+
+                // 組合所有行並加入 Grid
+                rows.forEach((rowEls, index) => {
+                    if (index === 4) { // 分隔線
+                        let divLine = document.createElement('div');
+                        divLine.className = 'divider-row';
+                        this.gridEl.appendChild(divLine);
+                    } else {
+                        let rowDiv = document.createElement('div');
+                        rowDiv.className = 'math-row';
+                        rowEls.forEach(el => rowDiv.appendChild(el));
+                        this.gridEl.appendChild(rowDiv);
+                    }
+                });
+            }
+        }
+
+        let games = [];
+
+        function initApp() {
+            // 綁定 UI 控制列
+            document.getElementById('sel-level').addEventListener('change', (e) => {
+                config.level = parseInt(e.target.value);
+                restartAll();
+            });
+            
+            document.getElementById('sel-mode').addEventListener('change', (e) => {
+                config.mode = e.target.value;
+                restartAll();
+            });
+            
+            document.getElementById('sel-players').addEventListener('change', (e) => {
+                config.players = parseInt(e.target.value);
+                applyPlayerCount();
+                restartAll();
+            });
+            
+            const btnHint = document.getElementById('btn-hint');
+            btnHint.addEventListener('click', () => {
+                config.hint = !config.hint;
+                btnHint.textContent = config.hint ? '開啟' : '關閉';
+                btnHint.classList.toggle('active', config.hint);
+                games.forEach(g => g.renderGrid()); // 重新渲染以套用提示色
+            });
+
+            // 初始化棋盤
+            games.push(new MathBoard(1));
+            games.push(new MathBoard(2));
+            applyPlayerCount();
+        }
+
+        function applyPlayerCount() {
+            if (config.players === 1) {
+                document.getElementById('board-2').style.display = 'none';
+            } else {
+                document.getElementById('board-2').style.display = 'flex';
+            }
+        }
+
+        function restartAll() {
+            games[0].startNewGame();
+            if (config.players === 2) {
+                games[1].startNewGame();
+            }
+        }
+
+        // 啟動應用程式
+        window.onload = initApp;
+
+    </script>
+</body>
+</html>
