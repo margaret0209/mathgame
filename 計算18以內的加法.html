@@ -102,7 +102,6 @@
             right: 0;
             bottom: 0;
             background-color: #ccc;
-            transition: .4s;
             border-radius: 38px;
         }
 
@@ -114,7 +113,6 @@
             left: 4px;
             bottom: 4px;
             background-color: white;
-            transition: .4s;
             border-radius: 50%;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
@@ -159,7 +157,6 @@
             align-items: flex-end;
             justify-content: center;
             opacity: 0;
-            transition: opacity 0.3s;
             margin-bottom: 5px; /* 大幅縮減提示與數字之間的距離 */
             white-space: nowrap;
             pointer-events: none;
@@ -183,12 +180,6 @@
             height: 30px;
             fill: var(--primary-color);
             margin: 0 2px;
-            animation: pop 0.3s ease-out;
-        }
-
-        @keyframes pop {
-            0% { transform: scale(0); }
-            100% { transform: scale(1); }
         }
 
         /* HTML float text for finger animation (Safari iOS compatible) */
@@ -207,12 +198,6 @@
             opacity: 0;
             pointer-events: none;
             z-index: 20;
-            /* 增強 Safari 渲染相容性，確保硬體加速 */
-            will-change: transform, opacity;
-            -webkit-backface-visibility: hidden;
-            backface-visibility: hidden;
-            /* 加入柔和的過渡效果取代飄浮動畫 */
-            transition: opacity 0.3s ease, transform 0.3s ease;
         }
 
         /* 靜態顯示數字的樣式 */
@@ -280,7 +265,6 @@
             align-items: center;
             box-shadow: 0 6px 0px #b5ead7; /* 3D效果高度降低 */
             cursor: pointer;
-            transition: transform 0.1s, box-shadow 0.1s;
             -webkit-tap-highlight-color: transparent; /* Remove default tap flash */
         }
 
@@ -338,7 +322,6 @@
             color: var(--text-color);
             box-shadow: 0 8px 0px #9acfb9;
             cursor: pointer;
-            transition: transform 0.1s, box-shadow 0.1s;
             -webkit-tap-highlight-color: transparent;
             font-family: inherit;
             display: flex;
@@ -360,32 +343,19 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            display: flex;
+            display: none; /* 預設完全隱藏，移除 opacity 過渡 */
             justify-content: center;
             align-items: center;
             z-index: 100;
-            opacity: 0;
-            transition: opacity 0.3s;
         }
         
+        #feedback-overlay.show-feedback {
+            display: flex; /* 瞬間顯示 */
+        }
+
         .feedback-icon {
             font-size: 30vmin;
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
-            transform: scale(0);
-        }
-
-        .show-feedback {
-            opacity: 1 !important;
-        }
-        
-        .show-feedback .feedback-icon {
-            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        @keyframes bounceIn {
-            0% { transform: scale(0); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
         }
 
         /* Prevent zooming on inputs */
@@ -828,12 +798,11 @@
 
             // Step 1: Speak X (Base number)
             await new Promise(resolve => {
-                // Highlight X area slightly
-                elValX.style.transform = 'scale(1.2)';
-                elValX.style.transition = 'transform 0.3s';
+                // Highlight X area statically by changing color (removed transform animation)
+                elValX.style.color = 'var(--primary-color)';
                 
                 speakCantonese(currentX.toString(), () => {
-                    elValX.style.transform = 'scale(1)';
+                    elValX.style.color = ''; // Reset color
                     setTimeout(resolve, 500); // Small pause
                 });
             });
