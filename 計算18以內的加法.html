@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- Viewport settings for iPad/mobile responsiveness and disabling zoom/scrolling -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>計算18以內的加法</title>
+    <title>20以內的加法</title>
     <style>
         :root {
             /* Macaron Pastel Color Palette */
@@ -55,10 +55,10 @@
 
         /* [上方區域] Top Area */
         #top-area {
-            height: 15%; /* 15% of screen height */
+            height: 10%; /* 將原本的 15% 縮小為 10% */
             display: flex;
             justify-content: flex-end;
-            align-items: center;
+            align-items: flex-end; /* 將按鈕靠底部對齊，貼近下方題目 */
             padding: 0 5%;
             z-index: 10;
         }
@@ -129,12 +129,12 @@
 
         /* [下方區域] Bottom Area */
         #bottom-area {
-            height: 85%; /* 85% of screen height */
+            height: 90%; /* 配合上方區域改為 90% */
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            padding: 2% 0 5% 0;
+            padding: 0% 0 5% 0; /* 移除原本上方 2% 的空白 Padding */
             width: 100%;
         }
 
@@ -143,7 +143,7 @@
             flex: 1; /* Take up available space */
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start; /* 將題目由「垂直置中」改為「靠上對齊」，大幅拉近距離 */
             align-items: center;
             width: 90%;
             position: relative;
@@ -160,7 +160,7 @@
             justify-content: center;
             opacity: 0;
             transition: opacity 0.3s;
-            margin-bottom: 20px; /* Space between hint and number box */
+            margin-bottom: 5px; /* 大幅縮減提示與數字之間的距離 */
             white-space: nowrap;
             pointer-events: none;
         }
@@ -207,6 +207,10 @@
             opacity: 0;
             pointer-events: none;
             z-index: 20;
+            /* 增強 Safari 渲染相容性，確保硬體加速 */
+            will-change: transform, opacity;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
         }
 
         .html-float-text.animate {
@@ -317,6 +321,43 @@
             box-shadow: 0 0px 0px #b3e0ff;
         }
 
+        /* 下一題按鈕區域 */
+        #next-btn-area {
+            width: 85%;
+            max-width: 400px;
+            height: 40%;
+            max-height: 320px;
+            display: none; /* 預設隱藏，答題後由 JS 切換為 flex */
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        #next-btn {
+            width: 90%;
+            height: 80px;
+            background-color: var(--success-color);
+            border: 4px solid var(--secondary-color);
+            border-radius: 20px;
+            font-size: 6vmin;
+            font-weight: bold;
+            color: var(--text-color);
+            box-shadow: 0 8px 0px #9acfb9;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            -webkit-tap-highlight-color: transparent;
+            font-family: inherit;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #next-btn.active, #next-btn:active {
+            transform: translateY(8px);
+            box-shadow: 0 0px 0px #9acfb9;
+            background-color: #a3d9c5;
+        }
+
         /* Overlays and Animations */
         #feedback-overlay {
             position: absolute;
@@ -392,7 +433,7 @@
             
             <div id="problem-area">
                 <!-- Visual Hints Space Reserver (Keep layout stable) -->
-                <div style="min-height: 100px; width: 100%;"></div>
+                <div style="min-height: 85px; width: 100%;"></div>
 
                 <!-- Equation -->
                 <div id="equation">
@@ -430,6 +471,11 @@
                 <div class="key key-clear" data-action="clear">清除</div>
                 <div class="key" data-val="0">0</div>
                 <div class="key key-enter" data-action="enter">確定</div>
+            </div>
+            
+            <!-- 下一題按鈕 (答題後顯示) -->
+            <div id="next-btn-area">
+                <button id="next-btn">下一題</button>
             </div>
         </div>
         
@@ -616,8 +662,13 @@
         // Generate a new problem based on rules
         // Rules: x = 2-9, y = 2-9, x+y = 11-18
         function generateProblem() {
+            // 切換UI顯示：顯示鍵盤，隱藏下一題按鈕
+            document.getElementById('keypad-area').style.display = 'grid';
+            document.getElementById('next-btn-area').style.display = 'none';
+
             userAnswer = "";
             elAnswer.innerText = "";
+            elAnswer.style.color = ''; // 重置顏色
             
             let x, y, sum;
             do {
@@ -705,6 +756,25 @@
             key.addEventListener('mouseleave', releaseHandler);
         });
 
+        // Setup Next Button Event
+        const handleNextPress = (e) => {
+            if(e.cancelable) e.preventDefault();
+            if (isAnimating) return; // 動畫中禁止點擊
+            
+            const btn = document.getElementById('next-btn');
+            btn.classList.add('active');
+            playClickSound();
+            
+            // 延遲一點點讓按鈕動畫播完再換題
+            setTimeout(() => {
+                btn.classList.remove('active');
+                generateProblem(); // 生成新題目
+            }, 150);
+        };
+        const elNextBtn = document.getElementById('next-btn');
+        elNextBtn.addEventListener('touchstart', handleNextPress, {passive: false});
+        elNextBtn.addEventListener('mousedown', handleNextPress);
+
         // Check user's answer
         function checkAnswer() {
             if (userAnswer === "") return;
@@ -716,14 +786,20 @@
                 playSuccessSound();
                 showFeedback(checkIcon, "var(--success-color)");
                 
+                // 答對後：立即隱藏鍵盤，顯示下一題按鈕
+                document.getElementById('keypad-area').style.display = 'none';
+                document.getElementById('next-btn-area').style.display = 'flex';
+                
                 setTimeout(() => {
-                    generateProblem();
-                    isAnimating = false;
-                }, 1500);
+                    isAnimating = false; // 解除鎖定，允許點擊下一題
+                }, 1000);
             } else {
                 // Wrong Answer
                 playErrorSound();
                 showFeedback(crossIcon, "var(--error-color)");
+                
+                // 答錯後：立即隱藏鍵盤
+                document.getElementById('keypad-area').style.display = 'none';
                 
                 setTimeout(() => {
                     demonstrateCounting();
@@ -781,6 +857,10 @@
                     const fingerText = document.getElementById(`finger-text-${i}`);
                     
                     if (fingerText) {
+                        // 強制 Safari 重新觸發動畫 (Reflow Hack)
+                        fingerText.classList.remove('animate');
+                        void fingerText.offsetWidth; 
+                        
                         fingerText.textContent = currentCount;
                         fingerText.classList.add('animate'); // Triggers float CSS animation
                     }
@@ -804,9 +884,11 @@
                     elHintToggle.checked = false;
                     updateHints();
                 }
-                generateProblem();
+                
+                // 演示完畢：顯示下一題按鈕
+                document.getElementById('next-btn-area').style.display = 'flex';
                 isAnimating = false; // Unlock input
-            }, 2000);
+            }, 1500);
         }
 
         // Prevent default context menu (long press on touch devices)
