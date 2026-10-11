@@ -312,6 +312,12 @@
                 <option value="1">單人模式 (1人)</option>
                 <option value="2">雙人對戰 (2人同步)</option>
             </select>
+            
+            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: bold; color: #555; margin-right: 10px; font-size: 16px;">
+                <input type="checkbox" id="hint-toggle" style="width: 22px; height: 22px; accent-color: #FFB7B2;">
+                提示(分)
+            </label>
+            
             <button id="start-btn">開始遊戲</button>
         </div>
     </div>
@@ -399,6 +405,9 @@
         let numPlayers = 1;
         let scores = { 1: 0, 2: 0 };
         
+        let isHintActive = false;
+        let currentMissingNum = null;
+        
         // 記錄兩位玩家目前選中的輸入框 ID
         let activeInputId = { 1: null, 2: null };
         
@@ -471,8 +480,17 @@
            遊戲流程控制
            ========================================================= */
         const startBtn = document.getElementById('start-btn');
+        const hintToggle = document.getElementById('hint-toggle');
         const gameArea = document.getElementById('game-area');
         
+        hintToggle.addEventListener('change', (e) => {
+            isHintActive = e.target.checked;
+            // 若遊戲正在進行中，立刻重繪時鐘顯示/隱藏提示
+            if (isRoundActive) {
+                renderClock(targetTime.h, targetTime.m, currentMissingNum, currentTaskType);
+            }
+        });
+
         bindTapEvent(startBtn, () => {
             initAudio();
             currentLevel = parseInt(document.getElementById('level-select').value);
@@ -526,6 +544,8 @@
             currentTaskType = '';
             expectedAnswer = {};
             
+            currentMissingNum = null;
+
             // 重置雙方特殊按鍵及鍵盤顯示
             [1, 2].forEach(p => {
                 document.getElementById(`special-${p}`).style.display = 'none';
@@ -542,8 +562,8 @@
                     targetTime.m = getRandomInt(0, 59);
                     if (subType === 1) {
                         currentTaskType = 'missingNum';
-                        missingNum = getRandomInt(1, 12);
-                        expectedAnswer.num = missingNum.toString();
+                        currentMissingNum = getRandomInt(1, 12);
+                        expectedAnswer.num = currentMissingNum.toString();
                     } else if (subType === 2) {
                         currentTaskType = 'findHourHand';
                         [1, 2].forEach(p => document.getElementById(`numpad-${p}`).style.display = 'none');
@@ -574,7 +594,7 @@
             }
 
             // 渲染時鐘
-            renderClock(targetTime.h, targetTime.m, missingNum, currentTaskType);
+            renderClock(targetTime.h, targetTime.m, currentMissingNum, currentTaskType);
 
             // 渲染題目與綁定輸入框
             [1, 2].forEach(p => {
@@ -604,9 +624,9 @@
            時鐘渲染與互動
            ========================================================= */
         function renderClock(h, m, missingNumber = null, interactiveType = null) {
-            const size = 350;
+            const size = 390; 
             const center = size / 2;
-            const radius = 150;
+            const radius = 145; // 稍微縮小以容納外圍提示數字
             const hourAngle = (h % 12 + m / 60) * 30; 
             const minuteAngle = m * 6;                
 
@@ -652,6 +672,16 @@
                     }
 
                     svgHTML += `<text x="${tx}" y="${ty}" font-size="${fontSize}" font-weight="bold" fill="${textColor}" text-anchor="middle" pointer-events="none">${displayText}</text>`;
+                    
+                    if (isHintActive) {
+                        // 分鐘提示：12點位置顯示 0，其餘為 hourNum * 5
+                        const minVal = (hourNum === 12) ? 0 : hourNum * 5;
+                        const hintR = radius + 26; // 放置於外框外面
+                        const hx = center + hintR * Math.cos(angle);
+                        const hy = center + hintR * Math.sin(angle) + 6; 
+                        
+                        svgHTML += `<text x="${hx}" y="${hy}" font-size="20px" font-weight="bold" fill="#A8B1D4" text-anchor="middle" pointer-events="none">${minVal}</text>`;
+                    }
                 }
             }
 
