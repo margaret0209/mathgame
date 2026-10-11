@@ -49,40 +49,46 @@
 
         #top-bar {
             background-color: var(--panel-bg);
-            padding: 15px 20px;
+            padding: clamp(8px, 1.5vh, 15px) clamp(5px, 1vw, 20px);
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
             display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
+            flex-wrap: nowrap; /* 強制不換行，保持在同一行 */
+            gap: clamp(5px, 1vw, 15px); /* 自適應間距 */
             justify-content: center;
             align-items: center;
             z-index: 10;
+            width: 100%;
         }
 
         .control-group {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: clamp(4px, 0.8vw, 8px);
             background: #f9f9f9;
-            padding: 8px 12px;
+            padding: clamp(4px, 1vh, 8px) clamp(6px, 1vw, 12px);
             border-radius: 12px;
             border: 2px solid #eee;
+            white-space: nowrap; /* 防止文字換行 */
+            flex: 0 1 auto; /* 允許縮小以適應畫面 */
+            min-width: 0;
         }
 
         .control-group label {
             font-weight: bold;
-            font-size: 1.1rem;
+            font-size: clamp(0.7rem, 1.8vw, 1.1rem); /* 字體自適應 */
         }
 
         select, button.toggle-btn {
-            font-size: 1.1rem;
-            padding: 5px 10px;
+            font-size: clamp(0.7rem, 1.8vw, 1.1rem); /* 字體自適應 */
+            padding: clamp(2px, 0.5vh, 5px) clamp(4px, 1vw, 10px);
             border-radius: 8px;
             border: 2px solid #ddd;
             background: white;
             outline: none;
             cursor: pointer;
             font-family: inherit;
+            flex: 0 1 auto;
+            min-width: 0; /* 防止超出容器 */
         }
 
         button.toggle-btn.active {
