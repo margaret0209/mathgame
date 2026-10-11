@@ -211,21 +211,15 @@
             will-change: transform, opacity;
             -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
+            /* 加入柔和的過渡效果取代飄浮動畫 */
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
 
-        .html-float-text.animate {
-            animation: floatUpHtml 1s forwards;
-            -webkit-animation: floatUpHtml 1s forwards;
-        }
-
-        @keyframes floatUpHtml {
-            0% { transform: translate(-50%, 0); opacity: 1; }
-            100% { transform: translate(-50%, -25px); opacity: 0; }
-        }
-
-        @-webkit-keyframes floatUpHtml {
-            0% { -webkit-transform: translate(-50%, 0); opacity: 1; }
-            100% { -webkit-transform: translate(-50%, -25px); opacity: 0; }
+        /* 靜態顯示數字的樣式 */
+        .html-float-text.show-static {
+            opacity: 1;
+            transform: translate(-50%, -25px);
+            -webkit-transform: translate(-50%, -25px);
         }
 
         /* Math Equation Styling */
@@ -857,12 +851,8 @@
                     const fingerText = document.getElementById(`finger-text-${i}`);
                     
                     if (fingerText) {
-                        // 強制 Safari 重新觸發動畫 (Reflow Hack)
-                        fingerText.classList.remove('animate');
-                        void fingerText.offsetWidth; 
-                        
                         fingerText.textContent = currentCount;
-                        fingerText.classList.add('animate'); // Triggers float CSS animation
+                        fingerText.classList.add('show-static'); // 靜態顯示，不再使用飄浮淡出動畫
                     }
                     
                     // Speak the number
