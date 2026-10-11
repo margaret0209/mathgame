@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- Viewport settings for iPad/mobile responsiveness and disabling zoom/scrolling -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>20以內的加法</title>
+    <title>計算18以內的加法</title>
     <style>
         :root {
             /* Macaron Pastel Color Palette */
@@ -748,6 +748,7 @@
             if (parseInt(userAnswer) === expectedAnswer) {
                 // Correct Answer
                 playSuccessSound();
+                speakCantonese("答對了"); // 新增答對語音
                 showFeedback(checkIcon, "var(--success-color)");
                 
                 // 答對後：立即隱藏鍵盤，顯示下一題按鈕
@@ -760,14 +761,15 @@
             } else {
                 // Wrong Answer
                 playErrorSound();
+                speakCantonese("答錯了"); // 立即播放答錯語音
                 showFeedback(crossIcon, "var(--error-color)");
                 
                 // 答錯後：立即隱藏鍵盤
                 document.getElementById('keypad-area').style.display = 'none';
                 
                 setTimeout(() => {
-                    demonstrateCounting();
-                }, 1000); // Wait for X animation to finish before starting demo
+                    showCorrectAnswerDirectly();
+                }, 1000); // Wait for feedback to finish before showing correct answer
             }
         }
 
@@ -781,73 +783,19 @@
             }, 1000);
         }
 
-        // Demonstration Sequence for Wrong Answer
-        // E.g., 8+3 -> Says "8", then counts fingers "9, 10, 11"
-        async function demonstrateCounting() {
-            // Force turn on hints for demo if off
-            const wasHintOff = !elHintToggle.checked;
-            if (wasHintOff) {
-                elHintToggle.checked = true;
-                updateHints();
-            }
-
-            // Clear wrong answer
-            userAnswer = "";
-            elAnswer.innerText = "";
-            elAnswer.style.color = 'black'; // Reset color
-
-            // Step 1: Speak X (Base number)
-            await new Promise(resolve => {
-                // Highlight X area statically by changing color (removed transform animation)
-                elValX.style.color = 'var(--primary-color)';
-                
-                speakCantonese(currentX.toString(), () => {
-                    elValX.style.color = ''; // Reset color
-                    setTimeout(resolve, 500); // Small pause
-                });
-            });
-
-            // Step 2: Count Y sequentially
-            let currentCount = currentX;
-            const yContainer = document.getElementById('hint-y-container');
-            
-            // Highlight SVG fingers sequentially
-            for (let i = 1; i <= currentY; i++) {
-                currentCount++;
-                
-                await new Promise(resolve => {
-                    // Find the hidden text element directly inside the SVG finger
-                    const fingerText = document.getElementById(`finger-text-${i}`);
-                    
-                    if (fingerText) {
-                        fingerText.textContent = currentCount;
-                        fingerText.classList.add('show-static'); // 靜態顯示，不再使用飄浮淡出動畫
-                    }
-                    
-                    // Speak the number
-                    speakCantonese(currentCount.toString(), () => {
-                        setTimeout(() => {
-                            resolve();
-                        }, 500); // Small pause after speaking before next number
-                    });
-                });
-            }
-
-            // Step 3: Show correct answer and finish demo
+        // 直接顯示正確答案，不再進行點數演示
+        function showCorrectAnswerDirectly() {
+            // 直接顯示正確答案
             elAnswer.innerText = expectedAnswer;
             elAnswer.style.color = 'var(--success-color)';
             
-            // Final pause before resetting
-            setTimeout(() => {
-                if (wasHintOff) {
-                    elHintToggle.checked = false;
-                    updateHints();
-                }
-                
-                // 演示完畢：顯示下一題按鈕
-                document.getElementById('next-btn-area').style.display = 'flex';
-                isAnimating = false; // Unlock input
-            }, 1500);
+            // 語音讀出完整算式 (例如：8加9等於17)
+            const equationText = `${currentX}加${currentY}等於${expectedAnswer}`;
+            speakCantonese(equationText);
+            
+            // 顯示下一題按鈕
+            document.getElementById('next-btn-area').style.display = 'flex';
+            isAnimating = false; // Unlock input
         }
 
         // Prevent default context menu (long press on touch devices)
