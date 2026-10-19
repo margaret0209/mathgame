@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <!-- 確保在 iPad 及流動裝置上全螢幕且禁止縮放，符合自適應及禁止捲動要求 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>數學科 - 結束時間</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            /* 禁止文字反白，防止學生連續點擊時選取文字 */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            /* 馬卡龍柔和背景 */
+            background-color: #FFF0F5; /* 柔和的淡紫粉色 */
+            font-family: 'PingFang HK', 'Microsoft JhengHei', sans-serif;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden; /* 禁止捲動 */
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background-color: #FFE4E1; /* 馬卡龍粉 */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            height: 12vh;
+        }
+        .level-group {
+            display: flex;
+            gap: 15px;
+        }
+        .btn {
+            padding: 12px 24px;
+            font-size: 22px;
+            font-weight: bold;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 rgba(0,0,0,0.1);
+        }
+        /* 關卡按鈕顏色 */
+        .btn-level { background-color: #E6E6FA; color: #555; }
+        .btn-level.active { background-color: #B0C4DE; color: #000; outline: 4px solid #FFF; }
+        /* 提示按鈕顏色 */
+        .btn-hint { background-color: #FFFACD; color: #8B8589; }
+        .btn-hint.active { background-color: #F0E68C; color: #333; }
+
+        main {
+            display: flex;
+            flex: 1;
+            padding: 20px;
+            gap: 20px;
+            height: 73vh;
+        }
+        .panel {
+            flex: 1;
+            background-color: #FFFFFF;
+            border-radius: 30px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+            border: 4px solid #F5FFFA;
+        }
+        /* 左與右面板底色 */
+        .panel.left { background-color: #F0F8FF; border-color: #D4E6F1; }
+        .panel.right { background-color: #F5FFFA; border-color: #D5F5E3; }
+        .panel.center { background-color: #FFFAFA; border-color: #FADBD8; flex: 0.8; }
+
+        .clock-container {
+            width: 100%;
+            max-width: 250px;
+            aspect-ratio: 1 / 1;
+            margin-bottom: 20px;
+        }
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+        .time-label {
+            font-size: 32px;
+            font-weight: bold;
+            color: #444;
+            margin-top: 10px;
+        }
+        .duration-label {
+            font-size: 40px;
+            font-weight: bold;
+            color: #E67E22;
+            line-height: 1.5;
+        }
+        .hint-text {
+            font-size: 24px;
+            color: #C0392B;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #FDEDEC;
+            border-radius: 15px;
+            display: none; /* 預設隱藏 */
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #FFF;
+            padding: 10px;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .btn-adjust {
+            background-color: #D1F2EB;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 30px;
+            font-weight: bold;
+            color: #117A65;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(17, 122, 101, 0.2);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .btn-adjust:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 rgba(17, 122, 101, 0.2);
+        }
+        .val-display {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+            min-width: 60px;
+        }
+
+        footer {
+            height: 15vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #E6E6FA; /* 淡紫色 */
+        }
+        .btn-submit {
+            background-color: #A9DFBF;
+            color: #196F3D;
+            font-size: 36px;
+            padding: 15px 60px;
+            border-radius: 40px;
+            box-shadow: 0 8px 0 rgba(25, 111, 61, 0.2);
+        }
+        .btn-submit:active {
+            transform: translateY(8px);
+            box-shadow: 0 0 0 rgba(25, 111, 61, 0.2);
+        }
+
+        #feedback-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(255,255,255,0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .emoji { font-size: 150px; }
+        .feedback-msg { font-size: 50px; font-weight: bold; color: #333; margin-top: 20px;}
+        .hour-color { color: #C0392B; } /* 時針紅色 */
+        .min-color { color: #2980B9; }  /* 分針藍色 */
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="level-group">
+            <!-- 教師可在此修改關卡名稱 -->
+            <button class="btn btn-level active" id="btn-lv1" onclick="setLevel(1)">小時</button>
+            <button class="btn btn-level" id="btn-lv2" onclick="setLevel(2)">半小時</button>
+            <button class="btn btn-level" id="btn-lv3" onclick="setLevel(3)">小時與分鐘</button>
+        </div>
+        <button class="btn btn-hint" id="btn-hint" onclick="toggleHint()">提示：關 💡</button>
+    </header>
+
+    <main>
+        <!-- 左側：開始時間 -->
+        <div class="panel left">
+            <div class="clock-container" id="clock-start"></div>
+            <div class="time-label" id="text-start">4時 0分</div>
+        </div>
+
+        <!-- 中間：時距與提示 -->
+        <div class="panel center">
+            <div style="font-size:24px; color:#7F8C8D; margin-bottom:10px;">經過了</div>
+            <div class="duration-label" id="text-duration">2 小時</div>
+            <div class="hint-text" id="text-hint">
+                <!-- 提示內容會由 JS 自動生成 -->
+            </div>
+        </div>
+
+        <!-- 右側：結束時間 (互動區) -->
+        <div class="panel right">
+            <div class="clock-container" id="clock-end"></div>
+            
+            <div class="controls">
+                <!-- 小時控制 -->
+                <div class="control-group">
+                    <button class="btn-adjust" onpointerdown="adjustTime('h', 1)">+</button>
+                    <div class="val-display hour-color" id="val-h">4</div>
+                    <button class="btn-adjust" onpointerdown="adjustTime('h', -1)">-</button>
+                </div>
+                <div style="font-size:24px; font-weight:bold;">時</div>
+                
+                <!-- 分鐘控制 -->
+                <div class="control-group">
+                    <button class="btn-adjust" onpointerdown="adjustTime('m', 1)">+</button>
+                    <div class="val-display min-color" id="val-m">0</div>
+                    <button class="btn-adjust" onpointerdown="adjustTime('m', -1)">-</button>
+                </div>
+                <div style="font-size:24px; font-weight:bold;">分</div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <button class="btn btn-submit" onclick="checkAnswer()">確定 ✔️</button>
+    </footer>
+
+    <div id="feedback-overlay">
+        <div class="emoji" id="feedback-emoji">🌟</div>
+        <div class="feedback-msg" id="feedback-text">答對了！</div>
+    </div>
+
+    <script>
+        // 狀態變數
+        let currentLevel = 1;
+        let hintEnabled = false;
+        
+        // 題目變數
+        let startH = 0, startM = 0;
+        let durH = 0, durM = 0;
+        let targetH = 0, targetM = 0; // 系統計算的正確結束時間
+        
+        // 玩家變數
+        let userH = 0, userM = 0;
+
+        // 初始化 AudioContext (離線音效，不需要外部音檔)
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        // 綁定全局點擊初始化音效 (瀏覽器限制需由使用者觸發)
+        document.body.addEventListener('pointerdown', initAudio, { once: true });
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+            
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'correct') {
+                // 叮叮聲
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.15); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.3); // G5
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.6);
+                osc.start(now);
+                osc.stop(now + 0.6);
+            } else if (type === 'wrong') {
+                // 嘸嘸聲
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.linearRampToValueAtTime(150, now + 0.3);
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            }
+        }
+
+        function renderClock(elementId, h, m) {
+            // 計算角度
+            const mAngle = m * 6; // 每分鐘 6 度
+            // 時針角度：加上分鐘帶來的微調
+            const hAngle = (h % 12) * 30 + (m * 0.5); 
+            
+            let html = `<svg viewBox="0 0 100 100">
+                <!-- 鐘面背景 -->
+                <circle cx="50" cy="50" r="48" fill="#FFF" stroke="#BDC3C7" stroke-width="3" />`;
+            
+            // 繪製刻度
+            for (let i = 0; i < 60; i++) {
+                let angle = i * 6;
+                let isHour = i % 5 === 0;
+                let length = isHour ? 6 : 2;
+                let width = isHour ? 1.5 : 0.5;
+                let color = isHour ? "#2C3E50" : "#7F8C8D";
+                
+                // 使用三角函數計算刻度位置
+                let rad = (angle - 90) * Math.PI / 180;
+                let x1 = 50 + Math.cos(rad) * 46;
+                let y1 = 50 + Math.sin(rad) * 46;
+                let x2 = 50 + Math.cos(rad) * (46 - length);
+                let y2 = 50 + Math.sin(rad) * (46 - length);
+                
+                html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${width}" />`;
+                
+                // 加上數字 (只有 12, 3, 6, 9 以免太擠，或者全部顯示)
+                if (isHour) {
+                    let num = i === 0 ? 12 : i / 5;
+                    let numRad = (angle - 90) * Math.PI / 180;
+                    let nx = 50 + Math.cos(numRad) * 35;
+                    let ny = 50 + Math.sin(numRad) * 35;
+                    html += `<text x="${nx}" y="${ny}" fill="#34495E" font-size="7" font-weight="bold" text-anchor="middle" dominant-baseline="central">${num}</text>`;
+                }
+            }
+
+            // 繪製指針 (時針短且粗，分針長且幼)
+            html += `
+                <!-- 時針 -->
+                <line x1="50" y1="50" x2="50" y2="28" stroke="#C0392B" stroke-width="4" stroke-linecap="round" transform="rotate(${hAngle} 50 50)" />
+                <!-- 分針 -->
+                <line x1="50" y1="50" x2="50" y2="15" stroke="#2980B9" stroke-width="2" stroke-linecap="round" transform="rotate(${mAngle} 50 50)" />
+                <!-- 中心點 -->
+                <circle cx="50" cy="50" r="3" fill="#2C3E50" />
+            </svg>`;
+            
+            document.getElementById(elementId).innerHTML = html;
+        }
+
+        function generateQuestion() {
+            if (currentLevel === 1) {
+                // 關卡1: 小時
+                startM = 0;
+                startH = Math.floor(Math.random() * 12) + 1; // 1-12
+                durM = 0;
+                durH = Math.floor(Math.random() * 6) + 1; // 時距 1-6小時，避免跨日太複雜
+            } else if (currentLevel === 2) {
+                // 關卡2: 半小時
+                startM = Math.random() > 0.5 ? 0 : 30;
+                startH = Math.floor(Math.random() * 12) + 1;
+                // 時距： x小時30分 或 x小時0分 (半小時為單位)
+                durM = Math.random() > 0.5 ? 0 : 30;
+                durH = Math.floor(Math.random() * 4) + 1;
+                // 防止時距為0
+                if(durH === 0 && durM === 0) durM = 30; 
+            } else {
+                // 關卡3: 小時與分鐘
+                startM = Math.floor(Math.random() * 60);
+                startH = Math.floor(Math.random() * 12) + 1;
+                durM = Math.floor(Math.random() * 59) + 1;
+                durH = Math.floor(Math.random() * 4) + 1;
+            }
+
+            // 計算正確答案 (12小時制顯示)
+            let totalM = startM + durM;
+            let totalH = startH + durH + Math.floor(totalM / 60);
+            
+            targetM = totalM % 60;
+            targetH = totalH > 12 ? (totalH % 12 === 0 ? 12 : totalH % 12) : totalH;
+
+            // 初始化玩家答案為開始時間 (題目要求)
+            userH = startH;
+            userM = startM;
+
+            updateUI();
+        }
+
+        function updateUI() {
+            // 1. 更新開始時間面板
+            renderClock('clock-start', startH, startM);
+            document.getElementById('text-start').innerHTML = `<span class="hour-color">${startH}</span> 時 <span class="min-color">${startM}</span> 分`;
+
+            // 2. 更新時距文字
+            let durText = "";
+            if (durH > 0) durText += `${durH} 小時 `;
+            if (durM > 0) durText += `${durM} 分鐘`;
+            document.getElementById('text-duration').innerText = durText;
+
+            // 3. 更新提示內容 (若開啟)
+            if (hintEnabled) {
+                document.getElementById('text-hint').style.display = 'block';
+                // 針對 SEN 學生提供具體算式提示
+                document.getElementById('text-hint').innerHTML = `
+                    💡 提示：<br>
+                    時針前進 ${durH} 格<br>
+                    分針前進 ${durM} 小格
+                `;
+            } else {
+                document.getElementById('text-hint').style.display = 'none';
+            }
+
+            // 4. 更新結束時間 (玩家操作區)
+            updateUserEndClock();
+        }
+
+        function updateUserEndClock() {
+            renderClock('clock-end', userH, userM);
+            document.getElementById('val-h').innerText = userH;
+            document.getElementById('val-m').innerText = userM;
+        }
+
+        function adjustTime(type, delta) {
+            playSound('click');
+            if (type === 'h') {
+                userH += delta;
+                if (userH > 12) userH = 1;
+                if (userH < 1) userH = 12;
+            } else if (type === 'm') {
+                // 特教學生可能較難理解進位，但在這遊戲裡我們允許分鐘單獨加減，幫助他們觀察時鐘連動
+                // 如果需要自動進位時針，可啟用下方註解的邏輯
+                /*
+                userM += delta;
+                if (userM >= 60) { userM = 0; adjustTime('h', 1); }
+                if (userM < 0) { userM = 59; adjustTime('h', -1); }
+                */
+                // 為簡單操作，限定 0-59 循環，不自動進位時針(降低操作難度)
+                userM += delta;
+                if (userM >= 60) userM = 0;
+                if (userM < 0) userM = 59;
+            }
+            updateUserEndClock();
+        }
+
+        function setLevel(lvl) {
+            playSound('click');
+            currentLevel = lvl;
+            // 更新按鈕樣式
+            document.getElementById('btn-lv1').classList.remove('active');
+            document.getElementById('btn-lv2').classList.remove('active');
+            document.getElementById('btn-lv3').classList.remove('active');
+            document.getElementById('btn-lv' + lvl).classList.add('active');
+            
+            generateQuestion();
+        }
+
+        function toggleHint() {
+            playSound('click');
+            hintEnabled = !hintEnabled;
+            let btn = document.getElementById('btn-hint');
+            if (hintEnabled) {
+                btn.classList.add('active');
+                btn.innerText = '提示：開 💡';
+            } else {
+                btn.classList.remove('active');
+                btn.innerText = '提示：關 💡';
+            }
+            updateUI();
+        }
+
+        function checkAnswer() {
+            let isCorrect = (userH === targetH) && (userM === targetM);
+            
+            const overlay = document.getElementById('feedback-overlay');
+            const emoji = document.getElementById('feedback-emoji');
+            const text = document.getElementById('feedback-text');
+            
+            overlay.style.display = 'flex';
+            
+            if (isCorrect) {
+                playSound('correct');
+                emoji.innerText = '🌟';
+                text.innerText = '太棒了！答對了！';
+                text.style.color = '#27AE60';
+                
+                // 3秒後自動進入下一題
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    generateQuestion();
+                }, 2500);
+            } else {
+                playSound('wrong');
+                emoji.innerText = '🤔';
+                text.innerText = '再試試看喔！';
+                text.style.color = '#C0392B';
+                
+                // 2秒後關閉提示，讓學生繼續嘗試
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 2000);
+            }
+        }
+
+        // 初始化遊戲
+        window.onload = () => {
+            generateQuestion();
+        };
+
+    </script>
+</body>
+</html>
