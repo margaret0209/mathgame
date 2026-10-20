@@ -68,10 +68,12 @@
         }
 
         #game-title {
-            font-size: clamp(28px, 4vh, 42px);
+            font-size: clamp(24px, 4vh, 36px); /* 微調字體大小以適應中欄 */
             font-weight: 900;
             color: var(--text-dark);
             letter-spacing: 4px;
+            text-align: center;
+            margin-bottom: 1.5vh;
         }
 
         .btn-group {
@@ -228,18 +230,18 @@
         .numpad {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            width: 220px; /* 固定寬度，防止過度放大 */
+            gap: 6px;
+            width: 160px; /* 縮小固定寬度 */
             margin: 0 auto;
         }
 
         .num-btn {
-            height: 60px; /* 固定小尺寸 */
+            height: 45px; /* 縮小高度 */
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 26px;
-            border-radius: 12px;
+            font-size: 20px; /* 縮小數字字體 */
+            border-radius: 10px;
             border: none;
             background-color: var(--macaron-green);
             color: var(--text-dark);
@@ -254,7 +256,7 @@
         .num-btn.cmd {
             background-color: var(--accent-orange);
             box-shadow: 0 4px 0 #E3B3B7;
-            font-size: 18px;
+            font-size: 14px; /* 縮小指令字體 */
             color: white;
         }
 
@@ -313,8 +315,6 @@
                 <button class="btn" onclick="setLevel('both')" id="btn-both">小時與分鐘</button>
             </div>
             
-            <div id="game-title">時距</div>
-
             <button class="btn hint-btn" onclick="toggleHint()" id="btn-hint">💡 提示: 關</button>
         </div>
 
@@ -329,6 +329,7 @@
 
             <!-- 中欄：輸入與確定 -->
             <div class="column center-column">
+                <div id="game-title">時距</div>
                 <div class="col-header" style="background-color: var(--macaron-purple);">經過了多少時間？</div>
                 
                 <div id="hint-text">💡 提示內容</div>
