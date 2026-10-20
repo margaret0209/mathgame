@@ -6,60 +6,72 @@
     <title>時距學習遊戲</title>
     <style>
         /* ==================================================
-           基礎設定與 CSS 變數 (馬卡龍柔和色系)
+           全域與排版基礎設定 (嚴格遵守 85vh/100vw 置中要求)
            ================================================== */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            user-select: none; /* 防止反白選取文字 */
+            user-select: none;
             -webkit-user-select: none;
-            touch-action: manipulation; /* 觸控優化 */
+            touch-action: manipulation;
         }
 
+        body {
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f4f4f4; /* 外圍背景 */
+            font-family: "PingFang HK", "Microsoft JhengHei", sans-serif;
+        }
+
+        /* 遊戲主容器：佔據 85vh 高度與 100vw 寬度 */
+        #game-container {
+            width: 100vw;
+            height: 85vh;
+            background-color: #fff0f5; /* 馬卡龍粉紅色 */
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        /* ==================================================
+           配色與變數
+           ================================================== */
         :root {
-            --macaron-pink: #FADADD;
             --macaron-blue: #C7CEEA;
             --macaron-green: #B5EAD7;
             --macaron-yellow: #FFF5BA;
             --macaron-purple: #E2F0CB;
             --text-dark: #4A3E56;
             --accent-orange: #FF9EAA;
-            --minute-color: #2B5278; /* 分鐘文字對比色 */
-        }
-
-        body {
-            font-family: "PingFang HK", "Microsoft JhengHei", "Heiti TC", sans-serif;
-            background-color: #FDF6E3; /* 柔和奶油米色背景 */
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden; /* 嚴格禁止全頁捲動 */
-            display: flex;
-            flex-direction: column;
-            color: var(--text-dark);
+            --minute-color: #5C4B6B; /* 分鐘文字對比色 (藍紫色系) */
         }
 
         /* ==================================================
-           [上方區域]：標題、關卡切換與提示 Toggle
+           [上方區域]
            ================================================== */
         #top-area {
-            height: 10vh;
-            min-height: 55px;
-            background-color: var(--macaron-blue);
+            flex: 0 0 12%; /* 固定佔比，確保不壓縮 */
+            min-height: 60px;
+            background-color: rgba(255, 255, 255, 0.5);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-            z-index: 10;
+            padding: 0 2vw;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            border-bottom: 3px solid white;
         }
 
         #game-title {
-            font-size: 42px; /* 顯著放大標題 */
+            font-size: clamp(28px, 4vh, 42px);
             font-weight: 900;
             color: var(--text-dark);
-            letter-spacing: 2px;
-            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+            letter-spacing: 4px;
         }
 
         .btn-group {
@@ -68,119 +80,132 @@
         }
 
         .btn {
-            font-size: 22px; /* 放大上方按鈕文字 */
-            padding: 12px 24px; /* 放大按鈕點擊範圍 */
+            font-size: clamp(16px, 2vh, 22px);
+            padding: 1.5vh 1.5vw;
             border: 2px solid white;
             border-radius: 20px;
             background-color: white;
             color: var(--text-dark);
             cursor: pointer;
             font-weight: bold;
-            box-shadow: 2px 3px 6px rgba(0,0,0,0.08);
+            box-shadow: 2px 3px 6px rgba(0,0,0,0.05);
             transition: all 0.15s ease;
         }
-
-        .btn:active {
-            transform: scale(0.95);
-        }
-
+        .btn:active { transform: scale(0.95); }
         .btn.active {
-            background-color: var(--macaron-pink);
-            border-color: var(--macaron-pink);
-            color: white;
-        }
-
-        .hint-btn {
-            background-color: var(--macaron-yellow);
-            border-color: #FFE600;
-        }
-
-        .hint-btn.hint-active {
             background-color: var(--accent-orange);
-            color: white;
             border-color: var(--accent-orange);
+            color: white;
         }
+
+        .hint-btn { background-color: var(--macaron-yellow); border-color: #FDE272; }
+        .hint-btn.hint-active { background-color: #FFB347; color: white; border-color: #FFB347; }
 
         /* ==================================================
-           [中間區域]：左 (開始時間)、中 (輸入+確定)、右 (結束時間)
+           [中間區域]：左、中、右
            ================================================== */
         #middle-area {
-            flex: 1;
+            flex: 1 1 0; /* 填滿剩餘的 85vh 空間 */
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 12px 20px;
-            gap: 15px;
-            background-color: #FDF6E3;
-            height: 90vh;
+            align-items: stretch;
+            padding: 2vh 2vw;
+            gap: 2vw;
+            overflow: hidden;
         }
 
         .column {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between;
             background-color: white;
             border-radius: 24px;
-            padding: 12px 15px;
+            padding: 2vh 1vw;
             box-shadow: 0 6px 20px rgba(0,0,0,0.04);
-            flex: 1.4; /* 增加左右兩欄的空間佔比，讓時鐘可以放得更大 */
-            height: 100%;
-            max-height: 86vh;
-            position: relative;
+        }
+
+        /* 左右欄：時鐘區域 (佔用較多空間以放大時鐘) */
+        .side-column {
+            flex: 1.2;
+            background-color: rgba(255, 255, 255, 0.7);
+            justify-content: space-between;
+        }
+
+        /* 中欄：輸入區域 (限制寬度) */
+        .center-column {
+            flex: 0.8;
+            min-width: 320px;
+            background-color: #FFFFFF;
+            border: 3px solid white;
         }
 
         .col-header {
-            font-size: 30px; /* 放大欄位標題 */
+            font-size: clamp(20px, 3vh, 30px);
             font-weight: 900;
             color: var(--text-dark);
-            padding: 8px 24px;
+            padding: 1vh 2vw;
             border-radius: 12px;
-            background-color: rgba(255,255,255,0.7);
+            background-color: var(--macaron-blue);
+            text-align: center;
+            width: 90%;
         }
 
-        /* SVG 時鐘容器 */
+        /* 時鐘容器：自動適應高度並保持 1:1 比例 */
         .clock-container {
+            flex: 1;
             width: 100%;
-            max-width: 480px; /* 大幅放大時鐘尺寸 (從原先的 350px 增加至 480px) */
-            aspect-ratio: 1 / 1;
             display: flex;
             justify-content: center;
             align-items: center;
+            min-height: 0; /* 允許 flex 子項縮小 */
+        }
+        .clock-container svg {
+            max-width: 100%;
+            max-height: 100%;
         }
 
         .time-text {
-            font-size: 34px; /* 放大時鐘下方文字 */
+            font-size: clamp(22px, 3.5vh, 34px);
             font-weight: bold;
             color: var(--text-dark);
             background-color: #F8F5FC;
-            padding: 10px 24px;
+            padding: 1vh 2vw;
             border-radius: 15px;
             border: 2px dashed var(--macaron-blue);
+            margin-top: 1vh;
         }
 
-        /* 中欄：時距輸入區與控制項 */
-        .center-column {
-            background-color: #FFFFFF;
-            border: 2px solid #F0E6FF;
-            flex: 0.8; /* 縮小中欄在彈性盒子中的比例，將多餘空間讓給左右時鐘 */
-            max-width: 380px; /* 限制中欄的最大寬度，確保九宮格維持小型尺寸 */
+        /* ==================================================
+           中欄細節 (輸入框、九宮格、確定按鈕)
+           ================================================== */
+        #hint-text {
+            display: none;
+            color: #D9534F;
+            background-color: #FFF3CD;
+            padding: 1vh;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: clamp(16px, 2.5vh, 22px);
+            text-align: center;
+            width: 90%;
+            margin: 1vh 0;
         }
 
         .input-display {
             display: flex;
-            gap: 6px;
+            gap: 1vw;
             justify-content: center;
             align-items: center;
             width: 100%;
+            margin: 2vh 0;
         }
 
         .input-box {
-            font-size: 40px; /* 放大輸入框數字 */
-            padding: 8px 15px;
+            font-size: clamp(28px, 4vh, 40px);
+            padding: 1vh 2vw;
             border: 3px solid var(--macaron-blue);
             border-radius: 14px;
-            min-width: 90px;
+            min-width: 80px;
             text-align: center;
             font-weight: bold;
             color: var(--text-dark);
@@ -188,51 +213,32 @@
             background-color: #FAFAFA;
             transition: all 0.2s;
         }
-
         .input-box.active-input {
             background-color: var(--macaron-yellow);
             border-color: #FFAA00;
-            box-shadow: 0 0 10px rgba(255, 170, 0, 0.3);
         }
 
         .input-label {
-            font-size: 26px; /* 放大「小時」、「分鐘」字眼 */
+            font-size: clamp(18px, 2.5vh, 26px);
             font-weight: bold;
             color: var(--text-dark);
         }
 
-        /* 動態提示訊息框 */
-        #hint-text {
-            display: none;
-            color: #D9534F;
-            background-color: #FFF3CD;
-            border: 1px solid #FFEEBA;
-            padding: 10px 15px;
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 18px; /* 放大提示文字 */
-            text-align: center;
-            width: 100%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        /* 九宮格數字鍵盤：嚴格維持小型尺寸 */
+        /* 數字九宮格：維持小型尺寸 (使用固定像素限制大小) */
         .numpad {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            width: fit-content;
-            margin: 0 auto; /* 使其在中央對齊 */
+            gap: 10px;
+            width: 220px; /* 固定寬度，防止過度放大 */
+            margin: 0 auto;
         }
 
         .num-btn {
-            width: 65px; /* 固定寬度限制在小尺寸 */
-            height: 65px; /* 固定高度限制在小尺寸 */
+            height: 60px; /* 固定小尺寸 */
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 24px;
-            padding: 0;
+            font-size: 26px;
             border-radius: 12px;
             border: none;
             background-color: var(--macaron-green);
@@ -240,165 +246,129 @@
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 0 #92D0B8;
-            transition: transform 0.05s, box-shadow 0.05s;
         }
-        
         .num-btn:active {
             transform: translateY(4px);
             box-shadow: 0 0 0 #92D0B8;
         }
-
         .num-btn.cmd {
-            background-color: var(--macaron-pink);
+            background-color: var(--accent-orange);
             box-shadow: 0 4px 0 #E3B3B7;
-            font-size: 16px;
-        }
-        .num-btn.cmd:active {
-            box-shadow: 0 0 0 #E3B3B7;
+            font-size: 18px;
+            color: white;
         }
 
-        /* 需求2: [確定] 按鈕放置於中間區域的最下方 */
+        /* 確定按鈕：推到底部 */
         #confirm-btn {
-            width: 100%;
-            max-width: 320px; /* 加寬按鈕 */
-            font-size: 32px; /* 放大確定字體 */
-            padding: 15px 0; /* 增加點擊高度 */
+            margin-top: auto; /* 這是關鍵：將按鈕推到 flex 容器的最底部 */
+            width: 90%;
+            font-size: clamp(24px, 3.5vh, 32px);
+            padding: 2vh 0;
             border-radius: 20px;
             border: none;
-            background-color: var(--macaron-green);
-            color: var(--text-dark);
+            background-color: #4CAF50;
+            color: white;
             font-weight: 900;
-            box-shadow: 0 5px 0 #8CD1B8;
+            box-shadow: 0 6px 0 #388E3C;
             cursor: pointer;
             letter-spacing: 2px;
-            transition: all 0.1s;
         }
-
         #confirm-btn:active {
-            transform: translateY(5px);
-            box-shadow: 0 0 0 #8CD1B8;
+            transform: translateY(6px);
+            box-shadow: 0 0 0 #388E3C;
         }
 
         /* ==================================================
-           回饋彈窗 (對/錯)
+           回饋彈窗
            ================================================== */
         #feedback-overlay {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.92);
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(255, 255, 255, 0.9);
             display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 100;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(5px);
         }
-        
-        #feedback-emoji {
-            font-size: 100px;
-            margin-bottom: 10px;
-            animation: bounce 0.6s infinite alternate ease-in-out;
-        }
-
-        @keyframes bounce {
-            from { transform: translateY(0); }
-            to { transform: translateY(-15px); }
-        }
-        
-        #feedback-message {
-            font-size: 34px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-
+        #feedback-emoji { font-size: 120px; margin-bottom: 20px; }
+        #feedback-message { font-size: 40px; font-weight: bold; margin-bottom: 30px; }
         #feedback-btn {
-            font-size: 24px;
-            padding: 10px 40px;
-            border-radius: 25px;
-            border: none;
-            background-color: var(--macaron-blue);
-            color: white;
-            font-weight: bold;
-            box-shadow: 0 5px 0 #9FA8DA;
-            cursor: pointer;
-        }
-        #feedback-btn:active {
-            transform: translateY(5px);
-            box-shadow: 0 0 0 #9FA8DA;
+            font-size: 28px; padding: 15px 50px; border-radius: 30px;
+            border: none; background-color: var(--macaron-blue); color: var(--text-dark);
+            font-weight: bold; cursor: pointer; box-shadow: 0 5px 0 #9FA8DA;
         }
 
     </style>
 </head>
 <body>
 
-    <!-- 上方區域 -->
-    <div id="top-area">
-        <div class="btn-group">
-            <button class="btn active" onclick="setLevel('hour')" id="btn-hour">小時</button>
-            <button class="btn" onclick="setLevel('minute')" id="btn-minute">分鐘</button>
-            <button class="btn" onclick="setLevel('both')" id="btn-both">小時與分鐘</button>
-        </div>
-        
-        <!-- 中央標題 -->
-        <div id="game-title">時距</div>
-
-        <!-- 提示 Toggle 切換 -->
-        <button class="btn hint-btn" onclick="toggleHint()" id="btn-hint">💡 提示: 關</button>
-    </div>
-
-    <!-- 中間區域 (三欄式布局) -->
-    <div id="middle-area">
-        <!-- 左欄：開始時間 -->
-        <div class="column" style="background-color: #FFF0F2;">
-            <div class="col-header">開始時間</div>
-            <div class="clock-container" id="clock-start"></div>
-            <div class="time-text" id="text-start">--時--分</div>
-        </div>
-
-        <!-- 中欄：時距輸入區 & [確定] 提交按鈕 -->
-        <div class="column center-column">
-            <div class="col-header" style="background-color: var(--macaron-purple);">經過了多少時間？</div>
+    <div id="game-container">
+        <!-- 上方區域 -->
+        <div id="top-area">
+            <div class="btn-group">
+                <button class="btn active" onclick="setLevel('hour')" id="btn-hour">小時</button>
+                <button class="btn" onclick="setLevel('minute')" id="btn-minute">分鐘</button>
+                <button class="btn" onclick="setLevel('both')" id="btn-both">小時與分鐘</button>
+            </div>
             
-            <!-- 動態提示訊息 -->
-            <div id="hint-text">💡 提示內容</div>
+            <div id="game-title">時距</div>
 
-            <!-- 數字輸入顯示區 -->
-            <div class="input-display">
-                <div id="input-h" class="input-box active-input" onclick="setActiveInput('h')">0</div>
-                <div class="input-label" id="label-h">小時</div>
-                <div id="input-m" class="input-box" onclick="setActiveInput('m')">0</div>
-                <div class="input-label" id="label-m">分鐘</div>
-            </div>
-
-            <!-- 小型數字九宮格 -->
-            <div class="numpad">
-                <button class="num-btn" onclick="inputNum(1)">1</button>
-                <button class="num-btn" onclick="inputNum(2)">2</button>
-                <button class="num-btn" onclick="inputNum(3)">3</button>
-                <button class="num-btn" onclick="inputNum(4)">4</button>
-                <button class="num-btn" onclick="inputNum(5)">5</button>
-                <button class="num-btn" onclick="inputNum(6)">6</button>
-                <button class="num-btn" onclick="inputNum(7)">7</button>
-                <button class="num-btn" onclick="inputNum(8)">8</button>
-                <button class="num-btn" onclick="inputNum(9)">9</button>
-                <button class="num-btn cmd" onclick="clearInput()">清除</button>
-                <button class="num-btn" onclick="inputNum(0)">0</button>
-                <button class="num-btn cmd" onclick="deleteInput()">刪除</button>
-            </div>
-
-            <!-- 需求2: [確定] 提交按鈕固定放置於中間區域的最下方 -->
-            <button id="confirm-btn" onclick="checkAnswer()">✔️ 確定</button>
+            <button class="btn hint-btn" onclick="toggleHint()" id="btn-hint">💡 提示: 關</button>
         </div>
 
-        <!-- 右欄：結束時間 -->
-        <div class="column" style="background-color: #F0F4FF;">
-            <div class="col-header">結束時間</div>
-            <div class="clock-container" id="clock-end"></div>
-            <div class="time-text" id="text-end">--時--分</div>
+        <!-- 中間區域 -->
+        <div id="middle-area">
+            <!-- 左欄：開始時間 -->
+            <div class="column side-column">
+                <div class="col-header" style="background-color: var(--macaron-pink);">開始時間</div>
+                <div class="clock-container" id="clock-start"></div>
+                <div class="time-text" id="text-start">--時--分</div>
+            </div>
+
+            <!-- 中欄：輸入與確定 -->
+            <div class="column center-column">
+                <div class="col-header" style="background-color: var(--macaron-purple);">經過了多少時間？</div>
+                
+                <div id="hint-text">💡 提示內容</div>
+
+                <div class="input-display">
+                    <div id="input-h" class="input-box active-input" onclick="setActiveInput('h')">0</div>
+                    <div class="input-label" id="label-h">小時</div>
+                    <div id="input-m" class="input-box" onclick="setActiveInput('m')">0</div>
+                    <div class="input-label" id="label-m">分鐘</div>
+                </div>
+
+                <div class="numpad">
+                    <button class="num-btn" onclick="inputNum(1)">1</button>
+                    <button class="num-btn" onclick="inputNum(2)">2</button>
+                    <button class="num-btn" onclick="inputNum(3)">3</button>
+                    <button class="num-btn" onclick="inputNum(4)">4</button>
+                    <button class="num-btn" onclick="inputNum(5)">5</button>
+                    <button class="num-btn" onclick="inputNum(6)">6</button>
+                    <button class="num-btn" onclick="inputNum(7)">7</button>
+                    <button class="num-btn" onclick="inputNum(8)">8</button>
+                    <button class="num-btn" onclick="inputNum(9)">9</button>
+                    <button class="num-btn cmd" onclick="clearInput()">清除</button>
+                    <button class="num-btn" onclick="inputNum(0)">0</button>
+                    <button class="num-btn cmd" onclick="deleteInput()">刪除</button>
+                </div>
+
+                <!-- 確定按鈕 (利用 margin-top: auto 推至最底) -->
+                <button id="confirm-btn" onclick="checkAnswer()">✔️ 確定</button>
+            </div>
+
+            <!-- 右欄：結束時間 -->
+            <div class="column side-column">
+                <div class="col-header" style="background-color: var(--macaron-blue);">結束時間</div>
+                <div class="clock-container" id="clock-end"></div>
+                <div class="time-text" id="text-end">--時--分</div>
+            </div>
         </div>
     </div>
 
-    <!-- 答對/答錯視覺回饋彈窗 -->
+    <!-- 彈窗 -->
     <div id="feedback-overlay">
         <div id="feedback-emoji">🌟</div>
         <div id="feedback-message">答對了！</div>
@@ -407,26 +377,26 @@
 
     <script>
         /* ==================================================
-           遊戲狀態設定
+           狀態管理與音效
            ================================================== */
-        let currentLevel = 'hour'; // 關卡：'hour', 'minute', 'both'
-        let activeInput = 'h';     // 目前聚焦的輸入框：'h' 或 'm'
-        let isHintOn = false;      // 提示 Toggle 狀態
+        let currentLevel = 'hour';
+        let activeInput = 'h';
+        let isHintOn = false;
+        let isAudioInit = false;
 
-        let gameState = {
-            startH: 0, startM: 0,
-            endH: 0, endM: 0,
-            diffH: 0, diffM: 0,
-            userH: "0", userM: "0"
-        };
+        let gameState = { startH: 0, startM: 0, endH: 0, endM: 0, diffH: 0, diffM: 0, userH: "0", userM: "0" };
 
-        /* ==================================================
-           Web Audio API 離線音效生成
-           ================================================== */
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
+        function initAudio() {
+            if (!isAudioInit) {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                isAudioInit = true;
+            }
+        }
+
         function playSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            initAudio();
             const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             osc.connect(gainNode);
@@ -434,155 +404,126 @@
 
             if (type === 'click') {
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(500, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(250, audioCtx.currentTime + 0.08);
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.08);
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
             } else if (type === 'correct') {
-                const now = audioCtx.currentTime;
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(523.25, now);       // C5
-                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
-                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
-                gainNode.gain.setValueAtTime(0.4, now);
-                gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
-                osc.start();
-                osc.stop(now + 0.5);
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.5);
             } else if (type === 'wrong') {
-                const now = audioCtx.currentTime;
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(220, now);
-                osc.frequency.setValueAtTime(180, now + 0.15);
-                gainNode.gain.setValueAtTime(0.3, now);
-                gainNode.gain.linearRampToValueAtTime(0, now + 0.35);
-                osc.start();
-                osc.stop(now + 0.35);
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime + 0.2);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.4);
             }
         }
 
-        // 綁定所有按鈕音效 (觸控與點擊雙支援)
+        document.body.addEventListener('touchstart', initAudio, { once: true });
+        document.body.addEventListener('click', initAudio, { once: true });
+
         document.querySelectorAll('button, .input-box').forEach(el => {
-            el.addEventListener('touchstart', () => {
-                if(el.id !== 'confirm-btn' && el.id !== 'feedback-btn') playSound('click');
+            el.addEventListener('mousedown', () => { if(el.id !== 'confirm-btn') playSound('click'); });
+            el.addEventListener('touchstart', (e) => { 
+                if(el.id !== 'confirm-btn') playSound('click'); 
             }, {passive: true});
-            el.addEventListener('mousedown', () => {
-                if(el.id !== 'confirm-btn' && el.id !== 'feedback-btn') playSound('click');
-            });
         });
 
         /* ==================================================
-           需求1: 繪製 SVG 行針鐘 (顯示並加粗 0, 5, 10... 55 分鐘刻度)
+           繪製時鐘 SVG (含外圈粗體分鐘)
            ================================================== */
         function drawClock(containerId, hour, minute) {
             const container = document.getElementById(containerId);
-            const cx = 110, cy = 110;
-            const rClock = 72; // 鐘面底圈半徑
+            // 使用較大的 viewBox，確保放大縮小時比例正確
+            const cx = 130, cy = 130; 
+            const rFace = 85;  // 鐘面半徑
+            
+            let svg = `<circle cx="${cx}" cy="${cy}" r="${rFace}" fill="#FFFFFF" stroke="#5C4B6B" stroke-width="4" />`;
 
-            let svgContent = `
-                <!-- 鐘面底盤與外框 -->
-                <circle cx="${cx}" cy="${cy}" r="${rClock}" fill="#FFFFFF" stroke="#5C4B6B" stroke-width="4" />
-            `;
-
-            // 1. 繪製 60 個細微刻度線
+            // 刻度
             for (let i = 0; i < 60; i++) {
                 const angle = (i * 6 - 90) * (Math.PI / 180);
-                const isFiveMin = (i % 5 === 0);
-                const len = isFiveMin ? 8 : 4;
-                const x1 = cx + (rClock - len) * Math.cos(angle);
-                const y1 = cy + (rClock - len) * Math.sin(angle);
-                const x2 = cx + rClock * Math.cos(angle);
-                const y2 = cy + rClock * Math.sin(angle);
-                
-                svgContent += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" 
-                                stroke="${isFiveMin ? '#5C4B6B' : '#B8AEC5'}" 
-                                stroke-width="${isFiveMin ? '2.5' : '1'}" />`;
+                const isFive = (i % 5 === 0);
+                const len = isFive ? 10 : 5;
+                const x1 = cx + (rFace - len) * Math.cos(angle);
+                const y1 = cy + (rFace - len) * Math.sin(angle);
+                const x2 = cx + rFace * Math.cos(angle);
+                const y2 = cy + rFace * Math.sin(angle);
+                svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${isFive ? '#5C4B6B' : '#B8AEC5'}" stroke-width="${isFive ? '3' : '1.5'}" />`;
             }
 
-            // 2. 繪製內圈 1-12 小時數字
+            // 1-12 小時 (內圈)
             for (let i = 1; i <= 12; i++) {
                 const angle = (i * 30 - 90) * (Math.PI / 180);
-                const hourR = 52; // 小時數字半徑
-                const nx = cx + hourR * Math.cos(angle);
-                const ny = cy + hourR * Math.sin(angle);
-                svgContent += `<text x="${nx}" y="${ny}" text-anchor="middle" dominant-baseline="central" 
-                                font-size="15" font-weight="bold" fill="#4A3E56">${i}</text>`;
+                const rHour = 62;
+                const nx = cx + rHour * Math.cos(angle);
+                const ny = cy + rHour * Math.sin(angle);
+                svg += `<text x="${nx}" y="${ny}" text-anchor="middle" dominant-baseline="central" font-size="18" font-weight="bold" fill="#4A3E56">${i}</text>`;
             }
 
-            // 3. 需求1強化：繪製外圈 0, 5, 10, ... 55 分鐘刻度標籤 (加粗顯示)
+            // 0, 5, 10...55 分鐘 (外圈粗體)
             for (let i = 0; i < 12; i++) {
-                const minVal = i * 5; // 0, 5, 10, 15, ..., 55
+                const minVal = i * 5;
                 const angle = (i * 30 - 90) * (Math.PI / 180);
-                const minR = 88; // 外圍分鐘標籤半徑
-                const mx = cx + minR * Math.cos(angle);
-                const my = cy + minR * Math.sin(angle);
-                
-                svgContent += `<text x="${mx}" y="${my}" text-anchor="middle" dominant-baseline="central" 
-                                font-size="13" font-weight="900" fill="var(--minute-color)">${minVal}</text>`;
+                const rMin = 108; // 在鐘面外
+                const mx = cx + rMin * Math.cos(angle);
+                const my = cy + rMin * Math.sin(angle);
+                svg += `<text x="${mx}" y="${my}" text-anchor="middle" dominant-baseline="central" font-size="18" font-weight="900" fill="var(--minute-color)">${minVal}</text>`;
             }
 
-            // 4. 計算指針角度
-            const hourAngle = ((hour % 12) + minute / 60) * 30 - 90;
-            const minAngle = minute * 6 - 90;
+            // 指針
+            const hAngle = ((hour % 12) + minute / 60) * 30 - 90;
+            const mAngle = minute * 6 - 90;
+            
+            // 時針
+            const hx = cx + 45 * Math.cos(hAngle * Math.PI / 180);
+            const hy = cy + 45 * Math.sin(hAngle * Math.PI / 180);
+            svg += `<line x1="${cx}" y1="${cy}" x2="${hx}" y2="${hy}" stroke="#FF6B6B" stroke-width="7" stroke-linecap="round" />`;
 
-            // 時針 (短粗、粉紅紅色)
-            const hx = cx + 36 * Math.cos(hourAngle * Math.PI / 180);
-            const hy = cy + 36 * Math.sin(hourAngle * Math.PI / 180);
-            svgContent += `<line x1="${cx}" y1="${cy}" x2="${hx}" y2="${hy}" stroke="#FF6B6B" stroke-width="6" stroke-linecap="round" />`;
+            // 分針
+            const mx = cx + 70 * Math.cos(mAngle * Math.PI / 180);
+            const my = cy + 70 * Math.sin(mAngle * Math.PI / 180);
+            svg += `<line x1="${cx}" y1="${cy}" x2="${mx}" y2="${my}" stroke="#2B5278" stroke-width="4" stroke-linecap="round" />`;
 
-            // 分針 (長細、深藍色)
-            const mx = cx + 58 * Math.cos(minAngle * Math.PI / 180);
-            const my = cy + 58 * Math.sin(minAngle * Math.PI / 180);
-            svgContent += `<line x1="${cx}" y1="${cy}" x2="${mx}" y2="${my}" stroke="#2B5278" stroke-width="4" stroke-linecap="round" />`;
+            // 中心點
+            svg += `<circle cx="${cx}" cy="${cy}" r="6" fill="#4A3E56" />`;
 
-            // 中心圓點
-            svgContent += `<circle cx="${cx}" cy="${cy}" r="5" fill="#4A3E56" />`;
-
-            container.innerHTML = `<svg width="100%" height="100%" viewBox="0 0 220 220">${svgContent}</svg>`;
+            container.innerHTML = `<svg viewBox="0 0 260 260" width="100%" height="100%">${svg}</svg>`;
         }
 
         /* ==================================================
-           題目生成與遊戲邏輯
+           遊戲邏輯
            ================================================== */
-        function getRnd(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
+        function getRnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
         function setLevel(lvl) {
             currentLevel = lvl;
-            document.querySelectorAll('#top-area .btn-group .btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('#top-area .btn-group .btn').forEach(b => b.classList.remove('active'));
             document.getElementById('btn-' + lvl).classList.add('active');
             
-            const inputH = document.getElementById('input-h');
-            const inputM = document.getElementById('input-m');
-            const labelH = document.getElementById('label-h');
-            const labelM = document.getElementById('label-m');
+            const ih = document.getElementById('input-h'), im = document.getElementById('input-m');
+            const lh = document.getElementById('label-h'), lm = document.getElementById('label-m');
 
             if (lvl === 'hour') {
                 setActiveInput('h');
-                inputM.style.opacity = '0.25';
-                labelM.style.opacity = '0.25';
-                inputM.style.pointerEvents = 'none';
-                inputH.style.opacity = '1';
-                labelH.style.opacity = '1';
-                inputH.style.pointerEvents = 'auto';
+                im.style.opacity = '0.3'; lm.style.opacity = '0.3'; im.style.pointerEvents = 'none';
+                ih.style.opacity = '1'; lh.style.opacity = '1'; ih.style.pointerEvents = 'auto';
             } else if (lvl === 'minute') {
                 setActiveInput('m');
-                inputH.style.opacity = '0.25';
-                labelH.style.opacity = '0.25';
-                inputH.style.pointerEvents = 'none';
-                inputM.style.opacity = '1';
-                labelM.style.opacity = '1';
-                inputM.style.pointerEvents = 'auto';
+                ih.style.opacity = '0.3'; lh.style.opacity = '0.3'; ih.style.pointerEvents = 'none';
+                im.style.opacity = '1'; lm.style.opacity = '1'; im.style.pointerEvents = 'auto';
             } else {
                 setActiveInput('h');
-                inputH.style.opacity = '1';
-                labelH.style.opacity = '1';
-                inputM.style.opacity = '1';
-                labelM.style.opacity = '1';
-                inputH.style.pointerEvents = 'auto';
-                inputM.style.pointerEvents = 'auto';
+                ih.style.opacity = '1'; lh.style.opacity = '1'; ih.style.pointerEvents = 'auto';
+                im.style.opacity = '1'; lm.style.opacity = '1'; im.style.pointerEvents = 'auto';
             }
             generateQuestion();
         }
@@ -591,12 +532,11 @@
             gameState.startH = getRnd(1, 10);
             
             if (currentLevel === 'hour') {
-                const mins = [0, 30];
-                gameState.startM = mins[getRnd(0, 1)];
+                gameState.startM = [0, 30][getRnd(0, 1)];
                 gameState.diffH = getRnd(1, 5);
                 gameState.diffM = 0;
             } else if (currentLevel === 'minute') {
-                gameState.startM = getRnd(0, 6) * 5; // 5的倍數，符合5分刻度學習
+                gameState.startM = getRnd(0, 6) * 5; 
                 gameState.diffH = 0;
                 gameState.diffM = getRnd(1, 5) * 5;
             } else {
@@ -605,14 +545,11 @@
                 gameState.diffM = getRnd(1, 6) * 5;
             }
 
-            // 計算結束時間
-            let totalMins = gameState.startM + gameState.diffM;
-            let totalHours = gameState.startH + gameState.diffH + Math.floor(totalMins / 60);
-            
-            gameState.endM = totalMins % 60;
-            gameState.endH = totalHours > 12 ? totalHours - 12 : totalHours;
+            let tMins = gameState.startM + gameState.diffM;
+            let tHrs = gameState.startH + gameState.diffH + Math.floor(tMins / 60);
+            gameState.endM = tMins % 60;
+            gameState.endH = tHrs > 12 ? tHrs - 12 : tHrs;
 
-            // 重置玩家輸入
             gameState.userH = (currentLevel === 'minute') ? "0" : "";
             gameState.userM = (currentLevel === 'hour') ? "0" : "";
 
@@ -623,21 +560,16 @@
         }
 
         function updateDisplay() {
-            const formatTime = (h, m) => `${h}時${m < 10 ? '0' + m : m}分`;
-            document.getElementById('text-start').innerText = formatTime(gameState.startH, gameState.startM);
-            document.getElementById('text-end').innerText = formatTime(gameState.endH, gameState.endM);
-            
+            const fmt = (h, m) => `${h}時${m < 10 ? '0' + m : m}分`;
+            document.getElementById('text-start').innerText = fmt(gameState.startH, gameState.startM);
+            document.getElementById('text-end').innerText = fmt(gameState.endH, gameState.endM);
             document.getElementById('input-h').innerText = gameState.userH === "" ? "0" : gameState.userH;
             document.getElementById('input-m').innerText = gameState.userM === "" ? "0" : gameState.userM;
         }
 
-        /* ==================================================
-           數字輸入鍵盤控制
-           ================================================== */
         function setActiveInput(type) {
             if (currentLevel === 'hour' && type === 'm') return;
             if (currentLevel === 'minute' && type === 'h') return;
-            
             activeInput = type;
             document.getElementById('input-h').classList.remove('active-input');
             document.getElementById('input-m').classList.remove('active-input');
@@ -645,120 +577,70 @@
         }
 
         function inputNum(num) {
-            let currentVal = activeInput === 'h' ? gameState.userH : gameState.userM;
-            
-            if (currentVal === "0" || currentVal === "") {
-                currentVal = num.toString();
-            } else {
-                if (currentVal.length < 2) {
-                    currentVal += num.toString();
-                }
-            }
+            let val = activeInput === 'h' ? gameState.userH : gameState.userM;
+            if (val === "0" || val === "") val = num.toString();
+            else if (val.length < 2) val += num.toString();
 
-            if (activeInput === 'h' && parseInt(currentVal) > 11) currentVal = "11";
-            if (activeInput === 'm' && parseInt(currentVal) > 59) currentVal = "59";
+            if (activeInput === 'h' && parseInt(val) > 11) val = "11";
+            if (activeInput === 'm' && parseInt(val) > 59) val = "59";
 
-            if (activeInput === 'h') gameState.userH = currentVal;
-            else gameState.userM = currentVal;
-            
+            if (activeInput === 'h') gameState.userH = val;
+            else gameState.userM = val;
             updateDisplay();
         }
 
         function clearInput() {
-            if (activeInput === 'h') gameState.userH = "0";
-            else gameState.userM = "0";
+            if (activeInput === 'h') gameState.userH = "0"; else gameState.userM = "0";
             updateDisplay();
         }
 
         function deleteInput() {
-            let currentVal = activeInput === 'h' ? gameState.userH : gameState.userM;
-            if (currentVal.length > 1) {
-                currentVal = currentVal.slice(0, -1);
-            } else {
-                currentVal = "0";
-            }
-            if (activeInput === 'h') gameState.userH = currentVal;
-            else gameState.userM = currentVal;
+            let val = activeInput === 'h' ? gameState.userH : gameState.userM;
+            val = val.length > 1 ? val.slice(0, -1) : "0";
+            if (activeInput === 'h') gameState.userH = val; else gameState.userM = val;
             updateDisplay();
         }
 
-        /* ==================================================
-           提示功能
-           ================================================== */
         function toggleHint() {
             isHintOn = !isHintOn;
-            const btn = document.getElementById('btn-hint');
-            const hintText = document.getElementById('hint-text');
-
+            const btn = document.getElementById('btn-hint'), ht = document.getElementById('hint-text');
             if (isHintOn) {
-                btn.classList.add('hint-active');
-                btn.innerText = "💡 提示: 開";
-                hintText.style.display = "block";
-                updateHintText();
+                btn.classList.add('hint-active'); btn.innerText = "💡 提示: 開"; ht.style.display = "block"; updateHintText();
             } else {
-                btn.classList.remove('hint-active');
-                btn.innerText = "💡 提示: 關";
-                hintText.style.display = "none";
+                btn.classList.remove('hint-active'); btn.innerText = "💡 提示: 關"; ht.style.display = "none";
             }
         }
 
         function updateHintText() {
             if (!isHintOn) return;
-            const hintText = document.getElementById('hint-text');
-            if (currentLevel === 'hour') {
-                hintText.innerText = `💡 從 ${gameState.startH} 時走到 ${gameState.endH} 時，數數看時針跳了幾格？`;
-            } else if (currentLevel === 'minute') {
-                hintText.innerText = `💡 看外圈藍字：從 ${gameState.startM} 分走到 ${gameState.endM} 分，經過了多久？`;
-            } else {
-                hintText.innerText = `💡 小時相差 ${gameState.diffH} 小時，再看看外圈藍字分鐘相差多少？`;
-            }
+            const ht = document.getElementById('hint-text');
+            if (currentLevel === 'hour') ht.innerText = `💡 從 ${gameState.startH} 時走到 ${gameState.endH} 時，相差幾小時？`;
+            else if (currentLevel === 'minute') ht.innerText = `💡 從 ${gameState.startM} 分走到 ${gameState.endM} 分，相差幾分鐘？`;
+            else ht.innerText = `💡 小時差 ${gameState.diffH} 小時，分鐘差多少呢？`;
         }
 
-        /* ==================================================
-           提交檢查與對錯回饋
-           ================================================== */
         let isCorrect = false;
-
         function checkAnswer() {
-            const ansH = parseInt(gameState.userH || 0);
-            const ansM = parseInt(gameState.userM || 0);
+            const h = parseInt(gameState.userH || 0), m = parseInt(gameState.userM || 0);
+            const ov = document.getElementById('feedback-overlay'), msg = document.getElementById('feedback-message');
+            const emoji = document.getElementById('feedback-emoji'), btn = document.getElementById('feedback-btn');
 
-            const overlay = document.getElementById('feedback-overlay');
-            const msg = document.getElementById('feedback-message');
-            const emoji = document.getElementById('feedback-emoji');
-            const btn = document.getElementById('feedback-btn');
-
-            if (ansH === gameState.diffH && ansM === gameState.diffM) {
-                isCorrect = true;
-                playSound('correct');
-                emoji.innerText = "🎉";
-                msg.innerText = "太棒了！答對了！";
-                msg.style.color = "#4CAF50";
-                btn.innerText = "下一題";
-                overlay.style.display = 'flex';
+            if (h === gameState.diffH && m === gameState.diffM) {
+                isCorrect = true; playSound('correct');
+                emoji.innerText = "🎉"; msg.innerText = "太棒了！答對了！"; msg.style.color = "#4CAF50"; btn.innerText = "下一題";
             } else {
-                isCorrect = false;
-                playSound('wrong');
-                emoji.innerText = "💪";
-                msg.innerText = "再試一次看看喔！";
-                msg.style.color = "#FF9800";
-                btn.innerText = "重新嘗試";
-                overlay.style.display = 'flex';
+                isCorrect = false; playSound('wrong');
+                emoji.innerText = "💪"; msg.innerText = "再試一次看看喔！"; msg.style.color = "#FF9800"; btn.innerText = "重新嘗試";
             }
+            ov.style.display = 'flex';
         }
 
         function handleFeedbackClick() {
             document.getElementById('feedback-overlay').style.display = 'none';
-            if (isCorrect) {
-                generateQuestion();
-            }
+            if (isCorrect) setLevel(currentLevel);
         }
 
-        // 頁面載入完成後啟動遊戲
-        window.onload = () => {
-            setLevel('hour');
-        };
-
+        window.onload = () => setLevel('hour');
     </script>
 </body>
 </html>
