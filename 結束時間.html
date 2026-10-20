@@ -62,9 +62,119 @@
         main {
             display: flex;
             flex: 1;
-            padding: 20px;
-            gap: 20px;
-            height: 73vh;
+            padding: 15px; /* 縮小外圍間距 */
+            gap: 15px;
+            height: 88vh; /* 扣除 header，讓主內容填滿 */
+        }
+        .panel {
+            flex: 1;
+            background-color: #FFFFFF;
+            border-radius: 30px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px 15px 15px 15px; /* 減少內邊距爭取空間 */
+            text-align: center;
+            border: 4px solid #F5FFFA;
+        }
+        /* 左與右面板底色 */
+        .panel.left { background-color: #F0F8FF; border-color: #D4E6F1; }
+        .panel.right { background-color: #F5FFFA; border-color: #D5F5E3; }
+        .panel.center { background-color: #FFFAFA; border-color: #FADBD8; flex: 0.8; }
+
+        /* 面板標題樣式 */
+        .panel-title {
+            font-size: 24px; /* 稍微縮小標題 */
+            font-weight: bold;
+            color: #5D6D7E;
+            margin-bottom: 15px; /* 縮小標題下方間距 */
+            background-color: rgba(255, 255, 255, 0.6);
+            padding: 5px 20px;
+            border-radius: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .clock-container {
+            width: 100%;
+            max-width: 25vh; /* 以畫面高度為基準，確保兩邊時鐘大小絕對一致且不超出畫面 */
+            max-height: 25vh; /* 嚴格限制高度 */
+            aspect-ratio: 1 / 1;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+        .time-label {
+            font-size: 28px; /* 稍微縮小字體 */
+            font-weight: bold;
+            color: #444;
+            margin-top: 10px;
+        }
+        .duration-label {
+            font-size: 40px;
+            font-weight: bold;
+            color: #E67E22;
+            line-height: 1.5;
+        }
+        .hint-text {
+            font-size: 24px;
+            color: #C0392B;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #FDEDEC;
+            border-radius: 15px;
+            display: none; /* 預設隱藏 */
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px; /* 減少間隔 */
+            margin-top: 5px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #FFF;
+            padding: 8px; /* 減少內邊距 */
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .btn-adjust {
+            background-color: #D1F2EB;
+            border: none;
+            border-radius: 50%;
+            width: 35px; /* 縮小按鈕 */
+            height: 35px; /* 縮小按鈕 */
+            font-size: 24px; /* 縮小加減號字體 */
+            font-weight: bold;
+            color: #117A65;
+            cursor: pointer;
+            box-shadow: 0 3px 0 rgba(17, 122, 101, 0.2);
+            transition: transform 0.1s, box-shadow 0.1s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            line-height: 1; /* 確保符號置中 */
+        }
+        .btn-adjust:active {
+            transform: translateY(3px);
+            box-shadow: 0 0 0 rgba(17, 122, 101, 0.2);
+        }
+        .val-display {
+            font-size: 28px; /* 縮小數值字體 */
+            font-weight: bold;
+            margin: 5px 0;
+            min-width: 50px;
         }
         .panel {
             flex: 1;
@@ -89,7 +199,7 @@
             font-size: 28px;
             font-weight: bold;
             color: #5D6D7E;
-            margin-bottom: 30px;
+            margin-bottom: 20px; /* 稍微縮小下方間距以預留空間 */
             background-color: rgba(255, 255, 255, 0.6);
             padding: 5px 25px;
             border-radius: 20px;
@@ -97,14 +207,20 @@
         }
 
         .clock-container {
-            width: 100%;
-            max-width: 250px;
+            /* 放大時鐘比例至 50vh，並加上 90% 限制以達到自適應畫面不破版 */
+            width: min(50vh, 90%); 
+            height: min(50vh, 90%); 
+            flex-shrink: 0; /* 關鍵：防止因下方控制按鈕而被壓縮變小 */
             aspect-ratio: 1 / 1;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         svg {
             width: 100%;
             height: 100%;
+            display: block;
         }
         .time-label {
             font-size: 32px;
@@ -140,7 +256,7 @@
             flex-direction: column;
             align-items: center;
             background-color: #FFF;
-            padding: 10px;
+            padding: 8px; /* 縮小內邊距 */
             border-radius: 20px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
@@ -148,9 +264,9 @@
             background-color: #D1F2EB;
             border: none;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 30px;
+            width: 40px; /* 縮小按鈕 */
+            height: 40px; /* 縮小按鈕 */
+            font-size: 24px; /* 縮小加減符號 */
             font-weight: bold;
             color: #117A65;
             cursor: pointer;
@@ -162,29 +278,27 @@
             box-shadow: 0 0 0 rgba(17, 122, 101, 0.2);
         }
         .val-display {
-            font-size: 36px;
+            font-size: 30px; /* 縮小數字 */
             font-weight: bold;
-            margin: 10px 0;
-            min-width: 60px;
+            margin: 5px 0; /* 縮小間距 */
+            min-width: 50px;
         }
 
-        footer {
-            height: 15vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #E6E6FA; /* 淡紫色 */
-        }
         .btn-submit {
             background-color: #A9DFBF;
             color: #196F3D;
-            font-size: 36px;
-            padding: 15px 60px;
-            border-radius: 40px;
-            box-shadow: 0 8px 0 rgba(25, 111, 61, 0.2);
+            font-size: 24px; /* 縮小字體 */
+            font-weight: bold;
+            border: none;
+            padding: 15px 30px; /* 縮小內邊距 */
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 rgba(25, 111, 61, 0.2);
+            transition: transform 0.1s, box-shadow 0.1s;
+            white-space: nowrap; /* 確保文字不會換行 */
         }
         .btn-submit:active {
-            transform: translateY(8px);
+            transform: translateY(6px);
             box-shadow: 0 0 0 rgba(25, 111, 61, 0.2);
         }
 
@@ -239,7 +353,11 @@
 
         <!-- 右側：結束時間 (互動區) -->
         <div class="panel right">
-            <div class="panel-title">結束時間</div>
+            <!-- 標題與確定按鈕置於同一列 -->
+            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 30px; width: 100%;">
+                <div class="panel-title" style="margin-bottom: 0;">結束時間</div>
+                <button class="btn-submit" onclick="checkAnswer()" style="padding: 10px 20px; font-size: 20px;">確定 ✔️</button>
+            </div>
             <div class="clock-container" id="clock-end"></div>
             
             <div class="controls">
@@ -261,10 +379,6 @@
             </div>
         </div>
     </main>
-
-    <footer>
-        <button class="btn btn-submit" onclick="checkAnswer()">確定 ✔️</button>
-    </footer>
 
     <div id="feedback-overlay">
         <div class="emoji" id="feedback-emoji">🌟</div>
