@@ -22,6 +22,15 @@
             height: 100vh;
             overflow: hidden; /* 禁止捲動 */
             display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 限制整體內容為 100% 寬度、85% 高度 */
+        #app-wrapper {
+            width: 100vw;
+            height: 85vh;
+            display: flex;
             flex-direction: column;
         }
 
@@ -32,7 +41,7 @@
             padding: 15px 30px;
             background-color: #FFE4E1; /* 馬卡龍粉 */
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            height: 12vh;
+            flex: 0 0 12%; /* 依比例佔據高度 */
         }
         .level-group {
             display: flex;
@@ -61,10 +70,9 @@
 
         main {
             display: flex;
-            flex: 1;
+            flex: 1; /* 自動填滿剩餘高度 */
             padding: 20px;
             gap: 20px;
-            height: 73vh;
         }
         .panel {
             flex: 1;
@@ -169,7 +177,7 @@
         }
 
         footer {
-            height: 15vh;
+            flex: 0 0 15%; /* 依比例佔據高度 */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -206,11 +214,11 @@
 </head>
 <body>
 
-    <header>
-        <div class="level-group">
-            <!-- 教師可在此修改關卡名稱 -->
-            <button class="btn btn-level active" id="btn-lv1" onclick="setLevel(1)">小時</button>
-            <button class="btn btn-level" id="btn-lv2" onclick="setLevel(2)">半小時</button>
+    <!-- 將主要內容包裹在自適應比例的容器中 -->
+    <div id="app-wrapper">
+        <header>
+            <div class="level-group">
+                <!-- 教師可在此修改關卡名稱 -->
             <button class="btn btn-level" id="btn-lv3" onclick="setLevel(3)">小時與分鐘</button>
         </div>
         <button class="btn btn-hint" id="btn-hint" onclick="toggleHint()">提示：關 💡</button>
@@ -259,12 +267,12 @@
                 </div>
                 <div style="font-size:24px; font-weight:bold;">分</div>
             </div>
-        </div>
-    </main>
+        </main>
 
-    <footer>
-        <button class="btn btn-submit" onclick="checkAnswer()">確定 ✔️</button>
-    </footer>
+        <footer>
+            <button class="btn btn-submit" onclick="checkAnswer()">確定 ✔️</button>
+        </footer>
+    </div>
 
     <div id="feedback-overlay">
         <div class="emoji" id="feedback-emoji">🌟</div>
