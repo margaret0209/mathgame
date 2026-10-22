@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>旋轉對稱大挑戰 ⛵</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #FFF0F5; /* LavenderBlush - 可愛柔和背景 */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .game-board {
+            touch-action: none; /* 防止多點觸控時螢幕滑動或縮放 */
+            background-color: #ffffff;
+            position: relative;
+        }
+
+        /* 座標軸與格線 */
+        .grid-line-h, .grid-line-v {
+            position: absolute;
+            background-color: #FFE4E1; /* 柔和格線 */
+        }
+        .axis-line-h, .axis-line-v {
+            position: absolute;
+            background-color: #FFB6C1; /* 較深的軸線 */
+            z-index: 5;
+        }
+
+        /* 座標點 */
+        .dot {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: #B0E0E6; /* 預設淡藍色 */
+            transform: translate(-50%, 50%); /* 對齊中心，因為我們用 left 和 bottom */
+            z-index: 10;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            /* 加入 Flex 讓裡面的 ✖️ 完美置中 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+        }
+        .dot:active {
+            transform: translate(-50%, 50%) scale(0.8);
+        }
+        .dot.correct {
+            background-color: #4ade80 !important; /* 綠色 - 正確 */
+            box-shadow: 0 0 8px #4ade80;
+        }
+        .dot.wrong {
+            background-color: #f87171 !important; /* 紅色 - 錯誤 */
+            box-shadow: 0 0 8px #f87171;
+        }
+
+        /* 船隻與爆炸效果 */
+        .ship {
+            position: absolute;
+            font-size: 28px;
+            transform: translate(-50%, 50%);
+            z-index: 15;
+            transition: opacity 0.3s;
+            pointer-events: none; /* 讓點擊穿透到下方的點 */
+        }
+        
+        .explosion {
+            position: absolute;
+            transform: translate(-50%, 50%);
+            font-size: 32px;
+            z-index: 20;
+            pointer-events: none;
+            animation: explode 0.5s ease-out forwards;
+        }
+
+        @keyframes explode {
+            0% { transform: translate(-50%, 50%) scale(0.5); opacity: 1; }
+            50% { transform: translate(-50%, 50%) scale(1.5); opacity: 0.8; }
+            100% { transform: translate(-50%, 50%) scale(2); opacity: 0; }
+        }
+
+        /* 隱藏/顯示 */
+        .hidden-custom {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="text-gray-700 min-h-screen flex flex-col items-center p-4">
+
+    <!-- 控制面板區 (上方題型選項) -->
+    <div class="w-full max-w-3xl bg-white rounded-2xl shadow-sm border border-pink-100 p-4 mb-4 flex flex-wrap gap-4 items-end justify-center">
+        <div class="flex flex-col">
+            <label class="text-sm font-bold text-pink-500 mb-1">座標大小 [N]</label>
+            <select id="config-n" class="border-2 border-pink-200 rounded-lg p-2 bg-pink-50 focus:outline-none focus:border-pink-400">
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5" selected>5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+            </select>
+        </div>
+        <div class="flex flex-col">
+            <label class="text-sm font-bold text-pink-500 mb-1">船的數量</label>
+            <select id="config-ships" class="border-2 border-pink-200 rounded-lg p-2 bg-pink-50 focus:outline-none focus:border-pink-400">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+            </select>
+        </div>
+        <div class="flex flex-col">
+            <label class="text-sm font-bold text-pink-500 mb-1">遊玩人數</label>
+            <select id="config-players" class="border-2 border-pink-200 rounded-lg p-2 bg-pink-50 focus:outline-none focus:border-pink-400">
+                <option value="1" selected>1人 (全局生命)</option>
+                <option value="3">3人 (各象限獨立生命)</option>
+            </select>
+        </div>
+        <button id="btn-start" class="bg-pink-400 hover:bg-pink-500 text-white font-bold py-2 px-6 rounded-lg transition-transform transform active:scale-95 shadow-md">
+            生成題目 / 重新開始
+        </button>
+    </div>
+
+    <!-- 遊戲主要區域 (包含 HP 和 畫布) -->
+    <div class="relative w-full max-w-3xl aspect-square flex flex-col">
+        
+        <!-- 單人模式 HP 顯示 (右上角) -->
+        <div id="hp-1p" class="absolute top-2 right-2 z-30 bg-white/80 backdrop-blur rounded-full px-3 py-1 shadow hidden-custom text-lg">
+            HP: <span id="hearts-1p">❤❤❤❤❤</span>
+        </div>
+
+        <!-- 3人模式 HP 顯示 (散佈在三個象限) -->
+        <div id="hp-3p-q2" class="absolute top-2 left-2 z-30 bg-white/80 backdrop-blur rounded-xl px-3 py-1 shadow hidden-custom flex flex-col items-center">
+            <span class="text-xs font-bold text-blue-500">第二象限 P1</span>
+            <span id="hearts-q2" class="text-sm">❤❤❤❤❤</span>
+        </div>
+        <div id="hp-3p-q3" class="absolute bottom-2 left-2 z-30 bg-white/80 backdrop-blur rounded-xl px-3 py-1 shadow hidden-custom flex flex-col items-center">
+            <span class="text-xs font-bold text-purple-500">第三象限 P2</span>
+            <span id="hearts-q3" class="text-sm">❤❤❤❤❤</span>
+        </div>
+        <div id="hp-3p-q4" class="absolute bottom-2 right-2 z-30 bg-white/80 backdrop-blur rounded-xl px-3 py-1 shadow hidden-custom flex flex-col items-center">
+            <span class="text-xs font-bold text-orange-500">第四象限 P3</span>
+            <span id="hearts-q4" class="text-sm">❤❤❤❤❤</span>
+        </div>
+
+        <!-- 遊戲畫布 -->
+        <div id="game-board" class="game-board w-full h-full rounded-2xl shadow-xl overflow-hidden border-4 border-white flex-grow">
+            <!-- 動態生成的元素將放在這裡 -->
+        </div>
+    </div>
+
+    <!-- 提示字眼 -->
+    <p class="mt-4 text-sm text-pink-400 font-bold text-center max-w-md">
+        玩法：找出第一象限 ⛵ 船隻的旋轉對稱點（二、三、四象限）並點擊圓點來炸毀它！<br>
+        船需要被炸 3 次才會完全消失喔！
+    </p>
+
+    <!-- 遊戲結束/勝利 Modal -->
+    <div id="modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden-custom opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl transform scale-95 transition-transform duration-300" id="modal-content">
+            <h2 id="modal-title" class="text-3xl font-extrabold mb-4 text-gray-800">遊戲結束</h2>
+            <p id="modal-message" class="text-lg text-gray-600 mb-6">您已經失去所有生命值了！</p>
+            <button id="btn-restart-modal" class="bg-pink-400 hover:bg-pink-500 text-white font-bold py-3 px-8 rounded-full shadow-lg w-full">
+                再玩一次
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 遊戲狀態變數
+        let N = 5;
+        let shipCount = 3;
+        let playerCount = 1;
+        let isGameOver = false;
+        
+        let shipsData = [];
+        let clickedDots = new Set(); // 記錄已被點擊過的座標字串 "x,y"
+        
+        const SHIP_TYPES = [
+            { emoji: '⛵', color: '#4ade80' }, // 綠色
+            { emoji: '🚢', color: '#60a5fa' }, // 藍色
+            { emoji: '🚤', color: '#f472b6' }, // 粉紅色
+            { emoji: '🛳️', color: '#fb923c' }, // 橘色
+            { emoji: '⛴️', color: '#a78bfa' }, // 紫色
+            { emoji: '🛶', color: '#2dd4bf' }  // 藍綠色
+        ];
+
+        // 生命值狀態
+        let hp1P = 5;
+        let hp3P = { q2: 5, q3: 5, q4: 5 };
+
+        // DOM 元素參考
+        const board = document.getElementById('game-board');
+        const hp1pContainer = document.getElementById('hp-1p');
+        const hearts1p = document.getElementById('hearts-1p');
+        
+        const hp3pQ2 = document.getElementById('hp-3p-q2');
+        const hp3pQ3 = document.getElementById('hp-3p-q3');
+        const hp3pQ4 = document.getElementById('hp-3p-q4');
+        const heartsQ2 = document.getElementById('hearts-q2');
+        const heartsQ3 = document.getElementById('hearts-q3');
+        const heartsQ4 = document.getElementById('hearts-q4');
+
+        const modal = document.getElementById('modal');
+        const modalContent = document.getElementById('modal-content');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+
+        // 音效設定 (使用 Tone.js)
+        let toneStarted = false;
+        
+        const clickSynth = new Tone.Synth({
+            oscillator: { type: "sine" },
+            envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 }
+        }).toDestination();
+        clickSynth.volume.value = -10;
+
+        const correctSynth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "triangle" },
+            envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.5 }
+        }).toDestination();
+        correctSynth.volume.value = -8;
+
+        const wrongSynth = new Tone.MembraneSynth().toDestination();
+        wrongSynth.volume.value = -5;
+
+        // 建立原生 Audio 物件來播放指定的爆炸音效
+        const explosionAudio1 = new Audio('https://taira-komori.net/sound_os2/arms01/bomb.mp3');
+        const explosionAudio2 = new Audio('https://taira-komori.net/sound_os2/arms01/small_explosion1.mp3');
+        const explosionAudio3 = new Audio('https://taira-komori.net/sound_os2/arms01/explosion3.mp3');
+
+        async function initAudio() {
+            if (!toneStarted) {
+                await Tone.start();
+                toneStarted = true;
+            }
+        }
+
+        function playClickSound() {
+            if (toneStarted) clickSynth.triggerAttackRelease("C6", "16n");
+        }
+
+        function playCorrectSound() {
+            if (toneStarted) correctSynth.triggerAttackRelease(["C5", "E5", "G5"], "8n");
+        }
+
+        function playWrongSound() {
+            if (toneStarted) wrongSynth.triggerAttackRelease("C2", "8n");
+        }
+
+        function playExplosionSound(hitCount) {
+            // 根據不同擊中次數播放不同音效
+            if (hitCount === 1) {
+                explosionAudio1.currentTime = 0;
+                explosionAudio1.play().catch(e => console.log("Audio play error:", e));
+            } else if (hitCount === 2) {
+                explosionAudio2.currentTime = 0;
+                explosionAudio2.play().catch(e => console.log("Audio play error:", e));
+            } else if (hitCount >= 3) {
+                explosionAudio3.currentTime = 0;
+                explosionAudio3.play().catch(e => console.log("Audio play error:", e));
+            }
+        }
+
+        // 將座標 (x, y) 轉換為以百分比表示的 left 和 bottom
+        // 為了留出邊距，將範圍 [-N, N] 映射到 [5%, 95%]
+        function coordToPercent(x, y) {
+            const range = 2 * N;
+            const left = 5 + ((x - (-N)) / range) * 90;
+            const bottom = 5 + ((y - (-N)) / range) * 90;
+            return { left, bottom };
+        }
+
+        // 開始新遊戲
+        function startGame() {
+            // 讀取設定
+            N = parseInt(document.getElementById('config-n').value);
+            shipCount = parseInt(document.getElementById('config-ships').value);
+            playerCount = parseInt(document.getElementById('config-players').value);
+
+            // 重置狀態
+            isGameOver = false;
+            clickedDots.clear();
+            shipsData = [];
+            
+            // 重置 HP
+            hp1P = 5;
+            hp3P = { q2: 5, q3: 5, q4: 5 };
+            updateHPDisplay();
+
+            // 設置 UI 顯示
+            if (playerCount === 1) {
+                hp1pContainer.classList.remove('hidden-custom');
+                hp3pQ2.classList.add('hidden-custom');
+                hp3pQ3.classList.add('hidden-custom');
+                hp3pQ4.classList.add('hidden-custom');
+            } else {
+                hp1pContainer.classList.add('hidden-custom');
+                hp3pQ2.classList.remove('hidden-custom');
+                hp3pQ3.classList.remove('hidden-custom');
+                hp3pQ4.classList.remove('hidden-custom');
+            }
+
+            // 清理畫布
+            board.innerHTML = '';
+            
+            // 繪製格線與點
+            renderGridAndDots();
+            
+            // 生成船隻
+            generateShips();
+        }
+
+        function renderGridAndDots() {
+            // 繪製格線
+            for (let i = -N; i <= N; i++) {
+                const pos = coordToPercent(i, i); // x=i 對應 left, y=i 對應 bottom
+                
+                // 垂直線 (固定 left)
+                const vLine = document.createElement('div');
+                vLine.className = i === 0 ? 'axis-line-v' : 'grid-line-v';
+                vLine.style.left = `${pos.left}%`;
+                vLine.style.top = '5%';
+                vLine.style.bottom = '5%';
+                vLine.style.width = i === 0 ? '3px' : '1px';
+                if (i === 0) vLine.style.transform = 'translateX(-1px)';
+                board.appendChild(vLine);
+
+                // 水平線 (固定 bottom)
+                const hLine = document.createElement('div');
+                hLine.className = i === 0 ? 'axis-line-h' : 'grid-line-h';
+                hLine.style.bottom = `${pos.bottom}%`;
+                hLine.style.left = '5%';
+                hLine.style.right = '5%';
+                hLine.style.height = i === 0 ? '3px' : '1px';
+                if (i === 0) hLine.style.transform = 'translateY(1px)';
+                board.appendChild(hLine);
+            }
+
+            // 繪製點 (所有整數座標)
+            for (let x = -N; x <= N; x++) {
+                for (let y = -N; y <= N; y++) {
+                    const pos = coordToPercent(x, y);
+                    const dot = document.createElement('div');
+                    dot.className = 'dot';
+                    dot.style.left = `${pos.left}%`;
+                    dot.style.bottom = `${pos.bottom}%`;
+                    dot.dataset.x = x;
+                    dot.dataset.y = y;
+                    
+                    // 加入觸控/點擊事件 (支援多點觸控)
+                    dot.addEventListener('pointerdown', (e) => {
+                        e.preventDefault(); // 防止默認滑動
+                        initAudio(); // 確保使用者互動時啟動音效
+                        handleInteraction(x, y, dot);
+                    });
+
+                    board.appendChild(dot);
+                }
+            }
+        }
+
+        function generateShips() {
+            let attempts = 0;
+            // 第一象限隨機 (1~N, 1~N)
+            while (shipsData.length < shipCount && attempts < 1000) {
+                attempts++;
+                const a = Math.floor(Math.random() * N) + 1;
+                const b = Math.floor(Math.random() * N) + 1;
+                
+                // 檢查是否重複位置
+                if (!shipsData.some(s => s.a === a && s.b === b)) {
+                    // 根據題目規則計算旋轉對稱目標
+                    const targets = [
+                        { q: 'Q4', x: b, y: -a, hit: false },
+                        { q: 'Q3', x: -a, y: -b, hit: false },
+                        { q: 'Q2', x: -b, y: a, hit: false }
+                    ];
+
+                    // 依序或隨機選擇船隻類型
+                    const shipConfig = SHIP_TYPES[shipsData.length % SHIP_TYPES.length];
+
+                    const pos = coordToPercent(a, b);
+                    const shipEl = document.createElement('div');
+                    shipEl.className = 'ship';
+                    shipEl.style.left = `${pos.left}%`;
+                    shipEl.style.bottom = `${pos.bottom}%`;
+                    shipEl.innerHTML = shipConfig.emoji;
+                    board.appendChild(shipEl);
+
+                    shipsData.push({
+                        a, b,
+                        targets,
+                        hits: 0,
+                        element: shipEl,
+                        color: shipConfig.color
+                    });
+                }
+            }
+        }
+
+        function handleInteraction(x, y, dotElement) {
+            if (isGameOver) return;
+            const coordKey = `${x},${y}`;
+            if (clickedDots.has(coordKey)) return; // 已經點過
+
+            // 判斷該座標屬於哪個象限 (僅用於 3 人模式扣血邏輯)
+            let quadrant = 'Q1_OR_AXIS';
+            if (x < 0 && y > 0) quadrant = 'Q2';
+            else if (x < 0 && y < 0) quadrant = 'Q3';
+            else if (x > 0 && y < 0) quadrant = 'Q4';
+
+            // 檢查是否點擊到正確的目標
+            let isCorrect = false;
+            let hitShip = null;
+
+            for (let ship of shipsData) {
+                // 如果這艘船已經被炸沉，跳過
+                if (ship.hits >= 3) continue;
+
+                for (let target of ship.targets) {
+                    if (target.x === x && target.y === y && !target.hit) {
+                        isCorrect = true;
+                        target.hit = true;
+                        hitShip = ship;
+                        break;
+                    }
+                }
+                if (isCorrect) break;
+            }
+
+            // 記錄該點已被點擊
+            clickedDots.add(coordKey);
+
+            if (isCorrect) {
+                // 處理正確點擊
+                dotElement.style.setProperty('background-color', hitShip.color, 'important');
+                dotElement.style.boxShadow = `0 0 8px ${hitShip.color}`;
+                hitShip.hits += 1;
+                
+                playCorrectSound();
+
+                // 在船的位置產生爆炸特效，並傳入受擊次數
+                createExplosion(hitShip.a, hitShip.b, hitShip.hits);
+
+                // 更新船的視覺 (例如稍微半透明，表示受損)
+                if (hitShip.hits === 1) hitShip.element.style.opacity = '0.8';
+                if (hitShip.hits === 2) hitShip.element.style.opacity = '0.5';
+
+                // 檢查船是否已完全炸毀 (3次)
+                if (hitShip.hits >= 3) {
+                    // 不讓船消失，改為顯示隨機寶藏
+                    const treasures = ['💰', '💎', '👑', '💍'];
+                    const randomTreasure = treasures[Math.floor(Math.random() * treasures.length)];
+                    
+                    hitShip.element.innerHTML = randomTreasure;
+                    hitShip.element.style.opacity = '1'; // 恢復透明度
+                    
+                    // 加入短暫的彈跳放大動畫效果
+                    hitShip.element.style.transform = 'translate(-50%, 50%) scale(1.3)';
+                    hitShip.element.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    setTimeout(() => {
+                        if (hitShip.element) hitShip.element.style.transform = 'translate(-50%, 50%) scale(1)';
+                    }, 300);
+                }
+
+                checkWinCondition();
+            } else {
+                // 處理錯誤點擊
+                // 如果點擊的是第一象限或是軸線上，為了遊戲體驗，我們不予扣血 (或者只允許二三四象限有反應)
+                // 根據需求：只有在二三四象限點擊錯誤才扣血比較合理。
+                if (quadrant === 'Q1_OR_AXIS') {
+                    // 可以選擇標示紅點，但不扣血
+                    dotElement.classList.add('wrong');
+                    dotElement.innerHTML = '✖️';
+                    playWrongSound();
+                    return; 
+                }
+
+                dotElement.classList.add('wrong');
+                dotElement.innerHTML = '✖️';
+                playWrongSound();
+                deductHP(quadrant);
+            }
+        }
+
+        function createExplosion(x, y, hitCount) {
+            playExplosionSound(hitCount);
+            const pos = coordToPercent(x, y);
+            const exp = document.createElement('div');
+            exp.className = 'explosion';
+            exp.style.left = `${pos.left}%`;
+            exp.style.bottom = `${pos.bottom}%`;
+            exp.innerHTML = '💥';
+            board.appendChild(exp);
+            
+            // 動畫結束後移除元素
+            setTimeout(() => {
+                if(board.contains(exp)) board.removeChild(exp);
+            }, 500);
+        }
+
+        function deductHP(quadrant) {
+            if (playerCount === 1) {
+                hp1P = Math.max(0, hp1P - 1);
+            } else {
+                if (quadrant === 'Q2') hp3P.q2 = Math.max(0, hp3P.q2 - 1);
+                if (quadrant === 'Q3') hp3P.q3 = Math.max(0, hp3P.q3 - 1);
+                if (quadrant === 'Q4') hp3P.q4 = Math.max(0, hp3P.q4 - 1);
+            }
+            updateHPDisplay();
+            checkLoseCondition();
+        }
+
+        function updateHPDisplay() {
+            // 生成愛心字串
+            const makeHearts = (hp) => '❤'.repeat(hp) + '🤍'.repeat(5 - hp);
+            
+            if (playerCount === 1) {
+                hearts1p.innerHTML = `<span class="text-red-500">${'❤'.repeat(hp1P)}</span><span class="text-gray-300">${'🤍'.repeat(5 - hp1P)}</span>`;
+            } else {
+                heartsQ2.innerHTML = `<span class="text-red-500">${'❤'.repeat(hp3P.q2)}</span><span class="text-gray-300">${'🤍'.repeat(5 - hp3P.q2)}</span>`;
+                heartsQ3.innerHTML = `<span class="text-red-500">${'❤'.repeat(hp3P.q3)}</span><span class="text-gray-300">${'🤍'.repeat(5 - hp3P.q3)}</span>`;
+                heartsQ4.innerHTML = `<span class="text-red-500">${'❤'.repeat(hp3P.q4)}</span><span class="text-gray-300">${'🤍'.repeat(5 - hp3P.q4)}</span>`;
+            }
+        }
+
+        function checkLoseCondition() {
+            let isLost = false;
+            let msg = '';
+            
+            if (playerCount === 1 && hp1P === 0) {
+                isLost = true;
+                msg = '您的生命值歸零了！';
+            } else if (playerCount === 3) {
+                // 3人模式，任何一個象限 HP 歸零即結束遊戲
+                if (hp3P.q2 === 0) { isLost = true; msg = '第二象限(P1) 生命值歸零！'; }
+                else if (hp3P.q3 === 0) { isLost = true; msg = '第三象限(P2) 生命值歸零！'; }
+                else if (hp3P.q4 === 0) { isLost = true; msg = '第四象限(P3) 生命值歸零！'; }
+            }
+
+            if (isLost) {
+                isGameOver = true;
+                showModal('遊戲結束 😢', msg, 'text-red-500');
+            }
+        }
+
+        function checkWinCondition() {
+            // 檢查是否所有船隻的 hit 都等於 3
+            const allDestroyed = shipsData.every(ship => ship.hits >= 3);
+            if (allDestroyed) {
+                isGameOver = true;
+                showModal('挑戰成功！ 🎉', '你成功炸毀了所有船隻！', 'text-green-500');
+            }
+        }
+
+        function showModal(title, message, titleColorClass) {
+            modalTitle.innerText = title;
+            modalTitle.className = `text-3xl font-extrabold mb-4 ${titleColorClass}`;
+            modalMessage.innerText = message;
+            
+            modal.classList.remove('hidden-custom');
+            // 小延遲以確保過渡動畫生效
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+            }, 10);
+        }
+
+        function hideModal() {
+            modal.classList.add('opacity-0');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden-custom');
+            }, 300);
+        }
+
+        // 事件監聽器
+        document.getElementById('btn-start').addEventListener('click', async () => {
+            await initAudio();
+            playClickSound();
+            startGame();
+        });
+        document.getElementById('btn-restart-modal').addEventListener('click', async () => {
+            await initAudio();
+            playClickSound();
+            hideModal();
+            startGame();
+        });
+
+        // 初始啟動
+        startGame();
+
+    </script>
+</body>
+</html>
