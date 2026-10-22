@@ -134,43 +134,42 @@
     </div>
 
     <!-- 遊戲主要區域 (包含 HP 和 畫布) -->
-    <div class="w-full max-w-3xl flex flex-col gap-2">
+    <div class="w-full flex flex-row gap-1 sm:gap-3 items-stretch justify-center max-w-4xl">
         
-        <!-- 上方生命值顯示區 (放置於畫布外圍上方) -->
-        <div class="flex justify-between items-end min-h-[44px] px-1">
+        <!-- 左側生命值區 (固定寬度，確保畫布置中) -->
+        <div class="w-16 sm:w-28 flex-shrink-0 flex flex-col justify-between py-2 sm:py-4">
             <!-- 3人模式：第二象限 P1 (左上) -->
-            <div id="hp-3p-q2" class="bg-white rounded-xl px-3 py-1 shadow-sm hidden-custom flex flex-col items-center border border-blue-100">
-                <span class="text-xs font-bold text-blue-500">第二象限 P1</span>
-                <span id="hearts-q2" class="text-sm">❤❤❤❤❤</span>
+            <div id="hp-3p-q2" class="bg-white rounded-xl px-1 sm:px-2 py-2 shadow-sm hidden-custom flex flex-col items-center border border-blue-100">
+                <span class="text-[10px] sm:text-xs font-bold text-blue-500 text-center leading-tight">第二象限<br>P1</span>
+                <div id="hearts-q2" class="text-[10px] sm:text-sm mt-1 text-center">❤❤❤❤❤</div>
             </div>
             
-            <!-- 單人模式 HP (靠右對齊) -->
-            <div class="flex-grow flex justify-end">
-                <div id="hp-1p" class="bg-white rounded-full px-4 py-1.5 shadow-sm hidden-custom text-lg font-bold text-pink-500 border border-pink-100">
-                    HP: <span id="hearts-1p">❤❤❤❤❤</span>
-                </div>
+            <!-- 3人模式：第三象限 P2 (左下) -->
+            <div id="hp-3p-q3" class="bg-white rounded-xl px-1 sm:px-2 py-2 shadow-sm hidden-custom flex flex-col items-center border border-purple-100 mt-auto">
+                <span class="text-[10px] sm:text-xs font-bold text-purple-500 text-center leading-tight">第三象限<br>P2</span>
+                <div id="hearts-q3" class="text-[10px] sm:text-sm mt-1 text-center">❤❤❤❤❤</div>
             </div>
         </div>
 
-        <!-- 遊戲畫布 (獨立一層，不會被遮擋) -->
-        <div class="relative w-full aspect-square">
+        <!-- 遊戲畫布 (獨立一層，自動延展並保持正方形) -->
+        <div class="relative w-full max-w-2xl aspect-square flex-shrink">
             <div id="game-board" class="game-board w-full h-full rounded-2xl shadow-xl overflow-hidden border-4 border-white">
                 <!-- 動態生成的元素將放在這裡 -->
             </div>
         </div>
 
-        <!-- 下方生命值顯示區 (放置於畫布外圍下方) -->
-        <div class="flex justify-between items-start min-h-[44px] px-1">
-            <!-- 3人模式：第三象限 P2 (左下) -->
-            <div id="hp-3p-q3" class="bg-white rounded-xl px-3 py-1 shadow-sm hidden-custom flex flex-col items-center border border-purple-100">
-                <span class="text-xs font-bold text-purple-500">第三象限 P2</span>
-                <span id="hearts-q3" class="text-sm">❤❤❤❤❤</span>
+        <!-- 右側生命值區 (固定寬度，確保畫布置中) -->
+        <div class="w-16 sm:w-28 flex-shrink-0 flex flex-col justify-between py-2 sm:py-4">
+            <!-- 單人模式 HP (右上) -->
+            <div id="hp-1p" class="bg-white rounded-xl px-1 sm:px-2 py-2 shadow-sm hidden-custom flex flex-col items-center border border-pink-100">
+                <span class="text-[10px] sm:text-xs font-bold text-pink-500 text-center leading-tight">玩家HP</span>
+                <div id="hearts-1p" class="text-[10px] sm:text-sm mt-1 text-center">❤❤❤❤❤</div>
             </div>
             
             <!-- 3人模式：第四象限 P3 (右下) -->
-            <div id="hp-3p-q4" class="bg-white rounded-xl px-3 py-1 shadow-sm hidden-custom flex flex-col items-center border border-orange-100">
-                <span class="text-xs font-bold text-orange-500">第四象限 P3</span>
-                <span id="hearts-q4" class="text-sm">❤❤❤❤❤</span>
+            <div id="hp-3p-q4" class="bg-white rounded-xl px-1 sm:px-2 py-2 shadow-sm hidden-custom flex flex-col items-center border border-orange-100 mt-auto">
+                <span class="text-[10px] sm:text-xs font-bold text-orange-500 text-center leading-tight">第四象限<br>P3</span>
+                <div id="hearts-q4" class="text-[10px] sm:text-sm mt-1 text-center">❤❤❤❤❤</div>
             </div>
         </div>
     </div>
