@@ -435,6 +435,15 @@
             else if (x < 0 && y < 0) quadrant = 'Q3';
             else if (x > 0 && y < 0) quadrant = 'Q4';
 
+            // 檢查該象限/玩家是否已經完成 (3人模式中，勝出或失敗後無法再點擊)
+            if (playerCount === 3) {
+                if (quadrant === 'Q2' && (hp3P.q2 === 0 || checkQuadrantWin('Q2'))) return;
+                if (quadrant === 'Q3' && (hp3P.q3 === 0 || checkQuadrantWin('Q3'))) return;
+                if (quadrant === 'Q4' && (hp3P.q4 === 0 || checkQuadrantWin('Q4'))) return;
+            } else {
+                if (hp1P === 0) return;
+            }
+
             // 檢查是否點擊到正確的目標
             let isCorrect = false;
             let hitShip = null;
@@ -489,7 +498,8 @@
                     }, 300);
                 }
 
-                checkWinCondition();
+                updateHPDisplay(); // 正確點擊也更新 UI (可能觸發某象限的勝出顯示)
+                checkGameState();
             } else {
                 // 處理錯誤點擊
                 // 如果點擊的是第一象限或是軸線上，為了遊戲體驗，我們不予扣血 (或者只允許二三四象限有反應)
@@ -525,6 +535,15 @@
             }, 500);
         }
 
+        function checkQuadrantWin(q) {
+            // 防呆：剛開始沒有船隻時，不應該視為勝出
+            if (shipsData.length === 0) return false;
+            return shipsData.every(ship => {
+                const target = ship.targets.find(t => t.q === q);
+                return target && target.hit;
+            });
+        }
+
         function deductHP(quadrant) {
             if (playerCount === 1) {
                 hp1P = Math.max(0, hp1P - 1);
@@ -534,55 +553,70 @@
                 if (quadrant === 'Q4') hp3P.q4 = Math.max(0, hp3P.q4 - 1);
             }
             updateHPDisplay();
-            checkLoseCondition();
+            checkGameState();
         }
 
         function updateHPDisplay() {
-            // 生成愛心字串
-            const makeHearts = (hp) => '❤'.repeat(hp) + '🤍'.repeat(5 - hp);
-            
             if (playerCount === 1) {
                 hearts1p.innerHTML = `<span class="text-red-500">${'❤'.repeat(hp1P)}</span><span class="text-gray-300">${'🤍'.repeat(5 - hp1P)}</span>`;
             } else {
-                heartsQ2.innerHTML = `<span class="text-red-500">${'❤'.repeat(hp3P.q2)}</span><span class="text-gray-300">${'🤍'.repeat(5 - hp3P.q2)}</span>`;
-                heartsQ3.innerHTML = `<span class="text-red-500">${'❤'.repeat(hp3P.q3)}</span><span class="text-gray-300">${'🤍'.repeat(5 - hp3P.q3)}</span>`;
-                heartsQ4.innerHTML = `<span class="text-red-500">${'❤'.repeat(hp3P.q4)}</span><span class="text-gray-300">${'🤍'.repeat(5 - hp3P.q4)}</span>`;
+                // 3人模式：即時檢查是否已經完成該象限的所有目標
+                const q2Won = checkQuadrantWin('Q2');
+                const q3Won = checkQuadrantWin('Q3');
+                const q4Won = checkQuadrantWin('Q4');
+
+                heartsQ2.innerHTML = q2Won ? `<span class="text-green-500 font-bold">勝出 🎉</span>` : `<span class="text-red-500">${'❤'.repeat(hp3P.q2)}</span><span class="text-gray-300">${'🤍'.repeat(5 - hp3P.q2)}</span>`;
+                heartsQ3.innerHTML = q3Won ? `<span class="text-green-500 font-bold">勝出 🎉</span>` : `<span class="text-red-500">${'❤'.repeat(hp3P.q3)}</span><span class="text-gray-300">${'🤍'.repeat(5 - hp3P.q3)}</span>`;
+                heartsQ4.innerHTML = q4Won ? `<span class="text-green-500 font-bold">勝出 🎉</span>` : `<span class="text-red-500">${'❤'.repeat(hp3P.q4)}</span><span class="text-gray-300">${'🤍'.repeat(5 - hp3P.q4)}</span>`;
             }
         }
 
-        function checkLoseCondition() {
-            let isLost = false;
-            let msg = '';
-            
-            if (playerCount === 1 && hp1P === 0) {
-                isLost = true;
-                msg = '您的生命值歸零了！';
-            } else if (playerCount === 3) {
-                // 3人模式，任何一個象限 HP 歸零即結束遊戲
-                if (hp3P.q2 === 0) { isLost = true; msg = '第二象限(P1) 生命值歸零！'; }
-                else if (hp3P.q3 === 0) { isLost = true; msg = '第三象限(P2) 生命值歸零！'; }
-                else if (hp3P.q4 === 0) { isLost = true; msg = '第四象限(P3) 生命值歸零！'; }
-            }
+        function checkGameState() {
+            if (playerCount === 1) {
+                const allDestroyed = shipsData.every(ship => ship.hits >= 3);
+                if (hp1P === 0) {
+                    isGameOver = true;
+                    showModal('遊戲結束 😢', '您的生命值歸零了！', 'text-red-500');
+                } else if (allDestroyed) {
+                    isGameOver = true;
+                    showModal('挑戰成功！ 🎉', '你成功炸毀了所有船隻！', 'text-green-500');
+                }
+            } else {
+                // 3人模式：取得所有人的最終狀態
+                const q2Won = checkQuadrantWin('Q2');
+                const q3Won = checkQuadrantWin('Q3');
+                const q4Won = checkQuadrantWin('Q4');
+                
+                const q2Lost = hp3P.q2 === 0;
+                const q3Lost = hp3P.q3 === 0;
+                const q4Lost = hp3P.q4 === 0;
 
-            if (isLost) {
-                isGameOver = true;
-                showModal('遊戲結束 😢', msg, 'text-red-500');
-            }
-        }
+                const q2Done = q2Won || q2Lost;
+                const q3Done = q3Won || q3Lost;
+                const q4Done = q4Won || q4Lost;
 
-        function checkWinCondition() {
-            // 檢查是否所有船隻的 hit 都等於 3
-            const allDestroyed = shipsData.every(ship => ship.hits >= 3);
-            if (allDestroyed) {
-                isGameOver = true;
-                showModal('挑戰成功！ 🎉', '你成功炸毀了所有船隻！', 'text-green-500');
+                // 所有人皆完成 (勝出或陣亡) 才會結算
+                if (q2Done && q3Done && q4Done) {
+                    isGameOver = true;
+                    let msg = `<div class="text-left mt-2 text-base space-y-3 font-semibold text-gray-700 bg-gray-50 p-4 rounded-xl border border-gray-200">`;
+                    msg += `<div>第二象限 (P1): <span class="${q2Won ? 'text-green-500' : 'text-red-500'}">${q2Won ? '🎉 成功找出目標' : '😢 生命值歸零'}</span></div>`;
+                    msg += `<div>第三象限 (P2): <span class="${q3Won ? 'text-green-500' : 'text-red-500'}">${q3Won ? '🎉 成功找出目標' : '😢 生命值歸零'}</span></div>`;
+                    msg += `<div>第四象限 (P3): <span class="${q4Won ? 'text-green-500' : 'text-red-500'}">${q4Won ? '🎉 成功找出目標' : '😢 生命值歸零'}</span></div>`;
+                    msg += `</div>`;
+
+                    const anyoneWon = q2Won || q3Won || q4Won;
+                    const title = anyoneWon ? '遊戲結束！' : '全軍覆沒 😢';
+                    const titleColor = anyoneWon ? 'text-blue-500' : 'text-red-500';
+
+                    showModal(title, msg, titleColor);
+                }
             }
         }
 
         function showModal(title, message, titleColorClass) {
             modalTitle.innerText = title;
             modalTitle.className = `text-3xl font-extrabold mb-4 ${titleColorClass}`;
-            modalMessage.innerText = message;
+            modalMessage.innerHTML = message;
             
             modal.classList.remove('hidden-custom');
             // 小延遲以確保過渡動畫生效
