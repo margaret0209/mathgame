@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- 確保在 iPad 及流動裝置上全螢幕且禁止縮放，符合自適應及禁止捲動要求 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>結束時間</title>
+    <title>數學科 - 結束時間</title>
     <style>
         * {
             box-sizing: border-box;
@@ -66,7 +66,6 @@
             gap: 15px;
             height: 88vh; /* 扣除 header，讓主內容填滿 */
         }
-        
         .panel {
             flex: 1;
             background-color: #FFFFFF;
@@ -76,7 +75,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            padding: 20px 15px 15px 15px;
+            padding: 20px 15px 15px 15px; /* 減少內邊距爭取空間 */
             text-align: center;
             border: 4px solid #F5FFFA;
         }
@@ -87,10 +86,10 @@
 
         /* 面板標題樣式 */
         .panel-title {
-            font-size: 24px;
+            font-size: 24px; /* 稍微縮小標題 */
             font-weight: bold;
             color: #5D6D7E;
-            margin-bottom: 15px;
+            margin-bottom: 15px; /* 縮小標題下方間距 */
             background-color: rgba(255, 255, 255, 0.6);
             padding: 5px 20px;
             border-radius: 20px;
@@ -99,10 +98,119 @@
 
         .clock-container {
             width: 100%;
-            /* 大幅放大時鐘的上限 */
-            max-width: 45vh; 
-            max-height: 45vh; 
-            flex-shrink: 0;
+            max-width: 25vh; /* 以畫面高度為基準，確保兩邊時鐘大小絕對一致且不超出畫面 */
+            max-height: 25vh; /* 嚴格限制高度 */
+            aspect-ratio: 1 / 1;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+        .time-label {
+            font-size: 28px; /* 稍微縮小字體 */
+            font-weight: bold;
+            color: #444;
+            margin-top: 10px;
+        }
+        .duration-label {
+            font-size: 40px;
+            font-weight: bold;
+            color: #E67E22;
+            line-height: 1.5;
+        }
+        .hint-text {
+            font-size: 24px;
+            color: #C0392B;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #FDEDEC;
+            border-radius: 15px;
+            display: none; /* 預設隱藏 */
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px; /* 減少間隔 */
+            margin-top: 5px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #FFF;
+            padding: 8px; /* 減少內邊距 */
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .btn-adjust {
+            background-color: #D1F2EB;
+            border: none;
+            border-radius: 50%;
+            width: 35px; /* 縮小按鈕 */
+            height: 35px; /* 縮小按鈕 */
+            font-size: 24px; /* 縮小加減號字體 */
+            font-weight: bold;
+            color: #117A65;
+            cursor: pointer;
+            box-shadow: 0 3px 0 rgba(17, 122, 101, 0.2);
+            transition: transform 0.1s, box-shadow 0.1s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            line-height: 1; /* 確保符號置中 */
+        }
+        .btn-adjust:active {
+            transform: translateY(3px);
+            box-shadow: 0 0 0 rgba(17, 122, 101, 0.2);
+        }
+        .val-display {
+            font-size: 28px; /* 縮小數值字體 */
+            font-weight: bold;
+            margin: 5px 0;
+            min-width: 50px;
+        }
+        .panel {
+            flex: 1;
+            background-color: #FFFFFF;
+            border-radius: 30px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 30px 20px 20px 20px;
+            text-align: center;
+            border: 4px solid #F5FFFA;
+        }
+        /* 左與右面板底色 */
+        .panel.left { background-color: #F0F8FF; border-color: #D4E6F1; }
+        .panel.right { background-color: #F5FFFA; border-color: #D5F5E3; }
+        .panel.center { background-color: #FFFAFA; border-color: #FADBD8; flex: 0.8; }
+
+        /* 面板標題樣式 */
+        .panel-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #5D6D7E;
+            margin-bottom: 20px; /* 稍微縮小下方間距以預留空間 */
+            background-color: rgba(255, 255, 255, 0.6);
+            padding: 5px 25px;
+            border-radius: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .clock-container {
+            /* 放大時鐘比例至 55vh，進一步放大 */
+            width: min(55vh, 95%); 
+            height: min(55vh, 95%); 
+            flex-shrink: 0; /* 關鍵：防止因下方控制按鈕而被壓縮變小 */
             aspect-ratio: 1 / 1;
             margin-bottom: 10px;
             display: flex;
@@ -115,7 +223,7 @@
             display: block;
         }
         .time-label {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: bold;
             color: #444;
             margin-top: 10px;
@@ -148,55 +256,53 @@
             flex-direction: column;
             align-items: center;
             background-color: #FFF;
-            padding: 6px;
-            border-radius: 20px;
+            padding: 6px; 
+            border-radius: 15px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
         .btn-adjust {
             background-color: #D1F2EB;
             border: none;
-            border-radius: 50%;
-            /* 縮小按鈕 */
-            width: 28px; 
-            height: 28px; 
-            font-size: 18px; 
+            border-radius: 12px; /* 改為圓角矩形以容納 +10 */
+            min-width: 40px; /* 縮小並調整按鈕寬度 */
+            height: 35px; /* 縮小按鈕高度 */
+            font-size: 18px; /* 縮小加減文字 */
             font-weight: bold;
             color: #117A65;
             cursor: pointer;
-            box-shadow: 0 3px 0 rgba(17, 122, 101, 0.2);
+            box-shadow: 0 4px 0 rgba(17, 122, 101, 0.2);
             transition: transform 0.1s, box-shadow 0.1s;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 0;
-            line-height: 1; /* 確保符號置中 */
         }
         .btn-adjust:active {
-            transform: translateY(3px);
+            transform: translateY(4px);
             box-shadow: 0 0 0 rgba(17, 122, 101, 0.2);
         }
         .val-display {
-            font-size: 24px;
+            font-size: 26px; /* 稍微縮小數字保留空間 */
             font-weight: bold;
-            margin: 5px 0;
-            min-width: 40px;
+            margin: 5px 0; 
+            min-width: 50px;
         }
 
         .btn-submit {
             background-color: #A9DFBF;
             color: #196F3D;
-            font-size: 22px; 
+            font-size: 24px; /* 縮小字體 */
             font-weight: bold;
             border: none;
-            padding: 10px 20px; 
+            padding: 15px 30px; /* 縮小內邊距 */
             border-radius: 30px;
             cursor: pointer;
-            box-shadow: 0 4px 0 rgba(25, 111, 61, 0.2);
+            box-shadow: 0 6px 0 rgba(25, 111, 61, 0.2);
             transition: transform 0.1s, box-shadow 0.1s;
             white-space: nowrap; /* 確保文字不會換行 */
         }
         .btn-submit:active {
-            transform: translateY(4px);
+            transform: translateY(6px);
             box-shadow: 0 0 0 rgba(25, 111, 61, 0.2);
         }
 
@@ -252,9 +358,9 @@
         <!-- 右側：結束時間 (互動區) -->
         <div class="panel right">
             <!-- 標題與確定按鈕置於同一列 -->
-            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px; width: 100%;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 30px; width: 100%;">
                 <div class="panel-title" style="margin-bottom: 0;">結束時間</div>
-                <button class="btn-submit" onclick="checkAnswer()">確定 ✔️</button>
+                <button class="btn-submit" onclick="checkAnswer()" style="padding: 10px 20px; font-size: 20px;">確定 ✔️</button>
             </div>
             <div class="clock-container" id="clock-end"></div>
             
@@ -269,9 +375,17 @@
                 
                 <!-- 分鐘控制 -->
                 <div class="control-group">
-                    <button class="btn-adjust" onpointerdown="adjustTime('m', 1)">+</button>
+                    <!-- 改為並排顯示 +10 與 +1 -->
+                    <div style="display: flex; gap: 5px;">
+                        <button class="btn-adjust" onpointerdown="adjustTime('m', 10)">+10</button>
+                        <button class="btn-adjust" onpointerdown="adjustTime('m', 1)">+1</button>
+                    </div>
                     <div class="val-display min-color" id="val-m">0</div>
-                    <button class="btn-adjust" onpointerdown="adjustTime('m', -1)">-</button>
+                    <!-- 改為並排顯示 -10 與 -1 -->
+                    <div style="display: flex; gap: 5px;">
+                        <button class="btn-adjust" onpointerdown="adjustTime('m', -10)">-10</button>
+                        <button class="btn-adjust" onpointerdown="adjustTime('m', -1)">-1</button>
+                    </div>
                 </div>
                 <div style="font-size:24px; font-weight:bold;">分</div>
             </div>
@@ -476,8 +590,9 @@
             } else if (type === 'm') {
                 // 為簡單操作，限定 0-59 循環，不自動進位時針(降低操作難度)
                 userM += delta;
-                if (userM >= 60) userM = 0;
-                if (userM < 0) userM = 59;
+                // 確保 +10 或 -10 時也能正確循環對應的分鐘數值
+                if (userM >= 60) userM -= 60;
+                if (userM < 0) userM += 60;
             }
             updateUserEndClock();
         }
