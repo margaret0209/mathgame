@@ -464,39 +464,34 @@
                     // 初階：無進位
                     for (let i = 0; i < lvl; i++) {
                         let isHighest = (i === lvl - 1);
-                        let max1 = isHighest ? 9 : 9;
-                        let min1 = isHighest ? 1 : 0;
-                        let d1 = min1 + Math.floor(Math.random() * (max1 - min1 + 1));
-                        
-                        let max2 = 9 - d1;
-                        let min2 = (isHighest && d1 === 0) ? 1 : 0;
-                        let d2 = min2 + Math.floor(Math.random() * (max2 - min2 + 1));
-                        
-                        // 防呆確保最高位不為0
-                        if (isHighest && d1+d2 === 0) { d1=1; d2=1; }
-                        
-                        this.num1.push(d1);
-                        this.num2.push(d2);
+                        if (isHighest) {
+                            // 最高位不能為 0，且兩數相加不大於 9 (確保無進位)
+                            let d1 = 1 + Math.floor(Math.random() * 8); // 1 到 8
+                            let d2 = 1 + Math.floor(Math.random() * (9 - d1)); // 1 到 (9-d1)
+                            this.num1.push(d1);
+                            this.num2.push(d2);
+                        } else {
+                            // 其他位數可包含 0
+                            let d1 = Math.floor(Math.random() * 10);
+                            let d2 = Math.floor(Math.random() * (10 - d1));
+                            this.num1.push(d1);
+                            this.num2.push(d2);
+                        }
                     }
                 } else if (mode === 'advanced') {
-                    // 高階：有進位。為確保不超過設定位數，總和必須小於 10^lvl
-                    let minSum = Math.pow(10, lvl - 1);
-                    let maxSum = Math.pow(10, lvl) - 1;
+                    // 高階：有進位。確保雙方都無開頭0，且答案位數等於設定位數
+                    let minVal = Math.pow(10, lvl - 1);
+                    let maxVal = Math.pow(10, lvl) - 1;
                     let found = false;
                     
                     while (!found) {
-                        let sum = minSum + Math.floor(Math.random() * (maxSum - minSum + 1));
-                        let val1 = Math.floor(Math.random() * sum);
-                        if(val1 < minSum / 10) val1 += Math.floor(minSum/2); // 避免數字太小
-                        let val2 = sum - val1;
+                        // 確保 val1 和 val2 至少為 minVal (無開頭0)，且總和不超過 maxVal
+                        let val1 = minVal + Math.floor(Math.random() * (maxVal - 2 * minVal + 1));
+                        let val2 = minVal + Math.floor(Math.random() * (maxVal - val1 - minVal + 1));
                         
                         // 轉成陣列檢查是否有進位
                         let arr1 = val1.toString().split('').reverse().map(Number);
                         let arr2 = val2.toString().split('').reverse().map(Number);
-                        
-                        // 補齊位數
-                        while(arr1.length < lvl) arr1.push(0);
-                        while(arr2.length < lvl) arr2.push(0);
                         
                         // 檢查是否包含至少一次進位
                         let hasCarry = false;
@@ -506,36 +501,22 @@
                             c = Math.floor((arr1[i] + arr2[i] + c) / 10);
                         }
                         
-                        if (hasCarry && arr1[lvl-1] + arr2[lvl-1] > 0) {
+                        if (hasCarry) {
                             this.num1 = arr1;
                             this.num2 = arr2;
                             found = true;
                         }
                     }
                 } else if (mode === 'challenge') {
-                    // 挑戰：完全隨機，混合進位與不進位
-                    let minSum = Math.pow(10, lvl - 1);
-                    let maxSum = Math.pow(10, lvl) - 1;
+                    // 挑戰：完全隨機，混合進位與不進位，確保無開頭0且位數正確
+                    let minVal = Math.pow(10, lvl - 1);
+                    let maxVal = Math.pow(10, lvl) - 1;
                     
-                    let sum = minSum + Math.floor(Math.random() * (maxSum - minSum + 1));
-                    let val1 = Math.floor(Math.random() * sum);
-                    if (val1 < minSum / 10) val1 += Math.floor(minSum/2);
-                    let val2 = sum - val1;
+                    let val1 = minVal + Math.floor(Math.random() * (maxVal - 2 * minVal + 1));
+                    let val2 = minVal + Math.floor(Math.random() * (maxVal - val1 - minVal + 1));
                     
-                    let arr1 = val1.toString().split('').reverse().map(Number);
-                    let arr2 = val2.toString().split('').reverse().map(Number);
-                    
-                    while(arr1.length < lvl) arr1.push(0);
-                    while(arr2.length < lvl) arr2.push(0);
-                    
-                    // 防呆確保最高位和不為 0
-                    if (arr1[lvl-1] + arr2[lvl-1] === 0) {
-                        arr1[lvl-1] = 1;
-                        arr2[lvl-1] = 1;
-                    }
-                    
-                    this.num1 = arr1;
-                    this.num2 = arr2;
+                    this.num1 = val1.toString().split('').reverse().map(Number);
+                    this.num2 = val2.toString().split('').reverse().map(Number);
                 }
             }
 
