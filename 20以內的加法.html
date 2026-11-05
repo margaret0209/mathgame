@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <!-- Viewport settings for iPad/mobile responsiveness and disabling zoom/scrolling -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>20以內的加法</title>
+    <style>
+        :root {
+            /* Macaron Pastel Color Palette */
+            --bg-color: #fdf6e3;       /* Soft cream background */
+            --primary-color: #ffb7b2;  /* Pastel pink */
+            --secondary-color: #e2f0cb;/* Pastel green */
+            --accent-color: #c7ceea;   /* Pastel blue */
+            --text-color: #555555;     /* Dark gray for readability */
+            --error-color: #ff9a9e;    /* Soft red for errors */
+            --success-color: #b5ead7;  /* Soft mint for success */
+            --key-bg: #ffffff;
+            --key-active: #f0f0f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            /* Prevent text selection to make it feel like an app */
+            user-select: none;
+            -webkit-user-select: none;
+            /* Disable default touch actions to handle them in JS (prevents scrolling) */
+            touch-action: none;
+            font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', sans-serif;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden; /* Ensure no scrolling */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Main Container for Game Layout */
+        #game-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            max-width: 1024px; /* Limit width on very wide screens */
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* [上方區域] Top Area */
+        #top-area {
+            height: 10%; /* 將原本的 15% 縮小為 10% */
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-end; /* 將按鈕靠底部對齊，貼近下方題目 */
+            padding: 0 5%;
+            z-index: 10;
+        }
+
+        /* Hint Toggle Switch Styling */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-color);
+            background: rgba(255, 255, 255, 0.7);
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .toggle-label {
+            margin-right: 15px;
+        }
+
+        /* The actual switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 70px;
+            height: 38px;
+        }
+
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            border-radius: 38px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 30px;
+            width: 30px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input:checked + .slider {
+            background-color: var(--success-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(32px);
+        }
+
+        /* [下方區域] Bottom Area */
+        #bottom-area {
+            height: 90%; /* 配合上方區域改為 90% */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0% 0 5% 0; /* 移除原本上方 2% 的空白 Padding */
+            width: 100%;
+        }
+
+        /* Problem Display Area */
+        #problem-area {
+            flex: 1; /* Take up available space */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* 將題目由「垂直置中」改為「靠上對齊」，大幅拉近距離 */
+            align-items: center;
+            width: 90%;
+            position: relative;
+        }
+
+        /* Hint Containers (Absolutely positioned above numbers) */
+        .hint-container {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            opacity: 0;
+            margin-bottom: 5px; /* 大幅縮減提示與數字之間的距離 */
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .hints-visible .hint-container {
+            opacity: 1;
+        }
+
+        .hint-section {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Heart SVG Styling */
+        .heart {
+            width: 30px;
+            height: 30px;
+            fill: var(--primary-color);
+            margin: 0 2px;
+        }
+
+        /* HTML float text for finger animation (Safari iOS compatible) */
+        .html-float-text {
+            position: absolute;
+            transform: translateX(-50%);
+            -webkit-transform: translateX(-50%);
+            color: #ff4d4d;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow:
+                -2px -2px 0 #ffffff,
+                2px -2px 0 #ffffff,
+                -2px 2px 0 #ffffff,
+                2px 2px 0 #ffffff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        /* 靜態顯示數字的樣式 */
+        .html-float-text.show-static {
+            opacity: 1;
+            transform: translate(-50%, -25px);
+            -webkit-transform: translate(-50%, -25px);
+        }
+
+        /* Math Equation Styling */
+        #equation {
+            font-size: 8vmin; /* Huge text, scales with viewport */
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 20px 40px;
+            border-radius: 40px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            border: 4px solid var(--accent-color);
+            letter-spacing: 5px;
+        }
+
+        .num-box {
+            display: inline-block;
+            text-align: center;
+            min-width: 1em;
+            position: relative;
+        }
+
+        #answer-box {
+            min-width: 1.5em;
+            height: 1.2em;
+            border-bottom: 4px dashed var(--text-color);
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--primary-color);
+        }
+
+        /* Keypad Area */
+        #keypad-area {
+            width: 85%;
+            max-width: 400px; /* 大幅縮小鍵盤最大寬度 */
+            height: 40%; /* 確保鍵盤只佔下方區域的 40% 高度，讓題目區域更大 */
+            max-height: 320px; /* 限制絕對最大高度，避免過度拉伸 */
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px; /* 縮小按鈕間距 */
+            padding: 5px;
+            margin-bottom: 20px;
+        }
+
+        .key {
+            background-color: var(--key-bg);
+            border: 3px solid var(--secondary-color); /* 邊線變幼 */
+            border-radius: 15px; /* 圓角變小 */
+            font-size: 5vmin; /* 字體縮小 */
+            font-weight: bold;
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 6px 0px #b5ead7; /* 3D效果高度降低 */
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent; /* Remove default tap flash */
+        }
+
+        /* Active state for keys (touch or mouse down) */
+        .key.active, .key:active {
+            transform: translateY(6px); /* 按壓下沉幅度配合陰影降低 */
+            box-shadow: 0 0px 0px #b5ead7;
+            background-color: var(--key-active);
+        }
+
+        .key-clear {
+            background-color: #ffe6e6;
+            border-color: var(--error-color);
+            box-shadow: 0 6px 0px #ffb3b3;
+            color: #d65a5a;
+            font-size: 4vmin; /* 文字按鈕字體更小一些 */
+        }
+        
+        .key-clear.active, .key-clear:active {
+            box-shadow: 0 0px 0px #ffb3b3;
+        }
+
+        .key-enter {
+            background-color: #e6f7ff;
+            border-color: var(--accent-color);
+            box-shadow: 0 6px 0px #b3e0ff;
+            color: #5aa1d6;
+            font-size: 4vmin; /* 文字按鈕字體更小一些 */
+        }
+
+        .key-enter.active, .key-enter:active {
+            box-shadow: 0 0px 0px #b3e0ff;
+        }
+
+        /* 下一題按鈕區域 */
+        #next-btn-area {
+            width: 85%;
+            max-width: 400px;
+            height: 40%;
+            max-height: 320px;
+            display: none; /* 預設隱藏，答題後由 JS 切換為 flex */
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        #next-btn {
+            width: 90%;
+            height: 80px;
+            background-color: var(--success-color);
+            border: 4px solid var(--secondary-color);
+            border-radius: 20px;
+            font-size: 6vmin;
+            font-weight: bold;
+            color: var(--text-color);
+            box-shadow: 0 8px 0px #9acfb9;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            font-family: inherit;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #next-btn.active, #next-btn:active {
+            transform: translateY(8px);
+            box-shadow: 0 0px 0px #9acfb9;
+            background-color: #a3d9c5;
+        }
+
+        /* Overlays and Animations */
+        #feedback-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: none; /* 預設完全隱藏，移除 opacity 過渡 */
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        #feedback-overlay.show-feedback {
+            display: flex; /* 瞬間顯示 */
+        }
+
+        .feedback-icon {
+            font-size: 30vmin;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
+        }
+
+        /* Prevent zooming on inputs */
+        input[type="text"], input[type="number"], textarea {
+            font-size: 16px;
+        }
+        
+        /* Sub-containers for alignment */
+        .eq-part {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        
+        /* Spacer for operator */
+        .eq-op {
+            margin: 0 20px;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        
+        <!-- [上方區域] Top Area: Hint Toggle -->
+        <div id="top-area">
+            <div class="toggle-container">
+                <span class="toggle-label">提示</span>
+                <label class="switch">
+                    <input type="checkbox" id="hint-toggle" aria-label="切換提示">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- [下方區域] Bottom Area: Problem & Numpad -->
+        <div id="bottom-area">
+            
+            <div id="problem-area">
+                <!-- Visual Hints Space Reserver (Keep layout stable) -->
+                <div style="min-height: 85px; width: 100%;"></div>
+
+                <!-- Equation -->
+                <div id="equation">
+                    <div class="eq-part" id="part-x">
+                        <div class="hint-container" id="hint-x-container"></div>
+                        <span class="num-box" id="val-x"></span>
+                    </div>
+                    <span class="eq-op">+</span>
+                    <div class="eq-part" id="part-y">
+                        <div class="hint-container" id="hint-y-container"></div>
+                        <span class="num-box" id="val-y"></span>
+                    </div>
+                    <span class="eq-op">=</span>
+                    <div class="eq-part">
+                        <span id="answer-box"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Keypad (85% of bottom area height handled by flex & max-height) -->
+            <div id="keypad-area">
+                <!-- Row 1 -->
+                <div class="key" data-val="1">1</div>
+                <div class="key" data-val="2">2</div>
+                <div class="key" data-val="3">3</div>
+                <!-- Row 2 -->
+                <div class="key" data-val="4">4</div>
+                <div class="key" data-val="5">5</div>
+                <div class="key" data-val="6">6</div>
+                <!-- Row 3 -->
+                <div class="key" data-val="7">7</div>
+                <div class="key" data-val="8">8</div>
+                <div class="key" data-val="9">9</div>
+                <!-- Row 4 -->
+                <div class="key key-clear" data-action="clear">清除</div>
+                <div class="key" data-val="0">0</div>
+                <div class="key key-enter" data-action="enter">確定</div>
+            </div>
+            
+            <!-- 下一題按鈕 (答題後顯示) -->
+            <div id="next-btn-area">
+                <button id="next-btn">下一題</button>
+            </div>
+        </div>
+        
+        <!-- Feedback Overlay (Tick/Cross) -->
+        <div id="feedback-overlay">
+            <div class="feedback-icon" id="feedback-icon"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // 遊戲核心邏輯 (Game Logic)
+        // ==========================================
+
+        // DOM Elements
+        const elValX = document.getElementById('val-x');
+        const elValY = document.getElementById('val-y');
+        const elAnswer = document.getElementById('answer-box');
+        const elHintToggle = document.getElementById('hint-toggle');
+        const elEquation = document.getElementById('equation');
+        const keys = document.querySelectorAll('.key');
+        const elFeedbackOverlay = document.getElementById('feedback-overlay');
+        const elFeedbackIcon = document.getElementById('feedback-icon');
+
+        // State Variables
+        let currentX = 0;
+        let currentY = 0;
+        let expectedAnswer = 0;
+        let userAnswer = "";
+        let isAnimating = false; // Prevent input during animations
+
+        // SVG Path for Heart
+        const heartSVG = `<svg class="heart" viewBox="0 0 32 29.6">
+            <path d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2
+            c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z"/>
+        </svg>`;
+
+        // SVG Paths for Feedback Icons (Replace Emoji)
+        const checkIcon = `<svg viewBox="0 0 24 24" width="1em" height="1em"><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
+        const crossIcon = `<svg viewBox="0 0 24 24" width="1em" height="1em"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`;
+
+        // Helper function to get hand SVGs for a number (1-9) drawn purely with CSS/SVG code
+        function getHandsHTML(num) {
+            let html = '';
+            let fingerIndex = 1; 
+            
+            function makeHand(fingersCount) {
+                // 使用相對定位的容器包裹 SVG，方便文字疊加 (解決 iOS Safari 動畫 Bug)
+                let containerHtml = `<div style="position: relative; display: inline-block; width: 80px; height: 80px; margin: 0 5px;">`;
+                let svg = `<svg viewBox="0 0 100 100" class="svg-hand" style="width: 100%; height: 100%; overflow: visible;">`;
+                svg += `<rect x="20" y="50" width="60" height="40" rx="10" fill="#FFC8A2" />`; // Palm
+                
+                // Finger geometric definitions
+                const fingerProps = [
+                    { id: 'f-index', x: 25, y: 15, w: 10, h: 45, foldedY: 50, foldedH: 20 },
+                    { id: 'f-middle', x: 40, y: 10, w: 10, h: 50, foldedY: 50, foldedH: 20 },
+                    { id: 'f-ring', x: 55, y: 15, w: 10, h: 45, foldedY: 50, foldedH: 20 },
+                    { id: 'f-pinky', x: 70, y: 25, w: 10, h: 35, foldedY: 55, foldedH: 15 },
+                    { id: 'f-thumb', x: 2, y: 40, w: 12, h: 30, transform: "rotate(-25 10 45)", foldedY: 55, foldedH: 15, foldedTransform: "rotate(-25 15 55)" }
+                ];
+
+                let textOverlays = '';
+
+                for (let i = 0; i < 5; i++) {
+                    let f = fingerProps[i];
+                    if (i < fingersCount) {
+                        // Extended fingers
+                        let trans = f.transform ? `transform="${f.transform}"` : '';
+                        svg += `<rect x="${f.x}" y="${f.y}" width="${f.w}" height="${f.h}" rx="5" fill="#FFC8A2" ${trans} />`;
+                        
+                        // 改用標準 HTML 絕對定位覆蓋在 SVG 上方，iOS 支援度 100%
+                        let leftPct = f.x + (f.w / 2);
+                        let topPct = f.y - 15;
+                        textOverlays += `<div id="finger-text-${fingerIndex}" class="html-float-text" style="left: ${leftPct}%; top: ${topPct}%;"></div>`;
+                        fingerIndex++;
+                    } else {
+                        // Folded fingers
+                        let trans = f.foldedTransform ? `transform="${f.foldedTransform}"` : '';
+                        svg += `<rect x="${f.x}" y="${f.foldedY}" width="${f.w}" height="${f.foldedH}" rx="5" fill="#E5B390" ${trans} />`;
+                    }
+                }
+                svg += `</svg>`;
+                containerHtml += svg + textOverlays + `</div>`;
+                return containerHtml;
+            }
+
+            // Compose hands based on number
+            if (num >= 5) {
+                html += makeHand(5);
+                if (num - 5 > 0) {
+                    html += makeHand(num - 5);
+                }
+            } else {
+                html += makeHand(num);
+            }
+            return html;
+        }
+
+        // ==========================================
+        // 語音與音效系統 (Audio System)
+        // 使用 Web Audio API 生成簡單音效，避免外部依賴
+        // 使用 SpeechSynthesis 朗讀數字 (廣東話)
+        // ==========================================
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Generate beep sound for button press
+        function playClickSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        // Generate success sound (Chime)
+        function playSuccessSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime); // A4
+            osc.frequency.setValueAtTime(554.37, audioCtx.currentTime + 0.1); // C#5
+            osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.2); // E5
+            
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.05);
+            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        // Generate error sound (Buzzer)
+        function playErrorSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+            
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // Cantonese TTS (Text-to-Speech)
+        function speakCantonese(text, callback) {
+            if (!window.speechSynthesis) {
+                if(callback) callback();
+                return;
+            }
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-HK'; // Set language to Cantonese
+            utterance.rate = 0.8; // Slightly slower for SEN students
+            
+            if (callback) {
+                utterance.onend = callback;
+            }
+            
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // ==========================================
+        // 遊戲流程控制 (Game Flow)
+        // ==========================================
+
+        // Generate a new problem based on rules
+        // Rules: x = 2-9, y = 2-9, x+y = 11-18
+        function generateProblem() {
+            // 切換UI顯示：顯示鍵盤，隱藏下一題按鈕
+            document.getElementById('keypad-area').style.display = 'grid';
+            document.getElementById('next-btn-area').style.display = 'none';
+
+            userAnswer = "";
+            elAnswer.innerText = "";
+            elAnswer.style.color = ''; // 重置顏色
+            
+            let x, y, sum;
+            do {
+                x = Math.floor(Math.random() * 8) + 2; // 2 to 9
+                y = Math.floor(Math.random() * 8) + 2; // 2 to 9
+                sum = x + y;
+            } while (sum < 11 || sum > 18);
+
+            currentX = x;
+            currentY = y;
+            expectedAnswer = sum;
+
+            elValX.innerText = currentX;
+            elValY.innerText = currentY;
+
+            updateHints();
+        }
+
+        // Update visual hints based on toggle state
+        function updateHints() {
+            const containerX = document.getElementById('hint-x-container');
+            const containerY = document.getElementById('hint-y-container');
+            
+            if (elHintToggle.checked) {
+                elEquation.classList.add('hints-visible');
+                
+                // Hint for X (只保留 1 個心形，必定置中於 x 正上方)
+                containerX.innerHTML = `<div class="hint-section">${heartSVG}</div>`;
+
+                // Hint for Y (使用純代碼 SVG 繪製的手指，必定置中於 y 正上方)
+                containerY.innerHTML = `<div class="hint-section">${getHandsHTML(currentY)}</div>`;
+                
+            } else {
+                elEquation.classList.remove('hints-visible');
+            }
+        }
+
+        // Handle Hint Toggle
+        elHintToggle.addEventListener('change', () => {
+            playClickSound();
+            updateHints();
+        });
+
+        // Handle Keypad Input
+        function handleInput(val, action) {
+            if (isAnimating) return; // Ignore input during animations
+
+            playClickSound();
+
+            if (action === 'clear') {
+                userAnswer = "";
+                elAnswer.innerText = "";
+            } else if (action === 'enter') {
+                checkAnswer();
+            } else {
+                // Max 2 digits
+                if (userAnswer.length < 2) {
+                    userAnswer += val;
+                    elAnswer.innerText = userAnswer;
+                }
+            }
+        }
+
+        // Setup touch/click events for keypad to handle active states manually
+        keys.forEach(key => {
+            const pressHandler = (e) => {
+                if(e.cancelable) e.preventDefault(); // Prevent double firing on touch
+                key.classList.add('active');
+                
+                const val = key.getAttribute('data-val');
+                const action = key.getAttribute('data-action');
+                handleInput(val, action);
+            };
+
+            const releaseHandler = (e) => {
+                if(e.cancelable) e.preventDefault();
+                key.classList.remove('active');
+            };
+
+            // Support both touch and mouse for iPad & desktop testing
+            key.addEventListener('touchstart', pressHandler, {passive: false});
+            key.addEventListener('touchend', releaseHandler, {passive: false});
+            key.addEventListener('mousedown', pressHandler);
+            key.addEventListener('mouseup', releaseHandler);
+            key.addEventListener('mouseleave', releaseHandler);
+        });
+
+        // Setup Next Button Event
+        const handleNextPress = (e) => {
+            if(e.cancelable) e.preventDefault();
+            if (isAnimating) return; // 動畫中禁止點擊
+            
+            const btn = document.getElementById('next-btn');
+            btn.classList.add('active');
+            playClickSound();
+            
+            // 延遲一點點讓按鈕動畫播完再換題
+            setTimeout(() => {
+                btn.classList.remove('active');
+                generateProblem(); // 生成新題目
+            }, 150);
+        };
+        const elNextBtn = document.getElementById('next-btn');
+        elNextBtn.addEventListener('touchstart', handleNextPress, {passive: false});
+        elNextBtn.addEventListener('mousedown', handleNextPress);
+
+        // Check user's answer
+        function checkAnswer() {
+            if (userAnswer === "") return;
+
+            isAnimating = true; // Lock input
+
+            if (parseInt(userAnswer) === expectedAnswer) {
+                // Correct Answer
+                playSuccessSound();
+                speakCantonese("答對了"); // 新增答對語音
+                showFeedback(checkIcon, "var(--success-color)");
+                
+                // 答對後：立即隱藏鍵盤，顯示下一題按鈕
+                document.getElementById('keypad-area').style.display = 'none';
+                document.getElementById('next-btn-area').style.display = 'flex';
+                
+                setTimeout(() => {
+                    isAnimating = false; // 解除鎖定，允許點擊下一題
+                }, 1000);
+            } else {
+                // Wrong Answer
+                playErrorSound();
+                speakCantonese("答錯了"); // 立即播放答錯語音
+                showFeedback(crossIcon, "var(--error-color)");
+                
+                // 答錯後：立即隱藏鍵盤
+                document.getElementById('keypad-area').style.display = 'none';
+                
+                setTimeout(() => {
+                    showCorrectAnswerDirectly();
+                }, 1000); // Wait for feedback to finish before showing correct answer
+            }
+        }
+
+        function showFeedback(iconSvg, color) {
+            elFeedbackIcon.innerHTML = iconSvg; // Changed to innerHTML to accept SVG
+            elFeedbackIcon.style.color = color;
+            elFeedbackOverlay.classList.add('show-feedback');
+            
+            setTimeout(() => {
+                elFeedbackOverlay.classList.remove('show-feedback');
+            }, 1000);
+        }
+
+        // 直接顯示正確答案，不再進行點數演示
+        function showCorrectAnswerDirectly() {
+            // 直接顯示正確答案
+            elAnswer.innerText = expectedAnswer;
+            elAnswer.style.color = 'var(--success-color)';
+            
+            // 語音讀出完整算式 (例如：8加9等於17)
+            const equationText = `${currentX}加${currentY}等於${expectedAnswer}`;
+            speakCantonese(equationText);
+            
+            // 顯示下一題按鈕
+            document.getElementById('next-btn-area').style.display = 'flex';
+            isAnimating = false; // Unlock input
+        }
+
+        // Prevent default context menu (long press on touch devices)
+        window.oncontextmenu = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+        };
+
+        // Initialize Game on Load
+        window.onload = () => {
+            // Unsuspend audio context & Prime SpeechSynthesis (iOS Safari 必須條件)
+            const unlockAudio = function() {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                // 發送一次空的語音來解鎖 iOS Safari 的 TTS 引擎，避免 setTimeout 內無法發聲
+                if (window.speechSynthesis) {
+                    let dummy = new SpeechSynthesisUtterance('');
+                    dummy.volume = 0;
+                    window.speechSynthesis.speak(dummy);
+                }
+                // 執行後移除監聽器
+                document.body.removeEventListener('touchstart', unlockAudio);
+                document.body.removeEventListener('mousedown', unlockAudio);
+            };
+
+            document.body.addEventListener('touchstart', unlockAudio, { once: true });
+            document.body.addEventListener('mousedown', unlockAudio, { once: true });
+
+            generateProblem();
+        };
+
+    </script>
+</body>
+</html>
