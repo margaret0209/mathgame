@@ -677,7 +677,7 @@
     color: #0f172a;
     background-color: #f8fafc;
   }
-  
+
   .input-row select {
     cursor: pointer;
   }
@@ -984,7 +984,6 @@
 
   window.addEventListener('DOMContentLoaded', () => {
     bindEventListeners();
-    // 遊戲載入時不再直接出題，而是等待使用者在 StartScreen 點擊「開始遊戲」
   });
 
   function bindEventListeners() {
@@ -1004,10 +1003,9 @@
     });
 
     window.addEventListener('keydown', (e) => {
-      // 防止在輸入自訂題目時觸發遊戲快捷鍵
       if(document.getElementById('customModal').classList.contains('open') || 
          document.getElementById('startScreen').classList.contains('open')) return;
-         
+
       if (e.key >= '0' && e.key <= '9') pressKey(e.key);
       if (e.key === 'Backspace') pressKey('clear');
       if (e.key === 'Enter') pressKey('ok');
@@ -1018,12 +1016,10 @@
   function startGame() {
     soundClick();
     document.getElementById('startScreen').classList.remove('open');
-    
-    // 將首頁選擇的值同步到 Header
     document.getElementById('levelSelect').value = document.getElementById('startLevel').value;
     document.getElementById('diffSelect').value = document.getElementById('startDiff').value;
     document.getElementById('modeSelect').value = document.getElementById('startMode').value;
-    
+
     digitsCount = parseInt(document.getElementById('levelSelect').value);
 
     if (document.getElementById('modeSelect').value === 'custom') {
@@ -1036,9 +1032,7 @@
   function closeCustomModal() {
     soundClick();
     document.getElementById('customModal').classList.remove('open');
-    document.getElementById('modeSelect').value = 'random'; // 若取消則退回隨機模式
-    
-    // 如果是第一次進入遊戲且取消自訂，則生成隨機題目
+    document.getElementById('modeSelect').value = 'random';
     if (step === '') {
       generateNewProblem();
     }
@@ -1046,21 +1040,30 @@
 
   function applyCustomNumbers() {
     soundClick();
-    const val1 = parseInt(document.getElementById('customNum1').value) || 12;
-    const val2 = parseInt(document.getElementById('customNum2').value) || 15;
-    document.getElementById('customModal').classList.remove('open');
+    let val1 = parseInt(document.getElementById('customNum1').value) || 12;
+    let val2 = parseInt(document.getElementById('customNum2').value) || 15;
     
-    if (val1 >= 100 || val2 >= 100) {
+    // 嚴格確保數值不會超過上限 (答案最大為 999)
+    if (val1 > 998) val1 = 998;
+    if (val1 + val2 > 999) {
+      val2 = 999 - val1;
+    }
+
+    document.getElementById('customModal').classList.remove('open');
+
+    // 如果自訂輸入的總和超過了 99，或是輸入包含三位數，強制切換至三位數模式
+    if (val1 >= 100 || val2 >= 100 || (val1 + val2 > 99)) {
       digitsCount = 3;
       document.getElementById('levelSelect').value = '3';
     } else {
       digitsCount = 2;
       document.getElementById('levelSelect').value = '2';
     }
+    
     loadQuestion(val1, val2);
   }
 
-  // 每次完全隨機生成新題目
+  // 每次完全隨機生成新題目，嚴格檢查邊界條件，防止總和超出對應位數
   function generateNewProblem() {
     const diff = document.getElementById('diffSelect').value;
     let n1, n2;
@@ -1070,19 +1073,19 @@
         const u1 = Math.floor(Math.random() * 5);
         const u2 = Math.floor(Math.random() * (9 - u1));
         const t1 = Math.floor(Math.random() * 4) + 1;
-        const t2 = Math.floor(Math.random() * (8 - t1)) + 1;
+        const t2 = Math.floor(Math.random() * (8 - t1)) + 1; // 確保 t1+t2 <= 8，總和 <= 89
         n1 = t1 * 10 + u1;
         n2 = t2 * 10 + u2;
       } else if (diff === 'carry') {
         const u1 = Math.floor(Math.random() * 5) + 5; // 5~9
         const u2 = Math.floor(Math.random() * (10 - (10 - u1))) + (10 - u1); // 保證相加 >= 10
-        const t1 = Math.floor(Math.random() * 4) + 1;
-        const t2 = Math.floor(Math.random() * 4) + 1;
+        const t1 = Math.floor(Math.random() * 4) + 1; // 1~4
+        const t2 = Math.floor(Math.random() * 4) + 1; // 1~4，進位後 t1+t2+1 <= 9，總和 <= 98
         n1 = t1 * 10 + u1;
         n2 = t2 * 10 + u2;
       } else {
-        n1 = Math.floor(Math.random() * 70) + 15;
-        n2 = Math.floor(Math.random() * 70) + 15;
+        n1 = Math.floor(Math.random() * 50) + 15; // 15~64
+        n2 = Math.floor(Math.random() * (99 - n1 - 10 + 1)) + 10; // 確保 n1+n2 <= 99
       }
     } else {
       if (diff === 'nocarry') {
@@ -1091,23 +1094,22 @@
         const t1 = Math.floor(Math.random() * 5);
         const t2 = Math.floor(Math.random() * (9 - t1));
         const h1 = Math.floor(Math.random() * 3) + 1;
-        const h2 = Math.floor(Math.random() * (8 - h1)) + 1;
+        const h2 = Math.floor(Math.random() * (8 - h1)) + 1; // h1+h2 <= 8，總和 <= 899
         n1 = h1 * 100 + t1 * 10 + u1;
         n2 = h2 * 100 + t2 * 10 + u2;
       } else if (diff === 'carry') {
-        // 隨機生成雙進位或個位進位題目
         const u1 = Math.floor(Math.random() * 5) + 5;
         const minU2 = 10 - u1;
         const u2 = Math.floor(Math.random() * (9 - minU2 + 1)) + minU2;
         const t1 = Math.floor(Math.random() * 5) + 5;
-        const t2 = Math.floor(Math.random() * 4) + 3;
+        const t2 = Math.floor(Math.random() * 3) + 1;
         const h1 = Math.floor(Math.random() * 3) + 1;
-        const h2 = Math.floor(Math.random() * 3) + 1;
+        const h2 = Math.floor(Math.random() * 3) + 1; // 雙進位後總和絕對安全 <= 799
         n1 = h1 * 100 + t1 * 10 + u1;
         n2 = h2 * 100 + t2 * 10 + u2;
       } else {
-        n1 = Math.floor(Math.random() * 400) + 125;
-        n2 = Math.floor(Math.random() * 400) + 125;
+        n1 = Math.floor(Math.random() * 400) + 125; // 125~524
+        n2 = Math.floor(Math.random() * (999 - n1 - 100 + 1)) + 100; // 確保 n1+n2 <= 999
       }
     }
     loadQuestion(n1, n2);
