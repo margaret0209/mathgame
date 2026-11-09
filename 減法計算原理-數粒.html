@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>減法計算原理 - 數粒互動學習</title>
+    <style>
+        :root {
+            --bg-page: #fffdf5;
+            --top-nav: #fde68a;
+            --hundred-color: #4ade80;
+            --hundred-border: #16a34a;
+            --ten-color: #fde047;
+            --ten-border: #ca8a04;
+            --one-color: #f87171;
+            --one-border: #dc2626;
+            --font-main: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+            --slash-red: #ef4444;
+            --slash-darkyellow: #ca8a04;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body {
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: var(--bg-page);
+            font-family: var(--font-main);
+            color: #1e293b;
+        }
+
+        /* 頂部導航列 (參照 PDF 第 1 頁) */
+        header {
+            background-color: var(--top-nav);
+            height: 52px;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+            flex-shrink: 0;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            color: #0f172a;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        select, button.top-btn {
+            font-size: 16px;
+            font-weight: 900;
+            padding: 5px 14px;
+            border-radius: 12px;
+            border: 2px solid #ffffff;
+            background-color: #ffffff;
+            cursor: pointer;
+            outline: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            transition: all 0.2s;
+            color: #1e293b;
+        }
+
+        button.top-btn {
+            background-color: #ca8a04;
+            color: white;
+            border-color: #ca8a04;
+        }
+        button.top-btn:hover {
+            background-color: #a16207;
+        }
+
+        /* 88vh 核心佈局容器 */
+        .main-container {
+            height: 88vh;
+            max-height: 88vh;
+            display: flex;
+            padding: 10px 16px;
+            gap: 16px;
+            max-width: 1500px;
+            margin: 0 auto;
+            width: 100%;
+            align-items: stretch;
+            position: relative;
+        }
+
+        /* 初始選擇關卡覆蓋層 (比照 PDF 第 1 頁空白或選擇提示) */
+        .welcome-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-page);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .welcome-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 36px 44px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            text-align: center;
+            max-width: 520px;
+            width: 90%;
+            border: 3px solid #fef08a;
+        }
+
+        .welcome-title {
+            font-size: 28px;
+            font-weight: 900;
+            color: #854d0e;
+            margin-bottom: 24px;
+        }
+
+        .select-group {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 28px;
+            text-align: left;
+        }
+
+        .select-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .select-row select {
+            border: 2px solid #cbd5e1;
+            padding: 6px 14px;
+            font-size: 16px;
+        }
+
+        .btn-start-game {
+            background-color: #ca8a04;
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 900;
+            padding: 10px 36px;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(202, 138, 4, 0.35);
+            transition: all 0.2s;
+        }
+        .btn-start-game:hover {
+            background-color: #a16207;
+            transform: scale(1.03);
+        }
+
+        /* 左側直式面板 */
+        .left-panel {
+            flex: 0 0 350px;
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 12px 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        /* 直式容器鎖定 fit-content */
+        .math-column-container {
+            position: relative;
+            display: grid;
+            grid-template-columns: 46px 72px 72px 72px;
+            row-gap: 2px;
+            align-items: center;
+            font-weight: 900;
+            width: fit-content;
+            margin: 0 auto;
+            flex-shrink: 0;
+        }
+
+        /* 直欄高亮柱 */
+        .column-highlight {
+            position: absolute;
+            top: -4px;
+            bottom: -4px;
+            width: 72px;
+            border-radius: 12px;
+            pointer-events: none;
+            transition: all 0.25s ease;
+            z-index: 1;
+        }
+        .highlight-hundred { left: 46px; background-color: rgba(187, 247, 208, 0.45); }
+        .highlight-ten     { left: 118px; background-color: rgba(254, 240, 138, 0.5); }
+        .highlight-one     { left: 190px; background-color: rgba(254, 205, 211, 0.5); }
+
+        .cell {
+            text-align: center;
+            font-size: 50px;
+            position: relative;
+            z-index: 2;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .header-cell {
+            font-size: 32px;
+            font-weight: 900;
+            color: #0f172a;
+            height: 40px;
+        }
+
+        /* 借位標記數字容器 */
+        .regroup-cell {
+            font-size: 32px;
+            height: 38px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: -1px;
+        }
+
+        .text-red { color: #ef4444; }
+        .text-darkyellow { color: #ca8a04; }
+
+        /* 斜線效果：使用 ::before (紅色) 與 ::after (深黃色) 實現單斜線與雙斜線 */
+        .slash-container {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 紅色斜線 \ */
+        .slash-red::before {
+            content: '';
+            position: absolute;
+            left: 15%;
+            top: 50%;
+            width: 70%;
+            height: 4.5px;
+            background-color: var(--slash-red);
+            transform: translateY(-50%) rotate(-35deg);
+            border-radius: 2px;
+            z-index: 4;
+        }
+
+        /* 深黃色斜線 \ */
+        .slash-darkyellow::after {
+            content: '';
+            position: absolute;
+            left: 15%;
+            top: 50%;
+            width: 70%;
+            height: 4.5px;
+            background-color: var(--slash-darkyellow);
+            transform: translateY(-50%) rotate(-35deg);
+            border-radius: 2px;
+            z-index: 5;
+        }
+
+        /* 當同時存在紅斜線與深黃色斜線時，深黃色斜線略為向上偏移並形成清晰雙斜線 */
+        .slash-red.slash-darkyellow::after {
+            left: 20%;
+            top: 38%;
+            width: 70%;
+            background-color: var(--slash-darkyellow);
+            transform: translateY(-50%) rotate(-35deg);
+        }
+
+        .operator-cell {
+            font-size: 46px;
+            color: #000;
+        }
+
+        .divider-line {
+            grid-column: 1 / span 4;
+            height: 4.5px;
+            background-color: #0f172a;
+            border-radius: 3px;
+            margin: 2px 0 4px 0;
+            z-index: 2;
+        }
+
+        .ans-box {
+            width: 62px;
+            height: 60px;
+            border: 3.5px solid #cbd5e1;
+            border-radius: 12px;
+            background-color: #ffffff;
+            font-size: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0f172a;
+            transition: all 0.2s;
+        }
+        .ans-box.active {
+            border-color: #ca8a04;
+            background-color: #fefce8;
+            box-shadow: 0 0 0 3px rgba(202, 138, 4, 0.2);
+        }
+        .ans-box.correct {
+            border-color: #22c55e;
+            color: #15803d;
+        }
+
+        /* 精簡數字鍵盤 */
+        .keypad-wrapper {
+            width: 100%;
+            max-width: 280px;
+            background: #f1f5f9;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 6px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            margin-top: 4px;
+        }
+
+        .key-btn {
+            height: 38px;
+            font-size: 20px;
+            font-weight: 900;
+            background-color: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            color: #0f172a;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s;
+        }
+        .key-btn:active {
+            transform: scale(0.95);
+            background-color: #cbd5e1;
+        }
+        .key-btn.trash {
+            background-color: #fee2e2;
+            border-color: #fca5a5;
+            color: #dc2626;
+        }
+        .key-btn.enter {
+            background-color: #dcfce7;
+            border-color: #86efac;
+            color: #16a34a;
+        }
+
+        /* 右側操作工作區 (3:2:1) */
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            height: 100%;
+            min-width: 0;
+        }
+
+        .workspace {
+            flex: 1;
+            background-color: #ffffff;
+            border-radius: 18px;
+            padding: 10px 14px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            display: grid;
+            grid-template-columns: 3fr 2fr 1fr;
+            gap: 12px;
+            overflow: hidden;
+        }
+
+        .zone-col {
+            background-color: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 14px;
+            padding: 8px 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .zone-title {
+            font-size: 17px;
+            font-weight: 900;
+            color: #475569;
+            margin-bottom: 8px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .blocks-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-content: flex-start;
+            width: 100%;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* 數塊 (125px x 125px) */
+        .block-hundred {
+            width: 125px;
+            height: 125px;
+            background-color: var(--hundred-color);
+            border: 2.5px solid var(--hundred-border);
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            cursor: grab;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.12);
+            transition: transform 0.15s;
+            flex-shrink: 0;
+        }
+        .block-hundred:hover { transform: scale(1.04); }
+        .block-hundred div { border: 0.5px solid rgba(22, 163, 74, 0.4); }
+
+        /* 數條 (22px x 125px) */
+        .block-ten {
+            width: 22px;
+            height: 125px;
+            background-color: var(--ten-color);
+            border: 2px solid var(--ten-border);
+            display: grid;
+            grid-template-rows: repeat(10, 1fr);
+            cursor: grab;
+            box-shadow: 1px 2px 4px rgba(0,0,0,0.12);
+            transition: transform 0.15s, opacity 0.2s;
+            flex-shrink: 0;
+        }
+        .block-ten.green-rod {
+            background-color: #86efac;
+            border-color: #16a34a;
+        }
+        .block-ten.green-rod div { border-bottom: 0.5px solid rgba(22, 163, 74, 0.4); }
+        .block-ten:hover { transform: scale(1.08); }
+        .block-ten div { border-bottom: 0.5px solid rgba(202, 138, 4, 0.45); }
+
+        /* 數粒 (26px x 26px) */
+        .block-one {
+            width: 26px;
+            height: 26px;
+            background-color: var(--one-color);
+            border: 2px solid var(--one-border);
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.12);
+            transition: transform 0.15s, opacity 0.2s;
+            flex-shrink: 0;
+        }
+        .block-one.yellow-cube {
+            background-color: #fef08a;
+            border-color: #ca8a04;
+        }
+        .block-one:hover { transform: scale(1.25); }
+
+        .block-eliminated {
+            opacity: 0.25 !important;
+            filter: grayscale(1);
+            pointer-events: none;
+            position: relative;
+        }
+        .block-eliminated::after {
+            content: '✖';
+            position: absolute;
+            color: #dc2626;
+            font-size: 18px;
+            font-weight: bold;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* 提示框 */
+        .guide-box {
+            height: 46px;
+            background-color: #fef08a;
+            border-radius: 12px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 900;
+            color: #854d0e;
+            text-align: center;
+            flex-shrink: 0;
+            transition: background-color 0.25s;
+        }
+        .guide-box.sub-mode {
+            background-color: #fecdd3;
+            color: #9f1239;
+        }
+        .guide-box.complete-mode {
+            background-color: #bbf7d0;
+            color: #14532d;
+        }
+
+        /* 彈窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 20px;
+            width: 340px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        }
+        .modal-content input {
+            font-size: 22px;
+            width: 120px;
+            padding: 6px;
+            margin: 8px;
+            text-align: center;
+            border: 2px solid #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 頂部選單列 (比照 PDF 頂端) -->
+    <header>
+        <div class="title">減法計算原理</div>
+        <div class="controls">
+            <select id="levelSelect" onchange="onNavSettingChange()">
+                <option value="3" selected>三位數 ▼</option>
+                <option value="2">兩位數 ▼</option>
+            </select>
+            <select id="diffSelect" onchange="onNavSettingChange()">
+                <option value="borrow" selected>借位 ▼</option>
+                <option value="no-borrow">不借位 ▼</option>
+                <option value="random">隨機 ▼</option>
+            </select>
+            <select id="modeSelect" onchange="onNavModeChange()">
+                <option value="random" selected>隨機 ▼</option>
+                <option value="custom">自訂 ▼</option>
+            </select>
+            <button class="top-btn" onclick="startNewProblem(true)">新題目</button>
+        </div>
+    </header>
+
+    <!-- 88vh 主遊戲視窗 -->
+    <div class="main-container">
+
+        <!-- 預設畫面：首次進入必須自行選擇關卡、難度、模式 (比照 PDF 第 1 頁) -->
+        <div class="welcome-overlay" id="welcomeOverlay">
+            <div class="welcome-card">
+                <div class="welcome-title">🌟 請選擇挑戰設定</div>
+                <div class="select-group">
+                    <div class="select-row">
+                        <span>關卡：</span>
+                        <select id="initLevel">
+                            <option value="3" selected>三位數</option>
+                            <option value="2">兩位數</option>
+                        </select>
+                    </div>
+                    <div class="select-row">
+                        <span>難度：</span>
+                        <select id="initDiff">
+                            <option value="borrow" selected>借位</option>
+                            <option value="no-borrow">不借位</option>
+                            <option value="random">隨機</option>
+                        </select>
+                    </div>
+                    <div class="select-row">
+                        <span>模式：</span>
+                        <select id="initMode">
+                            <option value="random" selected>隨機</option>
+                            <option value="custom">自訂</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn-start-game" onclick="confirmInitialSetup()">開始學習</button>
+            </div>
+        </div>
+
+        <!-- 左側直式與數字鍵盤 -->
+        <div class="left-panel">
+            <div class="math-column-container">
+                <!-- 直欄高亮柱 -->
+                <div id="colHighlight" class="column-highlight highlight-one"></div>
+
+                <!-- 標題欄：百 十 個 -->
+                <div class="cell header-cell"></div>
+                <div class="cell header-cell" id="lbl-hundred">百</div>
+                <div class="cell header-cell" id="lbl-ten">十</div>
+                <div class="cell header-cell" id="lbl-one">個</div>
+
+                <!-- 借位標記欄位 -->
+                <div class="cell regroup-cell"></div>
+                <div class="cell regroup-cell" id="rg-hundred"></div>
+                <div class="cell regroup-cell" id="rg-ten"></div>
+                <div class="cell regroup-cell" id="rg-one"></div>
+
+                <!-- 被減數欄位 (支援雙色斜線：紅色與深黃色) -->
+                <div class="cell"></div>
+                <div class="cell" id="min-hundred">
+                    <span class="slash-container" id="span-min-hundred">5</span>
+                </div>
+                <div class="cell" id="min-ten">
+                    <span class="slash-container" id="span-min-ten">2</span>
+                </div>
+                <div class="cell" id="min-one">
+                    <span class="slash-container" id="span-min-one">7</span>
+                </div>
+
+                <!-- 減數 -->
+                <div class="cell operator-cell">-</div>
+                <div class="cell" id="sub-hundred">4</div>
+                <div class="cell" id="sub-ten">3</div>
+                <div class="cell" id="sub-one">8</div>
+
+                <!-- 直式橫線 -->
+                <div class="divider-line"></div>
+
+                <!-- 答案格 -->
+                <div class="cell"></div>
+                <div class="cell">
+                    <div class="ans-box" id="ans-hundred"></div>
+                </div>
+                <div class="cell">
+                    <div class="ans-box" id="ans-ten"></div>
+                </div>
+                <div class="cell">
+                    <div class="ans-box active" id="ans-one"></div>
+                </div>
+            </div>
+
+            <!-- 緊湊鍵盤 -->
+            <div class="keypad-wrapper">
+                <button class="key-btn" onclick="pressKey('1')">1</button>
+                <button class="key-btn" onclick="pressKey('2')">2</button>
+                <button class="key-btn" onclick="pressKey('3')">3</button>
+                <button class="key-btn" onclick="pressKey('4')">4</button>
+                <button class="key-btn" onclick="pressKey('5')">5</button>
+                <button class="key-btn" onclick="pressKey('6')">6</button>
+                <button class="key-btn" onclick="pressKey('7')">7</button>
+                <button class="key-btn" onclick="pressKey('8')">8</button>
+                <button class="key-btn" onclick="pressKey('9')">9</button>
+                <button class="key-btn trash" onclick="pressKey('delete')">🗑️</button>
+                <button class="key-btn" onclick="pressKey('0')">0</button>
+                <button class="key-btn enter" onclick="pressKey('enter')">✔️</button>
+            </div>
+        </div>
+
+        <!-- 右側數粒操作工作區 -->
+        <div class="right-panel">
+            <div class="workspace">
+                <!-- 百位區 (3份) -->
+                <div class="zone-col" id="zone-hundred" ondragover="allowDrop(event)" ondrop="handleDrop(event, 'hundred')">
+                    <div class="zone-title">百位數塊 (100)</div>
+                    <div class="blocks-container" id="hundred-blocks"></div>
+                </div>
+
+                <!-- 十位區 (2份) -->
+                <div class="zone-col" id="zone-ten" ondragover="allowDrop(event)" ondrop="handleDrop(event, 'ten')">
+                    <div class="zone-title">十位數條 (10)</div>
+                    <div class="blocks-container" id="ten-blocks"></div>
+                </div>
+
+                <!-- 個位區 (1份) -->
+                <div class="zone-col" id="zone-one" ondragover="allowDrop(event)" ondrop="handleDrop(event, 'one')">
+                    <div class="zone-title">個位數粒 (1)</div>
+                    <div class="blocks-container" id="one-blocks"></div>
+                </div>
+            </div>
+
+            <!-- 步驟指引框 -->
+            <div class="guide-box" id="guideText">
+                請開始計算
+            </div>
+        </div>
+    </div>
+
+    <!-- 自訂題目彈窗 -->
+    <div class="modal" id="customModal">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#854d0e;">自訂減法題目</h3>
+            <p style="font-size:14px; color:#64748b; margin-top: -6px;">（系統確保答案為正數）</p>
+            <div>
+                被減數：<input type="number" id="customMin" min="10" max="999" value="527"><br>
+                減數：<input type="number" id="customSub" min="1" max="998" value="438">
+            </div>
+            <div style="margin-top: 18px; display: flex; justify-content: center; gap: 12px;">
+                <button class="top-btn" onclick="applyCustomProblem()">確定開始</button>
+                <button class="key-btn" style="padding: 2px 14px; height: 36px;" onclick="closeCustomModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Web Audio API 即時合成音效
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(freq, type, duration, delay = 0, vol = 0.15) {
+            setTimeout(() => {
+                try {
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + duration);
+                } catch(e) {}
+            }, delay);
+        }
+
+        const Sound = {
+            click: () => playTone(650, 'triangle', 0.05, 0, 0.1),
+            correct: () => {
+                playTone(523.25, 'sine', 0.12, 0, 0.2);
+                playTone(659.25, 'sine', 0.12, 90, 0.2);
+                playTone(783.99, 'sine', 0.22, 180, 0.2);
+            },
+            wrong: () => {
+                playTone(260, 'sawtooth', 0.18, 0, 0.2);
+                playTone(200, 'sawtooth', 0.25, 120, 0.25);
+            },
+            eliminate: () => playTone(880, 'sine', 0.08, 0, 0.18),
+            borrow: () => {
+                playTone(400, 'triangle', 0.1, 0, 0.15);
+                playTone(600, 'triangle', 0.15, 60, 0.18);
+                playTone(850, 'sine', 0.2, 120, 0.2);
+            },
+            win: () => {
+                [523, 659, 783, 1046].forEach((f, idx) => {
+                    playTone(f, 'triangle', 0.25, idx * 110, 0.22);
+                });
+            }
+        };
+
+        // 已出過的題目記錄集合，確保不重複
+        const usedProblemsHistory = new Set();
+
+        let game = {
+            level: 3,
+            minuend: 527,
+            subtrahend: 438,
+            currentDigits: { h: 5, t: 2, o: 7 },
+            subDigits: { h: 4, t: 3, o: 8 },
+            borrowedFromTens: false,
+            blocks: {
+                hundreds: 5,
+                tens: [],
+                ones: []
+            },
+            stepStage: 'one',
+            subStep: 'need_borrow',
+            eliminatedCount: 0,
+            inputAllowed: false
+        };
+
+        let draggedItemType = null;
+
+        // 頁面載入時：預設顯示選擇覆蓋層 (比照 PDF 第 1 頁)
+        window.onload = () => {
+            document.getElementById('welcomeOverlay').style.display = 'flex';
+        };
+
+        // 首次選擇確定開始
+        function confirmInitialSetup() {
+            Sound.click();
+            let lvl = document.getElementById('initLevel').value;
+            let diff = document.getElementById('initDiff').value;
+            let mode = document.getElementById('initMode').value;
+
+            document.getElementById('levelSelect').value = lvl;
+            document.getElementById('diffSelect').value = diff;
+            document.getElementById('modeSelect').value = mode;
+
+            document.getElementById('welcomeOverlay').style.display = 'none';
+
+            if (mode === 'custom') {
+                openCustomModal();
+            } else {
+                startNewProblem(false);
+            }
+        }
+
+        function onNavSettingChange() {
+            Sound.click();
+            startNewProblem(true);
+        }
+
+        function onNavModeChange() {
+            Sound.click();
+            if (document.getElementById('modeSelect').value === 'custom') {
+                openCustomModal();
+            } else {
+                startNewProblem(true);
+            }
+        }
+
+        function openCustomModal() {
+            let lvl = parseInt(document.getElementById('levelSelect').value);
+            if (lvl === 2) {
+                document.getElementById('customMin').value = 73;
+                document.getElementById('customSub').value = 38;
+                document.getElementById('customMin').max = 99;
+            } else {
+                document.getElementById('customMin').value = 527;
+                document.getElementById('customSub').value = 438;
+                document.getElementById('customMin').max = 999;
+            }
+            document.getElementById('customModal').style.display = 'flex';
+        }
+
+        function closeCustomModal() {
+            Sound.click();
+            document.getElementById('customModal').style.display = 'none';
+            document.getElementById('modeSelect').value = 'random';
+        }
+
+        function applyCustomProblem() {
+            Sound.click();
+            let m = parseInt(document.getElementById('customMin').value);
+            let s = parseInt(document.getElementById('customSub').value);
+
+            // 確保被減數大於減數，答案嚴格為正數
+            if (isNaN(m) || isNaN(s) || m <= s || s <= 0) {
+                alert("請輸入有效的正數減法算式（被減數必須大於減數，且答案為正數）！");
+                return;
+            }
+
+            document.getElementById('customModal').style.display = 'none';
+            usedProblemsHistory.add(`${m}-${s}`);
+            initGameWithNumbers(m, s);
+        }
+
+        // 題目生成核心：確保「答案為正數」且「隨機題目不重複」
+        function startNewProblem(playClickSound = true) {
+            if (playClickSound) Sound.click();
+
+            let level = parseInt(document.getElementById('levelSelect').value);
+            let diff = document.getElementById('diffSelect').value;
+
+            let m = 0, s = 0;
+            let attempts = 0;
+            const maxAttempts = 150;
+
+            do {
+                attempts++;
+                if (level === 3) {
+                    if (diff === 'borrow') {
+                        // 三位數借位：個位或十位產生借位，且確保 m > s (答案為正數)
+                        let h1 = Math.floor(Math.random() * 6) + 3; // 3~8
+                        let t1 = Math.floor(Math.random() * 7) + 1; // 1~7
+                        let o1 = Math.floor(Math.random() * 7);     // 0~6
+                        
+                        // 個位必借位
+                        let o2 = o1 + Math.floor(Math.random() * 3) + 2; // o2 > o1
+                        if (o2 > 9) o2 = 9;
+
+                        // 十位隨機借位或不借位
+                        let needTenBorrow = Math.random() < 0.6;
+                        let t2 = needTenBorrow ? Math.min(9, t1 + Math.floor(Math.random() * 3) + 1) : Math.floor(Math.random() * t1);
+
+                        // 百位確保 h1 >= h2，若十位借位則確保 h1 - 1 >= h2
+                        let maxH2 = needTenBorrow ? Math.max(1, h1 - 1) : h1;
+                        let h2 = Math.floor(Math.random() * maxH2) + 1;
+
+                        m = h1 * 100 + t1 * 10 + o1;
+                        s = h2 * 100 + t2 * 10 + o2;
+                    } else if (diff === 'no-borrow') {
+                        // 三位數不借位：每位被減數 >= 減數，且答案大於 0
+                        let h1 = Math.floor(Math.random() * 7) + 3; // 3~9
+                        let t1 = Math.floor(Math.random() * 8) + 2; // 2~9
+                        let o1 = Math.floor(Math.random() * 8) + 2; // 2~9
+
+                        let h2 = Math.floor(Math.random() * (h1 - 1)) + 1; // 確保答案百位大於0
+                        let t2 = Math.floor(Math.random() * (t1 + 1));
+                        let o2 = Math.floor(Math.random() * (o1 + 1));
+
+                        m = h1 * 100 + t1 * 10 + o1;
+                        s = h2 * 100 + t2 * 10 + o2;
+                    } else {
+                        // 隨機
+                        m = Math.floor(Math.random() * 700) + 250;
+                        s = Math.floor(Math.random() * (m - 100)) + 50;
+                    }
+                } else {
+                    // 兩位數
+                    if (diff === 'borrow') {
+                        let t1 = Math.floor(Math.random() * 7) + 3; // 3~9
+                        let o1 = Math.floor(Math.random() * 6);     // 0~5
+                        let o2 = o1 + Math.floor(Math.random() * 3) + 2; // o2 > o1
+                        if (o2 > 9) o2 = 9;
+                        let t2 = Math.floor(Math.random() * (t1 - 1)) + 1; // t2 < t1
+
+                        m = t1 * 10 + o1;
+                        s = t2 * 10 + o2;
+                    } else if (diff === 'no-borrow') {
+                        let t1 = Math.floor(Math.random() * 7) + 3; // 3~9
+                        let o1 = Math.floor(Math.random() * 7) + 2; // 2~8
+                        let t2 = Math.floor(Math.random() * (t1 - 1)) + 1;
+                        let o2 = Math.floor(Math.random() * o1);
+
+                        m = t1 * 10 + o1;
+                        s = t2 * 10 + o2;
+                    } else {
+                        m = Math.floor(Math.random() * 75) + 24;
+                        s = Math.floor(Math.random() * (m - 12)) + 11;
+                    }
+                }
+
+                // 防呆：確保 m > s (答案為正數)
+                if (m <= s) continue;
+
+                // 檢查題目是否重複
+                let key = `${m}-${s}`;
+                if (!usedProblemsHistory.has(key)) {
+                    usedProblemsHistory.add(key);
+                    break;
+                }
+            } while (attempts < maxAttempts);
+
+            // 若池子滿了則重置歷史，繼續保持不中斷體驗
+            if (attempts >= maxAttempts) {
+                usedProblemsHistory.clear();
+                usedProblemsHistory.add(`${m}-${s}`);
+            }
+
+            initGameWithNumbers(m, s);
+        }
+
+        function initGameWithNumbers(m, s) {
+            game.level = m >= 100 ? 3 : 2;
+            document.getElementById('levelSelect').value = game.level.toString();
+            game.minuend = m;
+            game.subtrahend = s;
+            game.borrowedFromTens = false;
+
+            let h1 = Math.floor(m / 100);
+            let t1 = Math.floor((m % 100) / 10);
+            let o1 = m % 10;
+
+            let h2 = Math.floor(s / 100);
+            let t2 = Math.floor((s % 100) / 10);
+            let o2 = s % 10;
+
+            game.currentDigits = { h: h1, t: t1, o: o1 };
+            game.subDigits = { h: h2, t: t2, o: o2 };
+
+            game.blocks = {
+                hundreds: game.level === 3 ? h1 : 0,
+                tens: [],
+                ones: []
+            };
+
+            for (let i = 0; i < t1; i++) {
+                game.blocks.tens.push({ id: 'ten_' + i, isGreen: false });
+            }
+            for (let i = 0; i < o1; i++) {
+                game.blocks.ones.push({ id: 'one_' + i, isYellow: false });
+            }
+
+            // 重置直式狀態與斜線
+            ['hundred', 'ten', 'one'].forEach(pos => {
+                document.getElementById(`ans-${pos}`).innerText = '';
+                document.getElementById(`ans-${pos}`).className = 'ans-box';
+                document.getElementById(`rg-${pos}`).innerHTML = '';
+                const span = document.getElementById(`span-min-${pos}`);
+                span.className = 'slash-container';
+            });
+
+            if (game.level === 2) {
+                document.getElementById('lbl-hundred').style.visibility = 'hidden';
+                document.getElementById('span-min-hundred').innerText = '';
+                document.getElementById('sub-hundred').innerText = '';
+                document.getElementById('ans-hundred').style.visibility = 'hidden';
+                document.getElementById('zone-hundred').style.display = 'none';
+            } else {
+                document.getElementById('lbl-hundred').style.visibility = 'visible';
+                document.getElementById('span-min-hundred').innerText = h1;
+                document.getElementById('sub-hundred').innerText = h2;
+                document.getElementById('ans-hundred').style.visibility = 'visible';
+                document.getElementById('zone-hundred').style.display = 'flex';
+            }
+
+            document.getElementById('span-min-ten').innerText = t1;
+            document.getElementById('span-min-one').innerText = o1;
+            document.getElementById('sub-ten').innerText = t2;
+            document.getElementById('sub-one').innerText = o2;
+
+            startStep('one');
+        }
+
+        function startStep(step) {
+            game.stepStage = step;
+            game.eliminatedCount = 0;
+            game.inputAllowed = false;
+
+            const highlight = document.getElementById('colHighlight');
+            const guide = document.getElementById('guideText');
+            guide.className = 'guide-box';
+
+            highlight.style.display = 'block';
+            highlight.className = 'column-highlight highlight-' + step;
+
+            ['hundred', 'ten', 'one'].forEach(p => {
+                document.getElementById(`ans-${p}`).classList.remove('active');
+            });
+            document.getElementById(`ans-${step}`).classList.add('active');
+
+            if (step === 'one') {
+                let curO = game.currentDigits.o;
+                let subO = game.subDigits.o;
+
+                if (curO < subO) {
+                    game.subStep = 'need_borrow';
+                    guide.innerText = `個位：${curO}<${subO}，拖拉數條，借1條為10粒至個位`;
+                } else {
+                    game.subStep = 'subtracting';
+                    guide.className = 'guide-box sub-mode';
+                    guide.innerText = `個位：${curO}≥${subO}，點擊數粒，進行減法`;
+                }
+            } else if (step === 'ten') {
+                let curT = game.currentDigits.t;
+                let subT = game.subDigits.t;
+
+                if (curT < subT) {
+                    game.subStep = 'need_borrow';
+                    guide.innerText = `十位：${curT}<${subT}，拖拉數塊，借1塊為10條至十位`;
+                } else {
+                    game.subStep = 'subtracting';
+                    guide.className = 'guide-box sub-mode';
+                    guide.innerText = `十位：${curT}≥${subT}，點擊數條，進行減法`;
+                }
+            } else if (step === 'hundred') {
+                let curH = game.currentDigits.h;
+                let subH = game.subDigits.h;
+                game.subStep = 'subtracting';
+                guide.className = 'guide-box sub-mode';
+                guide.innerText = `百位：點擊數塊，進行減法`;
+            }
+
+            renderBlocks();
+        }
+
+        function renderBlocks() {
+            // 百位數塊
+            const hContainer = document.getElementById('hundred-blocks');
+            hContainer.innerHTML = '';
+            for (let i = 0; i < game.blocks.hundreds; i++) {
+                let b = document.createElement('div');
+                b.className = 'block-hundred';
+                b.draggable = (game.stepStage === 'ten' && game.subStep === 'need_borrow');
+                b.ondragstart = (e) => onDragStart(e, 'hundred');
+                b.onclick = () => onHundredClicked(i, b);
+
+                for (let j = 0; j < 100; j++) {
+                    b.appendChild(document.createElement('div'));
+                }
+                hContainer.appendChild(b);
+            }
+
+            // 十位數條
+            const tContainer = document.getElementById('ten-blocks');
+            tContainer.innerHTML = '';
+            game.blocks.tens.forEach((rod, idx) => {
+                let r = document.createElement('div');
+                r.className = 'block-ten' + (rod.isGreen ? ' green-rod' : '');
+                r.draggable = (game.stepStage === 'one' && game.subStep === 'need_borrow');
+                r.ondragstart = (e) => onDragStart(e, 'ten');
+                r.onclick = () => onTenClicked(idx, r);
+
+                for (let j = 0; j < 10; j++) {
+                    r.appendChild(document.createElement('div'));
+                }
+                tContainer.appendChild(r);
+            });
+
+            // 個位數粒
+            const oContainer = document.getElementById('one-blocks');
+            oContainer.innerHTML = '';
+            game.blocks.ones.forEach((cube, idx) => {
+                let c = document.createElement('div');
+                c.className = 'block-one' + (cube.isYellow ? ' yellow-cube' : '');
+                c.onclick = () => onOneClicked(idx, c);
+                oContainer.appendChild(c);
+            });
+
+            checkDirectZeroSubtract();
+        }
+
+        function onDragStart(e, type) {
+            draggedItemType = type;
+            e.dataTransfer.setData('text/plain', type);
+        }
+
+        function allowDrop(e) {
+            e.preventDefault();
+        }
+
+        function handleDrop(e, targetZone) {
+            e.preventDefault();
+            if (draggedItemType === 'ten' && targetZone === 'one' && game.stepStage === 'one' && game.subStep === 'need_borrow') {
+                executeTenToOneBorrow();
+            } else if (draggedItemType === 'hundred' && targetZone === 'ten' && game.stepStage === 'ten' && game.subStep === 'need_borrow') {
+                executeHundredToTenBorrow();
+            }
+        }
+
+        function onTenClicked(idx, elem) {
+            if (game.stepStage === 'one' && game.subStep === 'need_borrow') {
+                executeTenToOneBorrow();
+            } else if (game.stepStage === 'ten' && game.subStep === 'subtracting') {
+                if (!elem.classList.contains('block-eliminated')) {
+                    Sound.eliminate();
+                    elem.classList.add('block-eliminated');
+                    game.eliminatedCount++;
+                    checkSubtractProgress();
+                }
+            }
+        }
+
+        function onHundredClicked(idx, elem) {
+            if (game.stepStage === 'ten' && game.subStep === 'need_borrow') {
+                executeHundredToTenBorrow();
+            } else if (game.stepStage === 'hundred' && game.subStep === 'subtracting') {
+                if (!elem.classList.contains('block-eliminated')) {
+                    Sound.eliminate();
+                    elem.classList.add('block-eliminated');
+                    game.eliminatedCount++;
+                    checkSubtractProgress();
+                }
+            }
+        }
+
+        function onOneClicked(idx, elem) {
+            if (game.stepStage === 'one' && game.subStep === 'subtracting') {
+                if (!elem.classList.contains('block-eliminated')) {
+                    Sound.eliminate();
+                    elem.classList.add('block-eliminated');
+                    game.eliminatedCount++;
+                    checkSubtractProgress();
+                }
+            }
+        }
+
+        // 當十位借1位至個位
+        function executeTenToOneBorrow() {
+            if (game.blocks.tens.length === 0) return;
+            Sound.borrow();
+
+            let originalOneDigit = game.currentDigits.o;
+
+            game.blocks.tens.pop();
+            game.currentDigits.t -= 1;
+            game.borrowedFromTens = true;
+
+            for (let i = 0; i < 10; i++) {
+                game.blocks.ones.push({ id: 'borrow_one_' + Date.now() + '_' + i, isYellow: true });
+            }
+            game.currentDigits.o += 10;
+
+            // 1. 個位上方標記：紅色1 與 黑色原個位數 (如：紅色1 與 黑色7)
+            document.getElementById('rg-one').innerHTML = `<span class="text-red">1</span><span style="color:#0f172a;">${originalOneDigit}</span>`;
+            
+            // 2. 十位上方紅色 [1]
+            document.getElementById('rg-ten').innerHTML = `<span class="text-red">${game.currentDigits.t}</span>`;
+
+            // 3. 被減數十位與個位劃上紅色 \
+            document.getElementById('span-min-ten').classList.add('slash-red');
+            document.getElementById('span-min-one').classList.add('slash-red');
+
+            game.subStep = 'subtracting';
+            const guide = document.getElementById('guideText');
+            guide.className = 'guide-box sub-mode';
+            guide.innerText = `個位：${game.currentDigits.o}>${game.subDigits.o}，點擊數粒，進行減法`;
+
+            renderBlocks();
+        }
+
+        // 當百位借1位至十位
+        function executeHundredToTenBorrow() {
+            if (game.blocks.hundreds === 0) return;
+            Sound.borrow();
+
+            game.blocks.hundreds -= 1;
+            game.currentDigits.h -= 1;
+
+            for (let i = 0; i < 10; i++) {
+                game.blocks.tens.push({ id: 'borrow_ten_' + Date.now() + '_' + i, isGreen: true });
+            }
+            game.currentDigits.t += 10;
+
+            // 1. 百位上方深黃色 [4]
+            document.getElementById('rg-hundred').innerHTML = `<span class="text-darkyellow">${game.currentDigits.h}</span>`;
+
+            // 2. 十位上方數字為 [11] (深黃色1 與 紅色1)
+            if (game.borrowedFromTens) {
+                document.getElementById('rg-ten').innerHTML = `<span class="text-darkyellow">1</span><span class="text-red">${game.currentDigits.t % 10}</span>`;
+            } else {
+                document.getElementById('rg-ten').innerHTML = `<span class="text-darkyellow">${game.currentDigits.t}</span>`;
+            }
+
+            // 3. 被減數百位與十位劃上深黃色 \
+            document.getElementById('span-min-ten').classList.add('slash-darkyellow');
+            document.getElementById('span-min-hundred').classList.add('slash-darkyellow');
+
+            game.subStep = 'subtracting';
+            const guide = document.getElementById('guideText');
+            guide.className = 'guide-box sub-mode';
+            guide.innerText = `十位：${game.currentDigits.t}>${game.subDigits.t}，點擊數條，進行減法`;
+
+            renderBlocks();
+        }
+
+        function checkDirectZeroSubtract() {
+            if (game.subStep !== 'subtracting') return;
+
+            let target = 0;
+            if (game.stepStage === 'one') target = game.subDigits.o;
+            if (game.stepStage === 'ten') target = game.subDigits.t;
+            if (game.stepStage === 'hundred') target = game.subDigits.h;
+
+            if (target === 0) {
+                readyToInputAnswer();
+            }
+        }
+
+        function checkSubtractProgress() {
+            let target = 0;
+            if (game.stepStage === 'one') target = game.subDigits.o;
+            if (game.stepStage === 'ten') target = game.subDigits.t;
+            if (game.stepStage === 'hundred') target = game.subDigits.h;
+
+            if (game.eliminatedCount >= target) {
+                readyToInputAnswer();
+            }
+        }
+
+        function readyToInputAnswer() {
+            game.subStep = 'input_ans';
+            game.inputAllowed = true;
+            const guide = document.getElementById('guideText');
+            guide.className = 'guide-box';
+
+            if (game.stepStage === 'one') {
+                guide.innerText = "個位：輸入個位答案";
+            } else if (game.stepStage === 'ten') {
+                guide.innerText = "十位：輸入十位答案";
+            } else if (game.stepStage === 'hundred') {
+                guide.innerText = "百位：輸入百位答案";
+            }
+        }
+
+        function pressKey(key) {
+            Sound.click();
+            if (!game.inputAllowed && key !== 'delete') return;
+
+            let targetBox = document.getElementById(`ans-${game.stepStage}`);
+
+            if (key === 'delete') {
+                if (targetBox) targetBox.innerText = '';
+                return;
+            }
+
+            if (key === 'enter') {
+                verifyCurrentDigit();
+                return;
+            }
+
+            if (targetBox) {
+                targetBox.innerText = key;
+                verifyCurrentDigit();
+            }
+        }
+
+        function verifyCurrentDigit() {
+            let step = game.stepStage;
+            let targetBox = document.getElementById(`ans-${step}`);
+            let val = targetBox.innerText.trim();
+
+            if (val === '') return;
+
+            let num = parseInt(val);
+            let expected = 0;
+
+            if (step === 'one') {
+                expected = game.currentDigits.o - game.subDigits.o;
+                if (num === expected) {
+                    Sound.correct();
+                    targetBox.classList.add('correct');
+                    setTimeout(() => startStep('ten'), 350);
+                } else {
+                    Sound.wrong();
+                    flashWrong(targetBox);
+                }
+            } else if (step === 'ten') {
+                expected = game.currentDigits.t - game.subDigits.t;
+                if (num === expected) {
+                    Sound.correct();
+                    targetBox.classList.add('correct');
+                    if (game.level === 3) {
+                        setTimeout(() => startStep('hundred'), 350);
+                    } else {
+                        finishCalculation();
+                    }
+                } else {
+                    Sound.wrong();
+                    flashWrong(targetBox);
+                }
+            } else if (step === 'hundred') {
+                expected = game.currentDigits.h - game.subDigits.h;
+
+                if (num === 0 && expected === 0) {
+                    Sound.correct();
+                    const guide = document.getElementById('guideText');
+                    guide.innerText = "最高位值不能是「0」，刪去";
+                    guide.className = 'guide-box complete-mode';
+
+                    setTimeout(() => {
+                        targetBox.innerText = '';
+                        targetBox.classList.remove('active');
+                        finishCalculation();
+                    }, 1200);
+                    return;
+                }
+
+                if (num === expected) {
+                    Sound.correct();
+                    targetBox.classList.add('correct');
+                    finishCalculation();
+                } else {
+                    Sound.wrong();
+                    flashWrong(targetBox);
+                }
+            }
+        }
+
+        function flashWrong(box) {
+            box.style.borderColor = '#ef4444';
+            box.style.backgroundColor = '#fee2e2';
+            setTimeout(() => {
+                box.style.borderColor = '';
+                box.style.backgroundColor = '';
+                box.innerText = '';
+            }, 600);
+        }
+
+        function finishCalculation() {
+            Sound.win();
+            game.stepStage = 'done';
+            game.inputAllowed = false;
+            document.getElementById('colHighlight').style.display = 'none';
+
+            ['hundred', 'ten', 'one'].forEach(p => {
+                document.getElementById(`ans-${p}`).classList.remove('active');
+            });
+
+            const guide = document.getElementById('guideText');
+            guide.className = 'guide-box complete-mode';
+            guide.innerText = `🎉 計算完成！${game.minuend} - ${game.subtrahend} = ${game.minuend - game.subtrahend}`;
+        }
+    </script>
+</body>
+</html>
