@@ -6,17 +6,16 @@
     <title>雙人加法火箭升空競賽</title>
     <style>
         :root {
-            --bg-color: #0b1d3a;       /* 太空深藍背景 */
+            --bg-color: #081226;       /* 深邃太空背景 */
             --panel-bg: #FFFFFF;       /* 面板白色 */
-            --btn-blue: #B5EAD7;       /* 按鈕淺綠藍 */
-            --btn-pink: #FFB7B2;       /* 按鈕粉紅 */
-            --btn-yellow: #FFF2B2;     /* 按鈕淺黃 */
-            --btn-purple: #E2D1F9;     /* 按鈕淺紫 */
-            --text-dark: #333333;      /* 深色文字 */
-            --active-border: #FF6B6B;  /* 作用中框線顏色 */
-            --carry-bg: #FFDAC1;       /* 進位標記背景色 */
-            --wrong-color: #ff4d4d;    /* 錯誤標示紅 */
-            --correct-color: #2ecc71;  /* 正確綠色 */
+            --btn-blue: #B5EAD7;       /* 淺綠藍 */
+            --btn-pink: #FFB7B2;       /* 粉紅 */
+            --btn-purple: #E2D1F9;     /* 淺紫 */
+            --text-dark: #333333;      /* 深色字 */
+            --active-border: #FF6B6B;  /* 選中框線 */
+            --carry-bg: #FFDAC1;       /* 進位標記色 */
+            --wrong-color: #ff4757;    /* 錯誤紅 */
+            --correct-color: #2ed573;  /* 正確綠 */
         }
 
         * {
@@ -41,18 +40,18 @@
 
         /* 頂部設定列 */
         #top-bar {
-            background-color: rgba(255, 255, 255, 0.12);
-            backdrop-filter: blur(8px);
-            padding: 8px 18px;
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 6px 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.18);
             z-index: 100;
         }
 
         .logo {
-            font-size: 1.35rem;
+            font-size: 1.3rem;
             font-weight: bold;
             color: #ffeb3b;
             text-shadow: 0 0 10px rgba(255, 235, 59, 0.4);
@@ -61,9 +60,18 @@
             gap: 8px;
         }
 
+        .speed-rule-tip {
+            font-size: 0.85rem;
+            color: #7bed9f;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 4px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(123, 237, 159, 0.4);
+        }
+
         .controls {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             align-items: center;
         }
 
@@ -72,24 +80,20 @@
             align-items: center;
             gap: 6px;
             background: rgba(255, 255, 255, 0.15);
-            padding: 4px 12px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 4px 10px;
+            border-radius: 16px;
         }
 
         .control-group label {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: bold;
-            color: #f1f2f6;
         }
 
         select {
-            font-size: 0.9rem;
-            padding: 3px 8px;
-            border-radius: 10px;
+            font-size: 0.85rem;
+            padding: 2px 6px;
+            border-radius: 8px;
             border: none;
-            background: white;
-            color: var(--text-dark);
             outline: none;
             cursor: pointer;
             font-family: inherit;
@@ -97,44 +101,42 @@
         }
 
         .btn-restart {
-            background: #ff5722;
+            background: #ff4757;
             color: white;
             border: none;
-            padding: 6px 14px;
-            border-radius: 20px;
+            padding: 5px 14px;
+            border-radius: 18px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 10px rgba(255, 87, 34, 0.4);
+            box-shadow: 0 3px 8px rgba(255, 71, 87, 0.4);
         }
 
-        .btn-restart:active {
-            transform: scale(0.95);
-        }
+        .btn-restart:active { transform: scale(0.95); }
 
-        /* 雙人主遊戲區 */
-        #game-container {
+        /* 主舞台佈局：左玩家 | 中央星空賽道 | 右玩家 */
+        #game-stage {
             flex: 1;
             display: flex;
             flex-direction: row;
-            padding: 10px 14px;
-            gap: 14px;
+            padding: 8px 12px;
+            gap: 12px;
             overflow: hidden;
             position: relative;
         }
 
-        /* 玩家作答面板 */
+        /* 玩家作答區 */
         .player-panel {
             flex: 1;
             background: rgba(255, 255, 255, 0.96);
-            border-radius: 22px;
+            border-radius: 20px;
             color: var(--text-dark);
             display: flex;
             flex-direction: column;
-            padding: 14px;
+            padding: 12px 14px;
             position: relative;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             border: 4px solid;
+            min-width: 0;
         }
 
         #panel-1 { border-color: #3498db; }
@@ -144,40 +146,40 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             padding-bottom: 6px;
-            border-bottom: 2px dashed #ddd;
+            border-bottom: 2px dashed #e1e2e6;
         }
 
         .player-title {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: bold;
             display: flex;
             align-items: center;
             gap: 6px;
         }
 
-        .player-score {
-            font-size: 0.95rem;
-            background: #f1f2f6;
-            color: #2f3542;
-            padding: 4px 12px;
-            border-radius: 15px;
+        .player-timer {
+            font-size: 0.85rem;
             font-weight: bold;
-            border: 1px solid #dcdde1;
+            padding: 3px 8px;
+            border-radius: 10px;
+            background: #e8f4fd;
+            color: #2980b9;
         }
 
-        .panel-body {
-            flex: 1;
-            display: flex;
-            flex-direction: row;
-            gap: 12px;
-            align-items: stretch;
-            min-height: 0;
+        .player-timer.fast {
+            background: #e8f8f5;
+            color: #27ae60;
+        }
+
+        .player-timer.slow {
+            background: #fdf2e9;
+            color: #d35400;
         }
 
         .math-section {
-            flex: 1.4;
+            flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -185,13 +187,13 @@
             min-height: 0;
         }
 
-        /* 直式計算網格 */
+        /* 直式計算 */
         .math-grid {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 4px;
             align-items: flex-end;
-            margin-top: 4px;
+            margin-top: 2px;
         }
 
         .math-row {
@@ -202,21 +204,21 @@
         }
 
         .math-cell {
-            width: 52px;
-            height: 52px;
+            width: 48px;
+            height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.2rem;
+            font-size: 2.1rem;
             font-weight: bold;
             border-radius: 8px;
             position: relative;
         }
 
         .header-cell {
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: #999;
-            height: 24px;
+            height: 22px;
         }
 
         .symbol-cell {
@@ -226,62 +228,53 @@
 
         .divider-row {
             border-bottom: 4px solid var(--text-dark);
-            margin: 3px 0;
+            margin: 2px 0;
             width: 100%;
         }
 
-        /* 學生自主判斷進位按鈕 */
+        /* 進位按鈕 */
         .carry-btn {
-            background-color: #f5f6fa;
+            background-color: #f1f2f6;
             border: 2px dashed #a4b0be;
             color: #747d8c;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             border-radius: 50%;
-            width: 42px;
-            height: 42px;
+            width: 38px;
+            height: 38px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
+            transition: all 0.15s;
             font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
         }
 
-        .carry-btn:hover {
-            border-color: #2ed573;
-            background-color: #e8f8f5;
-        }
-
-        /* 點選進位後轉為數字1的樣式 */
         .carry-btn.active-carry {
             background-color: var(--carry-bg);
             border: 2px solid #fca874;
             color: #d9534f;
-            font-size: 1.5rem;
-            box-shadow: 0 2px 6px rgba(252, 168, 116, 0.4);
+            font-size: 1.4rem;
         }
 
         /* 答案輸入方格 */
         .answer-box {
             border: 3px dashed #ced6e0;
-            background-color: #fdfdfd;
+            background-color: #fcfcfc;
             cursor: pointer;
         }
 
         .answer-box.selected {
             border: 3px solid var(--active-border) !important;
             background-color: #ffffff !important;
-            box-shadow: 0 0 10px rgba(255, 107, 107, 0.4);
+            box-shadow: 0 0 8px rgba(255, 107, 107, 0.4);
         }
 
         .answer-box.filled {
             border-style: solid;
             border-color: #70a1ff;
-            background-color: #eaf2ff;
+            background-color: #f1f6ff;
         }
 
-        /* 計算完畢錯誤/正確顯示 */
         .cell-wrong {
             border: 3px solid var(--wrong-color) !important;
             background-color: #ffe6e6 !important;
@@ -307,8 +300,8 @@
             background-color: var(--btn-purple);
             border: 2px solid #c9b3f0;
             border-radius: 10px;
-            padding: 7px;
-            font-size: 1.4rem;
+            padding: 6px;
+            font-size: 1.35rem;
             font-weight: bold;
             color: var(--text-dark);
             box-shadow: 0 3px 0 #c9b3f0;
@@ -322,29 +315,21 @@
         .numpad-btn:active {
             transform: translateY(3px);
             box-shadow: 0 0 0 #c9b3f0;
-            background-color: #d2bcf2;
         }
 
         .numpad-btn.btn-clear {
             background-color: var(--btn-pink);
             border-color: #f7a09c;
             box-shadow: 0 3px 0 #f7a09c;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
         }
 
-        /* 位於0右邊的提交/重交/下一題按鈕 */
         .numpad-btn.btn-submit-key {
             background-color: #2ed573;
             border-color: #26af5f;
             color: white;
             box-shadow: 0 3px 0 #208b4b;
-            font-size: 1.1rem;
-        }
-
-        .numpad-btn.btn-submit-key:active {
-            transform: translateY(3px);
-            box-shadow: 0 0 0 #208b4b;
-            background-color: #26af5f;
+            font-size: 1.05rem;
         }
 
         .numpad-btn.btn-retry-mode {
@@ -357,118 +342,180 @@
             background-color: #3498db !important;
             border-color: #2980b9 !important;
             box-shadow: 0 3px 0 #1f618d !important;
-            font-size: 1rem !important;
+            font-size: 0.95rem !important;
         }
 
-        /* 提示訊息區 */
         .action-area {
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2px;
             margin-top: 4px;
         }
 
         .chance-badge {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #eb4d4b;
             font-weight: bold;
-            min-height: 20px;
+            min-height: 18px;
             text-align: center;
         }
 
-        /* 火箭升空跑道區 */
-        .rocket-section {
-            flex: 0.6;
-            background: #112a4f;
-            border-radius: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.15);
+        /* ==========================================
+           中央同一個星空賽道 (Central Space Arena)
+           ========================================== */
+        #central-track {
+            flex: 0 0 240px;
+            background: #091326;
+            border-radius: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.25);
             position: relative;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 12px 0;
-            align-items: center;
+            padding: 14px 0 10px 0;
+            box-shadow: 0 0 25px rgba(0,0,0,0.6);
         }
 
-        .track-bg {
+        .track-gradient {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(to top, #112a4f 0%, #1e3799 35%, #4a69bd 70%, #f6b93b 100%);
-            opacity: 0.85;
+            background: linear-gradient(to top, 
+                #071426 0%, 
+                #0d2954 25%, 
+                #1b4d89 50%, 
+                #3a7bd5 75%, 
+                #f39c12 100%
+            );
+            opacity: 0.88;
             z-index: 1;
         }
 
-        .stars {
+        .space-stars {
             position: absolute;
             width: 100%;
             height: 100%;
-            background-image: radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 35px);
-            background-size: 25px 25px;
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 35px),
+                radial-gradient(rgba(255,255,255,0.7), rgba(255,255,255,.1) 1px, transparent 20px);
+            background-size: 30px 30px, 15px 15px;
             z-index: 2;
         }
 
-        .checkpoint {
-            position: relative;
+        .track-checkpoints {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 10px 10px 15px 10px;
             z-index: 3;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.75rem;
-            font-weight: bold;
-            border-top: 1px dashed rgba(255, 255, 255, 0.35);
-            width: 100%;
-            text-align: center;
-            padding-top: 2px;
+            pointer-events: none;
         }
 
-        .rocket-container {
+        .cp-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px dashed rgba(255, 255, 255, 0.35);
+            padding-top: 2px;
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: bold;
+        }
+
+        .cp-line:last-child {
+            border-top: 1px solid rgba(255, 255, 255, 0.45);
+        }
+
+        /* 雙火箭並列軌道槽 */
+        .lanes-container {
             position: absolute;
-            bottom: 18px;
-            width: 100%;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            z-index: 10;
+        }
+
+        .lane {
+            flex: 1;
+            position: relative;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .lane-divider {
+            position: absolute;
+            top: 0; bottom: 0; left: 50%;
+            width: 1px;
+            border-left: 2px dotted rgba(255, 255, 255, 0.2);
+            z-index: 5;
+        }
+
+        .rocket-wrap {
+            position: absolute;
+            bottom: 12px;
+            width: 50px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            z-index: 10;
             transition: bottom 0.8s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        .rocket {
-            width: 44px;
-            height: 68px;
+        .rocket-tag {
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .tag-p1 { background: #3498db; color: white; }
+        .tag-p2 { background: #e74c3c; color: white; }
+
+        .rocket-height-label {
+            font-size: 0.68rem;
+            color: #ffeb3b;
+            font-weight: bold;
+            margin-bottom: 2px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+        }
+
+        .rocket-icon {
+            width: 42px;
+            height: 64px;
             position: relative;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
         }
 
-        .rocket-svg {
-            width: 100%;
-            height: 100%;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
-        }
+        .rocket-svg { width: 100%; height: 100%; }
 
-        /* 升空噴火特效 */
         .flame {
             position: absolute;
-            bottom: -16px;
+            bottom: -15px;
             left: 50%;
             transform: translateX(-50%);
-            width: 16px;
-            height: 22px;
+            width: 14px;
+            height: 20px;
             background: linear-gradient(to bottom, #ff4757, #ffa502, transparent);
             border-radius: 50%;
             animation: flicker 0.12s infinite alternate;
             display: none;
         }
 
-        .rocket-container.moving .flame {
-            display: block;
-        }
+        .rocket-wrap.boosting .flame { display: block; }
 
         @keyframes flicker {
             0% { transform: translateX(-50%) scale(1); opacity: 0.8; }
             100% { transform: translateX(-50%) scale(1.35); opacity: 1; }
         }
 
-        /* 錯誤震動特效 */
+        /* 震動效果 */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             20%, 60% { transform: translateX(-6px); }
@@ -476,11 +523,11 @@
         }
         .shake { animation: shake 0.4s; }
 
-        /* 勝利畫面浮層 */
-        .success-overlay {
+        /* 獲勝全螢幕覆蓋 */
+        .win-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(11, 29, 58, 0.94);
+            background: rgba(8, 18, 38, 0.95);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -492,23 +539,23 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.5s;
-            z-index: 200;
+            z-index: 300;
             text-align: center;
-            text-shadow: 0 0 20px rgba(255, 235, 59, 0.6);
+            text-shadow: 0 0 25px rgba(255, 235, 59, 0.6);
             padding: 20px;
         }
-        .success-overlay.show {
+
+        .win-overlay.show {
             opacity: 1;
             pointer-events: auto;
         }
 
-        /* 響應式佈局適應（垂直螢幕或手機） */
-        @media (max-width: 860px) {
-            .panel-body { flex-direction: column; }
-            .rocket-section { flex: none; height: 90px; width: 100%; flex-direction: row; padding: 0 10px; }
-            .rocket-container { bottom: auto; left: 15px; flex-direction: row; transition: left 0.8s; }
-            .rocket { transform: rotate(90deg) scale(0.7); }
-            .checkpoint { border-top: none; border-left: 1px dashed rgba(255,255,255,0.3); height: 100%; width: auto; padding: 0 4px; writing-mode: vertical-lr; }
+        /* 響應式適配 */
+        @media (max-width: 900px) {
+            #central-track { flex: 0 0 180px; }
+            .math-cell { width: 42px; height: 42px; font-size: 1.8rem; }
+            .carry-btn { width: 34px; height: 34px; font-size: 0.75rem; }
+            .numpad-btn { font-size: 1.2rem; padding: 5px; }
         }
     </style>
 </head>
@@ -516,6 +563,7 @@
 
     <div id="top-bar">
         <div class="logo">🚀 雙人加法火箭升空競賽</div>
+        <div class="speed-rule-tip">⏱️ 速度獎勵：5秒內答對 +20km | 超過5秒 +10km</div>
         <div class="controls">
             <div class="control-group">
                 <label>位數：</label>
@@ -526,35 +574,49 @@
                     <option value="5">五位數</option>
                 </select>
             </div>
-            <button class="btn-restart" onclick="restartGame()">重新開始比賽</button>
+            <button class="btn-restart" onclick="restartMatch()">重新比賽</button>
         </div>
     </div>
 
-    <div id="game-container">
-        <!-- 玩家 1 版面 -->
+    <div id="game-stage">
+        <!-- 左邊：玩家 1 作答版面 -->
         <div id="panel-1" class="player-panel">
             <div class="player-header">
-                <div class="player-title">👩‍🚀 玩家 1 (藍色火箭)</div>
-                <div class="player-score" id="score-1">高度: 0 km</div>
+                <div class="player-title">👩‍🚀 玩家 1 (藍隊)</div>
+                <div class="player-timer" id="timer-1">用時: 0.0s</div>
             </div>
-            <div class="panel-body">
-                <div class="math-section">
-                    <div class="math-grid" id="grid-1"></div>
-                    <div class="numpad" id="numpad-1"></div>
-                    <div class="action-area">
-                        <div class="chance-badge" id="chance-1">剩餘修改機會：1 次</div>
-                    </div>
+            <div class="math-section">
+                <div class="math-grid" id="grid-1"></div>
+                <div class="numpad" id="numpad-1"></div>
+                <div class="action-area">
+                    <div class="chance-badge" id="chance-1">剩餘修改機會：1 次</div>
                 </div>
-                <div class="rocket-section">
-                    <div class="track-bg"></div>
-                    <div class="stars"></div>
-                    <div class="checkpoint">🌌 宇宙 (100km)</div>
-                    <div class="checkpoint">🪐 大氣層 (70km)</div>
-                    <div class="checkpoint">☁️ 雲層 (35km)</div>
-                    <div class="checkpoint">🌱 發射台 (0km)</div>
-                    <div class="rocket-container" id="rocket-container-1">
-                        <div class="rocket">
-                            <!-- 藍色火箭 -->
+            </div>
+        </div>
+
+        <!-- 中間：同一個星空賽道 (Central Space Arena) -->
+        <div id="central-track">
+            <div class="track-gradient"></div>
+            <div class="space-stars"></div>
+
+            <!-- 高度標尺與界線 -->
+            <div class="track-checkpoints">
+                <div class="cp-line"><span>🌌 宇宙</span><span>100 km</span></div>
+                <div class="cp-line"><span>🪐 大氣層頂</span><span>70 km</span></div>
+                <div class="cp-line"><span>☁️ 雲層</span><span>35 km</span></div>
+                <div class="cp-line"><span>🌱 地面發射台</span><span>0 km</span></div>
+            </div>
+
+            <div class="lane-divider"></div>
+
+            <!-- 兩架火箭並列升空 -->
+            <div class="lanes-container">
+                <!-- 藍色火箭跑道 -->
+                <div class="lane">
+                    <div class="rocket-wrap" id="rocket-wrap-1">
+                        <div class="rocket-height-label" id="height-lbl-1">0 km</div>
+                        <div class="rocket-tag tag-p1">P1 藍</div>
+                        <div class="rocket-icon">
                             <svg class="rocket-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12 2C12 2 9 6 9 11C9 14 10.5 16 12 18C13.5 16 15 14 15 11C15 6 12 2 12 2Z" fill="#3498db"/>
                                 <path d="M12 2C12 2 10.5 6 10.5 11C10.5 13 11.25 14.5 12 15.5C12.75 14.5 13.5 13 13.5 11C13.5 6 12 2 12 2Z" fill="#2980b9"/>
@@ -566,38 +628,13 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="success-overlay" id="success-1">
-                🎉 玩家 1 獲勝！<br>
-                成功衝出大氣層抵達宇宙！🌌
-                <button class="btn-restart" style="margin-top:20px; font-size:1.1rem;" onclick="restartGame()">再賽一局</button>
-            </div>
-        </div>
 
-        <!-- 玩家 2 版面 -->
-        <div id="panel-2" class="player-panel">
-            <div class="player-header">
-                <div class="player-title">👨‍🚀 玩家 2 (紅色火箭)</div>
-                <div class="player-score" id="score-2">高度: 0 km</div>
-            </div>
-            <div class="panel-body">
-                <div class="math-section">
-                    <div class="math-grid" id="grid-2"></div>
-                    <div class="numpad" id="numpad-2"></div>
-                    <div class="action-area">
-                        <div class="chance-badge" id="chance-2">剩餘修改機會：1 次</div>
-                    </div>
-                </div>
-                <div class="rocket-section">
-                    <div class="track-bg"></div>
-                    <div class="stars"></div>
-                    <div class="checkpoint">🌌 宇宙 (100km)</div>
-                    <div class="checkpoint">🪐 大氣層 (70km)</div>
-                    <div class="checkpoint">☁️ 雲層 (35km)</div>
-                    <div class="checkpoint">🌱 發射台 (0km)</div>
-                    <div class="rocket-container" id="rocket-container-2">
-                        <div class="rocket">
-                            <!-- 紅色火箭 -->
+                <!-- 紅色火箭跑道 -->
+                <div class="lane">
+                    <div class="rocket-wrap" id="rocket-wrap-2">
+                        <div class="rocket-height-label" id="height-lbl-2">0 km</div>
+                        <div class="rocket-tag tag-p2">P2 紅</div>
+                        <div class="rocket-icon">
                             <svg class="rocket-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12 2C12 2 9 6 9 11C9 14 10.5 16 12 18C13.5 16 15 14 15 11C15 6 12 2 12 2Z" fill="#e74c3c"/>
                                 <path d="M12 2C12 2 10.5 6 10.5 11C10.5 13 11.25 14.5 12 15.5C12.75 14.5 13.5 13 13.5 11C13.5 6 12 2 12 2Z" fill="#c0392b"/>
@@ -610,17 +647,34 @@
                     </div>
                 </div>
             </div>
-            <div class="success-overlay" id="success-2">
-                🎉 玩家 2 獲勝！<br>
-                成功衝出大氣層抵達宇宙！🌌
-                <button class="btn-restart" style="margin-top:20px; font-size:1.1rem;" onclick="restartGame()">再賽一局</button>
+        </div>
+
+        <!-- 右邊：玩家 2 作答版面 -->
+        <div id="panel-2" class="player-panel">
+            <div class="player-header">
+                <div class="player-title">👨‍🚀 玩家 2 (紅隊)</div>
+                <div class="player-timer" id="timer-2">用時: 0.0s</div>
+            </div>
+            <div class="math-section">
+                <div class="math-grid" id="grid-2"></div>
+                <div class="numpad" id="numpad-2"></div>
+                <div class="action-area">
+                    <div class="chance-badge" id="chance-2">剩餘修改機會：1 次</div>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- 獲勝結算彈窗 -->
+    <div class="win-overlay" id="win-overlay">
+        <span id="win-title">🏆 玩家 1 獲勝！</span><br>
+        <span style="font-size: 1.4rem; color: #fff;">最先衝出大氣層，成功抵達宇宙！🌌</span>
+        <button class="btn-restart" style="margin-top:25px; font-size:1.2rem; padding:8px 24px;" onclick="restartMatch()">再賽一場</button>
+    </div>
+
     <script>
         // ==========================================
-        // 音效系統 (Web Audio API)
+        // 音效系統
         // ==========================================
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playTone(freq, type, duration) {
@@ -653,13 +707,10 @@
             }
         };
 
-        // ==========================================
-        // 核心設定與數值常數
-        // ==========================================
         const PLACE_LABELS = ["個", "十", "百", "千", "萬"];
-        let gameConfig = {
+        let matchConfig = {
             level: 2,
-            targetToWin: 100 // 衝破大氣層到達 100km 宇宙即勝出
+            targetToWin: 100 // 衝破大氣層到達 100km 宇宙獲勝
         };
 
         class MatchPlayer {
@@ -668,22 +719,27 @@
                 this.height = 0; // 火箭高度 (km)
                 this.gridEl = document.getElementById(`grid-${id}`);
                 this.numpadEl = document.getElementById(`numpad-${id}`);
-                this.rocketEl = document.getElementById(`rocket-container-${id}`);
-                this.scoreEl = document.getElementById(`score-${id}`);
+                this.rocketWrapEl = document.getElementById(`rocket-wrap-${id}`);
+                this.heightLblEl = document.getElementById(`height-lbl-${id}`);
                 this.chanceEl = document.getElementById(`chance-${id}`);
-                this.successEl = document.getElementById(`success-${id}`);
+                this.timerEl = document.getElementById(`timer-${id}`);
                 this.submitBtn = null;
 
                 this.num1 = [];
                 this.num2 = [];
-                this.carries = [];     // 學生輸入的進位 (1 或 0)
-                this.answers = [];     // 學生輸入的各數位答案
-                this.carryErrors = []; // 標記進位錯誤位置
-                this.ansErrors = [];   // 標記答案錯誤位置
+                this.carries = [];
+                this.answers = [];
+                this.carryErrors = [];
+                this.ansErrors = [];
 
                 this.currentSelectedCol = 0;
-                this.modifyChances = 1;          // 剩餘修改機會次數
-                this.isDisplayingAnswer = false; // 是否已顯示正解等待按「下一題」
+                this.modifyChances = 1;
+                this.isDisplayingAnswer = false;
+
+                // 每題計時器
+                this.startTime = null;
+                this.timerInterval = null;
+                this.elapsedSeconds = 0;
 
                 this.initNumpad();
                 this.generateNewQuestion();
@@ -724,12 +780,32 @@
                 });
             }
 
-            // 產生新題目
-            // 規則 1：所有數最大位值的數字不能是 [1] (2 ~ 9)
-            // 規則 2：兩位數的加法答案，只能是兩位數 (即 sum < 10^lvl，無最高位溢出進位)
-            // 規則 3：題目必須包含至少一次進位
+            // 開始計時
+            startTimer() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                this.startTime = Date.now();
+                this.timerInterval = setInterval(() => {
+                    let diff = (Date.now() - this.startTime) / 1000;
+                    this.elapsedSeconds = diff;
+                    this.timerEl.textContent = `用時: ${diff.toFixed(1)}s`;
+                    if (diff <= 5.0) {
+                        this.timerEl.className = 'player-timer fast';
+                    } else {
+                        this.timerEl.className = 'player-timer slow';
+                    }
+                }, 100);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+            }
+
+            // 產生新題目：最高位不為 1，兩位數答案只能是兩位數 (<100)
             generateNewQuestion() {
-                let lvl = gameConfig.level;
+                let lvl = matchConfig.level;
                 this.num1 = [];
                 this.num2 = [];
                 this.carries = Array(lvl + 1).fill(0); 
@@ -749,7 +825,6 @@
                     let h1 = 2 + Math.floor(Math.random() * 8);
                     let h2 = 2 + Math.floor(Math.random() * 8);
 
-                    // 低位數（0 ~ 9）
                     let low1 = [];
                     let low2 = [];
                     for (let i = 0; i < lvl - 1; i++) {
@@ -757,7 +832,6 @@
                         low2.push(Math.floor(Math.random() * 10));
                     }
 
-                    // 組裝兩數的數值
                     let val1 = h1 * Math.pow(10, lvl - 1);
                     let val2 = h2 * Math.pow(10, lvl - 1);
                     for (let i = 0; i < lvl - 1; i++) {
@@ -767,7 +841,7 @@
 
                     let totalSum = val1 + val2;
 
-                    // 確保加法答案依然是 lvl 位數 (兩位數相加只能是兩位數，即 < 100)
+                    // 確保加法答案維持在 lvl 位數 (< 10^lvl)
                     if (totalSum < Math.pow(10, lvl)) {
                         let d1_arr = [...low1, h1];
                         let d2_arr = [...low2, h2];
@@ -796,6 +870,7 @@
                 }
                 this.chanceEl.textContent = "剩餘修改機會：1 次";
                 this.renderGrid();
+                this.startTimer();
             }
 
             handleKeypad(val) {
@@ -803,43 +878,41 @@
 
                 if (val === "清除") {
                     this.answers[this.currentSelectedCol] = null;
-                    this.ansErrors[this.currentSelectedCol] = false; // 清除紅框
+                    this.ansErrors[this.currentSelectedCol] = false;
                 } else if (typeof val === 'number') {
                     this.answers[this.currentSelectedCol] = val;
-                    this.ansErrors[this.currentSelectedCol] = false; // 修改輸入時立即清除錯誤紅框
+                    this.ansErrors[this.currentSelectedCol] = false;
 
-                    // 自動切換到下一個需要輸入的高位
-                    if (this.currentSelectedCol < gameConfig.level - 1) {
+                    if (this.currentSelectedCol < matchConfig.level - 1) {
                         this.currentSelectedCol++;
                     }
                 }
                 this.renderGrid();
             }
 
-            // 判斷進位：點擊 [進位] 按鈕轉化為數字 1，再次點擊取消
             toggleCarry(col) {
                 if (this.isDisplayingAnswer) return;
                 Sound.click();
                 this.carries[col] = (this.carries[col] === 1) ? 0 : 1;
-                this.carryErrors[col] = false; // 點擊修改時立即清除紅框
+                this.carryErrors[col] = false;
                 this.renderGrid();
             }
 
             renderGrid() {
                 this.gridEl.innerHTML = '';
-                let maxCol = gameConfig.level;
+                let maxCol = matchConfig.level;
                 let rows = [[], [], [], [], [], []];
 
                 for (let c = maxCol; c >= 0; c--) {
                     let isSymbolCol = (c === maxCol);
 
-                    // 1. 表頭 (萬千百十個)
+                    // 1. 表頭
                     let hCell = document.createElement('div');
                     hCell.className = 'math-cell header-cell';
                     hCell.textContent = isSymbolCol ? "" : PLACE_LABELS[c];
                     rows[0].push(hCell);
 
-                    // 2. 進位列 (放置 [進位] 按鈕)
+                    // 2. 進位列 [進位] 按鈕
                     let carryCell = document.createElement('div');
                     carryCell.className = 'math-cell';
                     if (!isSymbolCol && c > 0) {
@@ -854,7 +927,6 @@
                         } else if (this.isDisplayingAnswer && isCarried) {
                             carryBtn.classList.add('cell-correct');
                         }
-
                         carryCell.appendChild(carryBtn);
                     }
                     rows[1].push(carryCell);
@@ -901,13 +973,11 @@
                         } else if (this.isDisplayingAnswer) {
                             aBox.classList.add('cell-correct');
                         }
-
                         ansCell.appendChild(aBox);
                     }
                     rows[5].push(ansCell);
                 }
 
-                // 組合直式算式行
                 rows.forEach((rowEls, idx) => {
                     if (idx === 4) {
                         let divLine = document.createElement('div');
@@ -922,7 +992,6 @@
                 });
             }
 
-            // 按鈕點擊：提交 / 重交 / 下一題
             handleActionClick() {
                 if (this.isDisplayingAnswer) {
                     this.generateNewQuestion();
@@ -931,11 +1000,9 @@
                 this.submitAndVerify();
             }
 
-            // 批改核對答案
             submitAndVerify() {
-                // 檢查是否所有格都已作答
                 let missing = false;
-                for (let i = 0; i < gameConfig.level; i++) {
+                for (let i = 0; i < matchConfig.level; i++) {
                     if (this.answers[i] === null || this.answers[i] === undefined) {
                         missing = true;
                     }
@@ -945,24 +1012,22 @@
                     return;
                 }
 
-                // 計算理論正確解答
-                let correctCarries = Array(gameConfig.level + 1).fill(0);
-                let correctDigits = Array(gameConfig.level).fill(0);
+                let correctCarries = Array(matchConfig.level + 1).fill(0);
+                let correctDigits = Array(matchConfig.level).fill(0);
                 let cTemp = 0;
-                for (let i = 0; i < gameConfig.level; i++) {
+                for (let i = 0; i < matchConfig.level; i++) {
                     correctCarries[i] = cTemp;
                     let sum = (this.num1[i] || 0) + (this.num2[i] || 0) + cTemp;
                     correctDigits[i] = sum % 10;
                     cTemp = sum > 9 ? 1 : 0;
                 }
-                correctCarries[gameConfig.level] = cTemp;
+                correctCarries[matchConfig.level] = cTemp;
 
-                // 批改每一位的進位與答案
                 let hasError = false;
-                this.ansErrors = Array(gameConfig.level).fill(false);
-                this.carryErrors = Array(gameConfig.level + 1).fill(false);
+                this.ansErrors = Array(matchConfig.level).fill(false);
+                this.carryErrors = Array(matchConfig.level + 1).fill(false);
 
-                for (let i = 0; i < gameConfig.level; i++) {
+                for (let i = 0; i < matchConfig.level; i++) {
                     if (this.answers[i] !== correctDigits[i]) {
                         this.ansErrors[i] = true;
                         hasError = true;
@@ -974,22 +1039,28 @@
                 }
 
                 if (!hasError) {
-                    // 全部正確！
+                    // 答對了！
+                    this.stopTimer();
                     Sound.correct();
-                    this.height += 25; 
-                    if (this.height > gameConfig.targetToWin) this.height = gameConfig.targetToWin;
+
+                    // 速度判定：5秒內回答20km，超過5秒則10km
+                    let gainKm = (this.elapsedSeconds <= 5.0) ? 20 : 10;
+                    this.height += gainKm;
+                    if (this.height > matchConfig.targetToWin) this.height = matchConfig.targetToWin;
+                    
                     this.updateRocketUI();
                     this.renderGrid();
 
-                    if (this.height >= gameConfig.targetToWin) {
+                    if (this.height >= matchConfig.targetToWin) {
                         Sound.win();
-                        this.successEl.classList.add('show');
+                        declareWinner(this.id);
                     } else {
-                        this.chanceEl.textContent = "🎉 答對了！火箭注入燃料向上噴射！";
+                        let speedText = (gainKm === 20) ? "⚡ 5秒內超速答對！+20km" : "👍 答對了！+10km";
+                        this.chanceEl.textContent = speedText;
                         if (this.submitBtn) this.submitBtn.classList.add('disabled');
                         setTimeout(() => {
                             this.generateNewQuestion();
-                        }, 1300);
+                        }, 1200);
                     }
                 } else {
                     // 有錯誤
@@ -999,15 +1070,13 @@
                     setTimeout(() => activePanel.classList.remove('shake'), 400);
 
                     if (this.modifyChances > 0) {
-                        // 第一次錯誤：給予 1 次修改機會，標記紅框
                         this.modifyChances--;
                         this.chanceEl.textContent = "請修正紅框標示處！剩餘修改機會：0 次";
                         if (this.submitBtn) {
                             this.submitBtn.textContent = "重交";
                             this.submitBtn.classList.add('btn-retry-mode');
                         }
-                        // 游標自動跳往第一個錯誤格
-                        for (let i = 0; i < gameConfig.level; i++) {
+                        for (let i = 0; i < matchConfig.level; i++) {
                             if (this.ansErrors[i]) {
                                 this.currentSelectedCol = i;
                                 break;
@@ -1015,12 +1084,12 @@
                         }
                         this.renderGrid();
                     } else {
-                        // 第二次重交仍未能更正：直接給予答案，並可選 [下一題]
+                        // 第二次答錯：停止計時，直接公佈正解
+                        this.stopTimer();
                         this.isDisplayingAnswer = true;
-                        this.ansErrors = Array(gameConfig.level).fill(false);
-                        this.carryErrors = Array(gameConfig.level + 1).fill(false);
+                        this.ansErrors = Array(matchConfig.level).fill(false);
+                        this.carryErrors = Array(matchConfig.level + 1).fill(false);
 
-                        // 填入正確答案與進位
                         this.answers = correctDigits;
                         this.carries = correctCarries;
 
@@ -1035,20 +1104,14 @@
             }
 
             updateRocketUI() {
-                this.scoreEl.textContent = `高度: ${this.height} km`;
-                let percentage = (this.height / gameConfig.targetToWin) * 85;
-                this.rocketEl.classList.add('moving');
-
-                if (window.innerWidth <= 860) {
-                    this.rocketEl.style.left = `calc(15px + ${percentage}%)`;
-                    this.rocketEl.style.bottom = "auto";
-                } else {
-                    this.rocketEl.style.bottom = `calc(18px + ${percentage}%)`;
-                    this.rocketEl.style.left = "auto";
-                }
+                this.heightLblEl.textContent = `${this.height} km`;
+                // 火箭升空映射：0km ~ 100km 映射到賽道高度的 12px ~ 86%
+                let percentage = (this.height / matchConfig.targetToWin) * 82;
+                this.rocketWrapEl.classList.add('boosting');
+                this.rocketWrapEl.style.bottom = `calc(12px + ${percentage}%)`;
 
                 setTimeout(() => {
-                    this.rocketEl.classList.remove('moving');
+                    this.rocketWrapEl.classList.remove('boosting');
                 }, 800);
             }
         }
@@ -1059,24 +1122,29 @@
             players = [new MatchPlayer(1), new MatchPlayer(2)];
 
             document.getElementById('sel-level').addEventListener('change', (e) => {
-                gameConfig.level = parseInt(e.target.value);
-                restartGame();
+                matchConfig.level = parseInt(e.target.value);
+                restartMatch();
             });
         }
 
-        function restartGame() {
+        function declareWinner(winnerId) {
+            const overlay = document.getElementById('win-overlay');
+            const title = document.getElementById('win-title');
+            title.textContent = `🏆 玩家 ${winnerId} (${winnerId === 1 ? '藍隊' : '紅隊'}) 獲勝！`;
+            overlay.classList.add('show');
+        }
+
+        function restartMatch() {
+            document.getElementById('win-overlay').classList.remove('show');
             players.forEach(p => {
+                p.stopTimer();
                 p.height = 0;
                 p.updateRocketUI();
-                p.successEl.classList.remove('show');
                 p.generateNewQuestion();
             });
         }
 
         window.onload = initApp;
-        window.onresize = () => {
-            players.forEach(p => p.updateRocketUI());
-        };
     </script>
 </body>
 </html>
