@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>雙人加法格鬥對決 (Math Combat Showdown)</title>
+    <style>
+        :root {
+            --bg-color: #12131a;
+            --panel-p1: #1a2238;
+            --panel-p2: #381a1f;
+            --accent-p1: #3498db;
+            --accent-p2: #e74c3c;
+            --hp-green: #2ecc71;
+            --hp-yellow: #f1c40f;
+            --hp-red: #e74c3c;
+            --energy-gold: #f39c12;
+            --energy-super: #9b59b6;
+            --text-dark: #222222;
+            --carry-bg: #ffeaa7;
+            --active-border: #ff7675;
+            --wrong-color: #d63031;
+            --correct-color: #00b894;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        html, body {
+            background-color: var(--bg-color);
+            height: 100%;
+            width: 100%;
+            font-family: "Comic Sans MS", "Arial Rounded MT Bold", "PingFang HK", "Microsoft JhengHei", sans-serif;
+            color: #fff;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 頂部設定列 - 緊湊高度以留出更多舞台空間 */
+        #top-bar {
+            background-color: rgba(20, 20, 30, 0.95);
+            padding: 4px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+            z-index: 100;
+            flex-shrink: 0;
+            height: 42px;
+        }
+
+        .logo {
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: #f1c40f;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-shadow: 0 0 10px rgba(241, 196, 15, 0.4);
+        }
+
+        .battle-rules-tip {
+            font-size: 0.78rem;
+            color: #a4b0be;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 3px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .battle-rules-tip span {
+            color: #ffeaa7;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.12);
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .control-group label {
+            font-size: 0.78rem;
+            font-weight: bold;
+        }
+
+        select {
+            font-size: 0.78rem;
+            padding: 2px 5px;
+            border-radius: 5px;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(231, 76, 60, 0.4);
+            transition: transform 0.1s;
+        }
+
+        .btn-restart:active { transform: scale(0.95); }
+
+        /* ==========================================
+           格鬥舞台與血條 (Combat Arena HUD)
+           ========================================== */
+        #combat-hud {
+            flex-shrink: 0;
+            background: linear-gradient(180deg, #1c1e2b 0%, #11131a 100%);
+            border-bottom: 2px solid #2f3640;
+            padding: 4px 14px 2px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            position: relative;
+        }
+
+        .hp-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .fighter-hp-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .fighter-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.82rem;
+            font-weight: bold;
+        }
+
+        .fighter-p1-label { color: #54a0ff; }
+        .fighter-p2-label { color: #ff6b6b; }
+
+        .hp-bar-bg {
+            height: 15px;
+            background-color: #2f3542;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #57606f;
+            position: relative;
+        }
+
+        .hp-bar-fill {
+            height: 100%;
+            width: 100%;
+            background-color: var(--hp-green);
+            transition: width 0.4s ease-out, background-color 0.3s;
+        }
+
+        .p2-hp-fill { float: right; }
+
+        .energy-bar-bg {
+            height: 6px;
+            background: #2f3542;
+            border-radius: 3px;
+            overflow: hidden;
+            border: 1px solid #747d8c;
+        }
+
+        .energy-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #f1c40f, #e67e22);
+            transition: width 0.3s;
+        }
+
+        .vs-badge {
+            font-size: 1.05rem;
+            font-weight: 900;
+            font-style: italic;
+            color: #f1c40f;
+            text-shadow: 0 0 8px rgba(241, 196, 15, 0.7);
+            flex-shrink: 0;
+            padding: 0 6px;
+        }
+
+        /* 戰鬥角色擂台展示區 - 輕量高度 */
+        .fighters-stage {
+            height: 58px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 35px;
+            position: relative;
+        }
+
+        .fighter-avatar-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .fighter-char {
+            font-size: 2.2rem;
+            filter: drop-shadow(0 3px 5px rgba(0,0,0,0.6));
+            position: relative;
+            line-height: 1;
+        }
+
+        .fighter-tag-name {
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 1px 6px;
+            border-radius: 5px;
+        }
+
+        .tag-p1-bg { background: #2e86de; color: #fff; }
+        .tag-p2-bg { background: #ee5253; color: #fff; }
+
+        /* 浮動傷害數字飄字 */
+        .damage-popup {
+            position: absolute;
+            top: -20px;
+            font-size: 1.15rem;
+            font-weight: 900;
+            color: #ff4757;
+            text-shadow: 0 0 5px #000, 0 0 8px #ff4757;
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.6s ease-out, opacity 0.6s ease-out;
+            white-space: nowrap;
+        }
+
+        .damage-popup.crit {
+            color: #ffd32a;
+            font-size: 1.35rem;
+            text-shadow: 0 0 8px #000, 0 0 10px #ff3f34;
+        }
+
+        .damage-popup.show {
+            transform: translateY(-22px) scale(1.15);
+            opacity: 1;
+        }
+
+        /* 攻擊與受擊動畫 */
+        @keyframes punch-p1 {
+            0% { transform: translateX(0) scale(1); }
+            40% { transform: translateX(45px) scale(1.12) rotate(4deg); }
+            100% { transform: translateX(0) scale(1); }
+        }
+
+        @keyframes punch-p2 {
+            0% { transform: translateX(0) scale(1); }
+            40% { transform: translateX(-45px) scale(1.12) rotate(-4deg); }
+            100% { transform: translateX(0) scale(1); }
+        }
+
+        @keyframes hit-shake {
+            0%, 100% { transform: translateX(0); filter: brightness(1); }
+            20% { transform: translateX(-8px); filter: brightness(2) saturate(1.8); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+        }
+
+        .char-punch-p1 { animation: punch-p1 0.35s ease-out; }
+        .char-punch-p2 { animation: punch-p2 0.35s ease-out; }
+        .char-hit { animation: hit-shake 0.4s ease-in-out; }
+
+        /* 特效能量波動球 */
+        .projectile {
+            position: absolute;
+            top: 25%;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .projectile.blue {
+            background: radial-gradient(circle, #fff, #54a0ff, #2e86de);
+            box-shadow: 0 0 14px #54a0ff;
+        }
+
+        .projectile.red {
+            background: radial-gradient(circle, #fff, #ff6b6b, #ee5253);
+            box-shadow: 0 0 14px #ff6b6b;
+        }
+
+        @keyframes shoot-left-to-right {
+            0% { left: 75px; opacity: 1; transform: scale(0.6); }
+            80% { left: calc(100% - 90px); opacity: 1; transform: scale(1.2); }
+            100% { left: calc(100% - 60px); opacity: 0; transform: scale(1.6); }
+        }
+
+        @keyframes shoot-right-to-left {
+            0% { right: 75px; opacity: 1; transform: scale(0.6); }
+            80% { right: calc(100% - 90px); opacity: 1; transform: scale(1.2); }
+            100% { right: calc(100% - 60px); opacity: 0; transform: scale(1.6); }
+        }
+
+        .shoot-p1 { animation: shoot-left-to-right 0.35s linear forwards; }
+        .shoot-p2 { animation: shoot-right-to-left 0.35s linear forwards; }
+
+        /* ==========================================
+           主答題區佈局：左玩家 | 右玩家
+           ========================================== */
+        #game-stage {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            padding: 8px 12px;
+            gap: 12px;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .player-panel {
+            flex: 1;
+            background: #ffffff;
+            border-radius: 16px;
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            padding: 8px 12px 6px 12px;
+            position: relative;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+            border: 4px solid;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        #panel-1 { border-color: var(--accent-p1); background: #fdfefe; }
+        #panel-2 { border-color: var(--accent-p2); background: #fdfefe; }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 4px;
+            margin-bottom: 2px;
+            border-bottom: 2px dashed #dcdde1;
+            flex-shrink: 0;
+        }
+
+        .player-title {
+            font-size: 1.02rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .combo-badge {
+            font-size: 0.78rem;
+            font-weight: 800;
+            padding: 1px 7px;
+            border-radius: 9px;
+            background: #dfe4ea;
+            color: #57606f;
+            transition: all 0.2s;
+        }
+
+        .combo-badge.active {
+            background: #ffeaa7;
+            color: #d35400;
+            box-shadow: 0 0 6px rgba(243, 156, 18, 0.4);
+        }
+
+        .combo-badge.super {
+            background: #e2d1f9;
+            color: #8e44ad;
+            box-shadow: 0 0 8px rgba(142, 68, 173, 0.5);
+        }
+
+        .player-timer {
+            font-size: 0.78rem;
+            font-weight: bold;
+            padding: 2px 7px;
+            border-radius: 8px;
+            background: #e8f4fd;
+            color: #2980b9;
+        }
+
+        .player-timer.fast { background: #e8f8f5; color: #27ae60; }
+        .player-timer.slow { background: #fdf2e9; color: #d35400; }
+
+        /* ==========================================
+           自適應核心：直式加法放大 + 鍵盤緊靠在右
+           ========================================== */
+        .math-section {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            justify-content: center; /* 緊靠置中對齊 */
+            align-items: center;
+            gap: clamp(10px, 2.5vw, 24px); /* 控制直式與小鍵盤間距，靠得更近 */
+            min-height: 0;
+            padding: 2px 0;
+            overflow: hidden;
+        }
+
+        /* 左邊直式容器：自適應放大，佔據主要視野 */
+        .math-column-wrap {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex: 0 1 auto; /* 依據內容自然展開並靠攏 */
+            min-width: 0;
+        }
+
+        /* 直式計算網格 */
+        .math-grid {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(1px, 0.6vh, 4px);
+            align-items: flex-end;
+        }
+
+        .math-row {
+            display: flex;
+            gap: clamp(4px, 1vw, 8px);
+            justify-content: flex-end;
+            width: 100%;
+        }
+
+        /* 自適應放大直式格子：使用 clamp() 支援各尺寸螢幕 */
+        .math-cell {
+            width: clamp(48px, 5.2vw, 68px);
+            height: clamp(48px, 6.2vh, 68px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(2rem, 3.8vw, 3rem);
+            font-weight: bold;
+            border-radius: 10px;
+            position: relative;
+            color: #2d3436;
+        }
+
+        .header-cell {
+            font-size: clamp(0.95rem, 1.4vw, 1.25rem);
+            color: #7f8c8d;
+            height: clamp(20px, 2.8vh, 28px);
+            font-weight: bold;
+        }
+
+        .symbol-cell {
+            color: #2d3436;
+            justify-content: flex-start;
+        }
+
+        .divider-row {
+            border-bottom: clamp(3px, 0.5vh, 5px) solid #2d3436;
+            margin: clamp(1px, 0.3vh, 3px) 0;
+            width: 100%;
+        }
+
+        /* 進位按鈕：清晰微調 */
+        .carry-btn {
+            background-color: #f1f2f6;
+            border: 2px dashed #a4b0be;
+            color: #747d8c;
+            font-size: clamp(0.75rem, 1vw, 0.95rem);
+            border-radius: 50%;
+            width: clamp(38px, 4.4vw, 54px);
+            height: clamp(38px, 4.4vw, 54px);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            font-weight: bold;
+        }
+
+        .carry-btn.active-carry {
+            background-color: var(--carry-bg);
+            border: 2px solid #e67e22;
+            color: #d35400;
+            font-size: clamp(1.4rem, 2.2vw, 1.9rem);
+        }
+
+        /* 答案輸入方格 */
+        .answer-box {
+            border: 3px dashed #b2bec3;
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+
+        .answer-box.selected {
+            border: 3px solid var(--active-border) !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 0 10px rgba(255, 118, 117, 0.55);
+        }
+
+        .answer-box.filled {
+            border-style: solid;
+            border-color: #74b9ff;
+            background-color: #f1f6ff;
+        }
+
+        .cell-wrong {
+            border: 3px solid var(--wrong-color) !important;
+            background-color: #ffe6e6 !important;
+            color: var(--wrong-color) !important;
+        }
+
+        .cell-correct {
+            border: 3px solid var(--correct-color) !important;
+            background-color: #e8f8f5 !important;
+            color: var(--correct-color) !important;
+        }
+
+        /* ==========================================
+           右邊緊靠的數字小鍵盤：按需縮小、更精緻
+           ========================================== */
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: clamp(3px, 0.6vw, 6px);
+            width: clamp(118px, 14vw, 150px); /* 縮小寬度，精緻緊湊 */
+            flex-shrink: 0;
+        }
+
+        .numpad-btn {
+            background-color: #e2d1f9;
+            border: 1.5px solid #b898eb;
+            border-radius: 7px;
+            height: clamp(32px, 4.4vh, 44px); /* 縮減鍵盤單元高度 */
+            font-size: clamp(1.1rem, 1.7vw, 1.45rem);
+            font-weight: bold;
+            color: #2d3436;
+            box-shadow: 0 2px 0 #b898eb;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.08s;
+        }
+
+        .numpad-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 0 0 #b898eb;
+        }
+
+        .numpad-btn.btn-clear {
+            background-color: #ffb7b2;
+            border-color: #f7908a;
+            box-shadow: 0 2px 0 #f7908a;
+            font-size: clamp(0.85rem, 1.1vw, 1rem);
+        }
+
+        .numpad-btn.btn-submit-key {
+            background-color: #2ed573;
+            border-color: #20af5c;
+            color: white;
+            box-shadow: 0 2px 0 #1b8a49;
+            font-size: clamp(0.85rem, 1.1vw, 1rem);
+        }
+
+        .numpad-btn.btn-retry-mode {
+            background-color: #ffa502 !important;
+            border-color: #e67e22 !important;
+            box-shadow: 0 2px 0 #d35400 !important;
+        }
+
+        .numpad-btn.btn-next-mode {
+            background-color: #3498db !important;
+            border-color: #2980b9 !important;
+            box-shadow: 0 2px 0 #1f618d !important;
+            font-size: clamp(0.8rem, 1vw, 0.92rem) !important;
+        }
+
+        /* 底部提示狀態列 */
+        .action-area {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 3px;
+            border-top: 1px dashed #ecf0f1;
+            flex-shrink: 0;
+        }
+
+        .chance-badge {
+            font-size: clamp(0.72rem, 1vw, 0.82rem);
+            color: #e74c3c;
+            font-weight: bold;
+            min-height: 18px;
+            text-align: center;
+        }
+
+        /* 答錯晃動反饋 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .shake { animation: shake 0.4s; }
+
+        /* 獲勝全螢幕覆蓋 */
+        .win-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10, 11, 18, 0.96);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s;
+            z-index: 500;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .win-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .ko-banner {
+            font-size: clamp(3.5rem, 8vw, 5.5rem);
+            font-weight: 900;
+            font-style: italic;
+            color: #ff4757;
+            text-shadow: 0 0 20px #ff4757, 0 0 40px #ff6b81;
+            animation: bounce 0.6s infinite alternate ease-in-out;
+            margin-bottom: 8px;
+        }
+
+        @keyframes bounce {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        .win-desc {
+            font-size: clamp(1.5rem, 3.2vw, 2.4rem);
+            font-weight: bold;
+            color: #ffeaa7;
+            margin-bottom: 6px;
+        }
+
+        .win-sub {
+            font-size: clamp(0.95rem, 1.8vw, 1.2rem);
+            color: #ced6e0;
+            margin-bottom: 20px;
+        }
+
+        /* 螢幕適配優化 */
+        @media (max-width: 900px) {
+            #game-stage { gap: 8px; padding: 6px 8px; }
+            .player-panel { padding: 6px 8px; }
+            .fighters-stage { height: 48px; padding: 0 16px; }
+            .fighter-char { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="top-bar">
+        <div class="logo">🥊 雙人加法格鬥對決</div>
+        <div class="battle-rules-tip">
+            擊破血條獲勝！⚡ 5秒速答 <span>+5 傷害</span> | 🔥 2連擊 <span>暴擊</span> | 💥 3連擊 <span>大招</span>
+        </div>
+        <div class="controls">
+            <div class="control-group">
+                <label>位數：</label>
+                <select id="sel-level">
+                    <option value="2" selected>兩位數</option>
+                    <option value="3">三位數</option>
+                    <option value="4">四位數</option>
+                    <option value="5">五位數</option>
+                </select>
+            </div>
+            <button class="btn-restart" onclick="restartMatch()">重新開戰</button>
+        </div>
+    </div>
+
+    <!-- 頂部格鬥擂台 HUD：血條、能量與打鬥動畫 -->
+    <div id="combat-hud">
+        <div class="hp-section">
+            <!-- 玩家 1 血條 -->
+            <div class="fighter-hp-container">
+                <div class="fighter-info-row">
+                    <span class="fighter-p1-label">🥊 玩家 1 (藍方)</span>
+                    <span id="hp-text-1">100 / 100</span>
+                </div>
+                <div class="hp-bar-bg">
+                    <div class="hp-bar-fill" id="hp-fill-1"></div>
+                </div>
+                <div class="energy-bar-bg">
+                    <div class="energy-bar-fill" id="energy-fill-1"></div>
+                </div>
+            </div>
+
+            <div class="vs-badge">VS</div>
+
+            <!-- 玩家 2 血條 -->
+            <div class="fighter-hp-container">
+                <div class="fighter-info-row">
+                    <span id="hp-text-2">100 / 100</span>
+                    <span class="fighter-p2-label">(紅方) 玩家 2 🥋</span>
+                </div>
+                <div class="hp-bar-bg">
+                    <div class="hp-bar-fill p2-hp-fill" id="hp-fill-2"></div>
+                </div>
+                <div class="energy-bar-bg">
+                    <div class="energy-bar-fill" id="energy-fill-2" style="float: right;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 角色動畫對決舞台 -->
+        <div class="fighters-stage">
+            <!-- 藍方拳手 -->
+            <div class="fighter-avatar-wrap" id="fighter-wrap-1">
+                <div class="damage-popup" id="damage-popup-1">-20</div>
+                <div class="fighter-char" id="char-1">🥋</div>
+                <div class="fighter-tag-name tag-p1-bg">P1 藍拳士</div>
+            </div>
+
+            <!-- 飛行攻擊能量彈 -->
+            <div class="projectile blue" id="bullet-1"></div>
+            <div class="projectile red" id="bullet-2"></div>
+
+            <!-- 紅方拳手 -->
+            <div class="fighter-avatar-wrap" id="fighter-wrap-2">
+                <div class="damage-popup" id="damage-popup-2">-20</div>
+                <div class="fighter-char" id="char-2">🥊</div>
+                <div class="fighter-tag-name tag-p2-bg">P2 紅鬥士</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部主答題區 -->
+    <div id="game-stage">
+        <!-- 左邊：玩家 1 作答版面 -->
+        <div id="panel-1" class="player-panel">
+            <div class="player-header">
+                <div class="player-title">
+                    <span>🥋 玩家 1</span>
+                    <span class="combo-badge" id="combo-1">連擊: 0</span>
+                </div>
+                <div class="player-timer" id="timer-1">用時: 0.0s</div>
+            </div>
+
+            <!-- 直式加法自適應放大 + 縮小數字鍵盤緊靠在右側 -->
+            <div class="math-section">
+                <div class="math-column-wrap">
+                    <div class="math-grid" id="grid-1"></div>
+                </div>
+                <div class="numpad" id="numpad-1"></div>
+            </div>
+
+            <div class="action-area">
+                <div class="chance-badge" id="chance-1">剩餘修改機會：1 次</div>
+            </div>
+        </div>
+
+        <!-- 右邊：玩家 2 作答版面 -->
+        <div id="panel-2" class="player-panel">
+            <div class="player-header">
+                <div class="player-title">
+                    <span>🥊 玩家 2</span>
+                    <span class="combo-badge" id="combo-2">連擊: 0</span>
+                </div>
+                <div class="player-timer" id="timer-2">用時: 0.0s</div>
+            </div>
+
+            <!-- 直式加法自適應放大 + 縮小數字鍵盤緊靠在右側 -->
+            <div class="math-section">
+                <div class="math-column-wrap">
+                    <div class="math-grid" id="grid-2"></div>
+                </div>
+                <div class="numpad" id="numpad-2"></div>
+            </div>
+
+            <div class="action-area">
+                <div class="chance-badge" id="chance-2">剩餘修改機會：1 次</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 獲勝結算彈窗 -->
+    <div class="win-overlay" id="win-overlay">
+        <div class="ko-banner">K. O.</div>
+        <div class="win-desc" id="win-title">🏆 玩家 1 獲勝！</div>
+        <div class="win-sub" id="win-subtitle">以精準的算術重擊擊倒對手！</div>
+        <button class="btn-restart" style="font-size:1.1rem; padding:9px 24px;" onclick="restartMatch()">再戰一回合</button>
+    </div>
+
+    <script>
+        // ==========================================
+        // 音效系統
+        // ==========================================
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(freq, type, duration) {
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        const Sound = {
+            click: () => playTone(480, 'sine', 0.06),
+            hit: () => {
+                playTone(160, 'sawtooth', 0.18);
+                setTimeout(() => playTone(120, 'square', 0.15), 50);
+            },
+            crit: () => {
+                playTone(280, 'sawtooth', 0.12);
+                setTimeout(() => playTone(450, 'triangle', 0.15), 70);
+                setTimeout(() => playTone(700, 'sine', 0.22), 140);
+            },
+            superHit: () => {
+                [200, 350, 520, 780, 1040].forEach((f, idx) => {
+                    setTimeout(() => playTone(f, 'sawtooth', 0.18), idx * 60);
+                });
+            },
+            wrong: () => playTone(150, 'sawtooth', 0.35),
+            win: () => {
+                [440, 554, 659, 880].forEach((f, i) => {
+                    setTimeout(() => playTone(f, 'triangle', 0.2), i * 120);
+                });
+            }
+        };
+
+        const PLACE_LABELS = ["個", "十", "百", "千", "萬"];
+        let matchConfig = {
+            level: 2,
+            maxHp: 100,
+            baseDamage: 15,
+            speedBonusDamage: 5
+        };
+
+        let isGameOver = false;
+
+        class CombatPlayer {
+            constructor(id) {
+                this.id = id;
+                this.opponentId = (id === 1) ? 2 : 1;
+                this.hp = matchConfig.maxHp;
+                this.combo = 0;
+
+                this.gridEl = document.getElementById(`grid-${id}`);
+                this.numpadEl = document.getElementById(`numpad-${id}`);
+                this.chanceEl = document.getElementById(`chance-${id}`);
+                this.timerEl = document.getElementById(`timer-${id}`);
+                this.comboEl = document.getElementById(`combo-${id}`);
+                this.hpFillEl = document.getElementById(`hp-fill-${id}`);
+                this.hpTextEl = document.getElementById(`hp-text-${id}`);
+                this.energyFillEl = document.getElementById(`energy-fill-${id}`);
+                this.fighterWrapEl = document.getElementById(`fighter-wrap-${id}`);
+                this.submitBtn = null;
+
+                this.num1 = [];
+                this.num2 = [];
+                this.carries = [];
+                this.answers = [];
+                this.carryErrors = [];
+                this.ansErrors = [];
+
+                this.currentSelectedCol = 0;
+                this.modifyChances = 1;
+                this.isDisplayingAnswer = false;
+
+                // 計時器
+                this.startTime = null;
+                this.timerInterval = null;
+                this.elapsedSeconds = 0;
+
+                this.initNumpad();
+                this.generateNewQuestion();
+            }
+
+            initNumpad() {
+                this.numpadEl.innerHTML = '';
+                const layout = [1, 2, 3, 4, 5, 6, 7, 8, 9, "清除", 0, "攻擊"];
+                layout.forEach(item => {
+                    const btn = document.createElement('div');
+                    btn.className = 'numpad-btn';
+
+                    if (item === "清除") {
+                        btn.classList.add('btn-clear');
+                        btn.textContent = item;
+                        btn.addEventListener('pointerdown', (e) => {
+                            e.preventDefault();
+                            Sound.click();
+                            this.handleKeypad(item);
+                        });
+                    } else if (item === "攻擊") {
+                        btn.classList.add('btn-submit-key');
+                        btn.textContent = "攻擊";
+                        this.submitBtn = btn;
+                        btn.addEventListener('pointerdown', (e) => {
+                            e.preventDefault();
+                            this.handleActionClick();
+                        });
+                    } else {
+                        btn.textContent = item;
+                        btn.addEventListener('pointerdown', (e) => {
+                            e.preventDefault();
+                            Sound.click();
+                            this.handleKeypad(item);
+                        });
+                    }
+                    this.numpadEl.appendChild(btn);
+                });
+            }
+
+            startTimer() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                this.startTime = Date.now();
+                this.timerInterval = setInterval(() => {
+                    if (isGameOver) return;
+                    let diff = (Date.now() - this.startTime) / 1000;
+                    this.elapsedSeconds = diff;
+                    this.timerEl.textContent = `用時: ${diff.toFixed(1)}s`;
+                    if (diff <= 5.0) {
+                        this.timerEl.className = 'player-timer fast';
+                    } else {
+                        this.timerEl.className = 'player-timer slow';
+                    }
+                }, 100);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+            }
+
+            // 題庫生成：可完全不進位，亦可 1 個或多個進位；最高位不為 1，答案維持在同位數 (< 10^lvl)
+            generateNewQuestion() {
+                if (isGameOver) return;
+                let lvl = matchConfig.level;
+                this.num1 = [];
+                this.num2 = [];
+                this.carries = Array(lvl + 1).fill(0); 
+                this.answers = Array(lvl).fill(null);
+                this.carryErrors = Array(lvl + 1).fill(false);
+                this.ansErrors = Array(lvl).fill(false);
+                this.modifyChances = 1;
+                this.isDisplayingAnswer = false;
+                this.currentSelectedCol = 0;
+
+                let found = false;
+                let attempts = 0;
+
+                while (!found && attempts < 10000) {
+                    attempts++;
+                    // 最高位限制為 2 ~ 9 (排除 1)
+                    let h1 = 2 + Math.floor(Math.random() * 8);
+                    let h2 = 2 + Math.floor(Math.random() * 8);
+
+                    let low1 = [];
+                    let low2 = [];
+                    for (let i = 0; i < lvl - 1; i++) {
+                        low1.push(Math.floor(Math.random() * 10));
+                        low2.push(Math.floor(Math.random() * 10));
+                    }
+
+                    let val1 = h1 * Math.pow(10, lvl - 1);
+                    let val2 = h2 * Math.pow(10, lvl - 1);
+                    for (let i = 0; i < lvl - 1; i++) {
+                        val1 += low1[i] * Math.pow(10, i);
+                        val2 += low2[i] * Math.pow(10, i);
+                    }
+
+                    let totalSum = val1 + val2;
+
+                    // 確保加法結果維持在 lvl 位數 (< 10^lvl)
+                    if (totalSum < Math.pow(10, lvl)) {
+                        this.num1 = [...low1, h1];
+                        this.num2 = [...low2, h2];
+                        found = true;
+                    }
+                }
+
+                if (this.submitBtn) {
+                    this.submitBtn.className = 'numpad-btn btn-submit-key';
+                    this.submitBtn.textContent = "攻擊";
+                }
+                this.chanceEl.textContent = "剩餘修改機會：1 次";
+                this.renderGrid();
+                this.startTimer();
+            }
+
+            handleKeypad(val) {
+                if (this.isDisplayingAnswer || isGameOver) return;
+
+                if (val === "清除") {
+                    this.answers[this.currentSelectedCol] = null;
+                    this.ansErrors[this.currentSelectedCol] = false;
+                } else if (typeof val === 'number') {
+                    this.answers[this.currentSelectedCol] = val;
+                    this.ansErrors[this.currentSelectedCol] = false;
+
+                    if (this.currentSelectedCol < matchConfig.level - 1) {
+                        this.currentSelectedCol++;
+                    }
+                }
+                this.renderGrid();
+            }
+
+            toggleCarry(col) {
+                if (this.isDisplayingAnswer || isGameOver) return;
+                Sound.click();
+                this.carries[col] = (this.carries[col] === 1) ? 0 : 1;
+                this.carryErrors[col] = false;
+                this.renderGrid();
+            }
+
+            renderGrid() {
+                this.gridEl.innerHTML = '';
+                let maxCol = matchConfig.level;
+                let rows = [[], [], [], [], [], []];
+
+                for (let c = maxCol; c >= 0; c--) {
+                    let isSymbolCol = (c === maxCol);
+
+                    // 1. 表頭（位值標籤：個、十、百、千、萬）
+                    let hCell = document.createElement('div');
+                    hCell.className = 'math-cell header-cell';
+                    hCell.textContent = isSymbolCol ? "" : PLACE_LABELS[c];
+                    rows[0].push(hCell);
+
+                    // 2. 進位按鈕列
+                    let carryCell = document.createElement('div');
+                    carryCell.className = 'math-cell';
+                    if (!isSymbolCol && c > 0) {
+                        let isCarried = this.carries[c] === 1;
+                        let carryBtn = document.createElement('button');
+                        carryBtn.className = 'carry-btn' + (isCarried ? ' active-carry' : '');
+                        carryBtn.textContent = isCarried ? "1" : "進位";
+                        carryBtn.onclick = () => this.toggleCarry(c);
+
+                        if (this.carryErrors[c]) {
+                            carryBtn.classList.add('cell-wrong');
+                        } else if (this.isDisplayingAnswer && isCarried) {
+                            carryBtn.classList.add('cell-correct');
+                        }
+                        carryCell.appendChild(carryBtn);
+                    }
+                    rows[1].push(carryCell);
+
+                    // 3. 被加數
+                    let n1Cell = document.createElement('div');
+                    n1Cell.className = 'math-cell';
+                    n1Cell.textContent = !isSymbolCol ? this.num1[c] : "";
+                    rows[2].push(n1Cell);
+
+                    // 4. 加數與加號
+                    let n2Cell = document.createElement('div');
+                    n2Cell.className = 'math-cell';
+                    if (isSymbolCol) {
+                        n2Cell.textContent = "+";
+                        n2Cell.classList.add('symbol-cell');
+                    } else {
+                        n2Cell.textContent = this.num2[c] !== undefined ? this.num2[c] : "";
+                    }
+                    rows[3].push(n2Cell);
+
+                    // 5. 答案列
+                    let ansCell = document.createElement('div');
+                    ansCell.className = 'math-cell';
+                    if (!isSymbolCol) {
+                        let aBox = document.createElement('div');
+                        aBox.className = 'math-cell answer-box';
+                        if (this.answers[c] !== null && this.answers[c] !== undefined) {
+                            aBox.textContent = this.answers[c];
+                            aBox.classList.add('filled');
+                        }
+                        if (this.currentSelectedCol === c && !this.isDisplayingAnswer) {
+                            aBox.classList.add('selected');
+                        }
+
+                        aBox.onclick = () => {
+                            if (this.isDisplayingAnswer || isGameOver) return;
+                            this.currentSelectedCol = c;
+                            this.renderGrid();
+                        };
+
+                        if (this.ansErrors[c]) {
+                            aBox.classList.add('cell-wrong');
+                        } else if (this.isDisplayingAnswer) {
+                            aBox.classList.add('cell-correct');
+                        }
+                        ansCell.appendChild(aBox);
+                    }
+                    rows[5].push(ansCell);
+                }
+
+                rows.forEach((rowEls, idx) => {
+                    if (idx === 4) {
+                        let divLine = document.createElement('div');
+                        divLine.className = 'divider-row';
+                        this.gridEl.appendChild(divLine);
+                    } else {
+                        let rowDiv = document.createElement('div');
+                        rowDiv.className = 'math-row';
+                        rowEls.forEach(el => rowDiv.appendChild(el));
+                        this.gridEl.appendChild(rowDiv);
+                    }
+                });
+            }
+
+            handleActionClick() {
+                if (isGameOver) return;
+                if (this.isDisplayingAnswer) {
+                    this.generateNewQuestion();
+                    return;
+                }
+                this.submitAndVerify();
+            }
+
+            submitAndVerify() {
+                let missing = false;
+                for (let i = 0; i < matchConfig.level; i++) {
+                    if (this.answers[i] === null || this.answers[i] === undefined) {
+                        missing = true;
+                    }
+                }
+                if (missing) {
+                    alert(`玩家 ${this.id}：請先填妥所有答案方格！`);
+                    return;
+                }
+
+                let correctCarries = Array(matchConfig.level + 1).fill(0);
+                let correctDigits = Array(matchConfig.level).fill(0);
+                let cTemp = 0;
+                for (let i = 0; i < matchConfig.level; i++) {
+                    correctCarries[i] = cTemp;
+                    let sum = (this.num1[i] || 0) + (this.num2[i] || 0) + cTemp;
+                    correctDigits[i] = sum % 10;
+                    cTemp = sum > 9 ? 1 : 0;
+                }
+                correctCarries[matchConfig.level] = cTemp;
+
+                let hasError = false;
+                this.ansErrors = Array(matchConfig.level).fill(false);
+                this.carryErrors = Array(matchConfig.level + 1).fill(false);
+
+                for (let i = 0; i < matchConfig.level; i++) {
+                    if (this.answers[i] !== correctDigits[i]) {
+                        this.ansErrors[i] = true;
+                        hasError = true;
+                    }
+                    if (i > 0 && this.carries[i] !== correctCarries[i]) {
+                        this.carryErrors[i] = true;
+                        hasError = true;
+                    }
+                }
+
+                if (!hasError) {
+                    // 答對，發動格鬥攻擊
+                    this.stopTimer();
+                    this.combo++;
+                    this.updateComboUI();
+
+                    let damage = matchConfig.baseDamage;
+                    let isCrit = false;
+                    let isSuper = false;
+
+                    // 速度加成
+                    if (this.elapsedSeconds <= 5.0) {
+                        damage += matchConfig.speedBonusDamage;
+                    }
+
+                    // 連擊觸發暴擊與大招
+                    if (this.combo >= 3) {
+                        damage = Math.round(damage * 2.2);
+                        isSuper = true;
+                    } else if (this.combo === 2) {
+                        damage = Math.round(damage * 1.5);
+                        isCrit = true;
+                    }
+
+                    executeAttack(this.id, this.opponentId, damage, isCrit, isSuper);
+
+                    let attackMsg = isSuper ? "💥 釋放終極大招！" : (isCrit ? "🔥 觸發暴擊！" : "🥊 發動精準打擊！");
+                    if (this.elapsedSeconds <= 5.0) attackMsg += " (速答加成)";
+                    this.chanceEl.textContent = attackMsg;
+
+                    if (this.submitBtn) this.submitBtn.classList.add('disabled');
+                    setTimeout(() => {
+                        if (!isGameOver) this.generateNewQuestion();
+                    }, 1100);
+                } else {
+                    // 答錯，中斷連擊
+                    Sound.wrong();
+                    this.combo = 0;
+                    this.updateComboUI();
+
+                    let activePanel = document.getElementById(`panel-${this.id}`);
+                    activePanel.classList.add('shake');
+                    setTimeout(() => activePanel.classList.remove('shake'), 400);
+
+                    if (this.modifyChances > 0) {
+                        this.modifyChances--;
+                        this.chanceEl.textContent = "請修正紅框標示處！剩餘修改機會：0 次";
+                        if (this.submitBtn) {
+                            this.submitBtn.textContent = "重試";
+                            this.submitBtn.classList.add('btn-retry-mode');
+                        }
+                        for (let i = 0; i < matchConfig.level; i++) {
+                            if (this.ansErrors[i]) {
+                                this.currentSelectedCol = i;
+                                break;
+                            }
+                        }
+                        this.renderGrid();
+                    } else {
+                        // 第二次答錯，公佈答案
+                        this.stopTimer();
+                        this.isDisplayingAnswer = true;
+                        this.ansErrors = Array(matchConfig.level).fill(false);
+                        this.carryErrors = Array(matchConfig.level + 1).fill(false);
+
+                        this.answers = correctDigits;
+                        this.carries = correctCarries;
+
+                        this.chanceEl.textContent = "💡 已顯示正解，觀察後點擊『下一題』繼續！";
+                        if (this.submitBtn) {
+                            this.submitBtn.className = 'numpad-btn btn-submit-key btn-next-mode';
+                            this.submitBtn.textContent = "下一題";
+                        }
+                        this.renderGrid();
+                    }
+                }
+            }
+
+            updateComboUI() {
+                this.comboEl.textContent = `連擊: ${this.combo}`;
+                if (this.combo >= 3) {
+                    this.comboEl.className = 'combo-badge super';
+                    this.energyFillEl.style.width = '100%';
+                    this.energyFillEl.style.background = 'linear-gradient(90deg, #9b59b6, #e056fd)';
+                } else if (this.combo === 2) {
+                    this.comboEl.className = 'combo-badge active';
+                    this.energyFillEl.style.width = '66%';
+                    this.energyFillEl.style.background = 'linear-gradient(90deg, #f1c40f, #e67e22)';
+                } else if (this.combo === 1) {
+                    this.comboEl.className = 'combo-badge active';
+                    this.energyFillEl.style.width = '33%';
+                    this.energyFillEl.style.background = '#f1c40f';
+                } else {
+                    this.comboEl.className = 'combo-badge';
+                    this.energyFillEl.style.width = '0%';
+                }
+            }
+        }
+
+        let players = [];
+
+        function executeAttack(attackerId, defenderId, damage, isCrit, isSuper) {
+            const attackerWrap = document.getElementById(`fighter-wrap-${attackerId}`);
+            const defenderWrap = document.getElementById(`fighter-wrap-${defenderId}`);
+            const defenderObj = players[defenderId - 1];
+            const bullet = document.getElementById(`bullet-${attackerId}`);
+            const damagePopup = document.getElementById(`damage-popup-${defenderId}`);
+
+            attackerWrap.classList.add(attackerId === 1 ? 'char-punch-p1' : 'char-punch-p2');
+            bullet.className = `projectile ${attackerId === 1 ? 'blue shoot-p1' : 'red shoot-p2'}`;
+
+            setTimeout(() => {
+                attackerWrap.classList.remove('char-punch-p1', 'char-punch-p2');
+                bullet.className = `projectile ${attackerId === 1 ? 'blue' : 'red'}`;
+
+                if (isSuper) Sound.superHit();
+                else if (isCrit) Sound.crit();
+                else Sound.hit();
+
+                defenderWrap.classList.add('char-hit');
+                setTimeout(() => defenderWrap.classList.remove('char-hit'), 400);
+
+                defenderObj.hp = Math.max(0, defenderObj.hp - damage);
+                updateHpUI(defenderObj);
+
+                damagePopup.textContent = `-${damage}` + (isSuper ? " SUPER!" : (isCrit ? " CRIT!" : ""));
+                damagePopup.className = `damage-popup ${isCrit || isSuper ? 'crit' : ''} show`;
+                setTimeout(() => {
+                    damagePopup.className = 'damage-popup';
+                }, 700);
+
+                if (defenderObj.hp <= 0 && !isGameOver) {
+                    isGameOver = true;
+                    Sound.win();
+                    setTimeout(() => declareWinner(attackerId), 400);
+                }
+            }, 300);
+        }
+
+        function updateHpUI(player) {
+            const percentage = (player.hp / matchConfig.maxHp) * 100;
+            player.hpFillEl.style.width = `${percentage}%`;
+            player.hpTextEl.textContent = `${player.hp} / ${matchConfig.maxHp}`;
+
+            if (percentage <= 25) {
+                player.hpFillEl.style.backgroundColor = 'var(--hp-red)';
+            } else if (percentage <= 55) {
+                player.hpFillEl.style.backgroundColor = 'var(--hp-yellow)';
+            } else {
+                player.hpFillEl.style.backgroundColor = 'var(--hp-green)';
+            }
+        }
+
+        function declareWinner(winnerId) {
+            const overlay = document.getElementById('win-overlay');
+            const title = document.getElementById('win-title');
+            const subtitle = document.getElementById('win-subtitle');
+
+            const winnerColor = winnerId === 1 ? '藍方拳士' : '紅方鬥士';
+            title.textContent = `🏆 玩家 ${winnerId} (${winnerColor}) 獲勝！`;
+            subtitle.textContent = `成功擊潰對手血條，取得最終格鬥優勝！`;
+            overlay.classList.add('show');
+        }
+
+        function restartMatch() {
+            isGameOver = false;
+            document.getElementById('win-overlay').classList.remove('show');
+            players.forEach(p => {
+                p.stopTimer();
+                p.hp = matchConfig.maxHp;
+                p.combo = 0;
+                p.updateComboUI();
+                updateHpUI(p);
+                p.generateNewQuestion();
+            });
+        }
+
+        function initApp() {
+            players = [new CombatPlayer(1), new CombatPlayer(2)];
+
+            document.getElementById('sel-level').addEventListener('change', (e) => {
+                matchConfig.level = parseInt(e.target.value);
+                restartMatch();
+            });
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
