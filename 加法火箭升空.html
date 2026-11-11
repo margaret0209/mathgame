@@ -1001,17 +1001,6 @@
             }
 
             submitAndVerify() {
-                let missing = false;
-                for (let i = 0; i < matchConfig.level; i++) {
-                    if (this.answers[i] === null || this.answers[i] === undefined) {
-                        missing = true;
-                    }
-                }
-                if (missing) {
-                    alert(`玩家 ${this.id}：請先填寫好所有答案數位！`);
-                    return;
-                }
-
                 let correctCarries = Array(matchConfig.level + 1).fill(0);
                 let correctDigits = Array(matchConfig.level).fill(0);
                 let cTemp = 0;
@@ -1027,8 +1016,9 @@
                 this.ansErrors = Array(matchConfig.level).fill(false);
                 this.carryErrors = Array(matchConfig.level + 1).fill(false);
 
+                // 檢查答案格：未填寫 (null / undefined) 或數值不符一律標記為錯誤
                 for (let i = 0; i < matchConfig.level; i++) {
-                    if (this.answers[i] !== correctDigits[i]) {
+                    if (this.answers[i] === null || this.answers[i] === undefined || this.answers[i] !== correctDigits[i]) {
                         this.ansErrors[i] = true;
                         hasError = true;
                     }
@@ -1039,7 +1029,7 @@
                 }
 
                 if (!hasError) {
-                    // 答對了！
+                    // 全對！
                     this.stopTimer();
                     Sound.correct();
 
@@ -1047,7 +1037,7 @@
                     let gainKm = (this.elapsedSeconds <= 5.0) ? 20 : 10;
                     this.height += gainKm;
                     if (this.height > matchConfig.targetToWin) this.height = matchConfig.targetToWin;
-                    
+
                     this.updateRocketUI();
                     this.renderGrid();
 
@@ -1063,7 +1053,7 @@
                         }, 1200);
                     }
                 } else {
-                    // 有錯誤
+                    // 存在錯誤（包括漏填）
                     Sound.wrong();
                     let activePanel = document.getElementById(`panel-${this.id}`);
                     activePanel.classList.add('shake');
@@ -1076,6 +1066,7 @@
                             this.submitBtn.textContent = "重交";
                             this.submitBtn.classList.add('btn-retry-mode');
                         }
+                        // 自動將游標移至第一個錯誤格
                         for (let i = 0; i < matchConfig.level; i++) {
                             if (this.ansErrors[i]) {
                                 this.currentSelectedCol = i;
@@ -1105,7 +1096,6 @@
 
             updateRocketUI() {
                 this.heightLblEl.textContent = `${this.height} km`;
-                // 火箭升空映射：0km ~ 100km 映射到賽道高度的 12px ~ 86%
                 let percentage = (this.height / matchConfig.targetToWin) * 82;
                 this.rocketWrapEl.classList.add('boosting');
                 this.rocketWrapEl.style.bottom = `calc(12px + ${percentage}%)`;
