@@ -226,26 +226,56 @@
         .numpad {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
+            gap: 6px;
             width: 100%;
-            max-width: 220px;
+            max-width: 180px;
         }
 
         .numpad-btn {
             background-color: var(--btn-purple);
             border: 2px solid #c9b3f0;
-            border-radius: 12px;
-            padding: 10px;
-            font-size: 1.6rem;
+            border-radius: 10px;
+            padding: 6px;
+            font-size: 1.3rem;
             font-weight: bold;
             color: var(--text-dark);
             box-shadow: 0 4px 0 #c9b3f0;
             cursor: pointer;
             transition: transform 0.1s, box-shadow 0.1s;
-            /* 新增 Flexbox 置中設定 */
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .action-btn {
+            font-size: 1rem;
+        }
+
+        .del-btn {
+            background-color: var(--btn-pink);
+            border-color: #fca874;
+            box-shadow: 0 4px 0 #fca874;
+        }
+        .del-btn:active, .del-btn.pressed {
+            box-shadow: 0 0 0 #fca874;
+            background-color: #ff9e99;
+        }
+
+        .submit-btn {
+            background-color: var(--btn-blue);
+            border-color: #88d4b4;
+            box-shadow: 0 4px 0 #88d4b4;
+        }
+        .submit-btn:active, .submit-btn.pressed {
+            box-shadow: 0 0 0 #88d4b4;
+            background-color: #9cf0cc;
+        }
+
+        .clickable {
+            cursor: pointer;
+        }
+        .clickable:hover {
+            background-color: #fff3e0;
         }
 
         .numpad-btn:active, .numpad-btn.pressed {
@@ -413,32 +443,31 @@
                 this.answers = [];  // 使用者輸入的答案
                 
                 this.targetCol = 0; // 目前正在作答的位數 (0=個位)
-                this.waitingFor = 'answer'; // 'carry' (等候進位) 或 'answer' (等候答案)
+                this.currentAnswer = null; // 目前輸入的答案
+                this.currentCarry = 0;     // 目前輸入的進位 (0 或 1)
                 
                 this.initNumpad();
                 this.startNewGame();
             }
 
-            // 初始化數字鍵盤 (0-9)
+            // 初始化數字鍵盤
             initNumpad() {
                 this.numpadEl.innerHTML = '';
-                const layout = [1, 2, 3, 4, 5, 6, 7, 8, 9, "", 0, ""];
+                const layout = [1, 2, 3, 4, 5, 6, 7, 8, 9, "刪除", 0, "提交"];
                 layout.forEach(num => {
                     const btn = document.createElement('div');
-                    if (num === "") {
-                        btn.style.visibility = 'hidden'; // 空白佔位
-                    } else {
-                        btn.className = 'numpad-btn';
-                        btn.textContent = num;
-                        // 支援觸控與滑鼠點擊
-                        btn.addEventListener('pointerdown', (e) => {
-                            e.preventDefault();
-                            Sound.click();
-                            btn.classList.add('pressed');
-                            setTimeout(() => btn.classList.remove('pressed'), 100);
-                            this.handleInput(num);
-                        });
-                    }
+                    btn.className = 'numpad-btn';
+                    if (num === "刪除") btn.classList.add('action-btn', 'del-btn');
+                    if (num === "提交") btn.classList.add('action-btn', 'submit-btn');
+                    btn.textContent = num;
+                    
+                    // 支援觸控與滑鼠點擊
+                    btn.addEventListener('pointerdown', (e) => {
+                        e.preventDefault();
+                        btn.classList.add('pressed');
+                        setTimeout(() => btn.classList.remove('pressed'), 100);
+                        this.handleInput(num);
+                    });
                     this.numpadEl.appendChild(btn);
                 });
             }
@@ -449,8 +478,9 @@
                 this.carries = [];
                 this.answers = [];
                 this.targetCol = 0;
+                this.currentAnswer = null;
+                this.currentCarry = 0;
                 this.generateNumbers();
-                this.updateState(); // 計算第一步
                 this.renderGrid();
             }
 
@@ -520,58 +550,53 @@
                 }
             }
 
-            updateState() {
-                if (this.targetCol >= config.level) {
-                    // 遊戲過關
-                    setTimeout(() => {
-                        Sound.win();
-                        this.successEl.classList.add('show');
-                        setTimeout(() => this.startNewGame(), 2500); // 2.5秒後自動下一題
-                    }, 300);
-                    return;
-                }
-
-                let c = this.targetCol;
-                let d1 = this.num1[c];
-                let d2 = this.num2[c];
-                let carryIn = this.carries[c] || 0;
-                let sum = d1 + d2 + carryIn;
-                
-                let correctCarry = Math.floor(sum / 10);
-                
-                // 如果需要進位，且使用者尚未輸入進位
-                if (correctCarry > 0 && this.carries[c + 1] === undefined) {
-                    this.waitingFor = 'carry';
-                    this.expectedInput = correctCarry;
-                } else {
-                    // 否則等待輸入當前位數的答案
-                    this.waitingFor = 'answer';
-                    this.expectedInput = sum % 10;
-                }
-            }
-
             handleInput(num) {
                 if (this.targetCol >= config.level) return; // 已過關
 
-                if (num === this.expectedInput) {
-                    Sound.correct();
-                    // 正確輸入
-                    if (this.waitingFor === 'carry') {
-                        this.carries[this.targetCol + 1] = num;
-                    } else {
-                        this.answers[this.targetCol] = num;
-                        this.targetCol++; // 推進到下一個位數
-                    }
-                    this.updateState();
+                if (num === "刪除") {
+                    Sound.click();
+                    this.currentAnswer = null;
                     this.renderGrid();
-                } else {
-                    // 錯誤輸入 (Errorless Learning: 錯誤時不填寫，僅提示)
-                    Sound.wrong();
-                    let activeCell = this.gridEl.querySelector('.active-target');
-                    if (activeCell) {
-                        activeCell.classList.add('shake');
-                        setTimeout(() => activeCell.classList.remove('shake'), 400);
+                } else if (num === "提交") {
+                    let c = this.targetCol;
+                    let d1 = this.num1[c];
+                    let d2 = this.num2[c];
+                    let carryIn = this.carries[c] || 0;
+                    let sum = d1 + d2 + carryIn;
+                    
+                    let expectedAnswer = sum % 10;
+                    let expectedCarry = Math.floor(sum / 10);
+                    
+                    if (this.currentAnswer === expectedAnswer && this.currentCarry === expectedCarry) {
+                        Sound.correct();
+                        this.answers[this.targetCol] = this.currentAnswer;
+                        if (this.currentCarry === 1) {
+                            this.carries[this.targetCol + 1] = 1;
+                        }
+                        this.targetCol++;
+                        this.currentAnswer = null;
+                        this.currentCarry = 0;
+                        
+                        if (this.targetCol >= config.level) {
+                            setTimeout(() => {
+                                Sound.win();
+                                this.successEl.classList.add('show');
+                                setTimeout(() => this.startNewGame(), 2500);
+                            }, 300);
+                        }
+                        this.renderGrid();
+                    } else {
+                        Sound.wrong();
+                        let activeCells = this.gridEl.querySelectorAll('.active-target');
+                        activeCells.forEach(cell => {
+                            cell.classList.add('shake');
+                            setTimeout(() => cell.classList.remove('shake'), 400);
+                        });
                     }
+                } else {
+                    Sound.click();
+                    this.currentAnswer = num;
+                    this.renderGrid();
                 }
             }
 
@@ -598,18 +623,30 @@
                     if (!isSymbolCol && c < maxCol) {
                         let cBox = document.createElement('div');
                         cBox.className = 'carry-box';
-                        if (this.carries[c] !== undefined) {
-                            cBox.textContent = this.carries[c];
-                            cBox.classList.add('filled');
-                        }
-                        // 判斷是否為作用中目標
-                        if (this.waitingFor === 'carry' && this.targetCol + 1 === c) {
-                            cBox.classList.add('active-target');
+                        
+                        if (c < this.targetCol + 1) {
+                            if (this.carries[c] !== undefined) {
+                                cBox.textContent = this.carries[c];
+                                cBox.classList.add('filled');
+                            }
+                        } else if (c === this.targetCol + 1) {
+                            // 當前等待判斷的進位按鈕
+                            cBox.classList.add('active-target', 'clickable');
+                            if (this.currentCarry === 1) {
+                                cBox.textContent = "1";
+                                cBox.classList.add('filled');
+                            }
+                            cBox.addEventListener('pointerdown', (e) => {
+                                e.preventDefault();
+                                Sound.click();
+                                this.currentCarry = this.currentCarry === 1 ? 0 : 1;
+                                this.renderGrid();
+                            });
                         }
                         carryCell.appendChild(cBox);
                         
-                        // 提示模式標記
-                        if (config.hint && c === this.targetCol + 1 && this.waitingFor === 'carry') {
+                        // 提示模式標記 (提示來源進位)
+                        if (config.hint && c === this.targetCol && this.carries[c]) {
                             cBox.classList.add('hint-highlight');
                         }
                     }
@@ -647,25 +684,21 @@
                     if (!isSymbolCol) {
                         let aBox = document.createElement('div');
                         aBox.className = 'math-cell answer-box';
-                        if (this.answers[c] !== undefined) {
-                            aBox.textContent = this.answers[c];
-                            aBox.classList.add('filled');
-                        }
-                        // 判斷是否為作用中目標
-                        if (this.waitingFor === 'answer' && this.targetCol === c) {
+                        
+                        if (c < this.targetCol) {
+                            if (this.answers[c] !== undefined) {
+                                aBox.textContent = this.answers[c];
+                                aBox.classList.add('filled');
+                            }
+                        } else if (c === this.targetCol) {
                             aBox.classList.add('active-target');
+                            if (this.currentAnswer !== null) {
+                                aBox.textContent = this.currentAnswer;
+                                aBox.classList.add('filled');
+                            }
+                            if (config.hint) aBox.classList.add('hint-highlight');
                         }
                         ansCell.appendChild(aBox);
-                        
-                        // 提示模式標記 (如果正在算這行，連進位也標記)
-                        if (config.hint && c === this.targetCol) {
-                            aBox.classList.add('hint-highlight');
-                            // 標記這行的進位(如果有)
-                            let currentCarryBox = rows[1][rows[1].length-1].querySelector('.carry-box');
-                            if (currentCarryBox && this.carries[c] !== undefined) {
-                                currentCarryBox.classList.add('hint-highlight');
-                            }
-                        }
                     }
                     rows[5].push(ansCell);
                 }
