@@ -268,22 +268,13 @@
         #bottom-area {
             height: 90%; /* 配合上方區域改為 90% */
             display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0% 0 5% 0; /* 移除原本上方 2% 的空白 Padding */
+        /* 提示預留空間改為相對高度 (配合放大的手指圖案增加空間) */
+        #hint-spacer {
+            height: 20vh; /* 根據螢幕高度自動縮放預留空間 */
+            max-height: 190px;
+            min-height: 85px;
             width: 100%;
-        }
-
-        /* Problem Display Area */
-        #problem-area {
-            flex: 1; /* Take up available space */
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start; /* 將題目由「垂直置中」改為「靠上對齊」，大幅拉近距離 */
-            align-items: center;
-            width: 90%;
-            position: relative;
+            flex-shrink: 0;
         }
 
         /* Hint Containers (Absolutely positioned above numbers) */
@@ -296,7 +287,7 @@
             align-items: flex-end;
             justify-content: center;
             opacity: 0;
-            margin-bottom: 5px; /* 大幅縮減提示與數字之間的距離 */
+            margin-bottom: 1vh; /* 相對距離 */
             white-space: nowrap;
             pointer-events: none;
         }
@@ -313,12 +304,21 @@
             position: relative;
         }
 
-        /* Heart SVG Styling */
+        /* Heart SVG Styling (大幅放大並自適應大小) */
         .heart {
-            width: 55px;  /* 放大心形圖案 (原 30px) */
-            height: 55px;
+            width: clamp(48px, 11vmin, 95px);
+            height: clamp(48px, 11vmin, 95px);
             fill: var(--primary-color);
             margin: 0 2px;
+        }
+
+        /* 手指容器大幅放大並自適應大小 */
+        .hand-wrapper {
+            position: relative;
+            display: inline-block;
+            width: clamp(85px, 19vmin, 180px);
+            height: clamp(85px, 19vmin, 180px);
+            margin: 0 0.5vw;
         }
 
         /* HTML float text for finger animation (Safari iOS compatible) */
@@ -346,19 +346,19 @@
             -webkit-transform: translate(-50%, -25px);
         }
 
-        /* Math Equation Styling */
+        /* Math Equation Styling (大幅放大算式區域) */
         #equation {
-            font-size: clamp(2.2rem, 9.5vmin, 6.5rem); /* 限制最小與最大字體，防止極端螢幕爆版 */
+            font-size: clamp(3rem, 13.5vmin, 9rem); /* 放大算式字體，自適應螢幕 */
             font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: center;
             background: rgba(255, 255, 255, 0.6);
-            padding: 2.5vh 4vw; /* 相對內距 */
-            border-radius: clamp(20px, 4vmin, 45px);
+            padding: 3vh 5vw; /* 放大內距 */
+            border-radius: clamp(25px, 5vmin, 55px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            border: clamp(3px, 0.6vmin, 5px) solid var(--accent-color);
-            letter-spacing: 0.5vw;
+            border: clamp(4px, 0.8vmin, 7px) solid var(--accent-color);
+            letter-spacing: 0.8vw;
             max-width: 100%;
         }
 
@@ -379,39 +379,39 @@
             color: var(--primary-color);
         }
 
-        /* Keypad Area (自適應寬高) */
+        /* Keypad Area (縮小至原來的 0.75 倍，並自適應寬高) */
         #keypad-area {
-            width: min(85vw, 420px); /* 在寬螢幕不超過420px，在窄螢幕佔85% */
-            height: 40vh; /* 佔螢幕高度 40% */
-            max-height: 340px;
-            min-height: 200px;
+            width: min(65vw, 315px); /* 原 420px * 0.75 = 315px */
+            height: 30vh; /* 原 40vh * 0.75 = 30vh */
+            max-height: 255px; /* 原 340px * 0.75 = 255px */
+            min-height: 150px; /* 原 200px * 0.75 = 150px */
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(4, 1fr);
-            gap: clamp(6px, 1.2vh, 12px);
-            padding: 5px;
+            gap: clamp(4px, 0.9vh, 9px);
+            padding: 4px;
             margin-bottom: 1vh;
             flex-shrink: 0;
         }
 
         .key {
             background-color: var(--key-bg);
-            border: clamp(2px, 0.4vmin, 3px) solid var(--secondary-color);
-            border-radius: clamp(10px, 2vmin, 18px);
-            font-size: clamp(1.3rem, 4.5vmin, 2.5rem);
+            border: clamp(2px, 0.35vmin, 3px) solid var(--secondary-color);
+            border-radius: clamp(8px, 1.5vmin, 14px);
+            font-size: clamp(1.1rem, 3.4vmin, 1.9rem); /* 字體同步縮小至 0.75 倍 */
             font-weight: bold;
             color: var(--text-color);
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 clamp(4px, 0.7vh, 6px) 0px #b5ead7;
+            box-shadow: 0 clamp(3px, 0.5vh, 5px) 0px #b5ead7;
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
         }
 
         /* Active state for keys (touch or mouse down) */
         .key.active, .key:active {
-            transform: translateY(clamp(4px, 0.7vh, 6px));
+            transform: translateY(clamp(3px, 0.5vh, 5px));
             box-shadow: 0 0px 0px #b5ead7;
             background-color: var(--key-active);
         }
@@ -419,9 +419,9 @@
         .key-clear {
             background-color: #ffe6e6;
             border-color: var(--error-color);
-            box-shadow: 0 clamp(4px, 0.7vh, 6px) 0px #ffb3b3;
+            box-shadow: 0 clamp(3px, 0.5vh, 5px) 0px #ffb3b3;
             color: #d65a5a;
-            font-size: clamp(1rem, 3.5vmin, 2rem);
+            font-size: clamp(0.85rem, 2.6vmin, 1.5rem);
         }
         
         .key-clear.active, .key-clear:active {
@@ -431,21 +431,21 @@
         .key-enter {
             background-color: #e6f7ff;
             border-color: var(--accent-color);
-            box-shadow: 0 clamp(4px, 0.7vh, 6px) 0px #b3e0ff;
+            box-shadow: 0 clamp(3px, 0.5vh, 5px) 0px #b3e0ff;
             color: #5aa1d6;
-            font-size: clamp(1rem, 3.5vmin, 2rem);
+            font-size: clamp(0.85rem, 2.6vmin, 1.5rem);
         }
-
+        
         .key-enter.active, .key-enter:active {
             box-shadow: 0 0px 0px #b3e0ff;
         }
 
-        /* 下一題按鈕區域 (與鍵盤維持完全一致的自適應尺寸) */
+        /* 下一題按鈕區域 (與縮小後的鍵盤維持完全一致的自適應尺寸) */
         #next-btn-area {
-            width: min(85vw, 420px);
-            height: 40vh;
-            max-height: 340px;
-            min-height: 200px;
+            width: min(65vw, 315px);
+            height: 30vh;
+            max-height: 255px;
+            min-height: 150px;
             display: none;
             justify-content: center;
             align-items: center;
@@ -455,14 +455,14 @@
 
         #next-btn {
             width: 90%;
-            height: clamp(60px, 11vh, 95px);
+            height: clamp(50px, 9vh, 75px);
             background-color: var(--success-color);
-            border: 4px solid var(--secondary-color);
-            border-radius: 20px;
-            font-size: clamp(1.5rem, 5vmin, 3rem);
+            border: 3px solid var(--secondary-color);
+            border-radius: 16px;
+            font-size: clamp(1.2rem, 3.8vmin, 2.2rem);
             font-weight: bold;
             color: var(--text-color);
-            box-shadow: 0 8px 0px #9acfb9;
+            box-shadow: 0 6px 0px #9acfb9;
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
             font-family: inherit;
@@ -472,7 +472,7 @@
         }
 
         #next-btn.active, #next-btn:active {
-            transform: translateY(8px);
+            transform: translateY(6px);
             box-shadow: 0 0px 0px #9acfb9;
             background-color: #a3d9c5;
         }
