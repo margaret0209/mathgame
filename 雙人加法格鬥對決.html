@@ -6,16 +6,15 @@
     <title>雙人加法格鬥對決 (Math Combat Showdown)</title>
     <style>
         :root {
-            --bg-color: #12131a;
+            --bg-color: #0b0c14;
             --panel-p1: #1a2238;
             --panel-p2: #381a1f;
-            --accent-p1: #3498db;
-            --accent-p2: #e74c3c;
+            --accent-p1: #2980b9;
+            --accent-p2: #c0392b;
             --hp-green: #2ecc71;
             --hp-yellow: #f1c40f;
             --hp-red: #e74c3c;
             --energy-gold: #f39c12;
-            --energy-super: #9b59b6;
             --text-dark: #222222;
             --carry-bg: #ffeaa7;
             --active-border: #ff7675;
@@ -43,40 +42,41 @@
             flex-direction: column;
         }
 
-        /* 頂部設定列 - 緊湊高度以留出更多舞台空間 */
+        /* 頂部控制列 */
         #top-bar {
-            background-color: rgba(20, 20, 30, 0.95);
-            padding: 4px 14px;
+            background-color: rgba(14, 16, 26, 0.95);
+            padding: 4px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+            border-bottom: 2px solid #2f3640;
             z-index: 100;
             flex-shrink: 0;
-            height: 42px;
+            height: 38px;
         }
 
         .logo {
             font-size: 1.05rem;
-            font-weight: bold;
+            font-weight: 900;
             color: #f1c40f;
             display: flex;
             align-items: center;
             gap: 6px;
-            text-shadow: 0 0 10px rgba(241, 196, 15, 0.4);
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
         }
 
         .battle-rules-tip {
-            font-size: 0.78rem;
-            color: #a4b0be;
-            background: rgba(0, 0, 0, 0.4);
-            padding: 3px 10px;
+            font-size: 0.76rem;
+            color: #bdc3c7;
+            background: rgba(0, 0, 0, 0.45);
+            padding: 2px 10px;
             border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
         }
 
         .battle-rules-tip span {
-            color: #ffeaa7;
+            color: #f39c12;
             font-weight: bold;
         }
 
@@ -92,16 +92,16 @@
             gap: 5px;
             background: rgba(255, 255, 255, 0.12);
             padding: 2px 8px;
-            border-radius: 12px;
+            border-radius: 10px;
         }
 
         .control-group label {
-            font-size: 0.78rem;
+            font-size: 0.76rem;
             font-weight: bold;
         }
 
         select {
-            font-size: 0.78rem;
+            font-size: 0.76rem;
             padding: 2px 5px;
             border-radius: 5px;
             border: none;
@@ -116,9 +116,9 @@
             color: white;
             border: none;
             padding: 4px 12px;
-            border-radius: 12px;
+            border-radius: 10px;
             font-weight: bold;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             cursor: pointer;
             box-shadow: 0 2px 6px rgba(231, 76, 60, 0.4);
             transition: transform 0.1s;
@@ -127,97 +127,151 @@
         .btn-restart:active { transform: scale(0.95); }
 
         /* ==========================================
-           格鬥舞台與血條 (Combat Arena HUD)
+           放大版大型格鬥擂台 (Enlarged Combat Arena)
            ========================================== */
         #combat-hud {
             flex-shrink: 0;
-            background: linear-gradient(180deg, #1c1e2b 0%, #11131a 100%);
-            border-bottom: 2px solid #2f3640;
-            padding: 4px 14px 2px 14px;
+            background: radial-gradient(circle at 50% 30%, #1f2738 0%, #0d101a 100%);
+            border-bottom: 3px solid #f39c12;
+            padding: 6px 16px 8px 16px;
             display: flex;
             flex-direction: column;
-            gap: 2px;
             position: relative;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.7);
+            overflow: hidden;
         }
 
+        /* 擂台霓虹聚光燈背景線 */
+        #combat-hud::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: 
+                linear-gradient(90deg, rgba(52, 152, 219, 0.12) 0%, transparent 40%, transparent 60%, rgba(231, 76, 60, 0.12) 100%),
+                radial-gradient(ellipse at 50% 100%, rgba(243, 156, 18, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* 擂台格鬥地面 */
+        .stage-floor {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 18px;
+            background: linear-gradient(to bottom, #2c3e50, #1a252f);
+            border-top: 2px solid #576574;
+            box-shadow: 0 -3px 10px rgba(0,0,0,0.5);
+            z-index: 1;
+        }
+
+        .floor-lines {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,255,255,0.06) 40px, rgba(255,255,255,0.06) 42px);
+        }
+
+        /* 血條與能量區域 - 更加厚重霸氣 */
         .hp-section {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
+            gap: 16px;
             width: 100%;
+            z-index: 5;
         }
 
         .fighter-hp-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 3px;
         }
 
         .fighter-info-row {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            font-size: 0.82rem;
-            font-weight: bold;
+            font-size: 0.88rem;
+            font-weight: 900;
+            letter-spacing: 0.5px;
         }
 
-        .fighter-p1-label { color: #54a0ff; }
-        .fighter-p2-label { color: #ff6b6b; }
+        .fighter-p1-label {
+            color: #54a0ff;
+            text-shadow: 0 0 10px rgba(84, 160, 255, 0.6);
+        }
+        .fighter-p2-label {
+            color: #ff6b6b;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.6);
+        }
 
         .hp-bar-bg {
-            height: 15px;
-            background-color: #2f3542;
-            border-radius: 8px;
+            height: 18px;
+            background-color: #1e272e;
+            border-radius: 9px;
             overflow: hidden;
-            border: 2px solid #57606f;
+            border: 2px solid #718093;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5);
             position: relative;
         }
 
         .hp-bar-fill {
             height: 100%;
             width: 100%;
-            background-color: var(--hp-green);
-            transition: width 0.4s ease-out, background-color 0.3s;
+            background: linear-gradient(180deg, #2ed573 0%, #10ac84 100%);
+            box-shadow: 0 0 10px rgba(46, 213, 115, 0.6);
+            transition: width 0.35s cubic-bezier(0.25, 1, 0.5, 1), background 0.3s;
         }
 
         .p2-hp-fill { float: right; }
 
         .energy-bar-bg {
-            height: 6px;
-            background: #2f3542;
-            border-radius: 3px;
+            height: 7px;
+            background: #1e272e;
+            border-radius: 4px;
             overflow: hidden;
-            border: 1px solid #747d8c;
+            border: 1px solid #576574;
         }
 
         .energy-bar-fill {
             height: 100%;
             width: 0%;
             background: linear-gradient(90deg, #f1c40f, #e67e22);
+            box-shadow: 0 0 6px rgba(241, 196, 15, 0.6);
             transition: width 0.3s;
         }
 
         .vs-badge {
-            font-size: 1.05rem;
+            font-size: 1.35rem;
             font-weight: 900;
             font-style: italic;
             color: #f1c40f;
-            text-shadow: 0 0 8px rgba(241, 196, 15, 0.7);
+            text-shadow: 0 0 12px rgba(241, 196, 15, 0.8), 0 0 20px #e67e22;
             flex-shrink: 0;
-            padding: 0 6px;
+            padding: 0 4px;
+            animation: pulse-vs 1.2s infinite alternate ease-in-out;
         }
 
-        /* 戰鬥角色擂台展示區 - 輕量高度 */
+        @keyframes pulse-vs {
+            0% { transform: scale(0.95); }
+            100% { transform: scale(1.1); filter: brightness(1.2); }
+        }
+
+        /* ==========================================
+           放大格鬥舞台角色區 (Big Fighter Arena Stage)
+           ========================================== */
         .fighters-stage {
-            height: 58px;
+            height: clamp(86px, 14.5vh, 125px); /* 大幅增加擂台高度 */
             width: 100%;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            padding: 0 35px;
+            padding: 0 clamp(35px, 8vw, 90px);
             position: relative;
+            z-index: 5;
+            margin-bottom: 2px;
         }
 
         .fighter-avatar-wrap {
@@ -225,112 +279,212 @@
             flex-direction: column;
             align-items: center;
             position: relative;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 10;
+            transition: transform 0.15s ease-out;
         }
 
+        /* 角色本體放大 */
         .fighter-char {
-            font-size: 2.2rem;
-            filter: drop-shadow(0 3px 5px rgba(0,0,0,0.6));
+            font-size: clamp(3.2rem, 5.5vw, 4.4rem); /* 角色巨型化 */
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.8));
             position: relative;
             line-height: 1;
+            transition: transform 0.12s;
+        }
+
+        .fighter-shadow {
+            width: clamp(40px, 5vw, 65px);
+            height: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 50%;
+            margin-top: -4px;
+            filter: blur(2px);
         }
 
         .fighter-tag-name {
-            font-size: 0.7rem;
-            font-weight: bold;
-            padding: 1px 6px;
-            border-radius: 5px;
+            font-size: 0.72rem;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 8px;
+            margin-top: 3px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.6);
         }
 
-        .tag-p1-bg { background: #2e86de; color: #fff; }
-        .tag-p2-bg { background: #ee5253; color: #fff; }
+        .tag-p1-bg {
+            background: linear-gradient(135deg, #2e86de, #0984e3);
+            border: 1px solid #74b9ff;
+            color: #fff;
+        }
+        .tag-p2-bg {
+            background: linear-gradient(135deg, #ee5253, #d63031);
+            border: 1px solid #ff7675;
+            color: #fff;
+        }
 
-        /* 浮動傷害數字飄字 */
+        /* ==========================================
+           炫麗震撼打擊特效 (Visual FX & Animations)
+           ========================================== */
+        
+        /* 1. 浮動傷害數字 - 街機打擊字型 */
         .damage-popup {
             position: absolute;
-            top: -20px;
-            font-size: 1.15rem;
+            top: -24px;
+            font-size: 1.55rem;
             font-weight: 900;
             color: #ff4757;
-            text-shadow: 0 0 5px #000, 0 0 8px #ff4757;
+            text-shadow: 0 0 6px #000, 0 0 12px #ff4757, 0 0 20px #e74c3c;
             opacity: 0;
             pointer-events: none;
-            transition: transform 0.6s ease-out, opacity 0.6s ease-out;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease-out;
             white-space: nowrap;
+            z-index: 100;
         }
 
         .damage-popup.crit {
-            color: #ffd32a;
-            font-size: 1.35rem;
-            text-shadow: 0 0 8px #000, 0 0 10px #ff3f34;
+            color: #f1c40f;
+            font-size: 2rem;
+            text-shadow: 0 0 8px #000, 0 0 15px #f39c12, 0 0 28px #e67e22;
+        }
+
+        .damage-popup.super {
+            color: #a55eea;
+            font-size: 2.3rem;
+            text-shadow: 0 0 10px #000, 0 0 20px #8854d0, 0 0 35px #3867d6;
         }
 
         .damage-popup.show {
-            transform: translateY(-22px) scale(1.15);
+            transform: translateY(-38px) scale(1.2);
             opacity: 1;
         }
 
-        /* 攻擊與受擊動畫 */
-        @keyframes punch-p1 {
+        /* 2. 出拳突進攻擊動作 */
+        @keyframes dash-punch-p1 {
             0% { transform: translateX(0) scale(1); }
-            40% { transform: translateX(45px) scale(1.12) rotate(4deg); }
+            35% { transform: translateX(clamp(50px, 10vw, 110px)) scale(1.25) rotate(8deg); }
             100% { transform: translateX(0) scale(1); }
         }
 
-        @keyframes punch-p2 {
+        @keyframes dash-punch-p2 {
             0% { transform: translateX(0) scale(1); }
-            40% { transform: translateX(-45px) scale(1.12) rotate(-4deg); }
+            35% { transform: translateX(calc(-1 * clamp(50px, 10vw, 110px))) scale(1.25) rotate(-8deg); }
             100% { transform: translateX(0) scale(1); }
         }
 
-        @keyframes hit-shake {
-            0%, 100% { transform: translateX(0); filter: brightness(1); }
-            20% { transform: translateX(-8px); filter: brightness(2) saturate(1.8); }
-            40% { transform: translateX(8px); }
-            60% { transform: translateX(-5px); }
-            80% { transform: translateX(5px); }
+        .char-dash-p1 { animation: dash-punch-p1 0.36s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+        .char-dash-p2 { animation: dash-punch-p2 0.36s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+
+        /* 3. 被打擊爆裂擊退與受傷硬直 */
+        @keyframes hit-knockback-p1 {
+            0% { transform: translateX(0); filter: brightness(1); }
+            20% { transform: translateX(-24px) scale(0.92) rotate(-10deg); filter: brightness(2.6) saturate(2); }
+            45% { transform: translateX(12px) rotate(4deg); }
+            70% { transform: translateX(-6px); }
+            100% { transform: translateX(0); filter: brightness(1); }
         }
 
-        .char-punch-p1 { animation: punch-p1 0.35s ease-out; }
-        .char-punch-p2 { animation: punch-p2 0.35s ease-out; }
-        .char-hit { animation: hit-shake 0.4s ease-in-out; }
+        @keyframes hit-knockback-p2 {
+            0% { transform: translateX(0); filter: brightness(1); }
+            20% { transform: translateX(24px) scale(0.92) rotate(10deg); filter: brightness(2.6) saturate(2); }
+            45% { transform: translateX(-12px) rotate(-4deg); }
+            70% { transform: translateX(6px); }
+            100% { transform: translateX(0); filter: brightness(1); }
+        }
 
-        /* 特效能量波動球 */
-        .projectile {
+        .char-hit-p1 { animation: hit-knockback-p1 0.42s ease-out; }
+        .char-hit-p2 { animation: hit-knockback-p2 0.42s ease-out; }
+
+        /* 4. 巨大能量波動球 (Giant Fireball / Energy Wave) */
+        .energy-wave {
             position: absolute;
-            top: 25%;
-            width: 20px;
-            height: 20px;
+            bottom: 22px;
+            width: clamp(34px, 4.5vw, 55px);
+            height: clamp(34px, 4.5vw, 55px);
             border-radius: 50%;
             opacity: 0;
             pointer-events: none;
-            z-index: 50;
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .projectile.blue {
-            background: radial-gradient(circle, #fff, #54a0ff, #2e86de);
-            box-shadow: 0 0 14px #54a0ff;
+        .energy-wave.blue {
+            background: radial-gradient(circle, #ffffff 10%, #70a1ff 40%, #1e90ff 70%, transparent 100%);
+            box-shadow: 0 0 25px #00d2d3, 0 0 45px #2e86de, inset 0 0 15px #fff;
         }
 
-        .projectile.red {
-            background: radial-gradient(circle, #fff, #ff6b6b, #ee5253);
-            box-shadow: 0 0 14px #ff6b6b;
+        .energy-wave.red {
+            background: radial-gradient(circle, #ffffff 10%, #ff7675 40%, #d63031 70%, transparent 100%);
+            box-shadow: 0 0 25px #ff4757, 0 0 45px #ee5253, inset 0 0 15px #fff;
         }
 
-        @keyframes shoot-left-to-right {
-            0% { left: 75px; opacity: 1; transform: scale(0.6); }
-            80% { left: calc(100% - 90px); opacity: 1; transform: scale(1.2); }
-            100% { left: calc(100% - 60px); opacity: 0; transform: scale(1.6); }
+        .energy-wave.super-wave {
+            width: clamp(52px, 7vw, 85px) !important;
+            height: clamp(52px, 7vw, 85px) !important;
+            box-shadow: 0 0 40px #f1c40f, 0 0 65px #e056fd, inset 0 0 25px #ffffff !important;
         }
 
-        @keyframes shoot-right-to-left {
-            0% { right: 75px; opacity: 1; transform: scale(0.6); }
-            80% { right: calc(100% - 90px); opacity: 1; transform: scale(1.2); }
-            100% { right: calc(100% - 60px); opacity: 0; transform: scale(1.6); }
+        @keyframes wave-fly-p1 {
+            0% { left: 90px; opacity: 1; transform: scale(0.6) rotate(0deg); }
+            85% { left: calc(100% - 110px); opacity: 1; transform: scale(1.3) rotate(360deg); }
+            100% { left: calc(100% - 75px); opacity: 0; transform: scale(1.8) rotate(540deg); }
         }
 
-        .shoot-p1 { animation: shoot-left-to-right 0.35s linear forwards; }
-        .shoot-p2 { animation: shoot-right-to-left 0.35s linear forwards; }
+        @keyframes wave-fly-p2 {
+            0% { right: 90px; opacity: 1; transform: scale(0.6) rotate(0deg); }
+            85% { right: calc(100% - 110px); opacity: 1; transform: scale(1.3) rotate(-360deg); }
+            100% { right: calc(100% - 75px); opacity: 0; transform: scale(1.8) rotate(-540deg); }
+        }
+
+        .wave-shoot-p1 { animation: wave-fly-p1 0.36s cubic-bezier(0.2, 0.7, 0.4, 1) forwards; }
+        .wave-shoot-p2 { animation: wave-fly-p2 0.36s cubic-bezier(0.2, 0.7, 0.4, 1) forwards; }
+
+        /* 5. 命中爆裂光芒火花 (Hit Sparks & Blast Impact) */
+        .hit-impact-spark {
+            position: absolute;
+            top: 40%;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ffffff, #ffeaa7 40%, rgba(255, 71, 87, 0.8) 70%, transparent 100%);
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 60;
+            box-shadow: 0 0 35px #fff, 0 0 60px #f1c40f;
+        }
+
+        @keyframes spark-burst {
+            0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; filter: brightness(2); }
+            100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+        }
+
+        .spark-active { animation: spark-burst 0.32s ease-out forwards; }
+
+        /* 整個擂台震撼震動 */
+        @keyframes arena-shake {
+            0%, 100% { transform: translateY(0); }
+            15% { transform: translateY(-7px) translateX(5px); }
+            35% { transform: translateY(6px) translateX(-5px); }
+            55% { transform: translateY(-4px) translateX(3px); }
+            75% { transform: translateY(3px) translateX(-2px); }
+        }
+
+        .arena-vibrating { animation: arena-shake 0.35s ease-out; }
+
+        /* 全螢幕大招閃白特效 */
+        .screen-flash {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 200;
+            transition: opacity 0.1s ease-in;
+        }
+        .screen-flash.active { opacity: 0.55; }
 
         /* ==========================================
            主答題區佈局：左玩家 | 右玩家
@@ -339,7 +493,7 @@
             flex: 1;
             display: flex;
             flex-direction: row;
-            padding: 8px 12px;
+            padding: 6px 12px;
             gap: 12px;
             overflow: hidden;
             min-height: 0;
@@ -354,14 +508,14 @@
             flex-direction: column;
             padding: 8px 12px 6px 12px;
             position: relative;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
             border: 4px solid;
             min-width: 0;
             min-height: 0;
         }
 
-        #panel-1 { border-color: var(--accent-p1); background: #fdfefe; }
-        #panel-2 { border-color: var(--accent-p2); background: #fdfefe; }
+        #panel-1 { border-color: var(--accent-p1); background: #fbfdff; }
+        #panel-2 { border-color: var(--accent-p2); background: #fffbfc; }
 
         .player-header {
             display: flex;
@@ -375,7 +529,7 @@
 
         .player-title {
             font-size: 1.02rem;
-            font-weight: bold;
+            font-weight: 900;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -394,13 +548,13 @@
         .combo-badge.active {
             background: #ffeaa7;
             color: #d35400;
-            box-shadow: 0 0 6px rgba(243, 156, 18, 0.4);
+            box-shadow: 0 0 6px rgba(243, 156, 18, 0.5);
         }
 
         .combo-badge.super {
             background: #e2d1f9;
             color: #8e44ad;
-            box-shadow: 0 0 8px rgba(142, 68, 173, 0.5);
+            box-shadow: 0 0 10px rgba(142, 68, 173, 0.6);
         }
 
         .player-timer {
@@ -416,49 +570,47 @@
         .player-timer.slow { background: #fdf2e9; color: #d35400; }
 
         /* ==========================================
-           自適應核心：直式加法放大 + 鍵盤緊靠在右
+           直式自適應放大 + 縮小數字鍵盤緊靠在右
            ========================================== */
         .math-section {
             flex: 1;
             display: flex;
             flex-direction: row;
-            justify-content: center; /* 緊靠置中對齊 */
+            justify-content: center;
             align-items: center;
-            gap: clamp(10px, 2.5vw, 24px); /* 控制直式與小鍵盤間距，靠得更近 */
+            gap: clamp(8px, 2.2vw, 22px);
             min-height: 0;
             padding: 2px 0;
             overflow: hidden;
         }
 
-        /* 左邊直式容器：自適應放大，佔據主要視野 */
         .math-column-wrap {
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            flex: 0 1 auto; /* 依據內容自然展開並靠攏 */
+            flex: 0 1 auto;
             min-width: 0;
         }
 
-        /* 直式計算網格 */
         .math-grid {
             display: flex;
             flex-direction: column;
-            gap: clamp(1px, 0.6vh, 4px);
+            gap: clamp(1px, 0.5vh, 4px);
             align-items: flex-end;
         }
 
         .math-row {
             display: flex;
-            gap: clamp(4px, 1vw, 8px);
+            gap: clamp(4px, 0.9vw, 8px);
             justify-content: flex-end;
             width: 100%;
         }
 
-        /* 自適應放大直式格子：使用 clamp() 支援各尺寸螢幕 */
+        /* 放大直式單元格 */
         .math-cell {
-            width: clamp(48px, 5.2vw, 68px);
-            height: clamp(48px, 6.2vh, 68px);
+            width: clamp(46px, 5.2vw, 68px);
+            height: clamp(46px, 6vh, 66px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -470,9 +622,9 @@
         }
 
         .header-cell {
-            font-size: clamp(0.95rem, 1.4vw, 1.25rem);
+            font-size: clamp(0.92rem, 1.4vw, 1.25rem);
             color: #7f8c8d;
-            height: clamp(20px, 2.8vh, 28px);
+            height: clamp(20px, 2.7vh, 28px);
             font-weight: bold;
         }
 
@@ -487,15 +639,15 @@
             width: 100%;
         }
 
-        /* 進位按鈕：清晰微調 */
+        /* 進位按鈕 */
         .carry-btn {
             background-color: #f1f2f6;
             border: 2px dashed #a4b0be;
             color: #747d8c;
-            font-size: clamp(0.75rem, 1vw, 0.95rem);
+            font-size: clamp(0.72rem, 1vw, 0.92rem);
             border-radius: 50%;
-            width: clamp(38px, 4.4vw, 54px);
-            height: clamp(38px, 4.4vw, 54px);
+            width: clamp(36px, 4.3vw, 52px);
+            height: clamp(36px, 4.3vw, 52px);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -508,7 +660,7 @@
             background-color: var(--carry-bg);
             border: 2px solid #e67e22;
             color: #d35400;
-            font-size: clamp(1.4rem, 2.2vw, 1.9rem);
+            font-size: clamp(1.35rem, 2.2vw, 1.85rem);
         }
 
         /* 答案輸入方格 */
@@ -542,14 +694,12 @@
             color: var(--correct-color) !important;
         }
 
-        /* ==========================================
-           右邊緊靠的數字小鍵盤：按需縮小、更精緻
-           ========================================== */
+        /* 緊湊精緻的右側數字鍵盤 */
         .numpad {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: clamp(3px, 0.6vw, 6px);
-            width: clamp(118px, 14vw, 150px); /* 縮小寬度，精緻緊湊 */
+            gap: clamp(3px, 0.5vw, 6px);
+            width: clamp(115px, 13.5vw, 148px);
             flex-shrink: 0;
         }
 
@@ -557,8 +707,8 @@
             background-color: #e2d1f9;
             border: 1.5px solid #b898eb;
             border-radius: 7px;
-            height: clamp(32px, 4.4vh, 44px); /* 縮減鍵盤單元高度 */
-            font-size: clamp(1.1rem, 1.7vw, 1.45rem);
+            height: clamp(30px, 4.2vh, 42px);
+            font-size: clamp(1.05rem, 1.6vw, 1.4rem);
             font-weight: bold;
             color: #2d3436;
             box-shadow: 0 2px 0 #b898eb;
@@ -578,7 +728,7 @@
             background-color: #ffb7b2;
             border-color: #f7908a;
             box-shadow: 0 2px 0 #f7908a;
-            font-size: clamp(0.85rem, 1.1vw, 1rem);
+            font-size: clamp(0.82rem, 1.1vw, 0.98rem);
         }
 
         .numpad-btn.btn-submit-key {
@@ -587,6 +737,7 @@
             color: white;
             box-shadow: 0 2px 0 #1b8a49;
             font-size: clamp(0.85rem, 1.1vw, 1rem);
+            letter-spacing: 0.5px;
         }
 
         .numpad-btn.btn-retry-mode {
@@ -602,7 +753,6 @@
             font-size: clamp(0.8rem, 1vw, 0.92rem) !important;
         }
 
-        /* 底部提示狀態列 */
         .action-area {
             width: 100%;
             display: flex;
@@ -621,7 +771,6 @@
             text-align: center;
         }
 
-        /* 答錯晃動反饋 */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             20%, 60% { transform: translateX(-6px); }
@@ -629,7 +778,7 @@
         }
         .shake { animation: shake 0.4s; }
 
-        /* 獲勝全螢幕覆蓋 */
+        /* 獲勝結算彈窗 */
         .win-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -652,39 +801,37 @@
         }
 
         .ko-banner {
-            font-size: clamp(3.5rem, 8vw, 5.5rem);
+            font-size: clamp(3.8rem, 8.5vw, 6rem);
             font-weight: 900;
             font-style: italic;
             color: #ff4757;
-            text-shadow: 0 0 20px #ff4757, 0 0 40px #ff6b81;
+            text-shadow: 0 0 20px #ff4757, 0 0 45px #ff6b81;
             animation: bounce 0.6s infinite alternate ease-in-out;
             margin-bottom: 8px;
         }
 
         @keyframes bounce {
             0% { transform: scale(1); }
-            100% { transform: scale(1.1); }
+            100% { transform: scale(1.12); }
         }
 
         .win-desc {
-            font-size: clamp(1.5rem, 3.2vw, 2.4rem);
+            font-size: clamp(1.6rem, 3.4vw, 2.5rem);
             font-weight: bold;
             color: #ffeaa7;
             margin-bottom: 6px;
         }
 
         .win-sub {
-            font-size: clamp(0.95rem, 1.8vw, 1.2rem);
+            font-size: clamp(0.95rem, 1.8vw, 1.25rem);
             color: #ced6e0;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
 
-        /* 螢幕適配優化 */
         @media (max-width: 900px) {
-            #game-stage { gap: 8px; padding: 6px 8px; }
+            #game-stage { gap: 8px; padding: 4px 6px; }
             .player-panel { padding: 6px 8px; }
-            .fighters-stage { height: 48px; padding: 0 16px; }
-            .fighter-char { font-size: 1.8rem; }
+            .fighters-stage { padding: 0 20px; }
         }
     </style>
 </head>
@@ -693,7 +840,7 @@
     <div id="top-bar">
         <div class="logo">🥊 雙人加法格鬥對決</div>
         <div class="battle-rules-tip">
-            擊破血條獲勝！⚡ 5秒速答 <span>+5 傷害</span> | 🔥 2連擊 <span>暴擊</span> | 💥 3連擊 <span>大招</span>
+            擊破血條獲勝！⚡ 5秒速答 <span>+5 傷害</span> | 🔥 2連擊 <span>暴擊</span> | 💥 3連擊 <span>終極大招</span>
         </div>
         <div class="controls">
             <div class="control-group">
@@ -709,8 +856,10 @@
         </div>
     </div>
 
-    <!-- 頂部格鬥擂台 HUD：血條、能量與打鬥動畫 -->
+    <!-- 頂部放大版格鬥擂台 HUD：血條、能量與打鬥動畫 -->
     <div id="combat-hud">
+        <div class="screen-flash" id="screen-flash"></div>
+
         <div class="hp-section">
             <!-- 玩家 1 血條 -->
             <div class="fighter-hp-container">
@@ -743,23 +892,33 @@
             </div>
         </div>
 
-        <!-- 角色動畫對決舞台 -->
+        <!-- 角色動畫對決舞台 (大幅增高與放大) -->
         <div class="fighters-stage">
+            <div class="stage-floor">
+                <div class="floor-lines"></div>
+            </div>
+
             <!-- 藍方拳手 -->
             <div class="fighter-avatar-wrap" id="fighter-wrap-1">
                 <div class="damage-popup" id="damage-popup-1">-20</div>
                 <div class="fighter-char" id="char-1">🥋</div>
+                <div class="fighter-shadow"></div>
                 <div class="fighter-tag-name tag-p1-bg">P1 藍拳士</div>
             </div>
 
-            <!-- 飛行攻擊能量彈 -->
-            <div class="projectile blue" id="bullet-1"></div>
-            <div class="projectile red" id="bullet-2"></div>
+            <!-- 攻擊視覺化粒子彈 / 能量波 -->
+            <div class="energy-wave blue" id="bullet-1"></div>
+            <div class="energy-wave red" id="bullet-2"></div>
+
+            <!-- 命中爆炸火花 -->
+            <div class="hit-impact-spark" id="spark-1" style="left: 18%;"></div>
+            <div class="hit-impact-spark" id="spark-2" style="left: 82%;"></div>
 
             <!-- 紅方拳手 -->
             <div class="fighter-avatar-wrap" id="fighter-wrap-2">
                 <div class="damage-popup" id="damage-popup-2">-20</div>
                 <div class="fighter-char" id="char-2">🥊</div>
+                <div class="fighter-shadow"></div>
                 <div class="fighter-tag-name tag-p2-bg">P2 紅鬥士</div>
             </div>
         </div>
@@ -844,18 +1003,22 @@
 
         const Sound = {
             click: () => playTone(480, 'sine', 0.06),
+            whoosh: () => {
+                playTone(320, 'sine', 0.1);
+                setTimeout(() => playTone(180, 'sawtooth', 0.12), 40);
+            },
             hit: () => {
-                playTone(160, 'sawtooth', 0.18);
-                setTimeout(() => playTone(120, 'square', 0.15), 50);
+                playTone(160, 'sawtooth', 0.2);
+                setTimeout(() => playTone(110, 'square', 0.16), 40);
             },
             crit: () => {
                 playTone(280, 'sawtooth', 0.12);
-                setTimeout(() => playTone(450, 'triangle', 0.15), 70);
-                setTimeout(() => playTone(700, 'sine', 0.22), 140);
+                setTimeout(() => playTone(450, 'triangle', 0.16), 70);
+                setTimeout(() => playTone(720, 'sine', 0.25), 140);
             },
             superHit: () => {
-                [200, 350, 520, 780, 1040].forEach((f, idx) => {
-                    setTimeout(() => playTone(f, 'sawtooth', 0.18), idx * 60);
+                [180, 320, 500, 750, 1050].forEach((f, idx) => {
+                    setTimeout(() => playTone(f, 'sawtooth', 0.22), idx * 60);
                 });
             },
             wrong: () => playTone(150, 'sawtooth', 0.35),
@@ -1157,17 +1320,6 @@
             }
 
             submitAndVerify() {
-                let missing = false;
-                for (let i = 0; i < matchConfig.level; i++) {
-                    if (this.answers[i] === null || this.answers[i] === undefined) {
-                        missing = true;
-                    }
-                }
-                if (missing) {
-                    alert(`玩家 ${this.id}：請先填妥所有答案方格！`);
-                    return;
-                }
-
                 let correctCarries = Array(matchConfig.level + 1).fill(0);
                 let correctDigits = Array(matchConfig.level).fill(0);
                 let cTemp = 0;
@@ -1183,8 +1335,9 @@
                 this.ansErrors = Array(matchConfig.level).fill(false);
                 this.carryErrors = Array(matchConfig.level + 1).fill(false);
 
+                // 未填妥或填錯一律判定答錯，不彈提示
                 for (let i = 0; i < matchConfig.level; i++) {
-                    if (this.answers[i] !== correctDigits[i]) {
+                    if (this.answers[i] === null || this.answers[i] === undefined || this.answers[i] !== correctDigits[i]) {
                         this.ansErrors[i] = true;
                         hasError = true;
                     }
@@ -1195,7 +1348,7 @@
                 }
 
                 if (!hasError) {
-                    // 答對，發動格鬥攻擊
+                    // 答對，發動震撼格鬥攻擊
                     this.stopTimer();
                     this.combo++;
                     this.updateComboUI();
@@ -1204,12 +1357,12 @@
                     let isCrit = false;
                     let isSuper = false;
 
-                    // 速度加成
+                    // 5秒速答加成
                     if (this.elapsedSeconds <= 5.0) {
                         damage += matchConfig.speedBonusDamage;
                     }
 
-                    // 連擊觸發暴擊與大招
+                    // 連擊觸發暴擊與終極大招
                     if (this.combo >= 3) {
                         damage = Math.round(damage * 2.2);
                         isSuper = true;
@@ -1220,16 +1373,16 @@
 
                     executeAttack(this.id, this.opponentId, damage, isCrit, isSuper);
 
-                    let attackMsg = isSuper ? "💥 釋放終極大招！" : (isCrit ? "🔥 觸發暴擊！" : "🥊 發動精準打擊！");
-                    if (this.elapsedSeconds <= 5.0) attackMsg += " (速答加成)";
+                    let attackMsg = isSuper ? "💥 釋放終極大招！" : (isCrit ? "🔥 觸發暴擊打擊！" : "🥊 發動精準攻擊！");
+                    if (this.elapsedSeconds <= 5.0) attackMsg += " ⚡速答加成";
                     this.chanceEl.textContent = attackMsg;
 
                     if (this.submitBtn) this.submitBtn.classList.add('disabled');
                     setTimeout(() => {
                         if (!isGameOver) this.generateNewQuestion();
-                    }, 1100);
+                    }, 1200);
                 } else {
-                    // 答錯，中斷連擊
+                    // 答錯，連擊中斷
                     Sound.wrong();
                     this.combo = 0;
                     this.updateComboUI();
@@ -1295,40 +1448,74 @@
 
         let players = [];
 
+        // 升級版：高度視覺化攻擊演出
         function executeAttack(attackerId, defenderId, damage, isCrit, isSuper) {
             const attackerWrap = document.getElementById(`fighter-wrap-${attackerId}`);
             const defenderWrap = document.getElementById(`fighter-wrap-${defenderId}`);
             const defenderObj = players[defenderId - 1];
             const bullet = document.getElementById(`bullet-${attackerId}`);
             const damagePopup = document.getElementById(`damage-popup-${defenderId}`);
+            const spark = document.getElementById(`spark-${defenderId}`);
+            const combatHud = document.getElementById('combat-hud');
+            const flash = document.getElementById('screen-flash');
 
-            attackerWrap.classList.add(attackerId === 1 ? 'char-punch-p1' : 'char-punch-p2');
-            bullet.className = `projectile ${attackerId === 1 ? 'blue shoot-p1' : 'red shoot-p2'}`;
+            // 1. 角色突進動作 + 破空音效
+            Sound.whoosh();
+            attackerWrap.classList.add(attackerId === 1 ? 'char-dash-p1' : 'char-dash-p2');
 
+            // 2. 發射巨大能量波
+            let bulletClass = `energy-wave ${attackerId === 1 ? 'blue wave-shoot-p1' : 'red wave-shoot-p2'}`;
+            if (isSuper) bulletClass += ' super-wave';
+            bullet.className = bulletClass;
+
+            // 3. 終極大招全螢幕閃光
+            if (isSuper) {
+                flash.classList.add('active');
+                setTimeout(() => flash.classList.remove('active'), 120);
+            }
+
+            // 4. 擊中打擊點
             setTimeout(() => {
-                attackerWrap.classList.remove('char-punch-p1', 'char-punch-p2');
-                bullet.className = `projectile ${attackerId === 1 ? 'blue' : 'red'}`;
+                attackerWrap.classList.remove('char-dash-p1', 'char-dash-p2');
+                bullet.className = `energy-wave ${attackerId === 1 ? 'blue' : 'red'}`;
 
+                // 播放對應打擊音效
                 if (isSuper) Sound.superHit();
                 else if (isCrit) Sound.crit();
                 else Sound.hit();
 
-                defenderWrap.classList.add('char-hit');
-                setTimeout(() => defenderWrap.classList.remove('char-hit'), 400);
+                // 擂台震動
+                combatHud.classList.add('arena-vibrating');
+                setTimeout(() => combatHud.classList.remove('arena-vibrating'), 350);
 
+                // 受害者被擊退硬直動畫
+                defenderWrap.classList.add(defenderId === 1 ? 'char-hit-p1' : 'char-hit-p2');
+                setTimeout(() => defenderWrap.classList.remove('char-hit-p1', 'char-hit-p2'), 420);
+
+                // 爆裂火花光芒
+                spark.classList.add('spark-active');
+                setTimeout(() => spark.classList.remove('spark-active'), 320);
+
+                // 扣減血量
                 defenderObj.hp = Math.max(0, defenderObj.hp - damage);
                 updateHpUI(defenderObj);
 
-                damagePopup.textContent = `-${damage}` + (isSuper ? " SUPER!" : (isCrit ? " CRIT!" : ""));
-                damagePopup.className = `damage-popup ${isCrit || isSuper ? 'crit' : ''} show`;
+                // 飄浮傷害數字
+                let popupText = `-${damage}`;
+                if (isSuper) popupText += " 💥SUPER!";
+                else if (isCrit) popupText += " 🔥CRIT!";
+
+                damagePopup.textContent = popupText;
+                damagePopup.className = `damage-popup ${isSuper ? 'super' : (isCrit ? 'crit' : '')} show`;
                 setTimeout(() => {
                     damagePopup.className = 'damage-popup';
-                }, 700);
+                }, 750);
 
+                // 判定 KO
                 if (defenderObj.hp <= 0 && !isGameOver) {
                     isGameOver = true;
                     Sound.win();
-                    setTimeout(() => declareWinner(attackerId), 400);
+                    setTimeout(() => declareWinner(attackerId), 450);
                 }
             }, 300);
         }
@@ -1339,11 +1526,14 @@
             player.hpTextEl.textContent = `${player.hp} / ${matchConfig.maxHp}`;
 
             if (percentage <= 25) {
-                player.hpFillEl.style.backgroundColor = 'var(--hp-red)';
+                player.hpFillEl.style.background = 'linear-gradient(180deg, #ff4757 0%, #c0392b 100%)';
+                player.hpFillEl.style.boxShadow = '0 0 10px rgba(255, 71, 87, 0.8)';
             } else if (percentage <= 55) {
-                player.hpFillEl.style.backgroundColor = 'var(--hp-yellow)';
+                player.hpFillEl.style.background = 'linear-gradient(180deg, #f1c40f 0%, #d35400 100%)';
+                player.hpFillEl.style.boxShadow = '0 0 10px rgba(241, 196, 15, 0.8)';
             } else {
-                player.hpFillEl.style.backgroundColor = 'var(--hp-green)';
+                player.hpFillEl.style.background = 'linear-gradient(180deg, #2ed573 0%, #10ac84 100%)';
+                player.hpFillEl.style.boxShadow = '0 0 10px rgba(46, 213, 115, 0.6)';
             }
         }
 
@@ -1354,7 +1544,7 @@
 
             const winnerColor = winnerId === 1 ? '藍方拳士' : '紅方鬥士';
             title.textContent = `🏆 玩家 ${winnerId} (${winnerColor}) 獲勝！`;
-            subtitle.textContent = `成功擊潰對手血條，取得最終格鬥優勝！`;
+            subtitle.textContent = `以精湛算術發動終結重擊，完美 K.O. 對手！`;
             overlay.classList.add('show');
         }
 
