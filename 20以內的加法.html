@@ -55,12 +55,151 @@
 
         /* [上方區域] Top Area */
         #top-area {
-            height: 10%; /* 將原本的 15% 縮小為 10% */
+            height: 10vh; /* 改用 vh 確保與畫面高度連動 */
+            min-height: 55px;
             display: flex;
             justify-content: flex-end;
-            align-items: flex-end; /* 將按鈕靠底部對齊，貼近下方題目 */
-            padding: 0 5%;
+            align-items: center;
+            padding: 0 4vw;
             z-index: 10;
+        }
+
+        /* Hint Toggle Switch Styling */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            font-size: clamp(1rem, 2.5vmin, 1.5rem); /* 自適應字體大小 */
+            font-weight: bold;
+            color: var(--text-color);
+            background: rgba(255, 255, 255, 0.7);
+            padding: 1vh 2.5vw;
+            border-radius: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .toggle-label {
+            margin-right: 12px;
+        }
+
+        /* The actual switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: clamp(50px, 7vmin, 70px);
+            height: clamp(28px, 4vmin, 38px);
+        }
+
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            border-radius: 38px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: clamp(20px, 3vmin, 30px);
+            width: clamp(20px, 3vmin, 30px);
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input:checked + .slider {
+            background-color: var(--success-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(clamp(22px, 3vmin, 32px));
+        }
+
+        /* [下方區域] Bottom Area */
+        #bottom-area {
+            height: 90vh; /* 配合上方區域改為 90vh */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly; /* 均勻分配上下空間，適應各種長寬比 */
+            align-items: center;
+            padding: 0 2vw 2vh 2vw;
+            width: 100%;
+        }
+
+        /* Problem Display Area */
+        #problem-area {
+            flex: 1; /* 自動佔據剩餘空間 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* 在可用空間內垂直置中 */
+            align-items: center;
+            width: 95%;
+            position: relative;
+            min-height: 0; /* 允許 flex 子元素在極小螢幕縮小 */
+        }
+
+        /* 提示預留空間改為相對高度 */
+        #hint-spacer {
+            height: 15vh; /* 根據螢幕高度自動縮放預留空間 */
+            max-height: 140px;
+            min-height: 65px;
+            width: 100%;
+            flex-shrink: 0;
+        }
+
+        /* Hint Containers (Absolutely positioned above numbers) */
+        .hint-container {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            opacity: 0;
+            margin-bottom: 0.8vh; /* 相對距離 */
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .hints-visible .hint-container {
+            opacity: 1;
+        }
+
+        .hint-section {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Heart SVG Styling (自適應大小) */
+        .heart {
+            width: clamp(32px, 7vmin, 60px);
+            height: clamp(32px, 7vmin, 60px);
+            fill: var(--primary-color);
+            margin: 0 2px;
+        }
+
+        /* 手指容器自適應大小 */
+        .hand-wrapper {
+            position: relative;
+            display: inline-block;
+            width: clamp(60px, 14vmin, 130px);
+            height: clamp(60px, 14vmin, 130px);
+            margin: 0 0.5vw;
         }
 
         /* Hint Toggle Switch Styling */
@@ -176,8 +315,8 @@
 
         /* Heart SVG Styling */
         .heart {
-            width: 30px;
-            height: 30px;
+            width: 55px;  /* 放大心形圖案 (原 30px) */
+            height: 55px;
             fill: var(--primary-color);
             margin: 0 2px;
         }
@@ -209,17 +348,18 @@
 
         /* Math Equation Styling */
         #equation {
-            font-size: 8vmin; /* Huge text, scales with viewport */
+            font-size: clamp(2.2rem, 9.5vmin, 6.5rem); /* 限制最小與最大字體，防止極端螢幕爆版 */
             font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: center;
             background: rgba(255, 255, 255, 0.6);
-            padding: 20px 40px;
-            border-radius: 40px;
+            padding: 2.5vh 4vw; /* 相對內距 */
+            border-radius: clamp(20px, 4vmin, 45px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            border: 4px solid var(--accent-color);
-            letter-spacing: 5px;
+            border: clamp(3px, 0.6vmin, 5px) solid var(--accent-color);
+            letter-spacing: 0.5vw;
+            max-width: 100%;
         }
 
         .num-box {
@@ -232,45 +372,46 @@
         #answer-box {
             min-width: 1.5em;
             height: 1.2em;
-            border-bottom: 4px dashed var(--text-color);
+            border-bottom: clamp(3px, 0.5vmin, 5px) dashed var(--text-color);
             display: inline-flex;
             justify-content: center;
             align-items: center;
             color: var(--primary-color);
         }
 
-        /* Keypad Area */
+        /* Keypad Area (自適應寬高) */
         #keypad-area {
-            width: 85%;
-            max-width: 400px; /* 大幅縮小鍵盤最大寬度 */
-            height: 40%; /* 確保鍵盤只佔下方區域的 40% 高度，讓題目區域更大 */
-            max-height: 320px; /* 限制絕對最大高度，避免過度拉伸 */
+            width: min(85vw, 420px); /* 在寬螢幕不超過420px，在窄螢幕佔85% */
+            height: 40vh; /* 佔螢幕高度 40% */
+            max-height: 340px;
+            min-height: 200px;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(4, 1fr);
-            gap: 10px; /* 縮小按鈕間距 */
+            gap: clamp(6px, 1.2vh, 12px);
             padding: 5px;
-            margin-bottom: 20px;
+            margin-bottom: 1vh;
+            flex-shrink: 0;
         }
 
         .key {
             background-color: var(--key-bg);
-            border: 3px solid var(--secondary-color); /* 邊線變幼 */
-            border-radius: 15px; /* 圓角變小 */
-            font-size: 5vmin; /* 字體縮小 */
+            border: clamp(2px, 0.4vmin, 3px) solid var(--secondary-color);
+            border-radius: clamp(10px, 2vmin, 18px);
+            font-size: clamp(1.3rem, 4.5vmin, 2.5rem);
             font-weight: bold;
             color: var(--text-color);
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 6px 0px #b5ead7; /* 3D效果高度降低 */
+            box-shadow: 0 clamp(4px, 0.7vh, 6px) 0px #b5ead7;
             cursor: pointer;
-            -webkit-tap-highlight-color: transparent; /* Remove default tap flash */
+            -webkit-tap-highlight-color: transparent;
         }
 
         /* Active state for keys (touch or mouse down) */
         .key.active, .key:active {
-            transform: translateY(6px); /* 按壓下沉幅度配合陰影降低 */
+            transform: translateY(clamp(4px, 0.7vh, 6px));
             box-shadow: 0 0px 0px #b5ead7;
             background-color: var(--key-active);
         }
@@ -278,9 +419,9 @@
         .key-clear {
             background-color: #ffe6e6;
             border-color: var(--error-color);
-            box-shadow: 0 6px 0px #ffb3b3;
+            box-shadow: 0 clamp(4px, 0.7vh, 6px) 0px #ffb3b3;
             color: #d65a5a;
-            font-size: 4vmin; /* 文字按鈕字體更小一些 */
+            font-size: clamp(1rem, 3.5vmin, 2rem);
         }
         
         .key-clear.active, .key-clear:active {
@@ -290,34 +431,35 @@
         .key-enter {
             background-color: #e6f7ff;
             border-color: var(--accent-color);
-            box-shadow: 0 6px 0px #b3e0ff;
+            box-shadow: 0 clamp(4px, 0.7vh, 6px) 0px #b3e0ff;
             color: #5aa1d6;
-            font-size: 4vmin; /* 文字按鈕字體更小一些 */
+            font-size: clamp(1rem, 3.5vmin, 2rem);
         }
 
         .key-enter.active, .key-enter:active {
             box-shadow: 0 0px 0px #b3e0ff;
         }
 
-        /* 下一題按鈕區域 */
+        /* 下一題按鈕區域 (與鍵盤維持完全一致的自適應尺寸) */
         #next-btn-area {
-            width: 85%;
-            max-width: 400px;
-            height: 40%;
-            max-height: 320px;
-            display: none; /* 預設隱藏，答題後由 JS 切換為 flex */
+            width: min(85vw, 420px);
+            height: 40vh;
+            max-height: 340px;
+            min-height: 200px;
+            display: none;
             justify-content: center;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 1vh;
+            flex-shrink: 0;
         }
 
         #next-btn {
             width: 90%;
-            height: 80px;
+            height: clamp(60px, 11vh, 95px);
             background-color: var(--success-color);
             border: 4px solid var(--secondary-color);
             border-radius: 20px;
-            font-size: 6vmin;
+            font-size: clamp(1.5rem, 5vmin, 3rem);
             font-weight: bold;
             color: var(--text-color);
             box-shadow: 0 8px 0px #9acfb9;
@@ -373,7 +515,7 @@
         
         /* Spacer for operator */
         .eq-op {
-            margin: 0 20px;
+            margin: 0 1.5vw; /* 相對水平間距 */
         }
 
     </style>
@@ -397,7 +539,7 @@
             
             <div id="problem-area">
                 <!-- Visual Hints Space Reserver (Keep layout stable) -->
-                <div style="min-height: 85px; width: 100%;"></div>
+                <div id="hint-spacer"></div>
 
                 <!-- Equation -->
                 <div id="equation">
@@ -488,8 +630,8 @@
             let fingerIndex = 1; 
             
             function makeHand(fingersCount) {
-                // 使用相對定位的容器包裹 SVG，方便文字疊加 (解決 iOS Safari 動畫 Bug)
-                let containerHtml = `<div style="position: relative; display: inline-block; width: 80px; height: 80px; margin: 0 5px;">`;
+                // 改用 CSS class .hand-wrapper 實現自適應縮放
+                let containerHtml = `<div class="hand-wrapper">`;
                 let svg = `<svg viewBox="0 0 100 100" class="svg-hand" style="width: 100%; height: 100%; overflow: visible;">`;
                 svg += `<rect x="20" y="50" width="60" height="40" rx="10" fill="#FFC8A2" />`; // Palm
                 
@@ -517,9 +659,12 @@
                         textOverlays += `<div id="finger-text-${fingerIndex}" class="html-float-text" style="left: ${leftPct}%; top: ${topPct}%;"></div>`;
                         fingerIndex++;
                     } else {
-                        // Folded fingers
-                        let trans = f.foldedTransform ? `transform="${f.foldedTransform}"` : '';
-                        svg += `<rect x="${f.x}" y="${f.foldedY}" width="${f.w}" height="${f.foldedH}" rx="5" fill="#E5B390" ${trans} />`;
+                        // 當拇指收起時，直接消失（不繪製）
+                        if (f.id !== 'f-thumb') {
+                            // Folded fingers (其餘四隻手指維持收起狀態)
+                            let trans = f.foldedTransform ? `transform="${f.foldedTransform}"` : '';
+                            svg += `<rect x="${f.x}" y="${f.foldedY}" width="${f.w}" height="${f.foldedH}" rx="5" fill="#E5B390" ${trans} />`;
+                        }
                     }
                 }
                 svg += `</svg>`;
