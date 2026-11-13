@@ -99,7 +99,7 @@
   .divider-line { width: 100%; height: 5px; background-color: #0f172a; border-radius: 4px; margin: 4px 0 10px 0; }
 
   .answer-row { display: flex; justify-content: flex-end; gap: clamp(6px, 1vw, 10px); width: 100%; margin-bottom: 8px; }
-  .ans-box { width: clamp(62px, 7vw, 82px); height: clamp(58px, 6.8vh, 72px); border-radius: 14px; border: 4px solid #cbd5e1; font-size: clamp(38px, 4vw, 48px); font-weight: 900; display: flex; align-items: center; justify-content: center; background: #ffffff; cursor: pointer; transition: all 0.2s; }
+  .ans-box { width: clamp(62px, 7vw, 82px); height: clamp(58px, 6.8vh, 72px); border-radius: 14px; border: 4px solid #cbd5e1; font-size: clamp(38px, 4vw, 48px); font-weight: 900; display: flex; align-items: center; justify-content: center; background: #ffffff; cursor: pointer; transition: all 0.2s; overflow: hidden; }
   .ans-box.box-hundred { border-color: #86efac; color: #15803d; }
   .ans-box.box-ten { border-color: #fde047; color: #a16207; }
   .ans-box.box-unit { border-color: #fca5a5; color: #b91c1c; }
@@ -382,7 +382,7 @@
   let currentActiveBox = 'u';
   let n1_h = 1, n1_t = 6, n1_u = 7, n2_h = 2, n2_t = 8, n2_u = 5;
   let step = '', unitNeedCarry = false, tenNeedCarry = false;
-  
+
   // 記錄已出現的題目組合，避免重複
   const usedQuestions = new Set();
 
@@ -398,6 +398,15 @@
       if (e.target.value === 'custom') document.getElementById('customModal').classList.add('open');
       else generateNewProblem();
     });
+
+    // 處理自訂輸入框自動移除前導 0
+    document.getElementById('customNum1').addEventListener('input', function() {
+      if (this.value) this.value = parseInt(this.value, 10).toString();
+    });
+    document.getElementById('customNum2').addEventListener('input', function() {
+      if (this.value) this.value = parseInt(this.value, 10).toString();
+    });
+
     window.addEventListener('keydown', (e) => {
       if(document.querySelector('.modal-overlay.open')) return;
       if (e.key >= '0' && e.key <= '9') pressKey(e.key);
@@ -423,8 +432,8 @@
   }
 
   function applyCustomNumbers() {
-    let val1 = parseInt(document.getElementById('customNum1').value) || 12;
-    let val2 = parseInt(document.getElementById('customNum2').value) || 15;
+    let val1 = parseInt(document.getElementById('customNum1').value, 10) || 12;
+    let val2 = parseInt(document.getElementById('customNum2').value, 10) || 15;
     if (val1 > 998) val1 = 998;
     if (val1 + val2 > 999) val2 = 999 - val1;
     document.getElementById('customModal').classList.remove('open');
@@ -441,8 +450,7 @@
     let n1, n2;
     let attempts = 0;
     let problemKey = "";
-    
-    // 迴圈檢查確保題目不重複
+
     do {
       if (digitsCount === 2) {
         if (diff === 'nocarry') {
@@ -752,6 +760,7 @@
     if (type === 'h') document.getElementById('ansBoxH').classList.add('selected');
   }
 
+  // 修改後的輸入邏輯：支援連續輸入與刪除前導零
   function pressKey(key) {
     if (!canInputCurrentBox()) {
       soundWarn();
@@ -770,7 +779,11 @@
     if (key === 'clear') { target.textContent = ''; return; }
     if (key === 'ok') { validateStepInput(); return; }
 
-    target.textContent = key;
+    // 累積按鍵並透過 parseInt 轉換來自動刪除前導的「0」
+    let currentVal = target.textContent;
+    let newVal = currentVal + key;
+    target.textContent = parseInt(newVal, 10).toString();
+    
     validateStepInput();
   }
 
