@@ -1278,9 +1278,9 @@
     }
     else if (stepState === 'h_input') {
       const inputVal = document.getElementById('ansBoxH').textContent;
-      // 三位數：百位為最高位！若百位為 0 (如 362 - 278 = 84，不能是 084)
+      // 三位數：百位為最高位！若百位為 0 (如 362 - 278 = 84 或 315 - 308 = 7)
       if (ansH === 0 && inputVal === '0') {
-        handleHighestZeroRule(document.getElementById('ansBoxH'), completeGameSuccess);
+        cleanAllLeadingZeros(completeGameSuccess);
       } else if (inputVal === String(ansH)) {
         Sound.correct();
         completeGameSuccess();
@@ -1290,18 +1290,44 @@
     }
   }
 
-  /* 核心規則：最高位值不能是「0」，刪去 (合乎數字定義) */
-  function handleHighestZeroRule(boxElement, nextCallback) {
-    Sound.zeroWarn();
-    updateGuide("最高位值不能是「0」，刪去", true);
+  /* 核心規則：如果前位的位值都是「0」，都要刪去 (合乎數字定義，如 0456->456, 00456->456, 000456->456) */
+  function cleanAllLeadingZeros(nextCallback) {
+    const boxH = document.getElementById('ansBoxH');
+    const boxT = document.getElementById('ansBoxT');
+    const toClean = [];
 
-    // 稍微停留 1 秒展示輸入「0」，隨後依照教材流程自動刪去該「0」格
-    setTimeout(() => {
-      boxElement.textContent = ''; // 刪去 0，空格留白
-      boxElement.style.borderColor = '#cbd5e1';
+    if (level === 3) {
+      if (boxH && boxH.textContent === '0') {
+        toClean.push(boxH);
+        // 若百位為 0 且十位亦為 0，則十位也是前導 0，必須一併刪去
+        if (boxT && boxT.textContent === '0') {
+          toClean.push(boxT);
+        }
+      }
+    } else if (level === 2) {
+      if (boxT && boxT.textContent === '0') {
+        toClean.push(boxT);
+      }
+    }
+
+    if (toClean.length > 0) {
+      Sound.zeroWarn();
+      const promptText = toClean.length > 1 ? "前位的位值都是「0」，刪去" : "最高位值不能是「0」，刪去";
+      updateGuide(promptText, true);
+
+      // 停留展示輸入「0」，隨後依規則自動刪去所有前導 0 格
+      setTimeout(() => {
+        toClean.forEach(box => {
+          box.textContent = ''; // 刪去 0，空格留白
+          box.style.borderColor = '#cbd5e1';
+        });
+        Sound.correct();
+        nextCallback();
+      }, 1100);
+    } else {
       Sound.correct();
       nextCallback();
-    }, 1100);
+    }
   }
 
   function completeGameSuccess() {
