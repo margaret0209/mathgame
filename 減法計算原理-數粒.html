@@ -14,19 +14,13 @@
     --c-ten-border: #ca8a04;
     --c-unit: #ef4444;
     --c-unit-border: #dc2626;
-    --c-borrow-ten: #ca8a04; /* 深黃色 */
-    --c-borrow-unit: #ef4444; /* 紅色 */
+    --c-borrow-ten: #ca8a04;
+    --c-borrow-unit: #ef4444;
 
     /* 直欄運算高亮底色 */
     --hl-unit: #ffe4e6;
     --hl-ten: #fef9c3;
     --hl-hundred: #dcfce7;
-
-    /* 數粒尺寸 */
-    --flat-size: clamp(90px, 11vw, 125px);
-    --rod-width: clamp(14px, 1.8vw, 22px);
-    --rod-height: clamp(90px, 11vw, 125px);
-    --cube-size: clamp(20px, 2.3vw, 26px);
   }
 
   * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; }
@@ -41,7 +35,6 @@
     overflow: hidden;
   }
 
-  /* 頂部導航列 */
   header {
     background-color: var(--header-bg);
     height: 7vh;
@@ -55,7 +48,6 @@
   }
 
   .app-title { font-size: clamp(20px, 2.2vw, 26px); font-weight: 900; letter-spacing: 1.5px; color: #0f172a; }
-
   .header-controls { display: flex; gap: 12px; align-items: center; }
 
   .nav-dropdown {
@@ -69,7 +61,6 @@
   .nav-dropdown label { font-weight: 900; font-size: 14px; margin-right: 4px; color: #334155; }
   .nav-dropdown select { border: none; background: transparent; font-size: 15px; font-weight: 900; color: #0f172a; outline: none; cursor: pointer; }
 
-  /* 主舞台容器：嚴格限制 88vh，杜絕滾動 */
   main {
     height: 88vh;
     max-height: 88vh;
@@ -82,7 +73,7 @@
     overflow: hidden;
   }
 
-  /* 左側：直式與鍵盤控制區 */
+  /* 左側直式與鍵盤 */
   .left-panel {
     flex: 0 0 clamp(320px, 32vw, 420px);
     display: flex;
@@ -97,7 +88,6 @@
     overflow: hidden;
   }
 
-  /* 直式容器：4 欄固定等寬對齊 (符號 46px, 百 72px, 十 72px, 個 72px) */
   .math-column-container {
     width: 262px;
     position: relative;
@@ -106,7 +96,6 @@
     margin: 0 auto;
   }
 
-  /* 直欄高亮柱 (精準對齊百、十、個) */
   .column-highlight-bar {
     position: absolute;
     top: 0;
@@ -130,27 +119,25 @@
     z-index: 2;
   }
 
-  .place-title-row { height: 38px; }
-  .place-title { font-size: 28px; font-weight: 900; text-align: center; color: #0f172a; }
+  .place-title-row { height: 36px; }
+  .place-title { font-size: 26px; font-weight: 900; text-align: center; color: #0f172a; }
 
-  /* 借位標記行 */
-  .borrow-mark-row { height: 36px; }
+  .borrow-mark-row { height: 38px; }
   .borrow-cell {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 900;
     height: 100%;
+    line-height: 1;
   }
 
-  /* 雙色標記樣式 */
   .color-red { color: var(--c-borrow-unit); }
   .color-yellow { color: var(--c-borrow-ten); }
   .color-black { color: #0f172a; }
 
-  /* 算式數字行 */
-  .math-number-row { height: 50px; font-size: 48px; font-weight: 900; line-height: 1; }
+  .math-number-row { height: 48px; font-size: 46px; font-weight: 900; line-height: 1; }
   .math-cell {
     text-align: center;
     position: relative;
@@ -159,14 +146,13 @@
     justify-content: center;
     height: 100%;
   }
-  .op-symbol { font-size: 46px; font-weight: 900; text-align: center; color: #0f172a; }
+  .op-symbol { font-size: 44px; font-weight: 900; text-align: center; color: #0f172a; }
 
-  /* 被減數斜線劃線效果 (\) */
   .slash-red::after {
     content: "";
     position: absolute;
     width: 3.5px;
-    height: 48px;
+    height: 44px;
     background-color: var(--c-borrow-unit);
     transform: rotate(-32deg);
     border-radius: 2px;
@@ -175,17 +161,16 @@
     content: "";
     position: absolute;
     width: 3.5px;
-    height: 48px;
+    height: 44px;
     background-color: var(--c-borrow-ten);
     transform: rotate(-32deg);
     border-radius: 2px;
   }
-  /* 十位雙斜線 */
   .slash-both::after {
     content: "";
     position: absolute;
     width: 3.5px;
-    height: 48px;
+    height: 44px;
     background-color: var(--c-borrow-unit);
     transform: rotate(-35deg) translateX(-4px);
     border-radius: 2px;
@@ -194,7 +179,7 @@
     content: "";
     position: absolute;
     width: 3.5px;
-    height: 48px;
+    height: 44px;
     background-color: var(--c-borrow-ten);
     transform: rotate(-35deg) translateX(4px);
     border-radius: 2px;
@@ -202,22 +187,21 @@
 
   .divider-math-line {
     width: 100%;
-    height: 4.5px;
+    height: 4px;
     background-color: #0f172a;
     border-radius: 3px;
-    margin: 2px 0 6px 0;
+    margin: 2px 0 5px 0;
     z-index: 2;
   }
 
-  /* 答案輸入框行 */
-  .math-ans-row { height: 60px; margin-bottom: 4px; }
+  .math-ans-row { height: 56px; margin-bottom: 2px; }
   .ans-box-cell { display: flex; align-items: center; justify-content: center; }
   .ans-box {
-    width: 60px;
-    height: 56px;
+    width: 58px;
+    height: 52px;
     border-radius: 12px;
     border: 3.5px solid #cbd5e1;
-    font-size: 40px;
+    font-size: 38px;
     font-weight: 900;
     display: flex;
     align-items: center;
@@ -231,7 +215,6 @@
   .ans-box.box-h { border-color: #86efac; color: #15803d; }
   .ans-box.selected { box-shadow: 0 0 0 4px #38bdf8; transform: scale(1.05); }
 
-  /* 緊湊數字鍵盤 */
   .keypad-wrapper {
     width: 100%;
     max-width: 220px;
@@ -259,13 +242,13 @@
 
   .next-prob-btn {
     width: 90%;
-    height: 42px;
+    height: 40px;
     background-color: #38bdf8;
     color: #ffffff;
     font-size: 18px;
     font-weight: 900;
     border: none;
-    border-radius: 21px;
+    border-radius: 20px;
     cursor: pointer;
     box-shadow: 0 3px 0 #0284c7;
     margin-top: 4px;
@@ -273,7 +256,7 @@
   }
   .next-prob-btn:active { transform: translateY(2px); box-shadow: none; }
 
-  /* 右側：數粒操作展示區 (闊度比例 3:2:1) */
+  /* 右側數粒數塊區 (比例 3:2:1) */
   .right-panel {
     flex: 1;
     background: #ffffff;
@@ -319,10 +302,11 @@
   .col-tag {
     font-size: 14px;
     font-weight: 900;
-    padding: 2px 8px;
+    padding: 2px 10px;
     border-radius: 8px;
-    background: rgba(255,255,255,0.85);
+    background: rgba(255,255,255,0.9);
     margin-bottom: 6px;
+    flex-shrink: 0;
   }
 
   .blocks-display-container {
@@ -334,12 +318,13 @@
     align-content: flex-start;
     justify-content: center;
     overflow: hidden;
+    padding: 4px;
   }
 
-  /* 數塊 (10x10) 綠色 */
+  /* 自適應數塊 (10x10) 綠色 */
   .hundred-block {
-    width: var(--flat-size);
-    height: var(--flat-size);
+    width: var(--flat-w, 100px);
+    height: var(--flat-w, 100px);
     border: 1.5px solid var(--c-hundred-border);
     background-color: #4ade80;
     display: grid;
@@ -347,21 +332,23 @@
     grid-template-rows: repeat(10, 1fr);
     box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s, width 0.2s, height 0.2s;
+    flex-shrink: 0;
   }
-  .hundred-block div { border: 0.5px solid rgba(0,0,0,0.08); }
+  .hundred-block div { border: 0.5px solid rgba(0,0,0,0.06); }
 
-  /* 數條 (1x10) 黃色 / 借位綠色數條 */
+  /* 自適應數條 (1x10) 黃色 / 借位綠色數條 */
   .ten-rod {
-    width: var(--rod-width);
-    height: var(--rod-height);
+    width: var(--rod-w, 18px);
+    height: var(--rod-h, 110px);
     border: 1.5px solid var(--c-ten-border);
     background-color: #fef08a;
     display: flex;
     flex-direction: column;
     box-shadow: 1px 2px 0 rgba(0,0,0,0.1);
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s, width 0.2s, height 0.2s;
+    flex-shrink: 0;
   }
   .ten-rod.from-hundred {
     background-color: #86efac;
@@ -370,23 +357,23 @@
   .ten-rod div { flex: 1; border-bottom: 1px solid rgba(0,0,0,0.12); }
   .ten-rod div:last-child { border-bottom: none; }
 
-  /* 數粒 (1x1) 紅色 / 借位黃色數粒 */
+  /* 自適應數粒 (1x1) 紅色 / 借位黃色數粒 */
   .unit-cube {
-    width: var(--cube-size);
-    height: var(--cube-size);
+    width: var(--cube-w, 24px);
+    height: var(--cube-w, 24px);
     border: 1.5px solid var(--c-unit-border);
     background-color: #f87171;
     border-radius: 3px;
     box-shadow: 1px 1px 0 rgba(0,0,0,0.12);
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s, width 0.2s, height 0.2s;
+    flex-shrink: 0;
   }
   .unit-cube.from-ten {
     background-color: #fde047;
     border-color: #ca8a04;
   }
 
-  /* 被減去刪除劃叉標記 */
   .eliminated {
     opacity: 0.25 !important;
     position: relative;
@@ -399,12 +386,11 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 900;
     color: #dc2626;
   }
 
-  /* 可拖拉數粒/數條提點 */
   .can-borrow-drag {
     animation: bounceDrag 1.4s infinite;
     cursor: grab !important;
@@ -415,7 +401,6 @@
     50% { transform: translateY(-6px); box-shadow: 0 6px 14px rgba(234, 179, 8, 0.45); }
   }
 
-  /* 拖曳影子副本 */
   .ghost-drag-element {
     position: fixed !important;
     pointer-events: none;
@@ -424,7 +409,6 @@
     transform: scale(1.08);
   }
 
-  /* 底部提示欄 */
   .instruction-footer {
     height: 52px;
     min-height: 52px;
@@ -447,14 +431,13 @@
     50% { transform: scale(1.02); }
   }
   .instruction-text {
-    font-size: 21px;
+    font-size: 20px;
     font-weight: 900;
     color: #713f12;
     text-align: center;
     letter-spacing: 0.5px;
   }
 
-  /* 設定與自訂彈窗 */
   .modal-backdrop {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -528,7 +511,6 @@
     <div class="math-column-container" id="mathColContainer">
       <div class="column-highlight-bar" id="colHighlightBar"></div>
 
-      <!-- 位值標題行 (百、十、個) -->
       <div class="math-grid-row place-title-row">
         <div></div>
         <div class="place-title" id="titleH">百</div>
@@ -536,7 +518,6 @@
         <div class="place-title" id="titleU">個</div>
       </div>
 
-      <!-- 借位輔助標記行 -->
       <div class="math-grid-row borrow-mark-row">
         <div></div>
         <div class="borrow-cell" id="markH"></div>
@@ -544,25 +525,22 @@
         <div class="borrow-cell" id="markU"></div>
       </div>
 
-      <!-- 被減數行 -->
       <div class="math-grid-row math-number-row">
         <div></div>
         <div class="math-cell" id="numM_h">3</div>
-        <div class="math-cell" id="numM_t">6</div>
+        <div class="math-cell" id="numM_t">0</div>
         <div class="math-cell" id="numM_u">2</div>
       </div>
 
-      <!-- 減數行 -->
       <div class="math-grid-row math-number-row">
         <div class="op-symbol">-</div>
-        <div class="math-cell" id="numS_h">2</div>
-        <div class="math-cell" id="numS_t">7</div>
-        <div class="math-cell" id="numS_u">8</div>
+        <div class="math-cell" id="numS_h">1</div>
+        <div class="math-cell" id="numS_t">4</div>
+        <div class="math-cell" id="numS_u">5</div>
       </div>
 
       <div class="divider-math-line"></div>
 
-      <!-- 答案方框行 -->
       <div class="math-grid-row math-ans-row">
         <div></div>
         <div class="ans-box-cell"><div class="ans-box box-h" id="ansBoxH" onclick="selectAnswerBox('h')"></div></div>
@@ -571,7 +549,6 @@
       </div>
     </div>
 
-    <!-- 數字鍵盤 -->
     <div class="keypad-wrapper">
       <button class="key-btn" onclick="tapKey('1')">1</button>
       <button class="key-btn" onclick="tapKey('2')">2</button>
@@ -590,34 +567,29 @@
     <button class="next-prob-btn" id="btnNextProb" onclick="nextQuestion()">下一題 ➔</button>
   </section>
 
-  <!-- 右側數粒數條數塊區 -->
+  <!-- 右側數粒操作區 -->
   <section class="right-panel">
     <div class="blocks-layout-grid">
-      <!-- 百位區 -->
       <div class="block-col col-h" id="zoneColH">
         <div class="col-tag">百位</div>
         <div class="blocks-display-container" id="containerH"></div>
       </div>
-      <!-- 十位區 -->
       <div class="block-col col-t" id="zoneColT">
         <div class="col-tag">十位</div>
         <div class="blocks-display-container" id="containerT"></div>
       </div>
-      <!-- 個位區 -->
       <div class="block-col col-u" id="zoneColU">
         <div class="col-tag">個位</div>
         <div class="blocks-display-container" id="containerU"></div>
       </div>
     </div>
 
-    <!-- 底部教學指引列 -->
     <div class="instruction-footer" id="guideFooter">
-      <div class="instruction-text" id="guideText">個位：2&lt;8，點擊數條，借1條為10粒至個位</div>
+      <div class="instruction-text" id="guideText">個位不夠減，準備借位</div>
     </div>
   </section>
 </main>
 
-<!-- 預設自選設定畫面 (首頁 Dialog) -->
 <div class="modal-backdrop show" id="startModal">
   <div class="dialog-card">
     <h2>減法計算原理<br>挑戰設定</h2>
@@ -631,7 +603,7 @@
     <div class="form-row">
       <label>難度：</label>
       <select id="initDiff">
-        <option value="borrow" selected>借位</option>
+        <option value="borrow" selected>借位 (含連續借位)</option>
         <option value="noborrow">不借位</option>
         <option value="random">隨機</option>
       </select>
@@ -647,12 +619,11 @@
   </div>
 </div>
 
-<!-- 自訂出題 Modal -->
 <div class="modal-backdrop" id="customModal">
   <div class="dialog-card">
     <h3>自訂題目出題</h3>
-    <div class="form-row"><label>被減數：</label><input type="number" id="inpM" value="362" min="2" max="999"></div>
-    <div class="form-row"><label>減數：</label><input type="number" id="inpS" value="278" min="1" max="998"></div>
+    <div class="form-row"><label>被減數：</label><input type="number" id="inpM" value="302" min="2" max="999"></div>
+    <div class="form-row"><label>減數：</label><input type="number" id="inpS" value="145" min="1" max="998"></div>
     <div class="dialog-btns">
       <button class="dialog-btn btn-cancel" onclick="closeCustomModal()">取消</button>
       <button class="dialog-btn btn-confirm" onclick="applyCustomProblem()">確定出題</button>
@@ -692,20 +663,19 @@
     if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT') Sound.click();
   });
 
-  /* 遊戲全局狀態 */
+  /* 全局狀態 */
   let level = 3;
-  let minuend = 362, subtrahend = 278;
-  let m_h = 3, m_t = 6, m_u = 2;
-  let s_h = 2, s_t = 7, s_u = 8;
+  let minuend = 302, subtrahend = 145;
+  let m_h = 3, m_t = 0, m_u = 2;
+  let s_h = 1, s_t = 4, s_u = 5;
 
-  // 動態被減數追蹤（借位時數值調整）
-  let cur_h = 3, cur_t = 6, cur_u = 2;
+  let cur_h = 3, cur_t = 0, cur_u = 2;
   let u_borrowed = false, t_borrowed = false;
+  let through_zero = false; // 是否發生十位為 0 的向百位連鎖借位
 
-  // 減去消除計數
   let elim_u = 0, elim_t = 0, elim_h = 0;
 
-  // 流程狀態機: 'u_borrow' | 'u_elim' | 'u_input' | 't_borrow' | 't_elim' | 't_input' | 'h_elim' | 'h_input' | 'done'
+  // 狀態機: 'u_borrow_h' (十位為0時先借百位) | 'u_borrow' | 'u_elim' | 'u_input' | 't_borrow' | 't_elim' | 't_input' | 'h_elim' | 'h_input' | 'done'
   let stepState = 'u_borrow';
   let activeBox = 'u';
   const usedProblemsHistory = new Set();
@@ -723,7 +693,6 @@
       else generateRandomProblem();
     });
 
-    // 實體鍵盤監聽
     window.addEventListener('keydown', (e) => {
       if (document.querySelector('.modal-backdrop.show')) return;
       if (e.key >= '0' && e.key <= '9') tapKey(e.key);
@@ -731,7 +700,8 @@
       if (e.key === 'Enter') tapKey('ok');
     });
 
-    // 自訂輸入框輸入防呆：自動過濾前導 0 (例如輸入 0456 自動變成 456)
+    window.addEventListener('resize', adaptAllBlockSizes);
+
     ['inpM', 'inpS'].forEach(id => {
       document.getElementById(id).addEventListener('input', function() {
         if (this.value) {
@@ -742,7 +712,6 @@
     });
   });
 
-  /* 初始自選確認 */
   function confirmStartSettings() {
     level = parseInt(document.getElementById('initLevel').value);
     document.getElementById('selLevel').value = level;
@@ -768,13 +737,11 @@
   }
 
   function applyCustomProblem() {
-    // 嚴格過濾前導 0 確保合乎數字定義
     let rawM = document.getElementById('inpM').value;
     let rawS = document.getElementById('inpS').value;
     let m = parseInt(rawM, 10) || 52;
     let s = parseInt(rawS, 10) || 28;
 
-    // 確保答案嚴格為正數 (被減數 > 減數)
     if (m <= s) {
       alert("⚠️ 被減數必須大於減數，以確保計算結果為正數！");
       return;
@@ -791,7 +758,6 @@
     initProblem(m, s);
   }
 
-  /* 隨機題目生成 (確保答案為正數、符合難度、題目不重複) */
   function generateRandomProblem() {
     const diff = document.getElementById('selDiff').value;
     let m, s;
@@ -802,14 +768,14 @@
       if (level === 2) {
         if (diff === 'noborrow') {
           const u_m = Math.floor(Math.random() * 9) + 1;
-          const u_s = Math.floor(Math.random() * u_m); // 個位不借位: u_m >= u_s
+          const u_s = Math.floor(Math.random() * u_m);
           const t_m = Math.floor(Math.random() * 7) + 2;
-          const t_s = Math.floor(Math.random() * (t_m - 1)) + 1; // 十位不借位: t_m > t_s
+          const t_s = Math.floor(Math.random() * (t_m - 1)) + 1;
           m = t_m * 10 + u_m;
           s = t_s * 10 + u_s;
         } else if (diff === 'borrow') {
-          const u_m = Math.floor(Math.random() * 7); // 0~6
-          const u_s = Math.floor(Math.random() * (9 - (u_m + 1) + 1)) + (u_m + 1); // u_m < u_s
+          const u_m = Math.floor(Math.random() * 7);
+          const u_s = Math.floor(Math.random() * (9 - (u_m + 1) + 1)) + (u_m + 1);
           const t_m = Math.floor(Math.random() * 7) + 3;
           const t_s = Math.floor(Math.random() * (t_m - 2)) + 1;
           m = t_m * 10 + u_m;
@@ -829,15 +795,27 @@
           m = h_m * 100 + t_m * 10 + u_m;
           s = h_s * 100 + t_s * 10 + u_s;
         } else if (diff === 'borrow') {
-          // 連續借位或單次借位三位數 (如 PDF: 362 - 278)
-          const u_m = Math.floor(Math.random() * 5); // 0~4
-          const u_s = Math.floor(Math.random() * (9 - 6 + 1)) + 6; // 6~9
-          const t_m = Math.floor(Math.random() * 6); // 0~5
-          const t_s = Math.floor(Math.random() * (9 - 6 + 1)) + 6;
-          const h_m = Math.floor(Math.random() * 4) + 4;
-          const h_s = Math.floor(Math.random() * (h_m - 2)) + 1;
-          m = h_m * 100 + t_m * 10 + u_m;
-          s = h_s * 100 + t_s * 10 + u_s;
+          // 40% 機率生成十位為0的跨位連鎖借位題目（例如 302 - 145, 503 - 267）
+          const isZeroTen = Math.random() < 0.45;
+          if (isZeroTen) {
+            const h_m = Math.floor(Math.random() * 6) + 3;
+            const t_m = 0;
+            const u_m = Math.floor(Math.random() * 5); // 0~4
+            const h_s = Math.floor(Math.random() * (h_m - 2)) + 1;
+            const t_s = Math.floor(Math.random() * 8) + 1; // 1~8
+            const u_s = Math.floor(Math.random() * 4) + 6; // 6~9
+            m = h_m * 100 + t_m * 10 + u_m;
+            s = h_s * 100 + t_s * 10 + u_s;
+          } else {
+            const u_m = Math.floor(Math.random() * 5);
+            const u_s = Math.floor(Math.random() * 4) + 6;
+            const t_m = Math.floor(Math.random() * 5) + 1;
+            const t_s = Math.floor(Math.random() * 4) + 6;
+            const h_m = Math.floor(Math.random() * 4) + 4;
+            const h_s = Math.floor(Math.random() * (h_m - 2)) + 1;
+            m = h_m * 100 + t_m * 10 + u_m;
+            s = h_s * 100 + t_s * 10 + u_s;
+          }
         } else {
           m = Math.floor(Math.random() * 600) + 300;
           s = Math.floor(Math.random() * (m - 100)) + 50;
@@ -866,9 +844,9 @@
 
     cur_h = m_h; cur_t = m_t; cur_u = m_u;
     u_borrowed = false; t_borrowed = false;
+    through_zero = false;
     elim_u = 0; elim_t = 0; elim_h = 0;
 
-    // 清空答案格與輔助標記
     document.getElementById('markH').innerHTML = '';
     document.getElementById('markT').innerHTML = '';
     document.getElementById('markU').innerHTML = '';
@@ -877,12 +855,10 @@
     document.getElementById('ansBoxU').textContent = '';
     document.getElementById('btnNextProb').style.display = 'none';
 
-    // 重設劃線
     ['numM_h', 'numM_t', 'numM_u'].forEach(id => {
       document.getElementById(id).className = 'math-cell';
     });
 
-    // 設定兩位數 / 三位數顯示
     if (level === 2) {
       document.getElementById('titleH').style.visibility = 'hidden';
       document.getElementById('markH').style.visibility = 'hidden';
@@ -904,36 +880,78 @@
     document.getElementById('numS_t').textContent = s_t;
     document.getElementById('numS_u').textContent = s_u;
 
-    // 初始右側：即時渲染被減數的數粒數條數塊
     renderInitialBlocks();
-
-    // 啟動個位運算
     startUnitStep();
   }
 
-  /* 渲染被減數初始所有數粒、數條、數塊 */
+  /* 核心數塊尺寸自適應：按各區數量計算最佳長寬，防溢出 */
+  function adaptAllBlockSizes() {
+    adaptColumnBlockSize('H');
+    adaptColumnBlockSize('T');
+    adaptColumnBlockSize('U');
+  }
+
+  function adaptColumnBlockSize(colType) {
+    const container = document.getElementById(`container${colType}`);
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const w = rect.width - 12;
+    const h = rect.height - 12;
+    if (w <= 0 || h <= 0) return;
+
+    if (colType === 'H') {
+      const count = container.querySelectorAll('.hundred-block').length;
+      if (count === 0) return;
+      // 網格佈局：百位數塊 (正方形)，在可用區域內動態適配
+      let cols = Math.min(count, Math.max(1, Math.floor(w / 80)));
+      if (count > 4) cols = 3;
+      let rows = Math.ceil(count / cols);
+      let sizeW = Math.floor((w - (cols - 1) * 8) / cols);
+      let sizeH = Math.floor((h - (rows - 1) * 8) / rows);
+      let finalSize = Math.max(48, Math.min(125, sizeW, sizeH));
+      container.style.setProperty('--flat-w', `${finalSize}px`);
+    } else if (colType === 'T') {
+      const count = container.querySelectorAll('.ten-rod').length;
+      if (count === 0) return;
+      // 數條排布：並排或兩行排布
+      let cols = count;
+      let rows = 1;
+      if (count > 5 && w < count * 22) {
+        rows = 2;
+        cols = Math.ceil(count / 2);
+      }
+      let rodW = Math.floor((w - (cols - 1) * 5) / cols);
+      rodW = Math.max(10, Math.min(22, rodW));
+      let rodH = Math.floor((h - (rows - 1) * 8) / rows);
+      rodH = Math.max(50, Math.min(125, rodH));
+      container.style.setProperty('--rod-w', `${rodW}px`);
+      container.style.setProperty('--rod-h', `${rodH}px`);
+    } else if (colType === 'U') {
+      const count = container.querySelectorAll('.unit-cube').length;
+      if (count === 0) return;
+      // 數粒 (如借位後可能多達 18 粒)，計算合適格數
+      let cols = Math.max(2, Math.floor(w / 28));
+      let rows = Math.ceil(count / cols);
+      let cubeW = Math.floor((w - (cols - 1) * 4) / cols);
+      let cubeH = Math.floor((h - (rows - 1) * 4) / rows);
+      let finalCube = Math.max(14, Math.min(26, cubeW, cubeH));
+      container.style.setProperty('--cube-w', `${finalCube}px`);
+    }
+  }
+
   function renderInitialBlocks() {
     const cU = document.getElementById('containerU');
     const cT = document.getElementById('containerT');
     const cH = document.getElementById('containerH');
     cU.innerHTML = ''; cT.innerHTML = ''; cH.innerHTML = '';
 
-    // 個位數粒 (紅色 1x1)
-    for (let i = 0; i < m_u; i++) {
-      cU.appendChild(createUnitCube(false));
-    }
-
-    // 十位數條 (黃色 1x10)
-    for (let i = 0; i < m_t; i++) {
-      cT.appendChild(createTenRod(false));
-    }
-
-    // 百位數塊 (綠色 10x10)
+    for (let i = 0; i < m_u; i++) cU.appendChild(createUnitCube(false));
+    for (let i = 0; i < m_t; i++) cT.appendChild(createTenRod(false));
     if (level === 3) {
-      for (let i = 0; i < m_h; i++) {
-        cH.appendChild(createHundredBlock());
-      }
+      for (let i = 0; i < m_h; i++) cH.appendChild(createHundredBlock());
     }
+
+    setTimeout(adaptAllBlockSizes, 20);
   }
 
   function createUnitCube(isFromTen = false) {
@@ -956,16 +974,12 @@
     return block;
   }
 
-  /* 更新教學指引與高亮欄位 */
   function updateGuide(text, isZeroWarn = false) {
     const footer = document.getElementById('guideFooter');
     const txt = document.getElementById('guideText');
     txt.textContent = text;
-    if (isZeroWarn) {
-      footer.classList.add('warning-zero');
-    } else {
-      footer.classList.remove('warning-zero');
-    }
+    if (isZeroWarn) footer.classList.add('warning-zero');
+    else footer.classList.remove('warning-zero');
   }
 
   function setColumnFocus(place) {
@@ -984,15 +998,23 @@
     if (box === 'h') document.getElementById('ansBoxH').classList.add('selected');
   }
 
-  /* ================= 階段 1：個位運算 ================= */
+  /* ================= 階段 1：個位運算 (含十位為0的連鎖向百位借位) ================= */
   function startUnitStep() {
     setColumnFocus('u');
     selectAnswerBox('u');
 
     if (m_u < s_u) {
-      stepState = 'u_borrow';
-      updateGuide(`個位：${m_u}<${s_u}，點擊或拖拉數條，借1條為10粒至個位`);
-      enableTenRodBorrowDrag();
+      if (cur_t === 0 && level === 3) {
+        // 十位是 0，無法直接借位！先向百位借 1 塊
+        stepState = 'u_borrow_h';
+        through_zero = true;
+        updateGuide(`個位：${m_u}<${s_u}，但十位是0！請先向百位借1塊數塊至十位`);
+        enableZeroTenHundredBorrowDrag();
+      } else {
+        stepState = 'u_borrow';
+        updateGuide(`個位：${m_u}<${s_u}，點擊或拖拉數條，借1條為10粒至個位`);
+        enableTenRodBorrowDrag();
+      }
     } else {
       stepState = 'u_elim';
       updateGuide(`個位：${m_u}>=${s_u}，點擊數粒，進行減法 (減去 ${s_u} 粒)`);
@@ -1000,17 +1022,54 @@
     }
   }
 
-  // 十位數條借位至個位
+  // 十位為0時：向百位借位至十位
+  function enableZeroTenHundredBorrowDrag() {
+    const blocks = document.querySelectorAll('#containerH .hundred-block:not(.eliminated)');
+    if (blocks.length === 0) return;
+    const targetBlock = blocks[blocks.length - 1];
+    targetBlock.classList.add('can-borrow-drag');
+
+    targetBlock.onclick = () => doBorrowHundredToTenForUnitAction(targetBlock);
+    setupDragDrop(targetBlock, 'zoneColT', () => doBorrowHundredToTenForUnitAction(targetBlock));
+  }
+
+  function doBorrowHundredToTenForUnitAction(blockEl) {
+    if (stepState !== 'u_borrow_h') return;
+    Sound.borrow();
+    blockEl.classList.remove('can-borrow-drag');
+    blockEl.remove();
+
+    cur_h -= 1;
+    cur_t = 10;
+
+    // 百位直式劃深黃斜線，顯示 cur_h
+    document.getElementById('numM_h').classList.add('slash-yellow');
+    document.getElementById('markH').innerHTML = `<span class="color-yellow">${cur_h}</span>`;
+
+    // 十位劃深黃斜線，十位暫時變成 10
+    document.getElementById('numM_t').classList.add('slash-yellow');
+    document.getElementById('markT').innerHTML = `<span class="color-yellow">10</span>`;
+
+    // 十位增加 10 條綠色數條
+    const cT = document.getElementById('containerT');
+    for (let i = 0; i < 10; i++) {
+      cT.appendChild(createTenRod(true));
+    }
+    adaptAllBlockSizes();
+
+    // 接著：十位已有 10 條，現在可以借 1 條給個位！
+    stepState = 'u_borrow';
+    updateGuide(`十位現有10條！請點擊或拖拉1條數條，借至個位變成10粒`);
+    enableTenRodBorrowDrag();
+  }
+
   function enableTenRodBorrowDrag() {
     const rods = document.querySelectorAll('#containerT .ten-rod:not(.eliminated)');
     if (rods.length === 0) return;
-    const targetRod = rods[rods.length - 1]; // 取最後一條
+    const targetRod = rods[rods.length - 1];
     targetRod.classList.add('can-borrow-drag');
 
-    // 支援點擊借位
     targetRod.onclick = () => doUnitBorrowAction(targetRod);
-
-    // 支援拖曳至個位區 (Drag & Drop)
     setupDragDrop(targetRod, 'zoneColU', () => doUnitBorrowAction(targetRod));
   }
 
@@ -1020,26 +1079,30 @@
     rodEl.classList.remove('can-borrow-drag');
     rodEl.remove();
 
-    cur_t -= 1;
+    cur_t -= 1; // 若原為 10 則變 9
     cur_u += 10;
     u_borrowed = true;
 
-    // 左側直式標記：
-    // 十位劃紅色斜線，上方紅色顯示 cur_t
-    document.getElementById('numM_t').classList.add('slash-red');
-    document.getElementById('markT').innerHTML = `<span class="color-red">${cur_t}</span>`;
+    if (through_zero) {
+      // 曾經過十位 0：十位雙斜線，最終上方紅色標示 9
+      document.getElementById('numM_t').className = 'math-cell slash-both';
+      document.getElementById('markT').innerHTML = `<span class="color-red">${cur_t}</span>`;
+    } else {
+      document.getElementById('numM_t').classList.add('slash-red');
+      document.getElementById('markT').innerHTML = `<span class="color-red">${cur_t}</span>`;
+    }
 
-    // 個位劃紅色斜線，上方顯示紅色 1 與 黑色原個位數字 (例如: 17)
+    // 個位劃紅斜線，標示借來的 1 與原個位數字 (例如: 12)
     document.getElementById('numM_u').classList.add('slash-red');
     document.getElementById('markU').innerHTML = `<span class="color-red">1</span><span class="color-black">${m_u}</span>`;
 
-    // 右側個位增加 10 粒黃色數粒
+    // 個位加入 10 粒黃色數粒
     const cU = document.getElementById('containerU');
     for (let i = 0; i < 10; i++) {
       cU.appendChild(createUnitCube(true));
     }
+    adaptAllBlockSizes();
 
-    // 進入個位減法消除
     stepState = 'u_elim';
     updateGuide(`個位：${cur_u}>${s_u}，點擊數粒，進行減法 (需扣減 ${s_u} 粒)`);
     enableUnitElimination();
@@ -1080,6 +1143,7 @@
     setColumnFocus('t');
     selectAnswerBox('t');
 
+    // 注意：若剛才經歷過十位借百位，cur_t 目前為 9，若 9 >= s_t 則不需再借
     if (cur_t < s_t) {
       stepState = 't_borrow';
       updateGuide(`十位：${cur_t}<${s_t}，點擊或拖拉數塊，借1塊為10條至十位`);
@@ -1111,15 +1175,11 @@
     cur_t += 10;
     t_borrowed = true;
 
-    // 直式標記：
-    // 百位劃深黃色斜線，上方深黃色顯示 cur_h
     document.getElementById('numM_h').classList.add('slash-yellow');
     document.getElementById('markH').innerHTML = `<span class="color-yellow">${cur_h}</span>`;
 
-    // 十位疊加劃深黃色斜線 (雙斜線)
     if (u_borrowed) {
       document.getElementById('numM_t').className = 'math-cell slash-both';
-      // 上方組合：借來的 1 個百 (深黃色 1) 與 前一步個位借位後剩下的 (紅色數字)
       const prevRed = cur_t - 10;
       document.getElementById('markT').innerHTML = `<span class="color-yellow">1</span><span class="color-red">${prevRed}</span>`;
     } else {
@@ -1127,11 +1187,11 @@
       document.getElementById('markT').innerHTML = `<span class="color-yellow">1</span><span class="color-black">${m_t}</span>`;
     }
 
-    // 右側十位增加 10 條綠色數條
     const cT = document.getElementById('containerT');
     for (let i = 0; i < 10; i++) {
       cT.appendChild(createTenRod(true));
     }
+    adaptAllBlockSizes();
 
     stepState = 't_elim';
     updateGuide(`十位：${cur_t}>${s_t}，點擊數條，進行減法 (需扣減 ${s_t} 條)`);
@@ -1212,7 +1272,7 @@
     updateGuide(`百位：輸入百位答案`);
   }
 
-  /* ================= 鍵盤輸入與去除最高位 0 (符合數字定義) ================= */
+  /* ================= 鍵盤輸入與去除前導 0 ================= */
   function tapKey(key) {
     if (stepState === 'done') return;
 
@@ -1235,7 +1295,6 @@
       return;
     }
 
-    // 鍵盤按下單一數字
     targetBox.textContent = key;
     verifyCurrentStepInput();
   }
@@ -1257,9 +1316,8 @@
     else if (stepState === 't_input') {
       const inputVal = document.getElementById('ansBoxT').textContent;
       if (level === 2) {
-        // 兩位數時：十位即最高位！若十位減為 0 (如 45 - 38 = 7)，答案不能是 07
         if (ansT === 0 && inputVal === '0') {
-          handleHighestZeroRule(document.getElementById('ansBoxT'), completeGameSuccess);
+          cleanAllLeadingZeros(completeGameSuccess);
         } else if (inputVal === String(ansT)) {
           Sound.correct();
           completeGameSuccess();
@@ -1267,7 +1325,6 @@
           Sound.wrong();
         }
       } else {
-        // 三位數：十位可以為 0 (例如 504 - 201 = 303)，十位不是最高位
         if (inputVal === String(ansT)) {
           Sound.correct();
           startHundredStep();
@@ -1278,7 +1335,6 @@
     }
     else if (stepState === 'h_input') {
       const inputVal = document.getElementById('ansBoxH').textContent;
-      // 三位數：百位為最高位！若百位為 0 (如 362 - 278 = 84 或 315 - 308 = 7)
       if (ansH === 0 && inputVal === '0') {
         cleanAllLeadingZeros(completeGameSuccess);
       } else if (inputVal === String(ansH)) {
@@ -1290,7 +1346,6 @@
     }
   }
 
-  /* 核心規則：如果前位的位值都是「0」，都要刪去 (合乎數字定義，如 0456->456, 00456->456, 000456->456) */
   function cleanAllLeadingZeros(nextCallback) {
     const boxH = document.getElementById('ansBoxH');
     const boxT = document.getElementById('ansBoxT');
@@ -1299,7 +1354,6 @@
     if (level === 3) {
       if (boxH && boxH.textContent === '0') {
         toClean.push(boxH);
-        // 若百位為 0 且十位亦為 0，則十位也是前導 0，必須一併刪去
         if (boxT && boxT.textContent === '0') {
           toClean.push(boxT);
         }
@@ -1315,10 +1369,9 @@
       const promptText = toClean.length > 1 ? "前位的位值都是「0」，刪去" : "最高位值不能是「0」，刪去";
       updateGuide(promptText, true);
 
-      // 停留展示輸入「0」，隨後依規則自動刪去所有前導 0 格
       setTimeout(() => {
         toClean.forEach(box => {
-          box.textContent = ''; // 刪去 0，空格留白
+          box.textContent = '';
           box.style.borderColor = '#cbd5e1';
         });
         Sound.correct();
@@ -1334,7 +1387,6 @@
     stepState = 'done';
     Sound.win();
 
-    // 計算最終數學答案（自動去除前導零）
     const finalMathVal = minuend - subtrahend;
     updateGuide(`🎉 太棒了！全部計算完全正確！ ${minuend} - ${subtrahend} = ${finalMathVal}`);
     document.getElementById('colHighlightBar').className = 'column-highlight-bar';
@@ -1346,7 +1398,7 @@
     else generateRandomProblem();
   }
 
-  /* 拖曳封裝 (支援觸控與滑鼠拖拉) */
+  /* 拖曳支援 */
   function setupDragDrop(sourceEl, targetColId, successCb) {
     let ghost = null;
     let targetEl = document.getElementById(targetColId);
