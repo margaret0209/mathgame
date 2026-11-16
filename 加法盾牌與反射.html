@@ -85,6 +85,7 @@
 
         .battle-rules-tip .reflect-tip {
             color: #00d2d3;
+            font-weight: bold;
         }
 
         .controls {
@@ -134,6 +135,11 @@
         }
 
         .btn-restart:active { transform: scale(0.95); }
+
+        .btn-reroll {
+            background: linear-gradient(135deg, #8957e5, #6e40c9);
+            box-shadow: 0 2px 6px rgba(137, 87, 229, 0.4);
+        }
 
         /* ==========================================
            對戰 HUD：血條、護盾層數與動態角色戰場
@@ -282,6 +288,9 @@
             position: relative;
             line-height: 1;
             transition: transform 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* 物理盾牌光環特效 */
@@ -360,7 +369,7 @@
 
         .status-popup.reflect {
             color: #00d2d3;
-            font-size: 1.7rem;
+            font-size: 1.6rem;
             text-shadow: 0 0 10px #000, 0 0 20px #00d2d3, 0 0 30px #54a0ff;
         }
 
@@ -410,7 +419,6 @@
         .shoot-p1 { animation: shoot-left-to-right 0.32s cubic-bezier(0.2, 0.7, 0.4, 1) forwards; }
         .shoot-p2 { animation: shoot-right-to-left 0.32s cubic-bezier(0.2, 0.7, 0.4, 1) forwards; }
 
-        /* 反射彈回動畫 */
         @keyframes bounce-reflect-p1 {
             0% { left: calc(100% - 90px); opacity: 1; transform: scale(1.3); }
             100% { left: 80px; opacity: 1; transform: scale(1.4); }
@@ -424,7 +432,6 @@
         .reflect-p1 { animation: bounce-reflect-p1 0.28s ease-in-out forwards; }
         .reflect-p2 { animation: bounce-reflect-p2 0.28s ease-in-out forwards; }
 
-        /* 受擊震動 */
         @keyframes shake-char {
             0%, 100% { transform: translateX(0); }
             20% { transform: translateX(-12px); filter: brightness(2); }
@@ -507,9 +514,6 @@
             color: #57606f;
         }
 
-        /* ==========================================================
-           直式與鍵盤高度嚴格遵守 2 : 1 比例設定
-           ========================================================== */
         .math-section {
             flex: 1;
             display: flex;
@@ -523,7 +527,6 @@
             position: relative;
         }
 
-        /* 直式容器：高度佔比 2 */
         .math-column-wrap {
             display: flex;
             flex-direction: column;
@@ -550,7 +553,6 @@
             align-items: center;
         }
 
-        /* 直式單元格 */
         .math-cell {
             width: clamp(48px, 5.5vw, 68px);
             height: clamp(40px, 5.8vh, 56px);
@@ -582,7 +584,6 @@
             width: 100%;
         }
 
-        /* 進位按鈕 */
         .carry-btn {
             background-color: #f1f2f6;
             border: 2px dashed #a4b0be;
@@ -606,7 +607,6 @@
             font-size: clamp(1.35rem, 2.2vw, 1.8rem);
         }
 
-        /* 答案輸入方格 */
         .answer-box {
             border: 3px dashed #b2bec3;
             background-color: #f8f9fa;
@@ -637,7 +637,6 @@
             color: var(--correct-color) !important;
         }
 
-        /* 數字鍵盤容器：高度佔比 1（直式高度的 50%） */
         .numpad {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -697,7 +696,6 @@
             font-size: clamp(0.78rem, 0.95vw, 0.9rem) !important;
         }
 
-        /* 答對後浮現的心理戰抉擇浮層 (進攻 VS 護盾) */
         .tactics-modal {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -787,7 +785,6 @@
             text-align: center;
         }
 
-        /* 獲勝結算彈窗 */
         .win-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -847,7 +844,7 @@
     <div id="top-bar">
         <div class="logo">🛡️ 雙人加法：盾牌與反射對決</div>
         <div class="battle-rules-tip">
-            答對自主抉擇：💥 <b>【進攻】</b>造成20傷害 | 🛡️ <b>【加盾】</b>最多疊加2層護盾！<span class="reflect-tip">對手攻擊將被護盾100%反射反噬！</span>
+            答對自主抉擇：💥 <b>【進攻】</b>造成20傷害 | 🛡️ <b>【加盾】</b>最多疊加2層護盾！<span class="reflect-tip">對手攻擊將被護盾完全抵擋並彈回50%自爆！</span>
         </div>
         <div class="controls">
             <div class="control-group">
@@ -859,6 +856,7 @@
                     <option value="5">五位數</option>
                 </select>
             </div>
+            <button class="btn-restart btn-reroll" onclick="assignRandomCharacters()">🎲 換角色</button>
             <button class="btn-restart" onclick="restartMatch()">重新開戰</button>
         </div>
     </div>
@@ -869,7 +867,7 @@
             <!-- 玩家 1 血條與護盾 -->
             <div class="fighter-hp-container">
                 <div class="fighter-info-row">
-                    <span class="fighter-p1-label">🛡️ 玩家 1 (藍方)</span>
+                    <span class="fighter-p1-label" id="hud-label-1">🛡️ 玩家 1</span>
                     <span id="hp-text-1">100 / 100</span>
                 </div>
                 <div class="hp-bar-bg">
@@ -890,7 +888,7 @@
             <div class="fighter-hp-container">
                 <div class="fighter-info-row">
                     <span id="hp-text-2">100 / 100</span>
-                    <span class="fighter-p2-label">(紅方) 玩家 2 🛡️</span>
+                    <span class="fighter-p2-label" id="hud-label-2">玩家 2 🛡️</span>
                 </div>
                 <div class="hp-bar-bg">
                     <div class="hp-bar-fill p2-hp-fill" id="hp-fill-2"></div>
@@ -905,19 +903,16 @@
             </div>
         </div>
 
-        <!-- 角色動態舞台 -->
+        <!-- 角色動態舞台（每位玩家純淨單一角色） -->
         <div class="fighters-stage">
             <div class="stage-floor"></div>
 
             <!-- 玩家 1 角色 -->
             <div class="fighter-avatar-wrap" id="fighter-wrap-1">
                 <div class="status-popup" id="popup-1">-20</div>
-                <div class="fighter-char" id="char-1">
-                    🧙‍♂️
-                    <div class="shield-aura" id="shield-aura-1"></div>
-                </div>
+                <div class="fighter-char" id="char-1"><span id="char-emoji-1">🧙‍♂️</span><div class="shield-aura" id="shield-aura-1"></div></div>
                 <div class="fighter-shadow"></div>
-                <div class="fighter-tag-name tag-p1">P1 守護使</div>
+                <div class="fighter-tag-name tag-p1" id="fighter-tag-1">P1 守護法師</div>
             </div>
 
             <!-- 攻擊法球 -->
@@ -927,12 +922,9 @@
             <!-- 玩家 2 角色 -->
             <div class="fighter-avatar-wrap" id="fighter-wrap-2">
                 <div class="status-popup" id="popup-2">-20</div>
-                <div class="fighter-char" id="char-2">
-                    🧝‍♀️
-                    <div class="shield-aura p2-shield" id="shield-aura-2"></div>
-                </div>
+                <div class="fighter-char" id="char-2"><span id="char-emoji-2">🧝‍♀️</span><div class="shield-aura p2-shield" id="shield-aura-2"></div></div>
                 <div class="fighter-shadow"></div>
-                <div class="fighter-tag-name tag-p2">P2 幻盾師</div>
+                <div class="fighter-tag-name tag-p2" id="fighter-tag-2">P2 幻盾精靈</div>
             </div>
         </div>
     </div>
@@ -943,7 +935,7 @@
         <div id="panel-1" class="player-panel">
             <div class="player-header">
                 <div class="player-title">
-                    <span>🧙‍♂️ 玩家 1</span>
+                    <span id="panel-title-1">🧙‍♂️ 玩家 1 (守護法師)</span>
                     <span class="player-status-tag" id="status-tag-1">護盾: 0</span>
                 </div>
                 <div class="player-timer" id="timer-1">用時: 0.0s</div>
@@ -962,7 +954,7 @@
                         <button class="btn-tactic btn-shield" onclick="players[0].chooseTactic('shield')">
                             <span class="tactic-icon">🛡️</span>
                             <span class="tactic-label">給自己加盾</span>
-                            <span class="tactic-desc">反射對手下一次攻擊</span>
+                            <span class="tactic-desc">完全抵擋並彈回50%自爆</span>
                         </button>
                     </div>
                 </div>
@@ -985,7 +977,7 @@
         <div id="panel-2" class="player-panel">
             <div class="player-header">
                 <div class="player-title">
-                    <span>🧝‍♀️ 玩家 2</span>
+                    <span id="panel-title-2">🧝‍♀️ 玩家 2 (幻盾精靈)</span>
                     <span class="player-status-tag" id="status-tag-2">護盾: 0</span>
                 </div>
                 <div class="player-timer" id="timer-2">用時: 0.0s</div>
@@ -1004,7 +996,7 @@
                         <button class="btn-tactic btn-shield" onclick="players[1].chooseTactic('shield')">
                             <span class="tactic-icon">🛡️</span>
                             <span class="tactic-label">給自己加盾</span>
-                            <span class="tactic-desc">反射對手下一次攻擊</span>
+                            <span class="tactic-desc">完全抵擋並彈回50%自爆</span>
                         </button>
                     </div>
                 </div>
@@ -1095,7 +1087,7 @@
                 this.id = id;
                 this.opponentId = (id === 1) ? 2 : 1;
                 this.hp = matchConfig.maxHp;
-                this.shields = 0; // 護盾層數 (0~2)
+                this.shields = 0;
 
                 this.gridEl = document.getElementById(`grid-${id}`);
                 this.numpadEl = document.getElementById(`numpad-${id}`);
@@ -1191,32 +1183,28 @@
                 this.isDisplayingAnswer = false;
                 this.currentSelectedCol = 0;
 
-                // 隱藏戰術彈窗
                 this.tacticsModalEl.classList.remove('active');
 
-                // 決定進位模式：完全不用進位、部份進位、全進位
-                // 兩位數時：約 50% 完全不用進位，50% 進位
                 let targetMode;
                 if (lvl === 2) {
                     targetMode = Math.random() < 0.5 ? 'none' : 'all';
                 } else {
                     let r = Math.random();
                     if (r < 0.35) {
-                        targetMode = 'none';    // 完全不用進位
+                        targetMode = 'none';
                     } else if (r < 0.75) {
-                        targetMode = 'partial'; // 部份進位
+                        targetMode = 'partial';
                     } else {
-                        targetMode = 'all';     // 全進位 / 連續進位
+                        targetMode = 'all';
                     }
                 }
 
-                let k = lvl - 1; // 能產生進位的低位數量
+                let k = lvl - 1;
                 let carryPattern = Array(k).fill(0);
 
                 if (targetMode === 'all') {
                     carryPattern.fill(1);
                 } else if (targetMode === 'partial' && k > 1) {
-                    // 隨機選 1 到 k-1 個位置進位，其餘不進位
                     let numCarries = 1 + Math.floor(Math.random() * (k - 1));
                     let indices = [];
                     for (let i = 0; i < k; i++) indices.push(i);
@@ -1229,7 +1217,6 @@
                     }
                 }
 
-                // 根據 carryPattern 逐位生成低位數字
                 let n1Digits = [];
                 let n2Digits = [];
                 let cIn = 0;
@@ -1237,8 +1224,7 @@
                 for (let i = 0; i < k; i++) {
                     let needCarry = carryPattern[i];
                     if (needCarry === 1) {
-                        // 需要進位：總和 >= 10
-                        let targetSum = 10 + Math.floor(Math.random() * 9); // 10 ~ 18
+                        let targetSum = 10 + Math.floor(Math.random() * 9);
                         let dSum = targetSum - cIn;
                         let minD1 = Math.max(0, dSum - 9);
                         let maxD1 = Math.min(9, dSum);
@@ -1248,8 +1234,7 @@
                         n2Digits.push(d2);
                         cIn = 1;
                     } else {
-                        // 不需要進位：總和 < 10
-                        let targetSum = cIn + Math.floor(Math.random() * (10 - cIn)); // cIn ~ 9
+                        let targetSum = cIn + Math.floor(Math.random() * (10 - cIn));
                         let dSum = targetSum - cIn;
                         let d1 = Math.floor(Math.random() * (dSum + 1));
                         let d2 = dSum - d1;
@@ -1259,9 +1244,8 @@
                     }
                 }
 
-                // 最高位：確保最高位至少為 2，且最高位加法不溢位 (< 10^lvl)
                 let maxTotalH = 9 - cIn;
-                let totalH = 4 + Math.floor(Math.random() * (maxTotalH - 4 + 1)); // 4 ~ maxTotalH
+                let totalH = 4 + Math.floor(Math.random() * (maxTotalH - 4 + 1));
                 let h1 = 2 + Math.floor(Math.random() * (totalH - 4 + 1));
                 let h2 = totalH - h1;
 
@@ -1313,13 +1297,11 @@
                 for (let c = maxCol; c >= 0; c--) {
                     let isSymbolCol = (c === maxCol);
 
-                    // 1. 表頭（位值標籤）
                     let hCell = document.createElement('div');
                     hCell.className = 'math-cell header-cell';
                     hCell.textContent = isSymbolCol ? "" : PLACE_LABELS[c];
                     rows[0].push(hCell);
 
-                    // 2. 進位按鈕列
                     let carryCell = document.createElement('div');
                     carryCell.className = 'math-cell';
                     if (!isSymbolCol && c > 0) {
@@ -1338,13 +1320,11 @@
                     }
                     rows[1].push(carryCell);
 
-                    // 3. 被加數
                     let n1Cell = document.createElement('div');
                     n1Cell.className = 'math-cell';
                     n1Cell.textContent = !isSymbolCol ? this.num1[c] : "";
                     rows[2].push(n1Cell);
 
-                    // 4. 加數與加號
                     let n2Cell = document.createElement('div');
                     n2Cell.className = 'math-cell';
                     if (isSymbolCol) {
@@ -1355,7 +1335,6 @@
                     }
                     rows[3].push(n2Cell);
 
-                    // 5. 答案列
                     let ansCell = document.createElement('div');
                     ansCell.className = 'math-cell';
                     if (!isSymbolCol) {
@@ -1436,13 +1415,11 @@
                 }
 
                 if (!hasError) {
-                    // 答對！停止計時，跳出心理戰戰術選擇 (進攻 / 護盾)
                     this.stopTimer();
                     Sound.correct();
                     this.tacticsModalEl.classList.add('active');
                     this.chanceEl.textContent = "🎯 計算正確！請在上方選擇【進攻】或【加盾】";
                 } else {
-                    // 答錯
                     Sound.wrong();
                     let activePanel = document.getElementById(`panel-${this.id}`);
                     activePanel.classList.add('shake');
@@ -1463,7 +1440,6 @@
                         }
                         this.renderGrid();
                     } else {
-                        // 第二次答錯，公佈答案
                         this.stopTimer();
                         this.isDisplayingAnswer = true;
                         this.ansErrors = Array(matchConfig.level).fill(false);
@@ -1482,13 +1458,11 @@
                 }
             }
 
-            // 戰術選擇核心處理
             chooseTactic(tactic) {
                 if (isGameOver) return;
                 this.tacticsModalEl.classList.remove('active');
 
                 if (tactic === 'shield') {
-                    // 給自己加護盾
                     if (this.shields < matchConfig.maxShields) {
                         this.shields++;
                     }
@@ -1500,7 +1474,6 @@
                         if (!isGameOver) this.generateNewQuestion();
                     }, 1000);
                 } else if (tactic === 'attack') {
-                    // 發動進攻
                     executeAttack(this.id, this.opponentId, matchConfig.baseDamage);
                     setTimeout(() => {
                         if (!isGameOver) this.generateNewQuestion();
@@ -1511,7 +1484,6 @@
 
         let players = [];
 
-        // 執行進攻與護盾反射博弈判定
         function executeAttack(attackerId, defenderId, damage) {
             const attacker = players[attackerId - 1];
             const defender = players[defenderId - 1];
@@ -1523,36 +1495,34 @@
             ball.className = `energy-ball ${attackerId === 1 ? 'blue shoot-p1' : 'red shoot-p2'}`;
 
             setTimeout(() => {
-                // 抵達防守方，檢查是否有護盾
                 if (defender.shields > 0) {
-                    // 💥 觸發反射！消耗 1 層護盾，傷害 100% 彈回給攻擊者
                     defender.shields--;
                     updateShieldUI(defender);
                     Sound.reflect();
 
-                    showStatusPopup(defenderId, "⚡ 完美反射！", "reflect");
+                    showStatusPopup(defenderId, "⚡ 護盾格擋！", "reflect");
 
-                    // 飛彈反射動畫
                     ball.className = `energy-ball ${attackerId === 1 ? 'blue reflect-p1' : 'red reflect-p2'}`;
+
+                    let reflectDmg = Math.round(damage * 0.5);
 
                     setTimeout(() => {
                         ball.className = `energy-ball ${attackerId === 1 ? 'blue' : 'red'}`;
                         attackerWrap.classList.add('hit-shake');
                         setTimeout(() => attackerWrap.classList.remove('hit-shake'), 400);
 
-                        attacker.hp = Math.max(0, attacker.hp - damage);
+                        attacker.hp = Math.max(0, attacker.hp - reflectDmg);
                         updateHpUI(attacker);
-                        showStatusPopup(attackerId, `-${damage} (反噬)`, "dmg");
+                        showStatusPopup(attackerId, `-${reflectDmg} (50%反噬)`, "dmg");
 
                         if (attacker.hp <= 0 && !isGameOver) {
                             isGameOver = true;
                             Sound.win();
-                            setTimeout(() => declareWinner(defenderId, "對方猛攻撞上反射盾牌，遭到反噬自爆擊倒！"), 400);
+                            setTimeout(() => declareWinner(defenderId, "對方猛攻撞上反射盾牌，遭到50%反噬自爆擊倒！"), 400);
                         }
                     }, 280);
 
                 } else {
-                    // 🎯 無盾防守，正常命中
                     ball.className = `energy-ball ${attackerId === 1 ? 'blue' : 'red'}`;
                     defenderWrap.classList.add('hit-shake');
                     setTimeout(() => defenderWrap.classList.remove('hit-shake'), 400);
@@ -1593,7 +1563,6 @@
                 aura.classList.remove('visible');
             }
 
-            // 更新頂部 HUD 的 2 個護盾指示圓點
             for (let i = 1; i <= 2; i++) {
                 const dot = document.getElementById(`p${pid}-sdot-${i}`);
                 if (i <= player.shields) {
@@ -1618,13 +1587,66 @@
             }
         }
 
+        const CHARACTER_POOL = [
+            { emoji: "🧙‍♂️", name: "守護法師" },
+            { emoji: "🧝‍♀️", name: "幻盾精靈" },
+            { emoji: "🤖", name: "機甲泰坦" },
+            { emoji: "🦁", name: "金甲雄獅" },
+            { emoji: "🐼", name: "功夫宗師" },
+            { emoji: "🥷", name: "疾風神忍" },
+            { emoji: "🦄", name: "聖光獨角獸" },
+            { emoji: "🐉", name: "烈焰神龍" },
+            { emoji: "🦸‍♂️", name: "超能勇士" },
+            { emoji: "🦊", name: "幻彩靈狐" },
+            { emoji: "🐯", name: "霹靂猛虎" },
+            { emoji: "🦅", name: "空羽天鷹" },
+            { emoji: "🐺", name: "極地雪狼" },
+            { emoji: "🦖", name: "霸王暴龍" },
+            { emoji: "🐬", name: "深海守護神" },
+            { emoji: "🚀", name: "星際戰將" }
+        ];
+
+        let playerCharacters = [
+            { emoji: "🧙‍♂️", name: "守護法師" },
+            { emoji: "🧝‍♀️", name: "幻盾精靈" }
+        ];
+
+        function assignRandomCharacters() {
+            let shuffled = [...CHARACTER_POOL].sort(() => Math.random() - 0.5);
+            playerCharacters = [shuffled[0], shuffled[1]];
+
+            const c1 = playerCharacters[0];
+            const c2 = playerCharacters[1];
+
+            // 確保每位玩家嚴格只有單一角色 Emoji，不產生多重殘影
+            const emoji1 = document.getElementById('char-emoji-1');
+            const emoji2 = document.getElementById('char-emoji-2');
+            if (emoji1) emoji1.textContent = c1.emoji;
+            if (emoji2) emoji2.textContent = c2.emoji;
+
+            const tag1 = document.getElementById('fighter-tag-1');
+            const tag2 = document.getElementById('fighter-tag-2');
+            if (tag1) tag1.textContent = `P1 ${c1.name}`;
+            if (tag2) tag2.textContent = `P2 ${c2.name}`;
+
+            const hud1 = document.getElementById('hud-label-1');
+            const hud2 = document.getElementById('hud-label-2');
+            if (hud1) hud1.textContent = `${c1.emoji} 玩家 1`;
+            if (hud2) hud2.textContent = `玩家 2 ${c2.emoji}`;
+
+            const title1 = document.getElementById('panel-title-1');
+            const title2 = document.getElementById('panel-title-2');
+            if (title1) title1.textContent = `${c1.emoji} 玩家 1 (${c1.name})`;
+            if (title2) title2.textContent = `${c2.emoji} 玩家 2 (${c2.name})`;
+        }
+
         function declareWinner(winnerId, reason) {
             const overlay = document.getElementById('win-overlay');
             const title = document.getElementById('win-title');
             const subtitle = document.getElementById('win-subtitle');
 
-            const winnerColor = winnerId === 1 ? '藍方守護使' : '紅方幻盾師';
-            title.textContent = `🏆 玩家 ${winnerId} (${winnerColor}) 獲勝！`;
+            const char = playerCharacters[winnerId - 1];
+            title.textContent = `🏆 ${char.emoji} 玩家 ${winnerId} (${char.name}) 獲勝！`;
             subtitle.textContent = reason;
             overlay.classList.add('show');
         }
@@ -1632,6 +1654,7 @@
         function restartMatch() {
             isGameOver = false;
             document.getElementById('win-overlay').classList.remove('show');
+            assignRandomCharacters();
             players.forEach(p => {
                 p.stopTimer();
                 p.hp = matchConfig.maxHp;
@@ -1644,6 +1667,7 @@
 
         function initApp() {
             players = [new ShieldPlayer(1), new ShieldPlayer(2)];
+            assignRandomCharacters();
 
             document.getElementById('sel-level').addEventListener('change', (e) => {
                 matchConfig.level = parseInt(e.target.value);
