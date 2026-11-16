@@ -1397,8 +1397,29 @@
             let found = false;
             let attempts = 0;
 
+            // 模式判定：
+            // 'none': 完全不用進位 (兩位數機率約 50%，三位數以上約 30%)
+            // 'partial': 部份進位 (只在部分數位進位)
+            // 'full': 連續/多次進位 (多數或全部可能位數皆進位)
+            let chosenMode = 'none';
+            if (lvl === 2) {
+                // 兩位數：完全不用進位機率約 50%，進位機率約 50%
+                chosenMode = Math.random() < 0.5 ? 'none' : 'full';
+            } else {
+                let r = Math.random();
+                if (r < 0.30) {
+                    chosenMode = 'none';      // 約 30% 完全不用進位
+                } else if (r < 0.75) {
+                    chosenMode = 'partial';   // 約 45% 部份進位
+                } else {
+                    chosenMode = 'full';      // 約 25% 連續/多次進位
+                }
+            }
+
             while (!found && attempts < 10000) {
                 attempts++;
+                if (attempts > 4000) chosenMode = (Math.random() < 0.5 ? 'none' : 'any'); // 超時安全防護
+
                 let h1 = 2 + Math.floor(Math.random() * 8);
                 let h2 = 2 + Math.floor(Math.random() * 8);
 
@@ -1422,16 +1443,40 @@
                     let d1_arr = [...low1, h1];
                     let d2_arr = [...low2, h2];
 
-                    let hasCarry = false;
+                    let carryCount = 0;
                     let carryTemp = 0;
                     for (let i = 0; i < lvl; i++) {
                         if (d1_arr[i] + d2_arr[i] + carryTemp > 9) {
-                            hasCarry = true;
+                            carryCount++;
                         }
                         carryTemp = Math.floor((d1_arr[i] + d2_arr[i] + carryTemp) / 10);
                     }
 
-                    if (hasCarry) {
+                    let maxPossibleCarries = lvl - 1;
+                    let matchesMode = false;
+
+                    if (chosenMode === 'none') {
+                        matchesMode = (carryCount === 0);
+                    } else if (chosenMode === 'partial') {
+                        // 部份進位：有進位但並非全部可能位數都進位
+                        if (maxPossibleCarries > 1) {
+                            matchesMode = (carryCount >= 1 && carryCount < maxPossibleCarries);
+                        } else {
+                            matchesMode = (carryCount === 1);
+                        }
+                    } else if (chosenMode === 'full') {
+                        // 連續/多次進位
+                        if (maxPossibleCarries > 1) {
+                            matchesMode = (carryCount >= Math.min(2, maxPossibleCarries));
+                        } else {
+                            matchesMode = (carryCount === 1);
+                        }
+                    } else {
+                        // 超時防護 fallback
+                        matchesMode = true;
+                    }
+
+                    if (matchesMode) {
                         this.num1 = d1_arr;
                         this.num2 = d2_arr;
                         found = true;
