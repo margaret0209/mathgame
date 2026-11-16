@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>雙人加法對決：盾牌與反射 (Math Shield & Reflect)</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --panel-p1: #161b22;
+            --panel-p2: #21262d;
+            --accent-p1: #2f81f7;
+            --accent-p2: #f85149;
+            --shield-p1: #00d2d3;
+            --shield-p2: #ff9f43;
+            --hp-green: #2ecc71;
+            --hp-yellow: #f1c40f;
+            --hp-red: #e74c3c;
+            --carry-bg: #ffeaa7;
+            --active-border: #ff7675;
+            --wrong-color: #d63031;
+            --correct-color: #00b894;
+
+            /* 直式的高度 : 數字鍵盤的高度 = 2 : 1 嚴格比例 */
+            --math-col-height: clamp(230px, 34vh, 290px);
+            --numpad-height: calc(var(--math-col-height) / 2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        html, body {
+            background-color: var(--bg-color);
+            height: 100%;
+            width: 100%;
+            font-family: "Comic Sans MS", "Arial Rounded MT Bold", "PingFang HK", "Microsoft JhengHei", sans-serif;
+            color: #fff;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 頂部控制列 */
+        #top-bar {
+            background-color: rgba(13, 17, 23, 0.98);
+            padding: 4px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #30363d;
+            z-index: 100;
+            flex-shrink: 0;
+            height: 40px;
+        }
+
+        .logo {
+            font-size: 1.05rem;
+            font-weight: 900;
+            color: #58a6ff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 10px rgba(88, 166, 255, 0.5);
+        }
+
+        .battle-rules-tip {
+            font-size: 0.76rem;
+            color: #8b949e;
+            background: rgba(0, 0, 0, 0.45);
+            padding: 2px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .battle-rules-tip b {
+            color: #f1c40f;
+        }
+
+        .battle-rules-tip .reflect-tip {
+            color: #00d2d3;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 8px;
+        }
+
+        .control-group label {
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        select {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: none;
+            background: #21262d;
+            color: #c9d1d9;
+            outline: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, #238636, #2ea043);
+            color: white;
+            border: none;
+            padding: 4px 14px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.78rem;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(46, 160, 67, 0.4);
+            transition: transform 0.1s;
+        }
+
+        .btn-restart:active { transform: scale(0.95); }
+
+        /* ==========================================
+           對戰 HUD：血條、護盾層數與動態角色戰場
+           ========================================== */
+        #combat-hud {
+            flex-shrink: 0;
+            background: radial-gradient(circle at 50% 30%, #1c2128 0%, #0d1117 100%);
+            border-bottom: 3px solid #30363d;
+            padding: 6px 16px 8px 16px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            overflow: hidden;
+        }
+
+        .stage-floor {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 14px;
+            background: linear-gradient(to bottom, #30363d, #161b22);
+            border-top: 2px solid #8b949e;
+            box-shadow: 0 -3px 10px rgba(0,0,0,0.5);
+            z-index: 1;
+        }
+
+        .hp-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            width: 100%;
+            z-index: 5;
+        }
+
+        .fighter-hp-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .fighter-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.85rem;
+            font-weight: 900;
+        }
+
+        .fighter-p1-label { color: #58a6ff; text-shadow: 0 0 10px rgba(88, 166, 255, 0.6); }
+        .fighter-p2-label { color: #ff7b72; text-shadow: 0 0 10px rgba(255, 123, 114, 0.6); }
+
+        .hp-bar-bg {
+            height: 16px;
+            background-color: #21262d;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #484f58;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        .hp-bar-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(180deg, #2ecc71 0%, #10ac84 100%);
+            box-shadow: 0 0 10px rgba(46, 213, 115, 0.6);
+            transition: width 0.35s cubic-bezier(0.25, 1, 0.5, 1), background 0.3s;
+        }
+
+        .p2-hp-fill { float: right; }
+
+        /* 護盾視覺條 */
+        .shield-indicator-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            height: 12px;
+            font-size: 0.72rem;
+            color: #79c0ff;
+        }
+
+        .shield-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .shield-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #30363d;
+            border: 1px solid #6e7681;
+            transition: all 0.3s;
+        }
+
+        .shield-dot.active {
+            background: #00d2d3;
+            box-shadow: 0 0 8px #00d2d3;
+            border-color: #fff;
+        }
+
+        .shield-dot.active-p2 {
+            background: #ff9f43;
+            box-shadow: 0 0 8px #ff9f43;
+            border-color: #fff;
+        }
+
+        .vs-badge {
+            font-size: 1.25rem;
+            font-weight: 900;
+            font-style: italic;
+            color: #f1c40f;
+            text-shadow: 0 0 12px rgba(241, 196, 15, 0.8);
+            flex-shrink: 0;
+            padding: 0 6px;
+        }
+
+        /* 戰鬥舞台與角色 */
+        .fighters-stage {
+            height: clamp(80px, 13vh, 110px);
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 clamp(35px, 9vw, 95px);
+            position: relative;
+            z-index: 5;
+            margin-bottom: 2px;
+        }
+
+        .fighter-avatar-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .fighter-char {
+            font-size: clamp(2.8rem, 4.8vw, 3.8rem);
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.8));
+            position: relative;
+            line-height: 1;
+            transition: transform 0.15s;
+        }
+
+        /* 物理盾牌光環特效 */
+        .shield-aura {
+            position: absolute;
+            top: -6px;
+            left: -8px;
+            right: -8px;
+            bottom: -6px;
+            border-radius: 50%;
+            border: 3px solid #00d2d3;
+            background: radial-gradient(circle, rgba(0, 210, 211, 0.25) 0%, transparent 80%);
+            box-shadow: 0 0 20px #00d2d3, inset 0 0 10px #00d2d3;
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 15;
+            animation: pulse-shield 1.5s infinite alternate;
+        }
+
+        .shield-aura.p2-shield {
+            border-color: #ff9f43;
+            background: radial-gradient(circle, rgba(255, 159, 67, 0.25) 0%, transparent 80%);
+            box-shadow: 0 0 20px #ff9f43, inset 0 0 10px #ff9f43;
+        }
+
+        .shield-aura.visible {
+            opacity: 1;
+            transform: scale(1.08);
+        }
+
+        @keyframes pulse-shield {
+            0% { transform: scale(1.05); filter: brightness(1); }
+            100% { transform: scale(1.15); filter: brightness(1.3); }
+        }
+
+        .fighter-shadow {
+            width: clamp(35px, 4.5vw, 55px);
+            height: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 50%;
+            margin-top: -3px;
+            filter: blur(2px);
+        }
+
+        .fighter-tag-name {
+            font-size: 0.72rem;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 6px;
+            margin-top: 3px;
+            letter-spacing: 0.5px;
+        }
+
+        .tag-p1 { background: #1f6feb; color: #fff; }
+        .tag-p2 { background: #da3633; color: #fff; }
+
+        /* 傷害 / 護盾動態飄字 */
+        .status-popup {
+            position: absolute;
+            top: -24px;
+            font-size: 1.4rem;
+            font-weight: 900;
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease-out;
+            white-space: nowrap;
+            z-index: 100;
+        }
+
+        .status-popup.dmg {
+            color: #ff4d4f;
+            text-shadow: 0 0 8px rgba(0,0,0,0.8), 0 0 15px #f5222d;
+        }
+
+        .status-popup.reflect {
+            color: #00d2d3;
+            font-size: 1.7rem;
+            text-shadow: 0 0 10px #000, 0 0 20px #00d2d3, 0 0 30px #54a0ff;
+        }
+
+        .status-popup.shield-up {
+            color: #f1c40f;
+            font-size: 1.35rem;
+            text-shadow: 0 0 8px #000, 0 0 15px #f39c12;
+        }
+
+        .status-popup.show {
+            transform: translateY(-35px) scale(1.2);
+            opacity: 1;
+        }
+
+        /* 攻擊法球與反射射線 */
+        .energy-ball {
+            position: absolute;
+            bottom: 25px;
+            width: clamp(28px, 4vw, 42px);
+            height: clamp(28px, 4vw, 42px);
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 40;
+        }
+
+        .energy-ball.blue {
+            background: radial-gradient(circle, #fff 15%, #54a0ff 40%, #2e86de 80%);
+            box-shadow: 0 0 25px #00d2d3, 0 0 40px #2e86de;
+        }
+
+        .energy-ball.red {
+            background: radial-gradient(circle, #fff 15%, #ff6b6b 40%, #ee5253 80%);
+            box-shadow: 0 0 25px #ff4757, 0 0 40px #ee5253;
+        }
+
+        @keyframes shoot-left-to-right {
+            0% { left: 80px; opacity: 1; transform: scale(0.6); }
+            100% { left: calc(100% - 90px); opacity: 1; transform: scale(1.2); }
+        }
+
+        @keyframes shoot-right-to-left {
+            0% { right: 80px; opacity: 1; transform: scale(0.6); }
+            100% { right: calc(100% - 90px); opacity: 1; transform: scale(1.2); }
+        }
+
+        .shoot-p1 { animation: shoot-left-to-right 0.32s cubic-bezier(0.2, 0.7, 0.4, 1) forwards; }
+        .shoot-p2 { animation: shoot-right-to-left 0.32s cubic-bezier(0.2, 0.7, 0.4, 1) forwards; }
+
+        /* 反射彈回動畫 */
+        @keyframes bounce-reflect-p1 {
+            0% { left: calc(100% - 90px); opacity: 1; transform: scale(1.3); }
+            100% { left: 80px; opacity: 1; transform: scale(1.4); }
+        }
+
+        @keyframes bounce-reflect-p2 {
+            0% { right: calc(100% - 90px); opacity: 1; transform: scale(1.3); }
+            100% { right: 80px; opacity: 1; transform: scale(1.4); }
+        }
+
+        .reflect-p1 { animation: bounce-reflect-p1 0.28s ease-in-out forwards; }
+        .reflect-p2 { animation: bounce-reflect-p2 0.28s ease-in-out forwards; }
+
+        /* 受擊震動 */
+        @keyframes shake-char {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-12px); filter: brightness(2); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(4px); }
+        }
+        .hit-shake { animation: shake-char 0.4s ease-out; }
+
+        /* ==========================================
+           作答區：左玩家 | 右玩家
+           ========================================== */
+        #game-stage {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            padding: 5px 12px;
+            gap: 12px;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .player-panel {
+            flex: 1;
+            background: #ffffff;
+            border-radius: 16px;
+            color: #222;
+            display: flex;
+            flex-direction: column;
+            padding: 8px 12px 6px 12px;
+            position: relative;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+            border: 4px solid;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        #panel-1 { border-color: var(--accent-p1); background: #fbfdff; }
+        #panel-2 { border-color: var(--accent-p2); background: #fffbfc; }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 4px;
+            margin-bottom: 2px;
+            border-bottom: 2px dashed #dcdde1;
+            flex-shrink: 0;
+        }
+
+        .player-title {
+            font-size: 1rem;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .player-status-tag {
+            font-size: 0.78rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 9px;
+            background: #e1f5fe;
+            color: #0288d1;
+        }
+
+        .player-status-tag.shield-on {
+            background: #e0f2f1;
+            color: #00796b;
+            box-shadow: 0 0 6px rgba(0, 150, 136, 0.4);
+        }
+
+        .player-timer {
+            font-size: 0.78rem;
+            font-weight: bold;
+            padding: 2px 7px;
+            border-radius: 8px;
+            background: #f1f2f6;
+            color: #57606f;
+        }
+
+        /* ==========================================================
+           直式與鍵盤高度嚴格遵守 2 : 1 比例設定
+           ========================================================== */
+        .math-section {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: clamp(10px, 2.5vw, 26px);
+            min-height: 0;
+            padding: 4px 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 直式容器：高度佔比 2 */
+        .math-column-wrap {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: var(--math-col-height);
+            flex: 0 1 auto;
+            min-width: 0;
+        }
+
+        .math-grid {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .math-row {
+            display: flex;
+            gap: clamp(4px, 0.9vw, 8px);
+            justify-content: flex-end;
+            width: 100%;
+            align-items: center;
+        }
+
+        /* 直式單元格 */
+        .math-cell {
+            width: clamp(48px, 5.5vw, 68px);
+            height: clamp(40px, 5.8vh, 56px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(2rem, 3.8vw, 3rem);
+            font-weight: bold;
+            border-radius: 9px;
+            position: relative;
+            color: #2d3436;
+        }
+
+        .header-cell {
+            font-size: clamp(0.9rem, 1.4vw, 1.2rem);
+            color: #7f8c8d;
+            height: clamp(18px, 2.6vh, 26px);
+            font-weight: bold;
+        }
+
+        .symbol-cell {
+            color: #2d3436;
+            justify-content: flex-start;
+        }
+
+        .divider-row {
+            border-bottom: clamp(3px, 0.5vh, 5px) solid #2d3436;
+            margin: clamp(1px, 0.2vh, 2px) 0;
+            width: 100%;
+        }
+
+        /* 進位按鈕 */
+        .carry-btn {
+            background-color: #f1f2f6;
+            border: 2px dashed #a4b0be;
+            color: #747d8c;
+            font-size: clamp(0.72rem, 1vw, 0.92rem);
+            border-radius: 50%;
+            width: clamp(36px, 4.2vw, 48px);
+            height: clamp(36px, 4.2vw, 48px);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            font-weight: bold;
+        }
+
+        .carry-btn.active-carry {
+            background-color: var(--carry-bg);
+            border: 2px solid #e67e22;
+            color: #d35400;
+            font-size: clamp(1.35rem, 2.2vw, 1.8rem);
+        }
+
+        /* 答案輸入方格 */
+        .answer-box {
+            border: 3px dashed #b2bec3;
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+
+        .answer-box.selected {
+            border: 3px solid var(--active-border) !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 0 10px rgba(255, 118, 117, 0.55);
+        }
+
+        .answer-box.filled {
+            border-style: solid;
+            border-color: #74b9ff;
+            background-color: #f1f6ff;
+        }
+
+        .cell-wrong {
+            border: 3px solid var(--wrong-color) !important;
+            background-color: #ffe6e6 !important;
+            color: var(--wrong-color) !important;
+        }
+
+        .cell-correct {
+            border: 3px solid var(--correct-color) !important;
+            background-color: #e8f8f5 !important;
+            color: var(--correct-color) !important;
+        }
+
+        /* 數字鍵盤容器：高度佔比 1（直式高度的 50%） */
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: clamp(3px, 0.4vw, 5px);
+            width: clamp(120px, 14.5vw, 160px);
+            height: var(--numpad-height);
+            flex-shrink: 0;
+        }
+
+        .numpad-btn {
+            background-color: #e2d1f9;
+            border: 1.5px solid #b898eb;
+            border-radius: 7px;
+            height: 100%;
+            font-size: clamp(0.95rem, 1.5vw, 1.25rem);
+            font-weight: bold;
+            color: #2d3436;
+            box-shadow: 0 2px 0 #b898eb;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.08s;
+        }
+
+        .numpad-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 0 0 #b898eb;
+        }
+
+        .numpad-btn.btn-clear {
+            background-color: #ffb7b2;
+            border-color: #f7908a;
+            box-shadow: 0 2px 0 #f7908a;
+            font-size: clamp(0.8rem, 1vw, 0.95rem);
+        }
+
+        .numpad-btn.btn-submit-key {
+            background-color: #2ed573;
+            border-color: #20af5c;
+            color: white;
+            box-shadow: 0 2px 0 #1b8a49;
+            font-size: clamp(0.82rem, 1.05vw, 0.96rem);
+        }
+
+        .numpad-btn.btn-retry-mode {
+            background-color: #ffa502 !important;
+            border-color: #e67e22 !important;
+            box-shadow: 0 2px 0 #d35400 !important;
+        }
+
+        .numpad-btn.btn-next-mode {
+            background-color: #3498db !important;
+            border-color: #2980b9 !important;
+            box-shadow: 0 2px 0 #1f618d !important;
+            font-size: clamp(0.78rem, 0.95vw, 0.9rem) !important;
+        }
+
+        /* 答對後浮現的心理戰抉擇浮層 (進攻 VS 護盾) */
+        .tactics-modal {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.94);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            z-index: 80;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease-out;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        .tactics-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .tactics-title {
+            font-size: 1.15rem;
+            font-weight: 900;
+            color: #2f3542;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tactics-choice-row {
+            display: flex;
+            gap: 12px;
+            width: 90%;
+            max-width: 320px;
+        }
+
+        .btn-tactic {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 14px 10px;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+
+        .btn-tactic:active { transform: scale(0.96); }
+
+        .btn-attack {
+            background: linear-gradient(135deg, #ff4757, #ff6b81);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
+        }
+
+        .btn-shield {
+            background: linear-gradient(135deg, #00d2d3, #2e86de);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 210, 211, 0.4);
+        }
+
+        .tactic-icon { font-size: 2rem; }
+        .tactic-label { font-size: 1.05rem; font-weight: 900; }
+        .tactic-desc { font-size: 0.72rem; opacity: 0.9; }
+
+        .action-area {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 2px;
+            border-top: 1px dashed #ecf0f1;
+            flex-shrink: 0;
+        }
+
+        .chance-badge {
+            font-size: clamp(0.72rem, 1vw, 0.82rem);
+            color: #e74c3c;
+            font-weight: bold;
+            min-height: 18px;
+            text-align: center;
+        }
+
+        /* 獲勝結算彈窗 */
+        .win-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10, 11, 18, 0.96);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s;
+            z-index: 500;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .win-overlay.show { opacity: 1; pointer-events: auto; }
+
+        .ko-banner {
+            font-size: clamp(3.5rem, 8vw, 5.5rem);
+            font-weight: 900;
+            font-style: italic;
+            color: #ff9f43;
+            text-shadow: 0 0 20px #ff9f43, 0 0 45px #f39c12;
+            animation: bounce 0.6s infinite alternate ease-in-out;
+            margin-bottom: 8px;
+        }
+
+        @keyframes bounce {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        .win-desc {
+            font-size: clamp(1.6rem, 3.4vw, 2.4rem);
+            font-weight: bold;
+            color: #ffeaa7;
+            margin-bottom: 6px;
+        }
+
+        .win-sub {
+            font-size: clamp(0.95rem, 1.8vw, 1.25rem);
+            color: #ced6e0;
+            margin-bottom: 22px;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .shake { animation: shake 0.4s; }
+    </style>
+</head>
+<body>
+
+    <div id="top-bar">
+        <div class="logo">🛡️ 雙人加法：盾牌與反射對決</div>
+        <div class="battle-rules-tip">
+            答對自主抉擇：💥 <b>【進攻】</b>造成20傷害 | 🛡️ <b>【加盾】</b>最多疊加2層護盾！<span class="reflect-tip">對手攻擊將被護盾100%反射反噬！</span>
+        </div>
+        <div class="controls">
+            <div class="control-group">
+                <label>位數：</label>
+                <select id="sel-level">
+                    <option value="2" selected>兩位數</option>
+                    <option value="3">三位數</option>
+                    <option value="4">四位數</option>
+                    <option value="5">五位數</option>
+                </select>
+            </div>
+            <button class="btn-restart" onclick="restartMatch()">重新開戰</button>
+        </div>
+    </div>
+
+    <!-- 頂部戰鬥 HUD：血條、護盾狀態與打鬥/反射舞台 -->
+    <div id="combat-hud">
+        <div class="hp-section">
+            <!-- 玩家 1 血條與護盾 -->
+            <div class="fighter-hp-container">
+                <div class="fighter-info-row">
+                    <span class="fighter-p1-label">🛡️ 玩家 1 (藍方)</span>
+                    <span id="hp-text-1">100 / 100</span>
+                </div>
+                <div class="hp-bar-bg">
+                    <div class="hp-bar-fill" id="hp-fill-1"></div>
+                </div>
+                <div class="shield-indicator-row">
+                    <span>護盾層數:</span>
+                    <div class="shield-dots">
+                        <div class="shield-dot" id="p1-sdot-1"></div>
+                        <div class="shield-dot" id="p1-sdot-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="vs-badge">VS</div>
+
+            <!-- 玩家 2 血條與護盾 -->
+            <div class="fighter-hp-container">
+                <div class="fighter-info-row">
+                    <span id="hp-text-2">100 / 100</span>
+                    <span class="fighter-p2-label">(紅方) 玩家 2 🛡️</span>
+                </div>
+                <div class="hp-bar-bg">
+                    <div class="hp-bar-fill p2-hp-fill" id="hp-fill-2"></div>
+                </div>
+                <div class="shield-indicator-row" style="justify-content: flex-end;">
+                    <div class="shield-dots">
+                        <div class="shield-dot" id="p2-sdot-2"></div>
+                        <div class="shield-dot" id="p2-sdot-1"></div>
+                    </div>
+                    <span>:護盾層數</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 角色動態舞台 -->
+        <div class="fighters-stage">
+            <div class="stage-floor"></div>
+
+            <!-- 玩家 1 角色 -->
+            <div class="fighter-avatar-wrap" id="fighter-wrap-1">
+                <div class="status-popup" id="popup-1">-20</div>
+                <div class="fighter-char" id="char-1">
+                    🧙‍♂️
+                    <div class="shield-aura" id="shield-aura-1"></div>
+                </div>
+                <div class="fighter-shadow"></div>
+                <div class="fighter-tag-name tag-p1">P1 守護使</div>
+            </div>
+
+            <!-- 攻擊法球 -->
+            <div class="energy-ball blue" id="ball-1"></div>
+            <div class="energy-ball red" id="ball-2"></div>
+
+            <!-- 玩家 2 角色 -->
+            <div class="fighter-avatar-wrap" id="fighter-wrap-2">
+                <div class="status-popup" id="popup-2">-20</div>
+                <div class="fighter-char" id="char-2">
+                    🧝‍♀️
+                    <div class="shield-aura p2-shield" id="shield-aura-2"></div>
+                </div>
+                <div class="fighter-shadow"></div>
+                <div class="fighter-tag-name tag-p2">P2 幻盾師</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部主答題區 -->
+    <div id="game-stage">
+        <!-- 玩家 1 區域 -->
+        <div id="panel-1" class="player-panel">
+            <div class="player-header">
+                <div class="player-title">
+                    <span>🧙‍♂️ 玩家 1</span>
+                    <span class="player-status-tag" id="status-tag-1">護盾: 0</span>
+                </div>
+                <div class="player-timer" id="timer-1">用時: 0.0s</div>
+            </div>
+
+            <div class="math-section">
+                <!-- 心理戰戰術選擇浮層 -->
+                <div class="tactics-modal" id="tactics-1">
+                    <div class="tactics-title">🎉 答對了！請選擇戰術策略：</div>
+                    <div class="tactics-choice-row">
+                        <button class="btn-tactic btn-attack" onclick="players[0].chooseTactic('attack')">
+                            <span class="tactic-icon">⚔️</span>
+                            <span class="tactic-label">發動進攻</span>
+                            <span class="tactic-desc">造成 20 點傷害</span>
+                        </button>
+                        <button class="btn-tactic btn-shield" onclick="players[0].chooseTactic('shield')">
+                            <span class="tactic-icon">🛡️</span>
+                            <span class="tactic-label">給自己加盾</span>
+                            <span class="tactic-desc">反射對手下一次攻擊</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 直式加法 (高度 2) -->
+                <div class="math-column-wrap">
+                    <div class="math-grid" id="grid-1"></div>
+                </div>
+
+                <!-- 數字鍵盤 (高度 1，即 50% 高度) -->
+                <div class="numpad" id="numpad-1"></div>
+            </div>
+
+            <div class="action-area">
+                <div class="chance-badge" id="chance-1">剩餘修改機會：1 次</div>
+            </div>
+        </div>
+
+        <!-- 玩家 2 區域 -->
+        <div id="panel-2" class="player-panel">
+            <div class="player-header">
+                <div class="player-title">
+                    <span>🧝‍♀️ 玩家 2</span>
+                    <span class="player-status-tag" id="status-tag-2">護盾: 0</span>
+                </div>
+                <div class="player-timer" id="timer-2">用時: 0.0s</div>
+            </div>
+
+            <div class="math-section">
+                <!-- 心理戰戰術選擇浮層 -->
+                <div class="tactics-modal" id="tactics-2">
+                    <div class="tactics-title">🎉 答對了！請選擇戰術策略：</div>
+                    <div class="tactics-choice-row">
+                        <button class="btn-tactic btn-attack" onclick="players[1].chooseTactic('attack')">
+                            <span class="tactic-icon">⚔️</span>
+                            <span class="tactic-label">發動進攻</span>
+                            <span class="tactic-desc">造成 20 點傷害</span>
+                        </button>
+                        <button class="btn-tactic btn-shield" onclick="players[1].chooseTactic('shield')">
+                            <span class="tactic-icon">🛡️</span>
+                            <span class="tactic-label">給自己加盾</span>
+                            <span class="tactic-desc">反射對手下一次攻擊</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 直式加法 (高度 2) -->
+                <div class="math-column-wrap">
+                    <div class="math-grid" id="grid-2"></div>
+                </div>
+
+                <!-- 數字鍵盤 (高度 1，即 50% 高度) -->
+                <div class="numpad" id="numpad-2"></div>
+            </div>
+
+            <div class="action-area">
+                <div class="chance-badge" id="chance-2">剩餘修改機會：1 次</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 獲勝結算彈窗 -->
+    <div class="win-overlay" id="win-overlay">
+        <div class="ko-banner">VICTORY</div>
+        <div class="win-desc" id="win-title">🏆 玩家 1 獲勝！</div>
+        <div class="win-sub" id="win-subtitle">攻守兼備，透過精妙的心理戰與算術壓制對手！</div>
+        <button class="btn-restart" style="font-size:1.1rem; padding:9px 24px;" onclick="restartMatch()">再戰一回合</button>
+    </div>
+
+    <script>
+        // ==========================================
+        // 音效系統
+        // ==========================================
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(freq, type, duration) {
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        const Sound = {
+            click: () => playTone(480, 'sine', 0.05),
+            correct: () => {
+                playTone(523.25, 'triangle', 0.1);
+                setTimeout(() => playTone(659.25, 'triangle', 0.15), 80);
+            },
+            wrong: () => playTone(150, 'sawtooth', 0.35),
+            attack: () => {
+                playTone(300, 'sawtooth', 0.12);
+                setTimeout(() => playTone(120, 'square', 0.2), 60);
+            },
+            shieldUp: () => {
+                [350, 520, 780].forEach((f, i) => {
+                    setTimeout(() => playTone(f, 'sine', 0.18), i * 70);
+                });
+            },
+            reflect: () => {
+                [800, 600, 1100, 1400].forEach((f, i) => {
+                    setTimeout(() => playTone(f, 'square', 0.15), i * 50);
+                });
+            },
+            win: () => {
+                [440, 554, 659, 880].forEach((f, i) => {
+                    setTimeout(() => playTone(f, 'triangle', 0.25), i * 120);
+                });
+            }
+        };
+
+        const PLACE_LABELS = ["個", "十", "百", "千", "萬"];
+        let matchConfig = {
+            level: 2,
+            maxHp: 100,
+            baseDamage: 20,
+            maxShields: 2
+        };
+
+        let isGameOver = false;
+
+        class ShieldPlayer {
+            constructor(id) {
+                this.id = id;
+                this.opponentId = (id === 1) ? 2 : 1;
+                this.hp = matchConfig.maxHp;
+                this.shields = 0; // 護盾層數 (0~2)
+
+                this.gridEl = document.getElementById(`grid-${id}`);
+                this.numpadEl = document.getElementById(`numpad-${id}`);
+                this.chanceEl = document.getElementById(`chance-${id}`);
+                this.timerEl = document.getElementById(`timer-${id}`);
+                this.statusTagEl = document.getElementById(`status-tag-${id}`);
+                this.hpFillEl = document.getElementById(`hp-fill-${id}`);
+                this.hpTextEl = document.getElementById(`hp-text-${id}`);
+                this.tacticsModalEl = document.getElementById(`tactics-${id}`);
+                this.shieldAuraEl = document.getElementById(`shield-aura-${id}`);
+                this.submitBtn = null;
+
+                this.num1 = [];
+                this.num2 = [];
+                this.carries = [];
+                this.answers = [];
+                this.carryErrors = [];
+                this.ansErrors = [];
+
+                this.currentSelectedCol = 0;
+                this.modifyChances = 1;
+                this.isDisplayingAnswer = false;
+
+                this.startTime = null;
+                this.timerInterval = null;
+
+                this.initNumpad();
+                this.generateNewQuestion();
+            }
+
+            initNumpad() {
+                this.numpadEl.innerHTML = '';
+                const layout = [1, 2, 3, 4, 5, 6, 7, 8, 9, "清除", 0, "提交"];
+                layout.forEach(item => {
+                    const btn = document.createElement('div');
+                    btn.className = 'numpad-btn';
+
+                    if (item === "清除") {
+                        btn.classList.add('btn-clear');
+                        btn.textContent = item;
+                        btn.addEventListener('pointerdown', (e) => {
+                            e.preventDefault();
+                            Sound.click();
+                            this.handleKeypad(item);
+                        });
+                    } else if (item === "提交") {
+                        btn.classList.add('btn-submit-key');
+                        btn.textContent = "提交";
+                        this.submitBtn = btn;
+                        btn.addEventListener('pointerdown', (e) => {
+                            e.preventDefault();
+                            this.handleActionClick();
+                        });
+                    } else {
+                        btn.textContent = item;
+                        btn.addEventListener('pointerdown', (e) => {
+                            e.preventDefault();
+                            Sound.click();
+                            this.handleKeypad(item);
+                        });
+                    }
+                    this.numpadEl.appendChild(btn);
+                });
+            }
+
+            startTimer() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                this.startTime = Date.now();
+                this.timerInterval = setInterval(() => {
+                    if (isGameOver) return;
+                    let diff = (Date.now() - this.startTime) / 1000;
+                    this.timerEl.textContent = `用時: ${diff.toFixed(1)}s`;
+                }, 100);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+            }
+
+            generateNewQuestion() {
+                if (isGameOver) return;
+                let lvl = matchConfig.level;
+                this.num1 = [];
+                this.num2 = [];
+                this.carries = Array(lvl + 1).fill(0);
+                this.answers = Array(lvl).fill(null);
+                this.carryErrors = Array(lvl + 1).fill(false);
+                this.ansErrors = Array(lvl).fill(false);
+                this.modifyChances = 1;
+                this.isDisplayingAnswer = false;
+                this.currentSelectedCol = 0;
+
+                // 隱藏戰術彈窗
+                this.tacticsModalEl.classList.remove('active');
+
+                // 決定進位模式：完全不用進位、部份進位、全進位
+                // 兩位數時：約 50% 完全不用進位，50% 進位
+                let targetMode;
+                if (lvl === 2) {
+                    targetMode = Math.random() < 0.5 ? 'none' : 'all';
+                } else {
+                    let r = Math.random();
+                    if (r < 0.35) {
+                        targetMode = 'none';    // 完全不用進位
+                    } else if (r < 0.75) {
+                        targetMode = 'partial'; // 部份進位
+                    } else {
+                        targetMode = 'all';     // 全進位 / 連續進位
+                    }
+                }
+
+                let k = lvl - 1; // 能產生進位的低位數量
+                let carryPattern = Array(k).fill(0);
+
+                if (targetMode === 'all') {
+                    carryPattern.fill(1);
+                } else if (targetMode === 'partial' && k > 1) {
+                    // 隨機選 1 到 k-1 個位置進位，其餘不進位
+                    let numCarries = 1 + Math.floor(Math.random() * (k - 1));
+                    let indices = [];
+                    for (let i = 0; i < k; i++) indices.push(i);
+                    for (let i = indices.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [indices[i], indices[j]] = [indices[j], indices[i]];
+                    }
+                    for (let i = 0; i < numCarries; i++) {
+                        carryPattern[indices[i]] = 1;
+                    }
+                }
+
+                // 根據 carryPattern 逐位生成低位數字
+                let n1Digits = [];
+                let n2Digits = [];
+                let cIn = 0;
+
+                for (let i = 0; i < k; i++) {
+                    let needCarry = carryPattern[i];
+                    if (needCarry === 1) {
+                        // 需要進位：總和 >= 10
+                        let targetSum = 10 + Math.floor(Math.random() * 9); // 10 ~ 18
+                        let dSum = targetSum - cIn;
+                        let minD1 = Math.max(0, dSum - 9);
+                        let maxD1 = Math.min(9, dSum);
+                        let d1 = minD1 + Math.floor(Math.random() * (maxD1 - minD1 + 1));
+                        let d2 = dSum - d1;
+                        n1Digits.push(d1);
+                        n2Digits.push(d2);
+                        cIn = 1;
+                    } else {
+                        // 不需要進位：總和 < 10
+                        let targetSum = cIn + Math.floor(Math.random() * (10 - cIn)); // cIn ~ 9
+                        let dSum = targetSum - cIn;
+                        let d1 = Math.floor(Math.random() * (dSum + 1));
+                        let d2 = dSum - d1;
+                        n1Digits.push(d1);
+                        n2Digits.push(d2);
+                        cIn = 0;
+                    }
+                }
+
+                // 最高位：確保最高位至少為 2，且最高位加法不溢位 (< 10^lvl)
+                let maxTotalH = 9 - cIn;
+                let totalH = 4 + Math.floor(Math.random() * (maxTotalH - 4 + 1)); // 4 ~ maxTotalH
+                let h1 = 2 + Math.floor(Math.random() * (totalH - 4 + 1));
+                let h2 = totalH - h1;
+
+                n1Digits.push(h1);
+                n2Digits.push(h2);
+
+                this.num1 = n1Digits;
+                this.num2 = n2Digits;
+
+                if (this.submitBtn) {
+                    this.submitBtn.className = 'numpad-btn btn-submit-key';
+                    this.submitBtn.textContent = "提交";
+                }
+                this.chanceEl.textContent = "剩餘修改機會：1 次";
+                this.renderGrid();
+                this.startTimer();
+            }
+
+            handleKeypad(val) {
+                if (this.isDisplayingAnswer || isGameOver || this.tacticsModalEl.classList.contains('active')) return;
+
+                if (val === "清除") {
+                    this.answers[this.currentSelectedCol] = null;
+                    this.ansErrors[this.currentSelectedCol] = false;
+                } else if (typeof val === 'number') {
+                    this.answers[this.currentSelectedCol] = val;
+                    this.ansErrors[this.currentSelectedCol] = false;
+
+                    if (this.currentSelectedCol < matchConfig.level - 1) {
+                        this.currentSelectedCol++;
+                    }
+                }
+                this.renderGrid();
+            }
+
+            toggleCarry(col) {
+                if (this.isDisplayingAnswer || isGameOver || this.tacticsModalEl.classList.contains('active')) return;
+                Sound.click();
+                this.carries[col] = (this.carries[col] === 1) ? 0 : 1;
+                this.carryErrors[col] = false;
+                this.renderGrid();
+            }
+
+            renderGrid() {
+                this.gridEl.innerHTML = '';
+                let maxCol = matchConfig.level;
+                let rows = [[], [], [], [], [], []];
+
+                for (let c = maxCol; c >= 0; c--) {
+                    let isSymbolCol = (c === maxCol);
+
+                    // 1. 表頭（位值標籤）
+                    let hCell = document.createElement('div');
+                    hCell.className = 'math-cell header-cell';
+                    hCell.textContent = isSymbolCol ? "" : PLACE_LABELS[c];
+                    rows[0].push(hCell);
+
+                    // 2. 進位按鈕列
+                    let carryCell = document.createElement('div');
+                    carryCell.className = 'math-cell';
+                    if (!isSymbolCol && c > 0) {
+                        let isCarried = this.carries[c] === 1;
+                        let carryBtn = document.createElement('button');
+                        carryBtn.className = 'carry-btn' + (isCarried ? ' active-carry' : '');
+                        carryBtn.textContent = isCarried ? "1" : "進位";
+                        carryBtn.onclick = () => this.toggleCarry(c);
+
+                        if (this.carryErrors[c]) {
+                            carryBtn.classList.add('cell-wrong');
+                        } else if (this.isDisplayingAnswer && isCarried) {
+                            carryBtn.classList.add('cell-correct');
+                        }
+                        carryCell.appendChild(carryBtn);
+                    }
+                    rows[1].push(carryCell);
+
+                    // 3. 被加數
+                    let n1Cell = document.createElement('div');
+                    n1Cell.className = 'math-cell';
+                    n1Cell.textContent = !isSymbolCol ? this.num1[c] : "";
+                    rows[2].push(n1Cell);
+
+                    // 4. 加數與加號
+                    let n2Cell = document.createElement('div');
+                    n2Cell.className = 'math-cell';
+                    if (isSymbolCol) {
+                        n2Cell.textContent = "+";
+                        n2Cell.classList.add('symbol-cell');
+                    } else {
+                        n2Cell.textContent = this.num2[c] !== undefined ? this.num2[c] : "";
+                    }
+                    rows[3].push(n2Cell);
+
+                    // 5. 答案列
+                    let ansCell = document.createElement('div');
+                    ansCell.className = 'math-cell';
+                    if (!isSymbolCol) {
+                        let aBox = document.createElement('div');
+                        aBox.className = 'math-cell answer-box';
+                        if (this.answers[c] !== null && this.answers[c] !== undefined) {
+                            aBox.textContent = this.answers[c];
+                            aBox.classList.add('filled');
+                        }
+                        if (this.currentSelectedCol === c && !this.isDisplayingAnswer) {
+                            aBox.classList.add('selected');
+                        }
+
+                        aBox.onclick = () => {
+                            if (this.isDisplayingAnswer || isGameOver || this.tacticsModalEl.classList.contains('active')) return;
+                            this.currentSelectedCol = c;
+                            this.renderGrid();
+                        };
+
+                        if (this.ansErrors[c]) {
+                            aBox.classList.add('cell-wrong');
+                        } else if (this.isDisplayingAnswer) {
+                            aBox.classList.add('cell-correct');
+                        }
+                        ansCell.appendChild(aBox);
+                    }
+                    rows[5].push(ansCell);
+                }
+
+                rows.forEach((rowEls, idx) => {
+                    if (idx === 4) {
+                        let divLine = document.createElement('div');
+                        divLine.className = 'divider-row';
+                        this.gridEl.appendChild(divLine);
+                    } else {
+                        let rowDiv = document.createElement('div');
+                        rowDiv.className = 'math-row';
+                        rowEls.forEach(el => rowDiv.appendChild(el));
+                        this.gridEl.appendChild(rowDiv);
+                    }
+                });
+            }
+
+            handleActionClick() {
+                if (isGameOver) return;
+                if (this.isDisplayingAnswer) {
+                    this.generateNewQuestion();
+                    return;
+                }
+                this.submitAndVerify();
+            }
+
+            submitAndVerify() {
+                let correctCarries = Array(matchConfig.level + 1).fill(0);
+                let correctDigits = Array(matchConfig.level).fill(0);
+                let cTemp = 0;
+                for (let i = 0; i < matchConfig.level; i++) {
+                    correctCarries[i] = cTemp;
+                    let sum = (this.num1[i] || 0) + (this.num2[i] || 0) + cTemp;
+                    correctDigits[i] = sum % 10;
+                    cTemp = sum > 9 ? 1 : 0;
+                }
+                correctCarries[matchConfig.level] = cTemp;
+
+                let hasError = false;
+                this.ansErrors = Array(matchConfig.level).fill(false);
+                this.carryErrors = Array(matchConfig.level + 1).fill(false);
+
+                for (let i = 0; i < matchConfig.level; i++) {
+                    if (this.answers[i] === null || this.answers[i] === undefined || this.answers[i] !== correctDigits[i]) {
+                        this.ansErrors[i] = true;
+                        hasError = true;
+                    }
+                    if (i > 0 && this.carries[i] !== correctCarries[i]) {
+                        this.carryErrors[i] = true;
+                        hasError = true;
+                    }
+                }
+
+                if (!hasError) {
+                    // 答對！停止計時，跳出心理戰戰術選擇 (進攻 / 護盾)
+                    this.stopTimer();
+                    Sound.correct();
+                    this.tacticsModalEl.classList.add('active');
+                    this.chanceEl.textContent = "🎯 計算正確！請在上方選擇【進攻】或【加盾】";
+                } else {
+                    // 答錯
+                    Sound.wrong();
+                    let activePanel = document.getElementById(`panel-${this.id}`);
+                    activePanel.classList.add('shake');
+                    setTimeout(() => activePanel.classList.remove('shake'), 400);
+
+                    if (this.modifyChances > 0) {
+                        this.modifyChances--;
+                        this.chanceEl.textContent = "請修正紅框標示處！剩餘修改機會：0 次";
+                        if (this.submitBtn) {
+                            this.submitBtn.textContent = "重交";
+                            this.submitBtn.classList.add('btn-retry-mode');
+                        }
+                        for (let i = 0; i < matchConfig.level; i++) {
+                            if (this.ansErrors[i]) {
+                                this.currentSelectedCol = i;
+                                break;
+                            }
+                        }
+                        this.renderGrid();
+                    } else {
+                        // 第二次答錯，公佈答案
+                        this.stopTimer();
+                        this.isDisplayingAnswer = true;
+                        this.ansErrors = Array(matchConfig.level).fill(false);
+                        this.carryErrors = Array(matchConfig.level + 1).fill(false);
+
+                        this.answers = correctDigits;
+                        this.carries = correctCarries;
+
+                        this.chanceEl.textContent = "💡 已顯示正解，觀察後點擊『下一題』繼續！";
+                        if (this.submitBtn) {
+                            this.submitBtn.className = 'numpad-btn btn-submit-key btn-next-mode';
+                            this.submitBtn.textContent = "下一題";
+                        }
+                        this.renderGrid();
+                    }
+                }
+            }
+
+            // 戰術選擇核心處理
+            chooseTactic(tactic) {
+                if (isGameOver) return;
+                this.tacticsModalEl.classList.remove('active');
+
+                if (tactic === 'shield') {
+                    // 給自己加護盾
+                    if (this.shields < matchConfig.maxShields) {
+                        this.shields++;
+                    }
+                    Sound.shieldUp();
+                    showStatusPopup(this.id, "🛡️ 護盾 +1", "shield-up");
+                    updateShieldUI(this);
+                    this.chanceEl.textContent = `🛡️ 護盾已架設 (現有 ${this.shields} 層)！準備防守反擊！`;
+                    setTimeout(() => {
+                        if (!isGameOver) this.generateNewQuestion();
+                    }, 1000);
+                } else if (tactic === 'attack') {
+                    // 發動進攻
+                    executeAttack(this.id, this.opponentId, matchConfig.baseDamage);
+                    setTimeout(() => {
+                        if (!isGameOver) this.generateNewQuestion();
+                    }, 1300);
+                }
+            }
+        }
+
+        let players = [];
+
+        // 執行進攻與護盾反射博弈判定
+        function executeAttack(attackerId, defenderId, damage) {
+            const attacker = players[attackerId - 1];
+            const defender = players[defenderId - 1];
+            const ball = document.getElementById(`ball-${attackerId}`);
+            const defenderWrap = document.getElementById(`fighter-wrap-${defenderId}`);
+            const attackerWrap = document.getElementById(`fighter-wrap-${attackerId}`);
+
+            Sound.attack();
+            ball.className = `energy-ball ${attackerId === 1 ? 'blue shoot-p1' : 'red shoot-p2'}`;
+
+            setTimeout(() => {
+                // 抵達防守方，檢查是否有護盾
+                if (defender.shields > 0) {
+                    // 💥 觸發反射！消耗 1 層護盾，傷害 100% 彈回給攻擊者
+                    defender.shields--;
+                    updateShieldUI(defender);
+                    Sound.reflect();
+
+                    showStatusPopup(defenderId, "⚡ 完美反射！", "reflect");
+
+                    // 飛彈反射動畫
+                    ball.className = `energy-ball ${attackerId === 1 ? 'blue reflect-p1' : 'red reflect-p2'}`;
+
+                    setTimeout(() => {
+                        ball.className = `energy-ball ${attackerId === 1 ? 'blue' : 'red'}`;
+                        attackerWrap.classList.add('hit-shake');
+                        setTimeout(() => attackerWrap.classList.remove('hit-shake'), 400);
+
+                        attacker.hp = Math.max(0, attacker.hp - damage);
+                        updateHpUI(attacker);
+                        showStatusPopup(attackerId, `-${damage} (反噬)`, "dmg");
+
+                        if (attacker.hp <= 0 && !isGameOver) {
+                            isGameOver = true;
+                            Sound.win();
+                            setTimeout(() => declareWinner(defenderId, "對方猛攻撞上反射盾牌，遭到反噬自爆擊倒！"), 400);
+                        }
+                    }, 280);
+
+                } else {
+                    // 🎯 無盾防守，正常命中
+                    ball.className = `energy-ball ${attackerId === 1 ? 'blue' : 'red'}`;
+                    defenderWrap.classList.add('hit-shake');
+                    setTimeout(() => defenderWrap.classList.remove('hit-shake'), 400);
+
+                    defender.hp = Math.max(0, defender.hp - damage);
+                    updateHpUI(defender);
+                    showStatusPopup(defenderId, `-${damage}`, "dmg");
+
+                    if (defender.hp <= 0 && !isGameOver) {
+                        isGameOver = true;
+                        Sound.win();
+                        setTimeout(() => declareWinner(attackerId, "以銳利的連續進攻突破防線，徹底擊敗對手！"), 400);
+                    }
+                }
+            }, 320);
+        }
+
+        function showStatusPopup(playerId, text, type) {
+            const popup = document.getElementById(`popup-${playerId}`);
+            popup.textContent = text;
+            popup.className = `status-popup ${type} show`;
+            setTimeout(() => {
+                popup.className = 'status-popup';
+            }, 800);
+        }
+
+        function updateShieldUI(player) {
+            const pid = player.id;
+            const tag = player.statusTagEl;
+            const aura = player.shieldAuraEl;
+
+            tag.textContent = `護盾: ${player.shields}`;
+            if (player.shields > 0) {
+                tag.classList.add('shield-on');
+                aura.classList.add('visible');
+            } else {
+                tag.classList.remove('shield-on');
+                aura.classList.remove('visible');
+            }
+
+            // 更新頂部 HUD 的 2 個護盾指示圓點
+            for (let i = 1; i <= 2; i++) {
+                const dot = document.getElementById(`p${pid}-sdot-${i}`);
+                if (i <= player.shields) {
+                    dot.className = `shield-dot active${pid === 2 ? '-p2' : ''}`;
+                } else {
+                    dot.className = 'shield-dot';
+                }
+            }
+        }
+
+        function updateHpUI(player) {
+            const percentage = (player.hp / matchConfig.maxHp) * 100;
+            player.hpFillEl.style.width = `${percentage}%`;
+            player.hpTextEl.textContent = `${player.hp} / ${matchConfig.maxHp}`;
+
+            if (percentage <= 25) {
+                player.hpFillEl.style.background = 'linear-gradient(180deg, #ff4757 0%, #c0392b 100%)';
+            } else if (percentage <= 55) {
+                player.hpFillEl.style.background = 'linear-gradient(180deg, #f1c40f 0%, #d35400 100%)';
+            } else {
+                player.hpFillEl.style.background = 'linear-gradient(180deg, #2ecc71 0%, #10ac84 100%)';
+            }
+        }
+
+        function declareWinner(winnerId, reason) {
+            const overlay = document.getElementById('win-overlay');
+            const title = document.getElementById('win-title');
+            const subtitle = document.getElementById('win-subtitle');
+
+            const winnerColor = winnerId === 1 ? '藍方守護使' : '紅方幻盾師';
+            title.textContent = `🏆 玩家 ${winnerId} (${winnerColor}) 獲勝！`;
+            subtitle.textContent = reason;
+            overlay.classList.add('show');
+        }
+
+        function restartMatch() {
+            isGameOver = false;
+            document.getElementById('win-overlay').classList.remove('show');
+            players.forEach(p => {
+                p.stopTimer();
+                p.hp = matchConfig.maxHp;
+                p.shields = 0;
+                updateShieldUI(p);
+                updateHpUI(p);
+                p.generateNewQuestion();
+            });
+        }
+
+        function initApp() {
+            players = [new ShieldPlayer(1), new ShieldPlayer(2)];
+
+            document.getElementById('sel-level').addEventListener('change', (e) => {
+                matchConfig.level = parseInt(e.target.value);
+                restartMatch();
+            });
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
